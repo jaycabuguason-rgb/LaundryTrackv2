@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  Check,
   ChevronDown,
   RefreshCw,
   Search,
@@ -17,6 +18,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import {
   statusColors,
@@ -40,15 +49,22 @@ interface ProcessingPageProps {
 
 const STAGES: TransactionStatus[] = ["Received", "Washing", "Drying", "Processing", "Ready"];
 
-const NEXT_STATUSES: Record<TransactionStatus, TransactionStatus[]> = {
-  Received:   ["Washing"],
-  Washing:    ["Drying"],
-  Drying:     ["Processing", "Ready"],
-  Processing: ["Ready"],
-  Ready:      ["Claimed"],
-  Claimed:    [],
-  Voided:     [],
-};
+/** All statuses shown in the dropdown, in order */
+const ALL_STATUS_OPTIONS: {
+  status: TransactionStatus;
+  label: string;
+  dotClass: string;
+}[] = [
+  { status: "Received",   label: "Received",   dotClass: "bg-blue-500"   },
+  { status: "Washing",    label: "Washing",     dotClass: "bg-yellow-500" },
+  { status: "Drying",     label: "Drying",      dotClass: "bg-orange-500" },
+  { status: "Ready",      label: "Ready",       dotClass: "bg-green-500"  },
+  { status: "Claimed",    label: "Claimed",     dotClass: "bg-gray-500"   },
+  { status: "Voided",     label: "Voided",      dotClass: "bg-red-500"    },
+];
+
+/** Statuses that require a confirmation dialog before applying */
+const IRREVERSIBLE_STATUSES: TransactionStatus[] = ["Claimed", "Voided"];
 
 const STAGE_BADGE_COLORS: Record<TransactionStatus, string> = {
   Received:   "bg-blue-100 text-blue-700 border-blue-200",
@@ -111,6 +127,33 @@ function formatLastUpdated(date: Date): string {
   return `${mins} min ago`;
 }
 
+// ─── Toast ────────────────────────────────────────────────────────────────────
+
+interface ToastMsg { id: number; text: string; }
+
+function ToastContainer({ toasts, onDismiss }: { toasts: ToastMsg[]; onDismiss: (id: number) => void }) {
+  return (
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none">
+      {toasts.map((t) => (
+        <div
+          key={t.id}
+          className="pointer-events-auto flex items-center gap-3 rounded-lg border border-border bg-popover px-4 py-3 text-sm font-medium text-popover-foreground shadow-lg animate-in fade-in slide-in-from-bottom-2"
+        >
+          <Check className="h-4 w-4 shrink-0 text-green-500" />
+          {t.text}
+          <button
+            onClick={() => onDismiss(t.id)}
+            className="ml-auto text-muted-foreground hover:text-foreground"
+            aria-label="Dismiss"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function ProcessingPage({
@@ -129,6 +172,27 @@ export default function ProcessingPage({
   const [detailTxn, setDetailTxn] = useState<Transaction | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // ── Confirmation dialog state ──────────────────────────────────────────────
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    txn: Transaction | null;
+    targetStatus: TransactionStatus | null;
+  }>({ open: false, txn: null, targetStatus: null });
+
+  // ── Toast state ───────────────────────────────────────────────────────────
+  const [toasts, setToasts] = useState<ToastMsg[]>([]);
+  const toastIdRef = useRef(0);
+
+  const pushToast = useCallback((text: string) => {
+    const id = ++toastIdRef.current;
+    setToasts((prev) => [...prev, { id, text }]);
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000);
+  }, []);
+
+  const dismissToast = useCallback((id: number) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
 
   // Active (non-claimed, non-voided) transactions
   const activeTransactions = useMemo(
@@ -189,14 +253,37 @@ export default function ProcessingPage({
     setExpandedStage((prev) => (prev === stage ? null : stage));
   };
 
-  const handleUpdateStatus = async (txn: Transaction, newStatus: TransactionStatus) => {
+  // Core update – called after any confirmation / immediate click
+  const applyStatusUpdate = async (txn: Transaction, newStatus: TransactionStatus) => {
     if (!onUpdateTransaction) return;
     setUpdatingTicket(txn.ticketId);
     try {
       await onUpdateTransaction(txn.ticketId, { status: newStatus });
       setLastUpdated(new Date());
+      pushToast(`${txn.ticketId} moved to ${newStatus}`);
     } finally {
       setUpdatingTicket(null);
+    }
+  };
+
+  // Called when user clicks a status option in the dropdown
+  const handleStatusSelect = (txn: Transaction, newStatus: TransactionStatus) => {
+    if (newStatus === txn.status) return; // already active — no-op
+
+    if (IRREVERSIBLE_STATUSES.includes(newStatus)) {
+      setConfirmDialog({ open: true, txn, targetStatus: newStatus });
+      return;
+    }
+
+    applyStatusUpdate(txn, newStatus);
+  };
+
+  // Confirm button inside the dialog
+  const handleConfirmStatus = async () => {
+    const { txn, targetStatus } = confirmDialog;
+    setConfirmDialog({ open: false, txn: null, targetStatus: null });
+    if (txn && targetStatus) {
+      await applyStatusUpdate(txn, targetStatus);
     }
   };
 
@@ -248,7 +335,6 @@ export default function ProcessingPage({
                   {items.map((txn) => {
                     const hoursInStage = getHoursInStage(txn.arrivalDateTime);
                     const isPriorityReady = stage === "Ready" && hoursInStage >= 2;
-                    const nextStatuses = NEXT_STATUSES[txn.status] ?? [];
                     const isUpdating = updatingTicket === txn.ticketId;
 
                     return (
@@ -290,44 +376,51 @@ export default function ProcessingPage({
                           </span>
                         </td>
                         <td className="px-3 py-3 pr-4 md:pr-5">
-                          {nextStatuses.length > 0 ? (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  disabled={isUpdating}
-                                  className="h-7 gap-1.5 text-xs px-2.5 cursor-pointer"
-                                >
-                                  {isUpdating ? "Updating…" : "Update Status"}
-                                  <ChevronDown className="h-3 w-3" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="min-w-[160px]">
-                                {nextStatuses.map((next) => (
+                          {/* Update Status dropdown — shows ALL statuses */}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={isUpdating}
+                                className="h-7 gap-1.5 text-xs px-2.5 cursor-pointer"
+                              >
+                                {isUpdating ? "Updating…" : "Update Status"}
+                                <ChevronDown className="h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="min-w-[180px]">
+                              {ALL_STATUS_OPTIONS.map(({ status, label, dotClass }) => {
+                                const isCurrent = txn.status === status;
+                                return (
                                   <DropdownMenuItem
-                                    key={next}
-                                    className="cursor-pointer text-xs"
-                                    onClick={() => handleUpdateStatus(txn, next)}
+                                    key={status}
+                                    disabled={isCurrent}
+                                    className={cn(
+                                      "cursor-pointer text-xs gap-2",
+                                      isCurrent && "opacity-50 cursor-default",
+                                    )}
+                                    onClick={() => !isCurrent && handleStatusSelect(txn, status)}
                                   >
+                                    {/* Colored dot */}
                                     <span
                                       className={cn(
-                                        "mr-2 inline-flex h-2 w-2 rounded-full",
-                                        next === "Washing" && "bg-yellow-500",
-                                        next === "Drying" && "bg-orange-500",
-                                        next === "Processing" && "bg-purple-500",
-                                        next === "Ready" && "bg-green-500",
-                                        next === "Claimed" && "bg-gray-500",
+                                        "inline-flex h-2 w-2 shrink-0 rounded-full",
+                                        dotClass,
+                                        isCurrent && "ring-2 ring-offset-1 ring-current",
                                       )}
                                     />
-                                    Mark as {next}
+                                    {/* Label */}
+                                    <span className="flex-1">{label}</span>
+                                    {/* Checkmark for current */}
+                                    {isCurrent && (
+                                      <Check className="ml-auto h-3 w-3 shrink-0 text-muted-foreground" />
+                                    )}
                                   </DropdownMenuItem>
-                                ))}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">—</span>
-                          )}
+                                );
+                              })}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </td>
                       </tr>
                     );
@@ -492,6 +585,44 @@ export default function ProcessingPage({
         onOpenChange={setDetailOpen}
         transaction={detailTxn}
       />
+
+      {/* ── Irreversible-action confirmation dialog ─────────────────────────── */}
+      <Dialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => {
+          if (!open) setConfirmDialog({ open: false, txn: null, targetStatus: null });
+        }}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {confirmDialog.targetStatus === "Voided"
+                ? `Void ${confirmDialog.txn?.ticketId}?`
+                : `Mark ${confirmDialog.txn?.ticketId} as Claimed?`}
+            </DialogTitle>
+            <DialogDescription>
+              This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmDialog({ open: false, txn: null, targetStatus: null })}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant={confirmDialog.targetStatus === "Voided" ? "destructive" : "default"}
+              onClick={handleConfirmStatus}
+            >
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Toast notifications ─────────────────────────────────────────────── */}
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </>
   );
 }

@@ -25,7 +25,7 @@ export type RequestActor = {
   role: "admin" | "staff";
 };
 
-function getBearerToken(request: Request): string | null {
+export function getBearerToken(request: Request): string | null {
   const authorization = request.headers.get("authorization");
   if (!authorization) {
     return null;
@@ -99,10 +99,10 @@ async function syncMissingProfileFromAuthUser(user: User): Promise<ViewerProfile
 
 export async function getRequestActor(request: Request): Promise<RequestActor | null> {
   const accessToken = getBearerToken(request);
-  if (!accessToken) {
-    return null;
-  }
+  return accessToken ? getActorFromToken(accessToken) : null;
+}
 
+export async function getActorFromToken(accessToken: string): Promise<RequestActor | null> {
   const cachedActor = requestActorCache.get(accessToken);
   if (cachedActor) {
     return cachedActor;
@@ -137,13 +137,13 @@ export async function getRequestActor(request: Request): Promise<RequestActor | 
     return null;
   }
 
-  const actor = {
+  const actor: RequestActor = {
     id: user.id,
     name: viewerProfile.full_name ?? user.email?.split("@")[0] ?? "User",
     username: viewerProfile.username ?? user.email?.split("@")[0] ?? "user",
     phone: viewerProfile.phone_number ?? "",
     email: user.email ?? "",
-    role: viewerProfile.role,
+    role: viewerProfile.role === "admin" ? "admin" : "staff",
   };
 
   requestActorCache.set(accessToken, actor, REQUEST_ACTOR_CACHE_TTL_MS);
@@ -156,7 +156,7 @@ export async function requireAdminRequest(request: Request) {
     throw new Error("Missing authorization token.");
   }
 
-  const actor = await getRequestActor(request);
+  const actor = await getActorFromToken(accessToken);
   if (!actor) {
     throw new Error("Your session is invalid or has expired.");
   }
@@ -166,4 +166,34 @@ export async function requireAdminRequest(request: Request) {
   }
 
   return actor;
+}
+
+export async function requireAuthRequest(request: Request) {
+  const accessToken = getBearerToken(request);
+  if (!accessToken) {
+    throw new Error("Missing authorization token.");
+  }
+
+  const actor = await getActorFromToken(accessToken);
+  if (!actor) {
+    throw new Error("Your session is invalid or has expired.");
+  }
+
+  return actor;
+}
+
+export function getAuthErrorStatus(error: unknown): 401 | 403 | null {
+  if (!(error instanceof Error)) {
+    return null;
+  }
+
+  if (error.message === "Missing authorization token." || error.message === "Your session is invalid or has expired.") {
+    return 401;
+  }
+
+  if (error.message === "Admin access is required.") {
+    return 403;
+  }
+
+  return null;
 }

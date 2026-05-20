@@ -13,6 +13,7 @@ import {
 } from "@/lib/offline-transactions";
 import { isOnline, subscribeNetworkStatus } from "@/lib/network-status";
 import { getBrowserAccessToken } from "@/lib/supabase/browser-session";
+import { refreshBrowserSession } from "@/lib/supabase/browser-session";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { CreateTransactionInput, UpdateTransactionInput } from "@/lib/transaction-contracts";
 
@@ -41,7 +42,11 @@ async function readJson<T>(response: Response): Promise<T> {
 }
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
-  const accessToken = await getBrowserAccessToken();
+  let accessToken = await getBrowserAccessToken();
+  if (!accessToken) {
+    const refreshed = await refreshBrowserSession();
+    accessToken = refreshed?.access_token ?? null;
+  }
   if (!accessToken) {
     return {};
   }
@@ -123,9 +128,12 @@ export function useTransactions() {
         }
       }
       setError(null);
+      setLastSyncError(null);
       setSyncStatus("online");
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Unable to load transactions.");
+      const message = requestError instanceof Error ? requestError.message : "Unable to load transactions.";
+      setError(message);
+      setLastSyncError(message);
       setSyncStatus(isOnline() ? "error" : "offline");
     } finally {
       setLoading(false);

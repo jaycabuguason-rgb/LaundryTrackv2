@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 
 import { createAuditLog } from "@/lib/server/audit-log-repository";
 import { getRequestIp } from "@/lib/server/request-meta";
-import type { ResetStaffPasswordInput } from "@/lib/staff-contracts";
 import { getStaffAccountById, resetStaffPassword } from "@/lib/server/staff-repository";
 import { requireAdminRequest } from "@/lib/server/request-auth";
 
@@ -14,8 +13,11 @@ export async function POST(
     const actor = await requireAdminRequest(request);
     const { staffId } = await context.params;
     const staffAccount = await getStaffAccountById(staffId);
-    const body = (await request.json()) as ResetStaffPasswordInput;
-    await resetStaffPassword(staffId, body.password);
+    const raw = await request.json();
+    if (typeof raw?.password !== "string" || raw.password.length < 8) {
+      return NextResponse.json({ error: "Invalid input: password must be at least 8 characters." }, { status: 400 });
+    }
+    await resetStaffPassword(staffId, String(raw.password));
 
     await createAuditLog({
       action: "staff_password_reset",

@@ -13,6 +13,7 @@ import {
 import { authenticateStaff, type UserProfile } from "@/lib/auth";
 import { setBrowserSessionCache } from "@/lib/supabase/browser-session";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { isOnline } from "@/lib/network-status";
 
 // Legacy type alias kept for ChangePasswordPage compat
 export interface AdminProfile {
@@ -85,10 +86,14 @@ export default function Home() {
         parsedFallback = null;
       }
     }
-    const effectiveProfile = profile ?? parsedFallback;
+    const effectiveProfile = profile ?? (!isOnline() ? parsedFallback : null);
 
     if (profile && typeof window !== "undefined") {
       window.localStorage.setItem(LAST_PROFILE_KEY, JSON.stringify(profile));
+    }
+
+    if (!profile && typeof window !== "undefined" && isOnline()) {
+      window.localStorage.removeItem(LAST_PROFILE_KEY);
     }
 
     setView(effectiveProfile ? "app" : initialView);

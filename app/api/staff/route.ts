@@ -21,7 +21,26 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const actor = await requireAdminRequest(request);
-    const body = (await request.json()) as CreateStaffAccountInput;
+    const raw = await request.json();
+    if (!raw || typeof raw.fullName !== "string" || !raw.fullName.trim()) {
+      return NextResponse.json({ error: "Invalid input: fullName is required." }, { status: 400 });
+    }
+    if (typeof raw.email !== "string" || !raw.email.trim()) {
+      return NextResponse.json({ error: "Invalid input: email is required." }, { status: 400 });
+    }
+    if (typeof raw.username !== "string" || !raw.username.trim()) {
+      return NextResponse.json({ error: "Invalid input: username is required." }, { status: 400 });
+    }
+    if (typeof raw.password !== "string" || raw.password.length < 8) {
+      return NextResponse.json({ error: "Invalid input: password must be at least 8 characters." }, { status: 400 });
+    }
+    const body: CreateStaffAccountInput = {
+      fullName: String(raw.fullName).trim().slice(0, 100),
+      email: String(raw.email).trim().slice(0, 200),
+      username: String(raw.username).trim().slice(0, 50),
+      password: String(raw.password),
+      phoneNumber: raw.phoneNumber != null ? String(raw.phoneNumber).trim().slice(0, 20) : undefined,
+    };
     const staffAccount = await createStaffAccount(body);
 
     await createAuditLog({

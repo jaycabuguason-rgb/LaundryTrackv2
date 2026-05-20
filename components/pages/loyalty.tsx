@@ -41,10 +41,38 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
   const washesPerReward = 10;
   const rewardName = "Free wash";
 
-  const filtered = members.filter(
-    (m) =>
-      m.name.toLowerCase().includes(search.toLowerCase()) ||
-      m.phone.includes(search)
+  const [showAtRiskOnly, setShowAtRiskOnly] = useState(false);
+
+  function checkChurnRisk(member: LoyaltyMember) {
+    if (!member.stampHistory || member.stampHistory.length < 2) return false;
+    
+    const sortedHistory = [...member.stampHistory].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+    
+    const firstDate = new Date(sortedHistory[0].date).getTime();
+    const lastDate = new Date(sortedHistory[sortedHistory.length - 1].date).getTime();
+    const today = new Date().getTime();
+    
+    if (sortedHistory.length <= 1 || firstDate === lastDate) return false;
+    
+    const totalDays = (lastDate - firstDate) / (1000 * 60 * 60 * 24);
+    const avgDaysBetween = totalDays / (sortedHistory.length - 1);
+    
+    const daysSinceLastVisit = (today - lastDate) / (1000 * 60 * 60 * 24);
+    
+    return daysSinceLastVisit > (avgDaysBetween * 1.5) && daysSinceLastVisit > 14;
+  }
+
+  const membersWithRisk = members.map(m => ({ ...m, isAtRisk: checkChurnRisk(m) }));
+  const atRiskCount = membersWithRisk.filter(m => m.isAtRisk).length;
+
+  const filtered = membersWithRisk.filter(
+    (m) => {
+      const matchesSearch = m.name.toLowerCase().includes(search.toLowerCase()) || m.phone.includes(search);
+      const matchesRisk = showAtRiskOnly ? m.isAtRisk : true;
+      return matchesSearch && matchesRisk;
+    }
   );
 
   async function handleAddMember(e: React.FormEvent<HTMLFormElement>) {
@@ -144,12 +172,20 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
   if (selected) {
     return (
       <div className="space-y-5">
-        <button
-          onClick={() => setSelected(null)}
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ChevronLeft className="w-4 h-4" /> Back to Members
-        </button>
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => setSelected(null)}
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" /> Back to Members
+          </button>
+          {membersWithRisk.find(m => m.id === selected.id)?.isAtRisk && (
+            <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-[11px] font-medium text-red-800">
+              <AlertTriangle className="w-3 h-3 mr-1" />
+              At Risk of Churn
+            </span>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Profile Card */}
@@ -366,11 +402,31 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
       </div>
 
       {/* Summary */}
-      <div className="max-w-xs">
-        <Card className="border border-border shadow-none">
+      <div className="flex flex-wrap gap-4">
+        <Card className="border border-border shadow-none w-full max-w-xs">
           <CardContent className="p-4 text-center">
             <p className="text-2xl font-bold text-foreground">{loading ? "..." : members.length}</p>
             <p className="text-xs text-muted-foreground mt-0.5">Total Members</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border border-border shadow-none w-full max-w-xs bg-red-50/50">
+          <CardContent className="p-4 flex flex-col items-center justify-center">
+            <div className="flex items-center gap-2 text-red-600 mb-1">
+              <AlertTriangle className="w-4 h-4" />
+              <span className="font-semibold text-sm">Churn Risk</span>
+            </div>
+            <p className="text-2xl font-bold text-red-700">{loading ? "..." : atRiskCount}</p>
+            <div className="mt-2">
+              <Button 
+                size="sm" 
+                variant={showAtRiskOnly ? "default" : "outline"}
+                className={`h-7 text-[11px] ${showAtRiskOnly ? "bg-red-600 hover:bg-red-700" : "text-red-700 border-red-200 hover:bg-red-50"}`}
+                onClick={() => setShowAtRiskOnly(!showAtRiskOnly)}
+              >
+                {showAtRiskOnly ? "Show All Members" : "Filter At Risk"}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -388,8 +444,13 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
             </thead>
             <tbody>
               {filtered.map((m) => (
-                <tr key={m.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
-                  <td className="px-4 py-3 text-xs font-semibold text-foreground">{m.name}</td>
+                <tr key={m.id} className={`border-b border-border last:border-0 hover:bg-muted/20 transition-colors ${m.isAtRisk ? "bg-red-50/30" : ""}`}>
+                  <td className="px-4 py-3 text-xs font-semibold text-foreground flex items-center gap-2">
+                    {m.name}
+                    {m.isAtRisk && (
+                      <span className="inline-block w-2 h-2 rounded-full bg-red-500" title="At Risk of Churn" />
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">{m.phone}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1.5">

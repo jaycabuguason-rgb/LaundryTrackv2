@@ -21,16 +21,13 @@ import {
 } from "@/lib/data";
 import { TransactionDetailModal } from "@/components/transaction-detail-modal";
 import type { Page } from "@/components/sidebar";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import dynamic from "next/dynamic";
 import { usePeakHours } from "@/hooks/usePeakHours";
+
+const PeakHoursChart = dynamic(
+  () => import("@/components/peak-hours-chart"),
+  { ssr: false, loading: () => <div className="h-40 w-full animate-pulse bg-muted rounded-md" /> }
+);
 
 interface DashboardPageProps {
   transactions?: Transaction[];
@@ -191,6 +188,7 @@ export default function DashboardPage({
                             <Button
                               variant="ghost"
                               size="icon"
+                              aria-label={`View details for ticket ${txn.ticketId}`}
                               className="h-8 w-8 min-h-[44px] min-w-[44px] md:h-7 md:min-h-0 md:min-w-0 md:w-7"
                               onClick={() => openDetail(txn)}
                             >
@@ -222,21 +220,7 @@ export default function DashboardPage({
                       <p className="text-xs text-muted-foreground">No transactions yet today</p>
                     </div>
                   ) : (
-                    <ResponsiveContainer width="100%" height={160}>
-                      <BarChart data={peakHoursData} barSize={10}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-slate-700" vertical={false} />
-                        <XAxis dataKey="hour" tick={{ fontSize: 10, fill: "#94a3b8" }} className="dark:fill-slate-400" tickLine={false} axisLine={false} />
-                        <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} className="dark:fill-slate-400" tickLine={false} axisLine={false} width={20} allowDecimals={false} />
-                        <Tooltip
-                          contentStyle={{ fontSize: 11, borderRadius: 6, border: "1px solid #e2e8f0", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}
-                          wrapperClassName="dark:[&_.recharts-tooltip-wrapper]:!bg-slate-800 dark:[&_.recharts-tooltip-wrapper]:!border-slate-700"
-                          cursor={{ fill: "rgba(59,130,246,0.06)" }}
-                          formatter={(value: number) => [`${value} transaction${value !== 1 ? 's' : ''}`, '']}
-                          labelFormatter={(label) => label}
-                        />
-                        <Bar dataKey="count" fill="#3b82f6" radius={[3, 3, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
+                    <PeakHoursChart data={peakHoursData} />
                   )}
                 </CardContent>
               </Card>

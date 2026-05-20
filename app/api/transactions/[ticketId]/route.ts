@@ -2,19 +2,34 @@ import { NextResponse } from "next/server";
 
 import { createAuditLog } from "@/lib/server/audit-log-repository";
 import { getTransactionByTicketId, updateTransaction } from "@/lib/server/laundry-repository";
-import { getRequestActor } from "@/lib/server/request-auth";
+import { getRequestActor, requireAuthRequest } from "@/lib/server/request-auth";
 import { getRequestIp } from "@/lib/server/request-meta";
 import type { UpdateTransactionInput } from "@/lib/transaction-contracts";
+
+const VALID_STATUSES = new Set(["Received", "Washing", "Drying", "Processing", "Ready", "Claimed", "Voided"]);
+const VALID_PAYMENT_STATUSES = new Set(["unpaid", "paid"]);
 
 export async function PATCH(
   request: Request,
   context: { params: Promise<{ ticketId: string }> },
 ) {
   try {
-    const actor = await getRequestActor(request);
+    const actor = await requireAuthRequest(request);
     const { ticketId } = await context.params;
     const previous = await getTransactionByTicketId(ticketId);
-    const body = (await request.json()) as UpdateTransactionInput;
+    const raw = await request.json();
+    if (raw.status !== undefined && !VALID_STATUSES.has(raw.status)) {
+      return NextResponse.json({ error: "Invalid status value." }, { status: 400 });
+    }
+    if (raw.paymentStatus !== undefined && !VALID_PAYMENT_STATUSES.has(raw.paymentStatus)) {
+      return NextResponse.json({ error: "Invalid paymentStatus value." }, { status: 400 });
+    }
+    const body: UpdateTransactionInput = {};
+    if (raw.status !== undefined) body.status = raw.status;
+    if (raw.paymentStatus !== undefined) body.paymentStatus = raw.paymentStatus;
+    if (raw.washInstructions !== undefined) body.washInstructions = String(raw.washInstructions).trim().slice(0, 500);
+    if (raw.eta !== undefined) body.eta = raw.eta != null ? String(raw.eta).trim() : null;
+    if (raw.voidReason !== undefined) body.voidReason = raw.voidReason != null ? String(raw.voidReason).trim().slice(0, 500) : null;
     const transaction = await updateTransaction(ticketId, body);
 
     const statusChanged = Boolean(body.status && previous?.status !== transaction.status);

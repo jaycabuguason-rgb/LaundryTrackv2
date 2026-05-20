@@ -14,7 +14,23 @@ export async function PATCH(
     const actor = await requireAdminRequest(request);
     const { staffId } = await context.params;
     const previous = await getStaffAccountById(staffId);
-    const body = (await request.json()) as UpdateStaffAccountInput;
+    const raw = await request.json();
+    if (!raw || typeof raw.fullName !== "string" || !raw.fullName.trim()) {
+      return NextResponse.json({ error: "Invalid input: fullName is required." }, { status: 400 });
+    }
+    if (typeof raw.email !== "string" || !raw.email.trim()) {
+      return NextResponse.json({ error: "Invalid input: email is required." }, { status: 400 });
+    }
+    if (typeof raw.username !== "string" || !raw.username.trim()) {
+      return NextResponse.json({ error: "Invalid input: username is required." }, { status: 400 });
+    }
+    const body: UpdateStaffAccountInput = {
+      fullName: String(raw.fullName).trim().slice(0, 100),
+      email: String(raw.email).trim().slice(0, 200),
+      username: String(raw.username).trim().slice(0, 50),
+      isActive: Boolean(raw.isActive),
+      phoneNumber: raw.phoneNumber != null ? String(raw.phoneNumber).trim().slice(0, 20) : undefined,
+    };
     const staffAccount = await updateStaffAccount(staffId, body);
 
     const deactivated = previous?.isActive === true && staffAccount.isActive === false;

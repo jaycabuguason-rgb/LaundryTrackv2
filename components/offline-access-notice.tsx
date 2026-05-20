@@ -28,6 +28,16 @@ export default function OfflineAccessNotice({
     return "Offline";
   }, [syncStatus]);
 
+  const statusMessage = useMemo(() => {
+    if (syncStatus === "syncing") {
+      return "changes are being synced in the background.";
+    }
+    if (syncStatus === "error") {
+      return "we could not sync some data to the server.";
+    }
+    return "internet is unavailable.";
+  }, [syncStatus]);
+
   const availableFeatures =
     "Dashboard, Processing, Transactions, Claim Verification, Profile, Settings (Pricing / Business Profile / Loyalty)";
   const unavailableFeatures = "Reports, Staff Management, Audit Logs, Data Import";
@@ -36,7 +46,7 @@ export default function OfflineAccessNotice({
     <div className="mb-4 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-xs md:text-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="font-semibold text-orange-900">
-          {stateLabel} Mode: some features are limited while internet is unavailable.
+          {stateLabel} Mode: some features are limited while {statusMessage}
         </p>
         <div className="flex items-center gap-2">
           {pendingChangesCount > 0 && syncStatus !== "syncing" && (

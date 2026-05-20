@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { listLoyaltyMembers, createLoyaltyMember } from "@/lib/server/loyalty-repository";
+import { requireAuthRequest } from "@/lib/server/request-auth";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    await requireAuthRequest(request);
     const members = await listLoyaltyMembers();
     return NextResponse.json({ members });
   } catch (error) {
@@ -13,7 +15,16 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json() as { name: string; phone?: string; preferences?: string };
+    await requireAuthRequest(request);
+    const raw = await request.json();
+    if (!raw || typeof raw.name !== "string" || !raw.name.trim()) {
+      return NextResponse.json({ error: "Invalid input: name is required." }, { status: 400 });
+    }
+    const body = {
+      name: String(raw.name).trim().slice(0, 100),
+      phone: raw.phone != null ? String(raw.phone).trim().slice(0, 20) : undefined,
+      preferences: raw.preferences != null ? String(raw.preferences).trim().slice(0, 500) : undefined,
+    };
     const member = await createLoyaltyMember(body);
     return NextResponse.json({ member }, { status: 201 });
   } catch (error) {
