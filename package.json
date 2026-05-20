@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "clean:next": "powershell -NoProfile -Command \"if (Test-Path .next) { Remove-Item -LiteralPath .next -Recurse -Force }\"",
     "bootstrap:supabase": "node --env-file=.env.local scripts/bootstrap-supabase.mjs"
   },
   "dependencies": {

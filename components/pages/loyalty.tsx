@@ -12,6 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useLoyaltyMembers } from "@/hooks/use-loyalty-members";
 import { type LoyaltyMember } from "@/lib/data";
 import { toast } from "@/hooks/use-toast";
+import { getBrowserAccessToken, refreshBrowserSession } from "@/lib/supabase/browser-session";
 
 function StampDots({ count, max = 21 }: { count: number; max?: number }) {
   return (
@@ -42,6 +43,21 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
   const rewardName = "Free wash";
 
   const [showAtRiskOnly, setShowAtRiskOnly] = useState(false);
+
+  async function getAuthHeaders(extra: Record<string, string> = {}) {
+    let accessToken = await getBrowserAccessToken();
+    if (!accessToken) {
+      const refreshed = await refreshBrowserSession();
+      accessToken = refreshed?.access_token ?? null;
+    }
+
+    const headers: Record<string, string> = { ...extra };
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`;
+    }
+
+    return headers;
+  }
 
   function checkChurnRisk(member: LoyaltyMember) {
     if (!member.stampHistory || member.stampHistory.length < 2) return false;
@@ -83,7 +99,7 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
     try {
       const res = await fetch("/api/loyalty", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await getAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({
           name: data.get("name"),
           phone: data.get("phone"),
@@ -111,7 +127,7 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
     try {
       const res = await fetch(`/api/loyalty/${editModal.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: await getAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({
           name: data.get("name"),
           phone: data.get("phone"),
@@ -133,7 +149,10 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
     if (!deleteModal) return;
     setSaving(true);
     try {
-      const res = await fetch(`/api/loyalty/${deleteModal.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/loyalty/${deleteModal.id}`, {
+        method: "DELETE",
+        headers: await getAuthHeaders(),
+      });
       if (!res.ok) throw new Error("Failed to delete member");
       toast({ title: "Member deleted successfully" });
       setDeleteModal(null);
@@ -155,7 +174,7 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
     try {
       const res = await fetch(`/api/loyalty/${stampModal.id}/stamps`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await getAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ stamps }),
       });
       if (!res.ok) throw new Error("Failed to add stamps");

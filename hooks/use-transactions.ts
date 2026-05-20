@@ -30,12 +30,23 @@ interface ResolveResponse {
 }
 
 async function readJson<T>(response: Response): Promise<T> {
-  const data = await response.json().catch(() => ({}));
+  const rawText = await response.text();
+  let data: unknown = {};
+  if (rawText) {
+    try {
+      data = JSON.parse(rawText) as unknown;
+    } catch {
+      data = {};
+    }
+  }
   if (!response.ok) {
+    const fallbackText = rawText.trim();
     const message =
       typeof data === "object" && data && "error" in data && typeof data.error === "string"
         ? data.error
-        : "Request failed.";
+        : fallbackText
+          ? `Request failed (${response.status}): ${fallbackText.slice(0, 300)}`
+          : `Request failed (${response.status}).`;
     throw new Error(message);
   }
   return data as T;

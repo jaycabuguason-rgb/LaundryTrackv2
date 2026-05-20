@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { type LoyaltyMember } from "@/lib/data";
+import { getBrowserAccessToken, refreshBrowserSession } from "@/lib/supabase/browser-session";
 
 interface UseLoyaltyMembersResult {
   members: LoyaltyMember[];
@@ -21,7 +22,22 @@ export function useLoyaltyMembers(): UseLoyaltyMembersResult {
     setLoading(true);
     setError(null);
 
-    fetch("/api/loyalty")
+    const load = async () => {
+      let accessToken = await getBrowserAccessToken();
+      if (!accessToken) {
+        const refreshed = await refreshBrowserSession();
+        accessToken = refreshed?.access_token ?? null;
+      }
+
+      const headers: Record<string, string> = {};
+      if (accessToken) {
+        headers.Authorization = `Bearer ${accessToken}`;
+      }
+
+      return fetch("/api/loyalty", { headers });
+    };
+
+    load()
       .then(async (res) => {
         const data = await res.json() as { members?: LoyaltyMember[]; error?: string };
         if (cancelled) return;

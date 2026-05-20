@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { listLoyaltyMembers, createLoyaltyMember } from "@/lib/server/loyalty-repository";
-import { requireAuthRequest } from "@/lib/server/request-auth";
+import { getAuthErrorStatus, requireAuthRequest } from "@/lib/server/request-auth";
 
 export async function GET(request: Request) {
   try {
@@ -8,6 +8,11 @@ export async function GET(request: Request) {
     const members = await listLoyaltyMembers();
     return NextResponse.json({ members });
   } catch (error) {
+    const authStatus = getAuthErrorStatus(error);
+    if (authStatus) {
+      const message = error instanceof Error ? error.message : "Unauthorized.";
+      return NextResponse.json({ error: message }, { status: authStatus });
+    }
     const message = error instanceof Error ? error.message : "Unable to load loyalty members.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
@@ -28,6 +33,11 @@ export async function POST(request: Request) {
     const member = await createLoyaltyMember(body);
     return NextResponse.json({ member }, { status: 201 });
   } catch (error) {
+    const authStatus = getAuthErrorStatus(error);
+    if (authStatus) {
+      const message = error instanceof Error ? error.message : "Unauthorized.";
+      return NextResponse.json({ error: message }, { status: authStatus });
+    }
     const message = error instanceof Error ? error.message : "Unable to create loyalty member.";
     return NextResponse.json({ error: message }, { status: 500 });
   }

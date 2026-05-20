@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 
 import { createAuditLog } from "@/lib/server/audit-log-repository";
-import { getTransactionByTicketId, updateTransaction } from "@/lib/server/laundry-repository";
-import { getRequestActor, requireAuthRequest } from "@/lib/server/request-auth";
+import { updateTransaction } from "@/lib/server/laundry-repository";
+import { getAuthErrorStatus, requireAuthRequest } from "@/lib/server/request-auth";
 import { getRequestIp } from "@/lib/server/request-meta";
 import type { UpdateTransactionInput } from "@/lib/transaction-contracts";
 
@@ -16,7 +16,6 @@ export async function PATCH(
   try {
     const actor = await requireAuthRequest(request);
     const { ticketId } = await context.params;
-    const previous = await getTransactionByTicketId(ticketId);
     const raw = await request.json();
     if (raw.status !== undefined && !VALID_STATUSES.has(raw.status)) {
       return NextResponse.json({ error: "Invalid status value." }, { status: 400 });
@@ -32,20 +31,20 @@ export async function PATCH(
     if (raw.voidReason !== undefined) body.voidReason = raw.voidReason != null ? String(raw.voidReason).trim().slice(0, 500) : null;
     const transaction = await updateTransaction(ticketId, body);
 
-    const statusChanged = Boolean(body.status && previous?.status !== transaction.status);
+    const statusChanged = Boolean(body.status);
     const summary = statusChanged
       ? `Updated status of ${transaction.ticketId} to ${transaction.status}`
       : `Updated transaction ${transaction.ticketId}`;
     const details = statusChanged
-      ? `Previous status: ${previous?.status ?? "Unknown"} | New status: ${transaction.status} | Payment: ${transaction.paymentStatus}`
+      ? `New status: ${transaction.status} | Payment: ${transaction.paymentStatus}`
       : [
-          body.paymentStatus ? `Payment: ${previous?.paymentStatus ?? "Unknown"} -> ${transaction.paymentStatus}` : null,
+          body.paymentStatus ? `Payment updated to ${transaction.paymentStatus}` : null,
           body.eta !== undefined ? `ETA: ${transaction.eta ?? "none"}` : null,
           body.washInstructions !== undefined ? `Instructions updated` : null,
           body.voidReason !== undefined ? `Void reason: ${body.voidReason ?? "cleared"}` : null,
         ].filter(Boolean).join(" | ") || "Transaction details updated.";
 
-    await createAuditLog({
+    void createAuditLog({
       action: statusChanged ? "status_changed" : "transaction_updated",
       summary,
       details,
@@ -64,6 +63,16 @@ export async function PATCH(
 
     return NextResponse.json({ transaction });
   } catch (error) {
+    const authStatus = getAuthErrorStatus(error);
+    if (authStatus) {
+      const message = error instanceof Error ? error.message : "Unauthorized.";
+      return NextResponse.json({ error: message }, { status: authStatus });
+    }
+
+    if (error instanceof Error && error.message.includes("was not found")) {
+      return NextResponse.json({ error: error.message }, { status: 404 });
+    }
+
     const message = error instanceof Error ? error.message : "Unable to update transaction.";
     return NextResponse.json({ error: message }, { status: 500 });
   }

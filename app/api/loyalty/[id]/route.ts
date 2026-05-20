@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { updateLoyaltyMember, deleteLoyaltyMember } from "@/lib/server/loyalty-repository";
-import { requireAuthRequest } from "@/lib/server/request-auth";
+import { getAuthErrorStatus, requireAuthRequest } from "@/lib/server/request-auth";
 
 export async function PATCH(
   request: Request,
@@ -17,6 +17,11 @@ export async function PATCH(
     await updateLoyaltyMember(id, body);
     return NextResponse.json({ success: true });
   } catch (error) {
+    const authStatus = getAuthErrorStatus(error);
+    if (authStatus) {
+      const message = error instanceof Error ? error.message : "Unauthorized.";
+      return NextResponse.json({ error: message }, { status: authStatus });
+    }
     const message = error instanceof Error ? error.message : "Unable to update member.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
@@ -35,6 +40,11 @@ export async function DELETE(
     await deleteLoyaltyMember(id);
     return NextResponse.json({ success: true });
   } catch (error) {
+    const authStatus = getAuthErrorStatus(error);
+    if (authStatus) {
+      const message = error instanceof Error ? error.message : "Unauthorized.";
+      return NextResponse.json({ error: message }, { status: authStatus });
+    }
     const message = error instanceof Error ? error.message : "Unable to delete member.";
     return NextResponse.json({ error: message }, { status: 500 });
   }

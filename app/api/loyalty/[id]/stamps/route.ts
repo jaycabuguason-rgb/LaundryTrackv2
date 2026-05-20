@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { addStampsToMember } from "@/lib/server/loyalty-repository";
-import { requireAuthRequest } from "@/lib/server/request-auth";
+import { getAuthErrorStatus, requireAuthRequest } from "@/lib/server/request-auth";
 
 export async function POST(
   request: Request,
@@ -17,6 +17,11 @@ export async function POST(
     await addStampsToMember(id, stamps);
     return NextResponse.json({ success: true });
   } catch (error) {
+    const authStatus = getAuthErrorStatus(error);
+    if (authStatus) {
+      const message = error instanceof Error ? error.message : "Unauthorized.";
+      return NextResponse.json({ error: message }, { status: authStatus });
+    }
     const message = error instanceof Error ? error.message : "Unable to add stamps.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
