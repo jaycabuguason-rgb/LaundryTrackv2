@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import Sidebar, { type Page } from "@/components/sidebar";
 import TopNav from "@/components/topnav";
 import MobileBottomNav from "@/components/mobile-bottom-nav";
@@ -8,24 +9,25 @@ import OfflineAccessNotice from "@/components/offline-access-notice";
 import { TransactionDetailModal } from "@/components/transaction-detail-modal";
 import { type Transaction, type Notification } from "@/lib/data";
 import { loadLoyaltySettings, loadBusinessProfile, type BusinessProfile } from "@/lib/settings-store";
-import DashboardPage from "@/components/pages/dashboard";
-import ProcessingPage from "@/components/pages/processing";
-import TransactionsPage from "@/components/pages/transactions";
-import ClaimVerificationPage from "@/components/pages/claim-verification";
-import ReportsPage from "@/components/pages/reports";
-import SettingsPage from "@/components/pages/settings";
-import LoyaltyPage from "@/components/pages/loyalty";
-import ProfilePage from "@/components/pages/profile";
-import ChangePasswordPage from "@/components/pages/change-password";
-import DataImportPage from "@/components/pages/data-import";
-import StaffManagementPage from "@/components/pages/staff-management";
-import AuditLogsPage from "@/components/pages/audit-logs";
 import type { UserProfile } from "@/lib/auth";
 import { useTransactions } from "@/hooks/use-transactions";
 import { toast } from "@/hooks/use-toast";
 import { processSettingsQueue } from "@/lib/offline-settings-sync";
 import { getBrowserAccessToken } from "@/lib/supabase/browser-session";
 import { isOnline, subscribeNetworkStatus } from "@/lib/network-status";
+
+const DashboardPage = dynamic(() => import("@/components/pages/dashboard"));
+const ProcessingPage = dynamic(() => import("@/components/pages/processing"));
+const TransactionsPage = dynamic(() => import("@/components/pages/transactions"));
+const ClaimVerificationPage = dynamic(() => import("@/components/pages/claim-verification"));
+const ReportsPage = dynamic(() => import("@/components/pages/reports"));
+const SettingsPage = dynamic(() => import("@/components/pages/settings"));
+const LoyaltyPage = dynamic(() => import("@/components/pages/loyalty"));
+const ProfilePage = dynamic(() => import("@/components/pages/profile"));
+const ChangePasswordPage = dynamic(() => import("@/components/pages/change-password"));
+const DataImportPage = dynamic(() => import("@/components/pages/data-import"));
+const StaffManagementPage = dynamic(() => import("@/components/pages/staff-management"));
+const AuditLogsPage = dynamic(() => import("@/components/pages/audit-logs"));
 
 interface AppShellProps {
   onSignOut: () => void;

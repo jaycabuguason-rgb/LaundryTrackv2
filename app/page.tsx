@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import AppShell from "@/components/app-shell";
+import dynamic from "next/dynamic";
 import LoginPage from "@/components/pages/login";
 import StaffLoginPage from "@/components/pages/staff-login";
 import {
@@ -26,6 +26,10 @@ export interface AdminProfile {
 type AuthView = "role-select" | "admin-login" | "staff-login" | "app";
 const AUTH_VIEW_STORAGE_KEY = "laundrytrack-auth-view";
 const LAST_PROFILE_KEY = "laundrytrack-last-profile";
+
+const AppShell = dynamic(() => import("@/components/app-shell"), {
+  loading: () => null,
+});
 
 async function readJson<T>(response: Response): Promise<T> {
   const data = await response.json().catch(() => ({}));
