@@ -453,7 +453,63 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
       {/* Members Table */}
       <Card className="border border-border shadow-none">
         <CardContent className="p-0">
-          <table className="w-full text-sm">
+          <div className="divide-y divide-border md:hidden">
+            {filtered.map((m) => (
+              <div key={m.id} className={`space-y-3 p-4 ${m.isAtRisk ? "bg-red-50/30" : ""}`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="truncate text-sm font-semibold text-foreground">{m.name}</p>
+                      {m.isAtRisk && (
+                        <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-red-500" title="At Risk of Churn" />
+                      )}
+                    </div>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{m.phone || "-"}</p>
+                  </div>
+                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setSelected(m)}>
+                    View
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/30 p-3">
+                  <div>
+                    <p className="text-[11px] text-muted-foreground">Stamps</p>
+                    <div className="mt-1 flex items-center gap-1">
+                      <Star className="h-3 w-3 text-yellow-500" />
+                      <span className="text-sm font-semibold text-foreground">{m.stampCount}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-muted-foreground">Rewards</p>
+                    <p className="mt-1 text-sm font-semibold text-foreground">{m.rewardsRedeemed}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-muted-foreground">Joined</p>
+                    <p className="mt-1 truncate text-xs text-foreground">{m.dateJoined}</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" className="h-8 flex-1 text-xs" onClick={() => setEditModal(m)}>
+                    <Edit className="mr-1 h-3 w-3" />
+                    Edit
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-8 flex-1 text-xs text-red-600 hover:text-red-700" onClick={() => setDeleteModal(m)}>
+                    <Trash2 className="mr-1 h-3 w-3" />
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div className="py-10 text-center text-sm text-muted-foreground">Loading...</div>
+            )}
+            {!loading && filtered.length === 0 && (
+              <div className="py-10 text-center text-sm text-muted-foreground">No members found.</div>
+            )}
+          </div>
+
+          <table className="hidden w-full text-sm md:table">
             <thead>
               <tr className="border-b border-border bg-muted/40">
                 {["Name", "Phone", "Stamps", "Rewards Redeemed", "Date Joined", ""].map((h) => (

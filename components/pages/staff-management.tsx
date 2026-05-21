@@ -405,7 +405,7 @@ export default function StaffManagementPage() {
 
   return (
     <div className="w-full max-w-5xl space-y-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3">
         <div>
           <h2 className="text-base font-semibold text-foreground">Staff Members</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
@@ -413,14 +413,14 @@ export default function StaffManagementPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="relative">
+        <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
+          <div className="relative min-w-0 flex-1 sm:w-52 sm:flex-none">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search staff..."
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              className="h-9 w-52 pl-8 text-sm"
+              className="h-9 w-full pl-8 text-sm"
             />
           </div>
           <Button size="sm" variant="outline" className="h-9 px-3 text-xs" onClick={() => void refresh()} disabled={loading}>

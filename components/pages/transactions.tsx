@@ -1472,7 +1472,83 @@ export default function TransactionsPage({
 
       {/* Table */}
       <div className="bg-card border border-border rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="divide-y divide-border md:hidden">
+          {filtered.map((txn) => {
+            const isVoided = txn.status === "Voided";
+            const isClaimed = txn.status === "Claimed";
+            return (
+              <div
+                key={txn.id}
+                className={cn(
+                  "space-y-3 px-4 py-3",
+                  isVoided ? "bg-muted/30 opacity-70" : "",
+                  isClaimed ? "text-muted-foreground/70" : ""
+                )}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className={cn("text-xs font-mono font-semibold text-primary", isVoided && "line-through")}>{txn.ticketId}</p>
+                    <p className={cn("truncate text-xs font-medium text-foreground", isVoided && "line-through")}>{txn.customerName}</p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">{txn.arrivalDateTime}</p>
+                  </div>
+                  <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap", statusColors[txn.status])}>
+                    {txn.status}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/30 p-2.5">
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">Weight</p>
+                    <p className="text-xs font-medium text-foreground">{txn.weight} kg</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">Type</p>
+                    <p className="truncate text-xs font-medium text-foreground">{txn.washType}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">Fee</p>
+                    <p className="text-xs font-medium text-foreground">₱{txn.fee}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className={cn(
+                    "inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap",
+                    txn.paymentStatus === "paid"
+                      ? "bg-green-50 text-green-700 border border-green-200"
+                      : "bg-red-50 text-red-600 border border-red-200"
+                  )}>
+                    {txn.paymentStatus === "paid" ? "Paid" : "Unpaid"}
+                  </span>
+                  <div className="flex items-center gap-0.5">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" title="View" onClick={() => setViewTxn(txn)}>
+                      <Eye className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" title="Edit" disabled={isVoided} onClick={() => openEdit(txn)}>
+                      <Edit className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost" size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      title="Void"
+                      disabled={isVoided}
+                      onClick={() => { setVoidTxn(txn); setVoidReason(""); }}
+                    >
+                      <Ban className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          {filtered.length === 0 && (
+            <div className="text-center py-10 text-sm text-muted-foreground">
+              {loading ? "Loading transactions..." : "No transactions found."}
+            </div>
+          )}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr className="border-b border-border bg-muted/40">

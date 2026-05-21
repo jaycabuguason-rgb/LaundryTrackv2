@@ -300,6 +300,18 @@ export default function ReportsPage({ transactions }: ReportsPageProps) {
   };
 
   return (
+    <div className="min-h-[60vh] space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-base font-semibold text-foreground">Reports</h2>
+        <p className="text-xs text-muted-foreground">{transactions.length} total transactions</p>
+      </div>
+      {transactions.length === 0 && (
+        <Card className="border border-border shadow-none">
+          <CardContent className="p-6 text-sm text-muted-foreground">
+            No report data yet. Add transactions to populate analytics and export sections.
+          </CardContent>
+        </Card>
+      )}
     <Tabs defaultValue="overview" className="space-y-4">
       <div className="overflow-x-auto pb-0.5">
         <TabsList className="h-9 w-max min-w-full bg-muted/40">
@@ -721,5 +733,6 @@ export default function ReportsPage({ transactions }: ReportsPageProps) {
         </Card>
       </TabsContent>
     </Tabs>
+    </div>
   );
 }
