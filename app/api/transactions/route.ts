@@ -30,7 +30,7 @@ export async function GET(request: Request) {
   }
 }
 
-const VALID_STATUSES = new Set(["Received", "Washing", "Drying", "Processing", "Ready", "Claimed", "Voided"]);
+const VALID_STATUSES = new Set(["Received", "Washing", "Drying", "Ready", "Claimed", "Voided"]);
 const VALID_PAYMENT_STATUSES = new Set(["unpaid", "paid"]);
 
 export async function POST(request: Request) {

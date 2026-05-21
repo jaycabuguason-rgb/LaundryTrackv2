@@ -6,7 +6,7 @@ import { getAuthErrorStatus, requireAuthRequest } from "@/lib/server/request-aut
 import { getRequestIp } from "@/lib/server/request-meta";
 import type { UpdateTransactionInput } from "@/lib/transaction-contracts";
 
-const VALID_STATUSES = new Set(["Received", "Washing", "Drying", "Processing", "Ready", "Claimed", "Voided"]);
+const VALID_STATUSES = new Set(["Received", "Washing", "Drying", "Ready", "Claimed", "Voided"]);
 const VALID_PAYMENT_STATUSES = new Set(["unpaid", "paid"]);
 
 export async function PATCH(

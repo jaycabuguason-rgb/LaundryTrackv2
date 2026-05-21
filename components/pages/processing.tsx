@@ -33,6 +33,7 @@ import {
   type TransactionStatus,
 } from "@/lib/data";
 import { TransactionDetailModal } from "@/components/transaction-detail-modal";
+import { StatusUpdateSheet } from "@/components/status-update-sheet";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -47,7 +48,7 @@ interface ProcessingPageProps {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const STAGES: TransactionStatus[] = ["Received", "Washing", "Drying", "Processing", "Ready"];
+const STAGES: TransactionStatus[] = ["Received", "Washing", "Drying", "Ready"];
 
 /** All statuses shown in the dropdown, in order */
 const ALL_STATUS_OPTIONS: {
@@ -70,7 +71,6 @@ const STAGE_BADGE_COLORS: Record<TransactionStatus, string> = {
   Received:   "bg-blue-100 text-blue-700 border-blue-200",
   Washing:    "bg-yellow-100 text-yellow-700 border-yellow-200",
   Drying:     "bg-orange-100 text-orange-700 border-orange-200",
-  Processing: "bg-purple-100 text-purple-700 border-purple-200",
   Ready:      "bg-green-100 text-green-700 border-green-200",
   Claimed:    "bg-gray-100 text-gray-600 border-gray-200",
   Voided:     "bg-red-100 text-red-700 border-red-200",
@@ -80,7 +80,6 @@ const STAGE_CARD_ACCENT: Record<TransactionStatus, string> = {
   Received:   "border-blue-200",
   Washing:    "border-yellow-200",
   Drying:     "border-orange-200",
-  Processing: "border-purple-200",
   Ready:      "border-green-200",
   Claimed:    "border-gray-200",
   Voided:     "border-red-200",
@@ -169,6 +168,7 @@ export default function ProcessingPage({
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [tick, setTick] = useState(0); // force re-render for relative time
   const [updatingTicket, setUpdatingTicket] = useState<string | null>(null);
+  const [sheetTxn, setSheetTxn] = useState<Transaction | null>(null);
   const [detailTxn, setDetailTxn] = useState<Transaction | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -261,6 +261,11 @@ export default function ProcessingPage({
       await onUpdateTransaction(txn.ticketId, { status: newStatus });
       setLastUpdated(new Date());
       pushToast(`${txn.ticketId} moved to ${newStatus}`);
+      setSheetTxn(null);
+      return true;
+    } catch {
+      pushToast("Unable to update the ticket status right now");
+      return false;
     } finally {
       setUpdatingTicket(null);
     }
@@ -317,7 +322,68 @@ export default function ProcessingPage({
               No tickets in this stage.
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+            <div className="divide-y divide-border md:hidden">
+              {items.map((txn) => {
+                const hoursInStage = getHoursInStage(txn.arrivalDateTime);
+                const isPriorityReady = stage === "Ready" && hoursInStage >= 2;
+                const isUpdating = updatingTicket === txn.ticketId;
+                return (
+                  <div key={txn.id} className="space-y-3 px-4 py-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <button
+                          onClick={() => handleViewTicket(txn)}
+                          className="text-xs font-mono font-semibold text-primary hover:underline cursor-pointer"
+                          title="View ticket details"
+                        >
+                          {txn.ticketId}
+                        </button>
+                        <p className="truncate text-xs font-medium text-foreground">{txn.customerName}</p>
+                        <p className="mt-0.5 text-[11px] text-muted-foreground">{txn.arrivalDateTime}</p>
+                      </div>
+                      <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap", statusColors[txn.status])}>
+                        {txn.status}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/30 p-2.5">
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">Wash</p>
+                        <p className="truncate text-xs font-medium text-foreground">{txn.washType}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">Weight</p>
+                        <p className="text-xs font-medium text-foreground">{txn.weight > 0 ? `${txn.weight} kg` : "-"}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">In Stage</p>
+                        <p className={cn("text-xs font-medium", getTimeInStageColor(txn.arrivalDateTime))}>{formatTimeInStage(txn.arrivalDateTime)}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      {isPriorityReady ? (
+                        <span className="inline-flex items-center rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-semibold text-orange-700">
+                          Waiting {Math.floor(hoursInStage)}h
+                        </span>
+                      ) : <span />}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={isUpdating}
+                        className="h-8 gap-1.5 text-xs px-2.5"
+                        onClick={() => setSheetTxn(txn)}
+                      >
+                        {isUpdating ? "Updating..." : "Update Status"}
+                        <ChevronDown className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full min-w-[820px] text-sm">
                 <thead>
                   <tr className="border-y border-border bg-muted/40">
@@ -428,6 +494,7 @@ export default function ProcessingPage({
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </CardContent>
       </Card>
@@ -506,7 +573,7 @@ export default function ProcessingPage({
         ) : (
           <>
             {/* Stage cards — horizontal row */}
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {filteredGrouped.map(({ stage, items }) => {
                 const isOpen = expandedStage === stage;
                 const allItems = grouped.find((g) => g.stage === stage)?.items ?? [];
@@ -623,6 +690,19 @@ export default function ProcessingPage({
 
       {/* ── Toast notifications ─────────────────────────────────────────────── */}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+
+      <StatusUpdateSheet
+        open={!!sheetTxn}
+        onOpenChange={(open) => !open && setSheetTxn(null)}
+        ticketId={sheetTxn?.ticketId}
+        currentStatus={sheetTxn?.status ?? "Received"}
+        options={ALL_STATUS_OPTIONS}
+        disabled={Boolean(sheetTxn && updatingTicket === sheetTxn.ticketId)}
+        onSelectStatus={async (status) => {
+          if (!sheetTxn) return;
+          handleStatusSelect(sheetTxn, status);
+        }}
+      />
     </>
   );
 }

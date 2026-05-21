@@ -257,7 +257,25 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
                     );
                   })()}
                 </div>
-                <table className="w-full text-sm">
+                <div className="divide-y divide-border md:hidden">
+                  {(() => {
+                    const currentCycleStamps = selected.stampCount % washesPerReward;
+                    const currentCycleHistory = selected.stampHistory.slice(-currentCycleStamps);
+                    if (currentCycleHistory.length === 0) {
+                      return <div className="py-6 text-center text-xs text-muted-foreground">No stamps in current cycle</div>;
+                    }
+                    return currentCycleHistory.map((s, i) => (
+                      <div key={i} className="flex items-center justify-between gap-3 px-4 py-3">
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-foreground">{s.date}</p>
+                          <p className="mt-0.5 font-mono text-[11px] text-primary">{s.ticket}</p>
+                        </div>
+                        <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-[11px] font-semibold text-yellow-700">+{s.stamps}</span>
+                      </div>
+                    ));
+                  })()}
+                </div>
+                <table className="hidden w-full text-sm md:table">
                   <thead>
                     <tr className="border-y border-border bg-muted/40">
                       {["Date", "Ticket", "Stamps"].map((h) => (
@@ -293,7 +311,23 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
                 <CardTitle className="text-sm">Reward History</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                <table className="w-full text-sm">
+                <div className="divide-y divide-border md:hidden">
+                  {selected.rewardHistory.length === 0 ? (
+                    <div className="py-6 text-center text-xs text-muted-foreground">No rewards redeemed yet</div>
+                  ) : (
+                    selected.rewardHistory.map((r, i) => (
+                      <button
+                        key={i}
+                        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/20"
+                        onClick={() => setRewardCycleModal(r)}
+                      >
+                        <span className="text-xs font-medium text-foreground">{r.date}</span>
+                        <span className="truncate text-xs font-semibold text-green-700">{r.reward}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+                <table className="hidden w-full text-sm md:table">
                   <thead>
                     <tr className="border-y border-border bg-muted/40">
                       {["Date", "Reward"].map((h) => (
@@ -335,7 +369,22 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
               {/* Cycle visits */}
               <div>
                 <p className="text-xs font-semibold text-muted-foreground mb-2">Visits in this cycle:</p>
-                <table className="w-full text-sm border border-border rounded-lg overflow-hidden">
+                <div className="divide-y divide-border overflow-hidden rounded-lg border border-border md:hidden">
+                  {Array.from({ length: washesPerReward }, (_, i) => ({
+                    date: `2026-0${(i % 3) + 1}-${10 + i}`,
+                    ticket: `TKT-00${70 + i}`,
+                    stamps: 1,
+                  })).map((v, i) => (
+                    <div key={i} className="flex items-center justify-between gap-3 px-3 py-2.5">
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-foreground">{v.date}</p>
+                        <p className="mt-0.5 font-mono text-[11px] text-primary">{v.ticket}</p>
+                      </div>
+                      <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-[11px] font-semibold text-yellow-700">+{v.stamps}</span>
+                    </div>
+                  ))}
+                </div>
+                <table className="hidden w-full text-sm border border-border rounded-lg overflow-hidden md:table">
                   <thead>
                     <tr className="bg-muted/40 border-b border-border">
                       <th className="text-left text-xs font-medium text-muted-foreground px-3 py-2">Date</th>

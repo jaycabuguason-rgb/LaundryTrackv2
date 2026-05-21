@@ -308,7 +308,7 @@ function PricingSettings() {
           {/* Pricing Mode toggle */}
           <div className="space-y-2">
             <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Pricing Mode</Label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               {MODES.map(({ value, icon, label, sub }) => (
                 <button
                   key={value}
@@ -341,7 +341,7 @@ function PricingSettings() {
               {pricingMode === "both" && (
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Per Kilogram</p>
               )}
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
                 <Label className="text-sm w-36 shrink-0">Price per kg (₱)</Label>
                 <Input
                   type="number"
@@ -356,10 +356,10 @@ function PricingSettings() {
                       e.preventDefault();
                     }
                   }}
-                  className="w-28 h-9 text-sm"
+                  className="h-9 w-full text-sm sm:w-28"
                 />
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
                 <Label className="text-sm w-36 shrink-0">Minimum weight (kg)</Label>
                 <Input
                   type="number"
@@ -375,7 +375,7 @@ function PricingSettings() {
                       e.preventDefault();
                     }
                   }}
-                  className="w-28 h-9 text-sm"
+                  className="h-9 w-full text-sm sm:w-28"
                 />
               </div>
             </div>
@@ -400,7 +400,100 @@ function PricingSettings() {
                 </Button>
               </div>
               <div className="rounded-lg border border-border overflow-hidden">
-                <table className="w-full text-sm">
+                <div className="divide-y divide-border md:hidden">
+                  {loadTiers.map((tier) => {
+                    const parsed = parseRange(tier.range);
+                    return (
+                      <div key={tier.id} className="space-y-3 p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <Label className="mb-1 block text-[10px] text-muted-foreground">Load Size</Label>
+                            <Input
+                              value={tier.name}
+                              onChange={(e) => updateTier(tier.id, { name: e.target.value })}
+                              className="h-9 text-sm"
+                              placeholder="e.g. Small"
+                            />
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="mt-4 h-9 w-9 text-muted-foreground hover:text-destructive"
+                            onClick={() => setDeleteTierId(tier.id)}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <Label className="mb-1 block text-[10px] text-muted-foreground">From (kg)</Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              value={parsed.from}
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/[^0-9.]/g, '');
+                                updateTier(tier.id, { from: value, to: parsed.to, open: parsed.open });
+                              }}
+                              className="h-9 text-xs"
+                              placeholder="0"
+                            />
+                          </div>
+                          <div>
+                            <Label className="mb-1 block text-[10px] text-muted-foreground">To (kg)</Label>
+                            {parsed.open ? (
+                              <div className="flex h-9 items-center rounded-md border border-border px-3 text-xs font-medium text-foreground">above</div>
+                            ) : (
+                              <Input
+                                type="number"
+                                min="0"
+                                value={parsed.to}
+                                onChange={(e) => {
+                                  const value = e.target.value.replace(/[^0-9.]/g, '');
+                                  updateTier(tier.id, { from: parsed.from, to: value, open: false });
+                                }}
+                                className="h-9 text-xs"
+                                placeholder="0"
+                              />
+                            )}
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-[1fr_auto] gap-2">
+                          <div>
+                            <Label className="mb-1 block text-[10px] text-muted-foreground">Price</Label>
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs text-muted-foreground">â‚±</span>
+                              <Input
+                                type="number"
+                                min="0"
+                                value={tier.price}
+                                onChange={(e) => {
+                                  const value = e.target.value.replace(/[^0-9.]/g, '');
+                                  updateTier(tier.id, { price: value });
+                                }}
+                                className="h-9 text-sm"
+                              />
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => updateTier(tier.id, { from: parsed.from, to: parsed.to, open: !parsed.open })}
+                            className={cn(
+                              "mt-5 h-9 rounded border px-3 text-xs font-medium transition-colors",
+                              parsed.open
+                                ? "bg-primary/10 border-primary/30 text-primary"
+                                : "bg-muted border-border text-muted-foreground hover:border-primary/40",
+                            )}
+                            title="Toggle open-ended"
+                          >
+                            {parsed.open ? "Open" : "Closed"}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <table className="hidden w-full text-sm md:table">
                   <thead>
                     <tr className="bg-muted/40 border-b border-border">
                       <th className="text-left px-3 py-2 text-xs font-semibold text-muted-foreground">Load Size</th>

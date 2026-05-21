@@ -107,7 +107,7 @@ const STEPS = [
 
 function StepIndicator({ current }: { current: StepId }) {
   return (
-    <div className="flex items-center justify-center gap-0 mb-8 overflow-x-auto">
+    <div className="mb-8 grid grid-cols-4 gap-2 sm:flex sm:items-center sm:justify-center sm:gap-0">
       {STEPS.map((step, idx) => {
         const done    = step.id < current;
         const active  = step.id === current;
@@ -576,21 +576,52 @@ export default function DataImportPage({ onViewTransactions }: DataImportProps) 
         {/* ── Step 3: Map Columns ────────────────────────────────────────── */}
         {step === 3 && (
           <div className="space-y-5">
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h2 className="text-base font-semibold text-foreground mb-1">Match your columns</h2>
                 <p className="text-sm text-muted-foreground">
                   Match the columns from your file to the correct fields in the system.
                 </p>
               </div>
-              <Button variant="outline" size="sm" className="gap-2 shrink-0 text-xs" onClick={autoMatch}>
+              <Button variant="outline" size="sm" className="min-h-[40px] gap-2 text-xs sm:min-h-0 sm:shrink-0" onClick={autoMatch}>
                 <Wand2 className="w-3.5 h-3.5" />
                 Auto Match
               </Button>
             </div>
 
             <div className="rounded-lg border border-border overflow-hidden">
-              <table className="w-full text-sm">
+              <div className="divide-y divide-border md:hidden">
+                {REQUIRED_FIELDS.map((field) => (
+                  <div key={field.key} className="space-y-2 p-4">
+                    <div>
+                      <span className="text-sm font-medium text-foreground">{field.label}</span>
+                      {field.required
+                        ? <span className="ml-1.5 text-destructive font-bold text-xs">*</span>
+                        : <span className="ml-1.5 text-[11px] text-muted-foreground">(optional)</span>
+                      }
+                    </div>
+                    <Select
+                      value={mapping[field.key] ?? "__none__"}
+                      onValueChange={(v) =>
+                        setMapping((m) => ({ ...m, [field.key]: v === "__none__" ? "" : v }))
+                      }
+                    >
+                      <SelectTrigger className="h-10 text-xs">
+                        <SelectValue placeholder="Select column..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">
+                          <span className="text-muted-foreground">not mapped</span>
+                        </SelectItem>
+                        {headers.map((h) => (
+                          <SelectItem key={h} value={h}>{h}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
+              </div>
+              <table className="hidden w-full text-sm md:table">
                 <thead>
                   <tr className="bg-muted/50 border-b border-border">
                     <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground w-1/2">System Field</th>
@@ -657,7 +688,40 @@ export default function DataImportPage({ onViewTransactions }: DataImportProps) 
             </div>
 
             {/* Preview table */}
-            <div className="overflow-x-auto rounded-lg border border-border">
+            <div className="rounded-lg border border-border overflow-hidden">
+              <div className="divide-y divide-border md:hidden">
+                {rows.slice(0, 5).map((row, idx) => {
+                  const rowNum = idx + 2;
+                  const hasErr  = errorRows.has(rowNum);
+                  const hasWarn = warningRows.has(rowNum);
+                  return (
+                    <div
+                      key={idx}
+                      className={cn(
+                        "space-y-3 p-4",
+                        hasErr ? "bg-red-50" : hasWarn ? "bg-yellow-50" : "bg-background",
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="font-mono text-xs font-semibold text-primary">Row {rowNum}</p>
+                        {hasErr && <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">Error</span>}
+                        {!hasErr && hasWarn && <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-[10px] font-semibold text-yellow-700">Warning</span>}
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {REQUIRED_FIELDS.filter((f) => mapping[f.key]).map((f) => (
+                          <div key={f.key} className="min-w-0 rounded-md bg-muted/30 p-2.5">
+                            <p className="text-[10px] text-muted-foreground">{f.label}</p>
+                            <p className="mt-0.5 truncate text-xs font-medium text-foreground">
+                              {row[mapping[f.key]] || <span className="italic text-muted-foreground">empty</span>}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="hidden overflow-x-auto md:block">
               <table className="text-xs w-full">
                 <thead>
                   <tr className="bg-muted/50 border-b border-border">
@@ -695,6 +759,7 @@ export default function DataImportPage({ onViewTransactions }: DataImportProps) 
                   })}
                 </tbody>
               </table>
+              </div>
               {rows.length > 5 && (
                 <div className="px-3 py-2 bg-muted/20 border-t border-border text-xs text-muted-foreground text-center">
                   Showing 5 of {rows.length} rows
@@ -703,7 +768,7 @@ export default function DataImportPage({ onViewTransactions }: DataImportProps) 
             </div>
 
             {/* Validation summary */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 flex items-center gap-2.5">
                 <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
                 <div>
@@ -875,7 +940,52 @@ export default function DataImportPage({ onViewTransactions }: DataImportProps) 
             <Clock className="w-4 h-4 text-muted-foreground" />
             <h2 className="text-sm font-semibold text-foreground">Import History</h2>
           </div>
-          <div className="overflow-x-auto">
+          <div className="divide-y divide-border md:hidden">
+            {history.map((entry) => {
+              const withinUndo = Date.now() - entry.timestamp.getTime() < 24 * 60 * 60 * 1000;
+              return (
+                <div key={entry.id} className="space-y-3 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-foreground">{entry.fileName}</p>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground">{format(entry.timestamp, "MMM d, yyyy h:mm a")}</p>
+                    </div>
+                    <Badge
+                      className={cn(
+                        "shrink-0 border-0 text-[10px] font-semibold",
+                        entry.status === "Success" && "bg-green-100 text-green-700",
+                        entry.status === "Partial" && "bg-yellow-100 text-yellow-700",
+                        entry.status === "Failed" && "bg-red-100 text-red-700",
+                      )}
+                    >
+                      {entry.status}
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 rounded-md bg-muted/30 p-2.5">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Data Type</p>
+                      <p className="mt-0.5 text-xs font-medium capitalize text-foreground">{entry.dataType}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Records</p>
+                      <p className="mt-0.5 text-xs font-semibold text-foreground">{entry.recordsImported.toLocaleString()}</p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={!withinUndo}
+                    className="min-h-[40px] w-full gap-1.5 text-xs"
+                    onClick={() => setHistory((prev) => prev.filter((e) => e.id !== entry.id))}
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    {withinUndo ? "Undo Import" : "Undo Expired"}
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-muted/40 border-b border-border">

@@ -313,12 +313,12 @@ export default function ReportsPage({ transactions }: ReportsPageProps) {
         </Card>
       )}
     <Tabs defaultValue="overview" className="space-y-4">
-      <div className="overflow-x-auto pb-0.5">
-        <TabsList className="h-9 w-max min-w-full bg-muted/40">
-          <TabsTrigger value="overview" className="text-xs">Daily Summary</TabsTrigger>
-          <TabsTrigger value="analytics" className="text-xs">Sales Analytics</TabsTrigger>
-          <TabsTrigger value="unclaimed" className="text-xs">Unclaimed Items</TabsTrigger>
-          <TabsTrigger value="export" className="text-xs">Export</TabsTrigger>
+      <div>
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 bg-muted/40 p-1 sm:flex sm:h-9">
+          <TabsTrigger value="overview" className="min-h-[40px] text-xs sm:min-h-0">Daily Summary</TabsTrigger>
+          <TabsTrigger value="analytics" className="min-h-[40px] text-xs sm:min-h-0">Sales Analytics</TabsTrigger>
+          <TabsTrigger value="unclaimed" className="min-h-[40px] text-xs sm:min-h-0">Unclaimed Items</TabsTrigger>
+          <TabsTrigger value="export" className="min-h-[40px] text-xs sm:min-h-0">Export</TabsTrigger>
         </TabsList>
       </div>
 
@@ -355,7 +355,42 @@ export default function ReportsPage({ transactions }: ReportsPageProps) {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
+            <div className="divide-y divide-border md:hidden">
+              {dailyTransactions.map((transaction) => (
+                <div key={transaction.id} className="space-y-3 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-mono text-xs font-semibold text-primary">{transaction.ticketId}</p>
+                      <p className="mt-0.5 truncate text-sm font-medium text-foreground">{transaction.customerName}</p>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground">{transaction.arrivalDateTime}</p>
+                    </div>
+                    <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium", statusColors[transaction.status])}>
+                      {transaction.status}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/30 p-2.5">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Service</p>
+                      <p className="truncate text-xs font-medium text-foreground">{transaction.washType}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Weight</p>
+                      <p className="text-xs font-medium text-foreground">{transaction.weight} kg</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Fee</p>
+                      <p className="text-xs font-semibold text-foreground">{formatCurrency(transaction.fee)}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {dailyTransactions.length === 0 && (
+                <div className="px-4 py-10 text-center text-sm text-muted-foreground">
+                  No transactions found for this date.
+                </div>
+              )}
+            </div>
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full min-w-[720px] text-sm">
                 <thead>
                   <tr className="border-y border-border bg-muted/40">
@@ -556,7 +591,31 @@ export default function ReportsPage({ transactions }: ReportsPageProps) {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
+            <div className="divide-y divide-border md:hidden">
+              {serviceRevenue.map((row) => (
+                <div key={row.service} className="space-y-3 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-foreground">{row.service}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{row.count} transactions</p>
+                    </div>
+                    <p className="shrink-0 text-sm font-bold text-foreground">{formatCurrency(row.revenue)}</p>
+                  </div>
+                  <div className="rounded-md bg-muted/30 p-2.5">
+                    <p className="text-[10px] text-muted-foreground">Average per order</p>
+                    <p className="mt-0.5 text-xs font-medium text-foreground">
+                      {formatCurrency(Math.round(row.revenue / Math.max(row.count, 1)))}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              {serviceRevenue.length === 0 && (
+                <div className="px-4 py-10 text-center text-sm text-muted-foreground">
+                  No analytics data available for the selected range.
+                </div>
+              )}
+            </div>
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full min-w-[560px] text-sm">
                 <thead>
                   <tr className="border-y border-border bg-muted/40">
@@ -598,7 +657,47 @@ export default function ReportsPage({ transactions }: ReportsPageProps) {
             <CardTitle className="text-sm font-semibold">Ready but Unclaimed Items ({unclaimedItems.length})</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
+            <div className="divide-y divide-border md:hidden">
+              {unclaimedItems.map((transaction) => (
+                <div key={transaction.id} className="space-y-3 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-mono text-xs font-semibold text-primary">{transaction.ticketId}</p>
+                      <p className="mt-0.5 truncate text-sm font-medium text-foreground">{transaction.customerName}</p>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground">{transaction.phone || "-"}</p>
+                    </div>
+                    <span
+                      className={cn(
+                        "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold uppercase",
+                        transaction.paymentStatus === "paid" ? "bg-green-500 text-white" : "bg-red-500 text-white",
+                      )}
+                    >
+                      {transaction.paymentStatus}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/30 p-2.5">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Arrival</p>
+                      <p className="truncate text-xs font-medium text-foreground">{transaction.arrivalDateTime}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Service</p>
+                      <p className="truncate text-xs font-medium text-foreground">{transaction.washType}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Fee</p>
+                      <p className="text-xs font-semibold text-foreground">{formatCurrency(transaction.fee)}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {unclaimedItems.length === 0 && (
+                <div className="px-4 py-10 text-center text-sm text-muted-foreground">
+                  No ready-for-pickup items at the moment.
+                </div>
+              )}
+            </div>
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full min-w-[760px] text-sm">
                 <thead>
                   <tr className="border-y border-border bg-muted/40">

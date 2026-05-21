@@ -89,7 +89,7 @@ let mockTransactions: TransactionRow[] = seedTransactions.map((transaction, inde
 let mockBusinessProfile = { ...DEFAULT_BUSINESS_PROFILE };
 
 function isValidTransactionStatus(value: string): value is TransactionStatus {
-  return ["Received", "Washing", "Drying", "Processing", "Ready", "Claimed", "Voided"].includes(value);
+  return ["Received", "Washing", "Drying", "Ready", "Claimed", "Voided"].includes(value);
 }
 
 function normalizeStatus(value: string | null | undefined): TransactionStatus {

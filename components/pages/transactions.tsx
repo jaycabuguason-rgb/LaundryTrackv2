@@ -42,6 +42,7 @@ import type { CreateTransactionInput, UpdateTransactionInput } from "@/lib/trans
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { PrintReceiptModal } from "@/components/print-receipt-modal";
+import { StatusUpdateSheet, type StatusOption } from "@/components/status-update-sheet";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // QR Scanner (inline, no package)
@@ -1103,6 +1104,15 @@ interface TransactionsPageProps {
   onEditComplete?: () => void;
 }
 
+const MOBILE_STATUS_OPTIONS: StatusOption[] = [
+  { status: "Received", label: "Received", dotClass: "bg-blue-500" },
+  { status: "Washing", label: "Washing", dotClass: "bg-yellow-500" },
+  { status: "Drying", label: "Drying", dotClass: "bg-orange-500" },
+  { status: "Ready", label: "Ready", dotClass: "bg-green-500" },
+  { status: "Claimed", label: "Claimed", dotClass: "bg-gray-500" },
+  { status: "Voided", label: "Voided", dotClass: "bg-red-500" },
+];
+
 export default function TransactionsPage({
   transactions: txns,
   loading = false,
@@ -1134,6 +1144,8 @@ export default function TransactionsPage({
   const [reprintTxn, setReprintTxn]   = useState<Transaction | null>(null);
   const [printTxn, setPrintTxn]       = useState<Transaction | null>(null);
   const [printPostCreate, setPrintPostCreate] = useState(false);
+  const [mobileStatusTxn, setMobileStatusTxn] = useState<Transaction | null>(null);
+  const [mobileStatusBusyTicket, setMobileStatusBusyTicket] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   // Toast
@@ -1245,6 +1257,30 @@ export default function TransactionsPage({
     setEditInstructions(txn.washInstructions || "");
     setEditStatus(txn.status);
     setEditPaymentStatus(txn.paymentStatus);
+  };
+
+  const handleMobileStatusSelect = async (status: Transaction["status"]) => {
+    if (!mobileStatusTxn || status === mobileStatusTxn.status) return;
+    if (status === "Claimed" && mobileStatusTxn.paymentStatus === "unpaid") {
+      showToast("Mark payment as Paid first before claiming this ticket.");
+      return;
+    }
+    if (status === "Voided") {
+      setVoidTxn(mobileStatusTxn);
+      setVoidReason("");
+      setMobileStatusTxn(null);
+      return;
+    }
+    setMobileStatusBusyTicket(mobileStatusTxn.ticketId);
+    try {
+      await onUpdateTransaction(mobileStatusTxn.ticketId, { status });
+      showToast(`Ticket #${mobileStatusTxn.ticketId} moved to ${status}`);
+      setMobileStatusTxn(null);
+    } catch {
+      showToast("Unable to update the ticket status right now");
+    } finally {
+      setMobileStatusBusyTicket(null);
+    }
   };
 
   // Auto-open edit modal if editTicketId is provided
@@ -1491,9 +1527,20 @@ export default function TransactionsPage({
                     <p className={cn("truncate text-xs font-medium text-foreground", isVoided && "line-through")}>{txn.customerName}</p>
                     <p className="mt-0.5 text-[11px] text-muted-foreground">{txn.arrivalDateTime}</p>
                   </div>
-                  <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap", statusColors[txn.status])}>
-                    {txn.status}
-                  </span>
+                  <div className="flex flex-col items-end gap-1.5">
+                    <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap", statusColors[txn.status])}>
+                      {txn.status}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2.5 text-[11px]"
+                      disabled={isVoided || mobileStatusBusyTicket === txn.ticketId}
+                      onClick={() => setMobileStatusTxn(txn)}
+                    >
+                      {mobileStatusBusyTicket === txn.ticketId ? "Updating..." : "Update Status"}
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/30 p-2.5">
@@ -1991,6 +2038,16 @@ export default function TransactionsPage({
           )}
         </DialogContent>
       </Dialog>
+
+      <StatusUpdateSheet
+        open={!!mobileStatusTxn}
+        onOpenChange={(open) => !open && setMobileStatusTxn(null)}
+        ticketId={mobileStatusTxn?.ticketId}
+        currentStatus={mobileStatusTxn?.status ?? "Received"}
+        options={MOBILE_STATUS_OPTIONS}
+        disabled={Boolean(mobileStatusTxn && mobileStatusBusyTicket === mobileStatusTxn.ticketId)}
+        onSelectStatus={handleMobileStatusSelect}
+      />
     </div>
   );
 }
