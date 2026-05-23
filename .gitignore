@@ -17,3 +17,17 @@ node_modules
 .DS_Store
 # AutoClaw KDream data
 .autoclaw/
+
+# TypeScript
+tsconfig.tsbuildinfo
+ts_error.log
+
+# Build & Test output
+output/
+.playwright-cli/
+
+# IDE & AI Agent folders
+.vscode/
+.agents/
+.claude/
+.codex/
