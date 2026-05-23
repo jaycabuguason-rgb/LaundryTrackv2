@@ -48,11 +48,11 @@ import { StatusUpdateSheet, type StatusOption } from "@/components/status-update
 // QR Scanner (inline, no package)
 // ─────────────────────────────────────────────────────────────────────────────
 function InlineQRScanner({ onScan, onClose }: { onScan: (v: string) => void; onClose: () => void }) {
-  const videoRef  = useRef<HTMLVideoElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const rafRef    = useRef<number | null>(null);
+  const rafRef = useRef<number | null>(null);
   const [active, setActive] = useState(false);
-  const [error, setError]   = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const stop = useCallback(() => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -131,7 +131,7 @@ function StampCard({ count, highlight }: { count: number; highlight?: boolean })
     <div className="flex flex-wrap gap-1.5">
       {Array.from({ length: STAMP_MILESTONE }).map((_, i) => {
         const filled = i < count % STAMP_MILESTONE || (count > 0 && count % STAMP_MILESTONE === 0 && i < STAMP_MILESTONE);
-        const isNew  = highlight && i === (count - 1) % STAMP_MILESTONE;
+        const isNew = highlight && i === (count - 1) % STAMP_MILESTONE;
         return (
           <div key={i} className={cn(
             "w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs transition-all",
@@ -154,9 +154,9 @@ function StampCard({ count, highlight }: { count: number; highlight?: boolean })
 // ──────────────────────────────────────────────────────────���──────────────────
 function MemberCard({ member, onClear, stampAfter }: { member: LoyaltyMember; onClear?: () => void; stampAfter?: boolean }) {
   const completedCycles = Math.floor(member.stampCount / STAMP_MILESTONE);
-  const currentStamp    = member.stampCount % STAMP_MILESTONE;
-  const newStamp        = stampAfter ? currentStamp + 1 : currentStamp;
-  const willUnlock      = stampAfter && newStamp >= STAMP_MILESTONE;
+  const currentStamp = member.stampCount % STAMP_MILESTONE;
+  const newStamp = stampAfter ? currentStamp + 1 : currentStamp;
+  const willUnlock = stampAfter && newStamp >= STAMP_MILESTONE;
 
   return (
     <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 space-y-3">
@@ -242,13 +242,13 @@ function NewTransactionWizard({
 }) {
   // Dynamic settings loaded from shared store
   const { members: loyaltyMembers } = useLoyaltyMembers();
-  const [serviceTypes, setServiceTypes]   = useState<ServiceType[]>([]);
-  const [svcEnabled, setSvcEnabled]       = useState(true);
-  const [basePerKg, setBasePerKg]         = useState("0");
-  const [addOnOptions, setAddOnOptions]   = useState<AddOn[]>([]);
-  const [minWeight, setMinWeightSetting]  = useState("0");
+  const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
+  const [svcEnabled, setSvcEnabled] = useState(true);
+  const [basePerKg, setBasePerKg] = useState("0");
+  const [addOnOptions, setAddOnOptions] = useState<AddOn[]>([]);
+  const [minWeight, setMinWeightSetting] = useState("0");
   const [pricingMode, setPricingModeSetting] = useState<PricingMode>("per-kg");
-  const [loadTiers, setLoadTiersSetting]  = useState<LoadTier[]>([]);
+  const [loadTiers, setLoadTiersSetting] = useState<LoadTier[]>([]);
   // For "both" mode — which method staff picks for this transaction (persisted across opens)
   const [chargingMode, setChargingMode] = useState<"per-kg" | "per-load">(() => {
     if (typeof window === "undefined") return "per-kg";
@@ -279,11 +279,11 @@ function NewTransactionWizard({
   });
 
   // Loyalty search state
-  const [memberSearch, setMemberSearch]     = useState("");
+  const [memberSearch, setMemberSearch] = useState("");
   const [memberSearchRes, setMemberSearchRes] = useState<LoyaltyMember[]>([]);
-  const [manualId, setManualId]             = useState("");
-  const [manualError, setManualError]       = useState("");
-  const [showScanner, setShowScanner]       = useState(false);
+  const [manualId, setManualId] = useState("");
+  const [manualError, setManualError] = useState("");
+  const [showScanner, setShowScanner] = useState(false);
 
   // Reset when dialog opens — also re-read settings so changes in Settings tab are reflected
   useEffect(() => {
@@ -367,10 +367,10 @@ function NewTransactionWizard({
     pricingMode === "both" ? chargingMode : (pricingMode === "per-load" ? "per-load" : "per-kg");
 
   const selectedService = serviceTypes.find((s) => s.name === form.washType);
-  const selectedTier    = loadTiers.find((t) => t.id === selectedTierId);
-  const weight          = parseFloat(form.weight) || 0;
-  const numberOfLoads   = parseInt(form.numberOfLoads) || 0;
-  const minWeightNum    = parseFloat(minWeight) || 0;
+  const selectedTier = loadTiers.find((t) => t.id === selectedTierId);
+  const weight = parseFloat(form.weight) || 0;
+  const numberOfLoads = parseInt(form.numberOfLoads) || 0;
+  const minWeightNum = parseFloat(minWeight) || 0;
 
   // ── Fee calculation ──────────────────────────────────────────���─────────────
   let baseFee = 0;
@@ -435,8 +435,8 @@ function NewTransactionWizard({
       {loyaltyEnabled && (
         <div className="grid grid-cols-2 gap-3">
           {([
-            { type: "walkin",  icon: User,  label: "Walk-in Customer",  sub: "No loyalty account" },
-            { type: "loyalty", icon: Star,  label: "Loyalty Member",     sub: "Has a loyalty account" },
+            { type: "walkin", icon: User, label: "Walk-in Customer", sub: "No loyalty account" },
+            { type: "loyalty", icon: Star, label: "Loyalty Member", sub: "Has a loyalty account" },
           ] as const).map(({ type, icon: Icon, label, sub }) => (
             <button
               key={type}
@@ -613,7 +613,7 @@ function NewTransactionWizard({
   // ── Step 2: Service Details ───────────────────────────────────────────────
   const renderStep2 = () => {
     // Filter services by the effective charging mode's pricingType
-    const perKgServices  = serviceTypes.filter((s) => s.pricingType === "per-kg" || s.pricingType === "per-piece");
+    const perKgServices = serviceTypes.filter((s) => s.pricingType === "per-kg" || s.pricingType === "per-piece");
     const perLoadServices = serviceTypes.filter((s) => s.pricingType === "per-load");
     const visibleServices = effectiveMode === "per-load" ? perLoadServices : perKgServices;
     const svcCols = visibleServices.length <= 2 ? visibleServices.length || 1 : visibleServices.length === 4 ? 2 : 3;
@@ -933,16 +933,16 @@ function NewTransactionWizard({
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Transaction Summary</p>
           <div className="grid grid-cols-2 gap-2 text-sm">
             {[
-              { label: "Customer",   value: form.customerName },
-              { label: "Phone",      value: form.phone || "—" },
-              { label: "Arrival",    value: form.arrivalDateTime },
+              { label: "Customer", value: form.customerName },
+              { label: "Phone", value: form.phone || "—" },
+              { label: "Arrival", value: form.arrivalDateTime },
               effectiveMode === "per-load"
-                ? { label: "Load Size",  value: selectedTier ? `${selectedTier.name} (${selectedTier.range})` : "—" }
-                : { label: "Wash Type",  value: form.washType || "Per Kilogram" },
+                ? { label: "Load Size", value: selectedTier ? `${selectedTier.name} (${selectedTier.range})` : "—" }
+                : { label: "Wash Type", value: form.washType || "Per Kilogram" },
               effectiveMode === "per-load"
-                ? { label: "Pricing",    value: "Per Load" }
-                : { label: "Weight",     value: `${form.weight} kg` },
-              { label: "Add-ons",    value: form.addOns.length ? form.addOns.join(", ") : "None" },
+                ? { label: "Pricing", value: "Per Load" }
+                : { label: "Weight", value: `${form.weight} kg` },
+              { label: "Add-ons", value: form.addOns.length ? form.addOns.join(", ") : "None" },
             ].map((row) => (
               <div key={row.label} className="bg-background/60 rounded-md p-2.5">
                 <p className="text-[10px] text-muted-foreground">{row.label}</p>
@@ -1134,15 +1134,15 @@ export default function TransactionsPage({
   const [showWizard, setShowWizard] = useState(false);
 
   // Modals
-  const [viewTxn, setViewTxn]         = useState<Transaction | null>(null);
-  const [editTxn, setEditTxn]         = useState<Transaction | null>(null);
+  const [viewTxn, setViewTxn] = useState<Transaction | null>(null);
+  const [editTxn, setEditTxn] = useState<Transaction | null>(null);
   const [editInstructions, setEditInstructions] = useState("");
-  const [editStatus, setEditStatus]   = useState<Transaction["status"]>("Received");
+  const [editStatus, setEditStatus] = useState<Transaction["status"]>("Received");
   const [editPaymentStatus, setEditPaymentStatus] = useState<PaymentStatus>("unpaid");
-  const [voidTxn, setVoidTxn]         = useState<Transaction | null>(null);
-  const [voidReason, setVoidReason]   = useState("");
-  const [reprintTxn, setReprintTxn]   = useState<Transaction | null>(null);
-  const [printTxn, setPrintTxn]       = useState<Transaction | null>(null);
+  const [voidTxn, setVoidTxn] = useState<Transaction | null>(null);
+  const [voidReason, setVoidReason] = useState("");
+  const [reprintTxn, setReprintTxn] = useState<Transaction | null>(null);
+  const [printTxn, setPrintTxn] = useState<Transaction | null>(null);
   const [printPostCreate, setPrintPostCreate] = useState(false);
   const [mobileStatusTxn, setMobileStatusTxn] = useState<Transaction | null>(null);
   const [mobileStatusBusyTicket, setMobileStatusBusyTicket] = useState<string | null>(null);
@@ -1322,7 +1322,7 @@ export default function TransactionsPage({
   const activeStatuses = new Set(["Received", "Washing", "Drying"]);
 
   const smartPriority = (t: Transaction): number => {
-    if (t.status === "Voided")  return 90;
+    if (t.status === "Voided") return 90;
     if (t.status === "Claimed") return 80;
     // Unpaid + Active (not Ready) — Priority 1
     if (t.paymentStatus === "unpaid" && activeStatuses.has(t.status)) return 1;
@@ -1612,7 +1612,7 @@ export default function TransactionsPage({
             </thead>
             <tbody>
               {filtered.map((txn) => {
-                const isVoided  = txn.status === "Voided";
+                const isVoided = txn.status === "Voided";
                 const isClaimed = txn.status === "Claimed";
                 const visualCls = rowVisualClass(txn);
                 return (
@@ -1620,7 +1620,7 @@ export default function TransactionsPage({
                     key={txn.id}
                     className={cn(
                       "border-b border-border last:border-0 transition-colors",
-                      isVoided  ? "bg-muted/30 opacity-50" : "",
+                      isVoided ? "bg-muted/30 opacity-50" : "",
                       isClaimed ? "text-muted-foreground/60" : "",
                       !isVoided && !isClaimed ? "hover:bg-muted/20" : "",
                       visualCls
@@ -1699,14 +1699,14 @@ export default function TransactionsPage({
               {/* Details grid */}
               <div className="grid grid-cols-2 gap-2 text-sm">
                 {[
-                  { label: "Ticket ID",           value: viewTxn.ticketId,                                          span: false },
-                  { label: "Customer Name",        value: viewTxn.customerName,                                      span: false },
-                  { label: "Arrival Date & Time",  value: viewTxn.arrivalDateTime,                                   span: true  },
-                  { label: "Weight (kg)",          value: `${viewTxn.weight} kg`,                                    span: false },
-                  { label: "Wash Type",            value: viewTxn.washType,                                          span: false },
-                  { label: "Add-ons",              value: viewTxn.addOns.length ? viewTxn.addOns.join(", ") : "None", span: false },
-                  { label: "Total Fee",            value: `₱${viewTxn.fee}`,                                         span: false },
-                  { label: "ETA",                  value: viewTxn.eta ? formatReadableDateTime(viewTxn.eta) : "Awaiting estimate", span: false },
+                  { label: "Ticket ID", value: viewTxn.ticketId, span: false },
+                  { label: "Customer Name", value: viewTxn.customerName, span: false },
+                  { label: "Arrival Date & Time", value: viewTxn.arrivalDateTime, span: true },
+                  { label: "Weight (kg)", value: `${viewTxn.weight} kg`, span: false },
+                  { label: "Wash Type", value: viewTxn.washType, span: false },
+                  { label: "Add-ons", value: viewTxn.addOns.length ? viewTxn.addOns.join(", ") : "None", span: false },
+                  { label: "Total Fee", value: `₱${viewTxn.fee}`, span: false },
+                  { label: "ETA", value: viewTxn.eta ? formatReadableDateTime(viewTxn.eta) : "Awaiting estimate", span: false },
                 ].map((row) => (
                   <div key={row.label} className={cn("bg-muted/30 rounded-md p-2.5", row.span && "col-span-2")}>
                     <p className="text-[11px] text-muted-foreground">{row.label}</p>
@@ -1748,8 +1748,8 @@ export default function TransactionsPage({
                   {statusOrder.map((step, idx) => {
                     const stepIdx = statusOrder.indexOf(viewTxn.status as (typeof statusOrder)[number]);
                     const isCompleted = idx < stepIdx;
-                    const isCurrent   = idx === stepIdx;
-                    const isLast      = idx === statusOrder.length - 1;
+                    const isCurrent = idx === stepIdx;
+                    const isLast = idx === statusOrder.length - 1;
                     return (
                       <div key={step} className="flex items-center flex-1 last:flex-none">
                         <div className="flex flex-col items-center">
@@ -1811,10 +1811,10 @@ export default function TransactionsPage({
               {/* Summary */}
               <div className="grid grid-cols-2 gap-2 text-sm">
                 {[
-                  { label: "Customer",  value: editTxn.customerName },
+                  { label: "Customer", value: editTxn.customerName },
                   { label: "Wash Type", value: editTxn.washType },
-                  { label: "Weight",    value: `${editTxn.weight} kg` },
-                  { label: "Fee",       value: `₱${editTxn.fee}` },
+                  { label: "Weight", value: `${editTxn.weight} kg` },
+                  { label: "Fee", value: `₱${editTxn.fee}` },
                 ].map((row) => (
                   <div key={row.label} className="bg-muted/30 rounded-md p-2.5">
                     <p className="text-[11px] text-muted-foreground">{row.label}</p>
@@ -1835,11 +1835,11 @@ export default function TransactionsPage({
                   </SelectTrigger>
                   <SelectContent>
                     {([
-                      { value: "Received", dot: "bg-blue-500",   text: "text-blue-700"   },
-                      { value: "Washing",  dot: "bg-yellow-500", text: "text-yellow-700" },
-                      { value: "Drying",   dot: "bg-orange-500", text: "text-orange-700" },
-                      { value: "Ready",    dot: "bg-green-500",  text: "text-green-700"  },
-                      { value: "Claimed",  dot: "bg-gray-400",   text: "text-gray-600"   },
+                      { value: "Received", dot: "bg-blue-500", text: "text-blue-700" },
+                      { value: "Washing", dot: "bg-yellow-500", text: "text-yellow-700" },
+                      { value: "Drying", dot: "bg-orange-500", text: "text-orange-700" },
+                      { value: "Ready", dot: "bg-green-500", text: "text-green-700" },
+                      { value: "Claimed", dot: "bg-gray-400", text: "text-gray-600" },
                     ] as const).map(({ value, dot, text }) => {
                       const isClaimedBlocked = value === "Claimed" && editPaymentStatus === "unpaid";
                       return (
