@@ -1,0 +1,12 @@
+- generic [active] [ref=e1]:
+  - region "Notifications (F8)":
+    - list
+  - button "Open Next.js Dev Tools" [ref=e44] [cursor=pointer]:
+    - img [ref=e45]
+  - alert [ref=e48]
+  - generic [ref=e49]:
+    - paragraph [ref=e50]: Install LaundryTrack App
+    - paragraph [ref=e51]: Install this app for faster access and better offline use.
+    - generic [ref=e52]:
+      - button "How to Install" [ref=e53]
+      - button "Not now" [ref=e54]

@@ -11,7 +11,7 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: 'LaundryTrack - Laundry Shop Management System',
-  description: 'Professional admin panel for laundry shop management',
+  description: 'LaundryTrack helps laundry shops manage orders, processing, claims, reports, staff, and customer loyalty from one admin dashboard.',
   generator: 'v0.app',
   manifest: '/manifest.webmanifest',
   icons: {

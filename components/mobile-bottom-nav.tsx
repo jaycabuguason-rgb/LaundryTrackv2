@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 interface MobileBottomNavProps {
   activePage: Page;
   onNavigate: (page: Page) => void;
+  onPreload?: (page: Page) => void;
 }
 
 const ITEMS: Array<{ page: Page; label: string; icon: typeof LayoutDashboard }> = [
@@ -17,7 +18,7 @@ const ITEMS: Array<{ page: Page; label: string; icon: typeof LayoutDashboard }> 
   { page: "profile", label: "Profile", icon: User },
 ];
 
-export default function MobileBottomNav({ activePage, onNavigate }: MobileBottomNavProps) {
+export default function MobileBottomNav({ activePage, onNavigate, onPreload }: MobileBottomNavProps) {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card lg:hidden">
       <div className="grid grid-cols-5">
@@ -27,6 +28,9 @@ export default function MobileBottomNav({ activePage, onNavigate }: MobileBottom
             <button
               key={page}
               type="button"
+              onPointerDown={() => onPreload?.(page)}
+              onPointerEnter={() => onPreload?.(page)}
+              onFocus={() => onPreload?.(page)}
               onClick={() => onNavigate(page)}
               className={cn(
                 "flex flex-col items-center justify-center gap-1 py-2 text-[11px]",

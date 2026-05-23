@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Sidebar, { type Page } from "@/components/sidebar";
 import TopNav from "@/components/topnav";
@@ -16,18 +16,68 @@ import { processSettingsQueue } from "@/lib/offline-settings-sync";
 import { getBrowserAccessToken } from "@/lib/supabase/browser-session";
 import { isOnline, subscribeNetworkStatus } from "@/lib/network-status";
 
-const DashboardPage = dynamic(() => import("@/components/pages/dashboard"));
-const ProcessingPage = dynamic(() => import("@/components/pages/processing"));
-const TransactionsPage = dynamic(() => import("@/components/pages/transactions"));
-const ClaimVerificationPage = dynamic(() => import("@/components/pages/claim-verification"));
-const ReportsPage = dynamic(() => import("@/components/pages/reports"));
-const SettingsPage = dynamic(() => import("@/components/pages/settings"));
-const LoyaltyPage = dynamic(() => import("@/components/pages/loyalty"));
-const ProfilePage = dynamic(() => import("@/components/pages/profile"));
-const ChangePasswordPage = dynamic(() => import("@/components/pages/change-password"));
-const DataImportPage = dynamic(() => import("@/components/pages/data-import"));
-const StaffManagementPage = dynamic(() => import("@/components/pages/staff-management"));
-const AuditLogsPage = dynamic(() => import("@/components/pages/audit-logs"));
+function PageLoadingFallback() {
+  return (
+    <div className="space-y-4">
+      <div className="h-10 w-full animate-pulse rounded-lg bg-muted" />
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div key={index} className="h-24 animate-pulse rounded-lg border border-border bg-card" />
+        ))}
+      </div>
+      <div className="h-56 animate-pulse rounded-lg border border-border bg-card" />
+    </div>
+  );
+}
+
+const DashboardPage = dynamic(() => import("@/components/pages/dashboard"), { loading: PageLoadingFallback });
+const ProcessingPage = dynamic(() => import("@/components/pages/processing"), { loading: PageLoadingFallback });
+const TransactionsPage = dynamic(() => import("@/components/pages/transactions"), { loading: PageLoadingFallback });
+const ClaimVerificationPage = dynamic(() => import("@/components/pages/claim-verification"), { loading: PageLoadingFallback });
+const ReportsPage = dynamic(() => import("@/components/pages/reports"), { loading: PageLoadingFallback });
+const SettingsPage = dynamic(() => import("@/components/pages/settings"), { loading: PageLoadingFallback });
+const LoyaltyPage = dynamic(() => import("@/components/pages/loyalty"), { loading: PageLoadingFallback });
+const ProfilePage = dynamic(() => import("@/components/pages/profile"), { loading: PageLoadingFallback });
+const ChangePasswordPage = dynamic(() => import("@/components/pages/change-password"), { loading: PageLoadingFallback });
+const DataImportPage = dynamic(() => import("@/components/pages/data-import"), { loading: PageLoadingFallback });
+const StaffManagementPage = dynamic(() => import("@/components/pages/staff-management"), { loading: PageLoadingFallback });
+const AuditLogsPage = dynamic(() => import("@/components/pages/audit-logs"), { loading: PageLoadingFallback });
+
+const preloadablePages = {
+  dashboard: DashboardPage,
+  processing: ProcessingPage,
+  transactions: TransactionsPage,
+  "claim-verification": ClaimVerificationPage,
+  reports: ReportsPage,
+  "settings-pricing": SettingsPage,
+  "settings-service-types": SettingsPage,
+  "settings-business-profile": SettingsPage,
+  "settings-backup": SettingsPage,
+  "settings-loyalty": SettingsPage,
+  loyalty: LoyaltyPage,
+  profile: ProfilePage,
+  "change-password": ChangePasswordPage,
+  "settings-data-import": DataImportPage,
+  "staff-management": StaffManagementPage,
+  "audit-logs": AuditLogsPage,
+} satisfies Record<Page, unknown>;
+
+function preloadPage(page: Page) {
+  const component = preloadablePages[page] as { preload?: () => void };
+  component.preload?.();
+}
+
+const PRIMARY_PRELOAD_PAGES: Page[] = ["processing", "transactions"];
+
+function scheduleIdleWork(callback: () => void, timeout: number) {
+  if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+    const idleId = window.requestIdleCallback(callback, { timeout });
+    return () => window.cancelIdleCallback(idleId);
+  }
+
+  const timeoutId = globalThis.setTimeout(callback, timeout);
+  return () => globalThis.clearTimeout(timeoutId);
+}
 
 interface AppShellProps {
   onSignOut: () => void;
@@ -206,6 +256,27 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
   const showOfflineNotice = !noticeDismissed && syncStatus !== "online";
 
   useEffect(() => {
+    if (
+      typeof window === "undefined"
+      || window.matchMedia("(pointer: coarse)").matches
+      || window.matchMedia("(max-width: 768px)").matches
+    ) {
+      return;
+    }
+
+    const pagesToPreload = PRIMARY_PRELOAD_PAGES
+      .filter((page) => page !== activePage)
+      .filter((page) => adminProfile.role !== "staff" || !STAFF_BLOCKED.includes(page));
+    const cleanups = pagesToPreload.map((page, index) =>
+      scheduleIdleWork(() => preloadPage(page), 3000 + index * 1500),
+    );
+
+    return () => {
+      cleanups.forEach((cleanup) => cleanup());
+    };
+  }, [activePage, adminProfile.role]);
+
+  useEffect(() => {
     if (syncStatus === "online") {
       setNoticeDismissed(false);
     }
@@ -260,6 +331,7 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
       });
       return;
     }
+    preloadPage(page);
     setActivePage(page);
     setMobileMenuOpen(false);
   };
@@ -283,7 +355,7 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
           ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
       >
-        <Sidebar activePage={activePage} onNavigate={handleNavigate} loyaltyEnabled={loyaltyEnabled} role={adminProfile.role} processingCount={txns.filter((t) => ["Received","Washing","Drying","Ready"].includes(t.status)).length} />
+        <Sidebar activePage={activePage} onNavigate={handleNavigate} onPreload={preloadPage} loyaltyEnabled={loyaltyEnabled} role={adminProfile.role} processingCount={txns.filter((t) => ["Received","Washing","Drying","Ready"].includes(t.status)).length} />
       </div>
 
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
@@ -316,7 +388,7 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
         </main>
       </div>
     </div>
-    <MobileBottomNav activePage={activePage} onNavigate={handleNavigate} />
+    <MobileBottomNav activePage={activePage} onNavigate={handleNavigate} onPreload={preloadPage} />
 
     <TransactionDetailModal
       open={detailOpen}

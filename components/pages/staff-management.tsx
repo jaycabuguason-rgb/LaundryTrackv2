@@ -434,6 +434,7 @@ export default function StaffManagementPage() {
               resetAddForm();
               setAddOpen(true);
             }}
+            disabled={!usingSupabase}
           >
             <Plus className="h-3.5 w-3.5" />
             Add Staff
@@ -443,7 +444,7 @@ export default function StaffManagementPage() {
 
       {!usingSupabase && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-800">
-          Supabase is not configured in this browser session, so staff management is currently running in demo mode.
+          Supabase is not configured in this browser session. Staff management is disabled until your project keys are set.
         </div>
       )}
 

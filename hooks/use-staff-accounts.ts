@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { staffAccounts as demoStaffAccounts } from "@/lib/auth";
 import type {
   CreateStaffAccountInput,
   StaffAccountSummary,
@@ -18,20 +17,6 @@ interface StaffListResponse {
 interface StaffAccountResponse {
   staffAccount: StaffAccountSummary;
 }
-
-const demoSeedStaff: StaffAccountSummary[] = demoStaffAccounts.map((account, index) => {
-  const createdAt = index === 0 ? "2026-01-10T00:00:00.000Z" : "2026-02-14T00:00:00.000Z";
-  return {
-    id: `demo-staff-${index + 1}`,
-    fullName: account.profile.name,
-    email: account.profile.email,
-    username: account.profile.username,
-    phoneNumber: account.profile.phone,
-    isActive: true,
-    createdAt,
-    updatedAt: createdAt,
-  };
-});
 
 async function readJson<T>(response: Response): Promise<T> {
   const data = await response.json().catch(() => ({}));
@@ -58,15 +43,17 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 
 export function useStaffAccounts() {
   const supabase = getSupabaseBrowserClient();
-  const [staff, setStaff] = useState<StaffAccountSummary[]>(() => (supabase ? [] : demoSeedStaff));
+  const [staff, setStaff] = useState<StaffAccountSummary[]>([]);
   const [loading, setLoading] = useState(Boolean(supabase));
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(
+    supabase ? null : "Supabase staff management is not configured.",
+  );
 
   const refresh = useCallback(async () => {
     if (!supabase) {
-      setStaff((current) => (current.length > 0 ? current : demoSeedStaff));
+      setStaff([]);
       setLoading(false);
-      setError(null);
+      setError("Supabase staff management is not configured.");
       return;
     }
 
@@ -118,19 +105,7 @@ export function useStaffAccounts() {
 
   const createStaff = useCallback(async (input: CreateStaffAccountInput) => {
     if (!supabase) {
-      const createdAt = new Date().toISOString();
-      const staffAccount: StaffAccountSummary = {
-        id: `demo-staff-${crypto.randomUUID()}`,
-        fullName: input.fullName.trim(),
-        email: input.email.trim().toLowerCase(),
-        username: input.username.trim().toLowerCase(),
-        phoneNumber: input.phoneNumber?.trim() ?? "",
-        isActive: true,
-        createdAt,
-        updatedAt: createdAt,
-      };
-      setStaff((current) => [staffAccount, ...current]);
-      return staffAccount;
+      throw new Error("Supabase staff management is not configured.");
     }
 
     const headers = await getAuthHeaders();
@@ -150,33 +125,7 @@ export function useStaffAccounts() {
 
   const updateStaff = useCallback(async (staffId: string, input: UpdateStaffAccountInput) => {
     if (!supabase) {
-      const updatedAt = new Date().toISOString();
-      let updatedStaffAccount: StaffAccountSummary | null = null;
-
-      setStaff((current) =>
-        current.map((item) => {
-          if (item.id !== staffId) {
-            return item;
-          }
-
-          updatedStaffAccount = {
-            ...item,
-            fullName: input.fullName.trim(),
-            email: input.email.trim().toLowerCase(),
-            username: input.username.trim().toLowerCase(),
-            phoneNumber: input.phoneNumber?.trim() ?? "",
-            isActive: input.isActive,
-            updatedAt,
-          };
-          return updatedStaffAccount;
-        }),
-      );
-
-      if (!updatedStaffAccount) {
-        throw new Error("That staff account could not be found.");
-      }
-
-      return updatedStaffAccount;
+      throw new Error("Supabase staff management is not configured.");
     }
 
     const headers = await getAuthHeaders();
@@ -198,7 +147,7 @@ export function useStaffAccounts() {
 
   const resetPassword = useCallback(async (staffId: string, password: string) => {
     if (!supabase) {
-      return;
+      throw new Error("Supabase staff management is not configured.");
     }
 
     const headers = await getAuthHeaders();

@@ -991,23 +991,23 @@ function PricingSettings() {
       </Card>
 
       {/* bottom spacer so content isn't hidden behind fixed bar */}
-      <div className="h-20" />
+      <div className="h-36 lg:h-20" />
     </div>
 
     {/* ── Fixed Save Bar ───────────────────────────────────────────────────── */}
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border px-6 py-3 flex items-center justify-between gap-3">
+    <div className="fixed bottom-14 left-0 right-0 z-50 flex items-center justify-between gap-3 border-t border-border bg-background px-4 py-2.5 lg:bottom-0 lg:px-6 lg:py-3">
       {saved ? (
-        <div className="flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-2 text-sm animate-in fade-in slide-in-from-bottom-1">
+        <div className="hidden items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-700 animate-in fade-in slide-in-from-bottom-1 sm:flex">
           <CheckCircle2 className="w-4 h-4 shrink-0" />
           Changes saved successfully!
         </div>
       ) : (
-        <p className="text-xs text-muted-foreground">Make changes above, then click Save to apply them.</p>
+        <p className="hidden text-xs text-muted-foreground sm:block">Make changes above, then click Save to apply them.</p>
       )}
       <Button
         size="sm"
         onClick={handleSave}
-        className="flex items-center gap-1.5 shrink-0"
+        className="flex w-full shrink-0 items-center justify-center gap-1.5 sm:w-auto"
       >
         <Save className="w-3.5 h-3.5" /> Save Changes
       </Button>

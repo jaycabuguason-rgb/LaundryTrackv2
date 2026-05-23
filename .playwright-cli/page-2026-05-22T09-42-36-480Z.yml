@@ -1,0 +1,200 @@
+- generic [ref=e1]:
+  - generic [ref=e60]:
+    - complementary [ref=e62]:
+      - generic [ref=e63]:
+        - img [ref=e65]
+        - generic [ref=e69]: LaundryTrack
+      - navigation [ref=e70]:
+        - list [ref=e71]:
+          - listitem [ref=e72]:
+            - button "Dashboard" [ref=e73]:
+              - img [ref=e74]
+              - generic [ref=e80]: Dashboard
+          - listitem [ref=e81]:
+            - button "Processing 2" [ref=e82]:
+              - img [ref=e83]
+              - generic [ref=e86]:
+                - generic [ref=e87]: Processing
+                - generic [ref=e88]: "2"
+          - listitem [ref=e89]:
+            - button "Transactions" [ref=e90]:
+              - img [ref=e91]
+              - generic [ref=e95]: Transactions
+          - listitem [ref=e96]:
+            - button "Claim Verification" [ref=e97]:
+              - img [ref=e98]
+              - generic [ref=e105]: Claim Verification
+          - listitem [ref=e106]:
+            - button "Reports" [ref=e107]:
+              - img [ref=e108]
+              - generic [ref=e111]: Reports
+          - listitem [ref=e112]:
+            - button "Staff Management" [ref=e113]:
+              - img [ref=e114]
+              - generic [ref=e120]: Staff Management
+          - listitem [ref=e121]:
+            - button "Audit Logs" [ref=e122]:
+              - img [ref=e123]
+              - generic [ref=e127]: Audit Logs
+          - listitem [ref=e128]:
+            - button "Loyalty Members" [ref=e129]:
+              - img [ref=e130]
+              - generic [ref=e133]: Loyalty Members
+          - listitem [ref=e134]:
+            - button "Settings" [ref=e135]:
+              - img [ref=e136]
+              - generic [ref=e139]: Settings
+              - img [ref=e140]
+    - generic [ref=e142]:
+      - banner [ref=e143]:
+        - generic [ref=e144]:
+          - button "Open navigation menu" [active] [ref=e145]:
+            - img [ref=e146]
+          - heading "Dashboard" [level=1] [ref=e147]
+        - generic [ref=e148]:
+          - button "Notifications" [ref=e149] [cursor=pointer]:
+            - img [ref=e150]
+          - button "User Profile" [ref=e153] [cursor=pointer]:
+            - img "Jay Cabuguason" [ref=e155]
+      - main [ref=e156]:
+        - generic [ref=e157]:
+          - generic [ref=e158]:
+            - generic [ref=e161]:
+              - generic [ref=e162]:
+                - paragraph [ref=e163]: Total Transactions Today
+                - paragraph [ref=e164]: "3"
+                - paragraph [ref=e165]: +3 from yesterday
+              - img [ref=e167]
+            - generic [ref=e172]:
+              - generic [ref=e173]:
+                - paragraph [ref=e174]: Total Revenue Today
+                - paragraph [ref=e175]: ₱414
+                - paragraph [ref=e176]: +12% vs yesterday
+              - generic [ref=e178]: ₱
+            - generic [ref=e181]:
+              - generic [ref=e182]:
+                - paragraph [ref=e183]: Ready for Pickup
+                - paragraph [ref=e184]: "1"
+                - paragraph [ref=e185]: Waiting to be claimed
+              - img [ref=e187]
+            - generic [ref=e191]:
+              - generic [ref=e192]:
+                - paragraph [ref=e193]: Active Orders
+                - paragraph [ref=e194]: "1"
+                - paragraph [ref=e195]: In progress
+              - img [ref=e197]
+          - generic [ref=e199]:
+            - generic [ref=e201]:
+              - generic [ref=e203]: Recent Transactions
+              - generic [ref=e205]:
+                - generic [ref=e206]:
+                  - generic [ref=e207]:
+                    - generic [ref=e208]:
+                      - button "TKT-0011" [ref=e209] [cursor=pointer]
+                      - paragraph [ref=e210]: s
+                    - generic [ref=e211]: Ready
+                  - generic [ref=e212]:
+                    - paragraph [ref=e213]: 2026-05-20
+                    - button "View details for ticket TKT-0011" [ref=e214]:
+                      - img
+                - generic [ref=e215]:
+                  - generic [ref=e216]:
+                    - generic [ref=e217]:
+                      - button "TKT-0010" [ref=e218] [cursor=pointer]
+                      - paragraph [ref=e219]: s
+                    - generic [ref=e220]: Received
+                  - generic [ref=e221]:
+                    - paragraph [ref=e222]: 2026-05-20
+                    - button "View details for ticket TKT-0010" [ref=e223]:
+                      - img
+                - generic [ref=e224]:
+                  - generic [ref=e225]:
+                    - generic [ref=e226]:
+                      - button "TKT-0009" [ref=e227] [cursor=pointer]
+                      - paragraph [ref=e228]: m
+                    - generic [ref=e229]: Claimed
+                  - generic [ref=e230]:
+                    - paragraph [ref=e231]: 2026-05-20
+                    - button "View details for ticket TKT-0009" [ref=e232]:
+                      - img
+                - generic [ref=e233]:
+                  - generic [ref=e234]:
+                    - generic [ref=e235]:
+                      - button "TKT-0008" [ref=e236] [cursor=pointer]
+                      - paragraph [ref=e237]: "y"
+                    - generic [ref=e238]: Claimed
+                  - generic [ref=e239]:
+                    - paragraph [ref=e240]: 2026-05-19
+                    - button "View details for ticket TKT-0008" [ref=e241]:
+                      - img
+                - generic [ref=e242]:
+                  - generic [ref=e243]:
+                    - generic [ref=e244]:
+                      - button "TKT-0007" [ref=e245] [cursor=pointer]
+                      - paragraph [ref=e246]: j
+                    - generic [ref=e247]: Claimed
+                  - generic [ref=e248]:
+                    - paragraph [ref=e249]: 2026-05-19
+                    - button "View details for ticket TKT-0007" [ref=e250]:
+                      - img
+                - generic [ref=e251]:
+                  - generic [ref=e252]:
+                    - generic [ref=e253]:
+                      - button "TKT-0006" [ref=e254] [cursor=pointer]
+                      - paragraph [ref=e255]: w
+                    - generic [ref=e256]: Claimed
+                  - generic [ref=e257]:
+                    - paragraph [ref=e258]: 2026-05-19
+                    - button "View details for ticket TKT-0006" [ref=e259]:
+                      - img
+            - generic [ref=e260]:
+              - generic [ref=e261]:
+                - generic [ref=e263]: Peak Hours Today
+                - paragraph [ref=e266]: No transactions yet today
+              - generic [ref=e269]:
+                - img [ref=e271]
+                - generic [ref=e276]:
+                  - paragraph [ref=e278]: Loyalty Members
+                  - paragraph [ref=e279]: "5"
+                  - paragraph [ref=e280]: Active enrolled members
+              - generic [ref=e281]:
+                - generic [ref=e283]: Quick Links
+                - generic [ref=e284]:
+                  - button "Reports & Analytics" [ref=e285]:
+                    - generic [ref=e286]:
+                      - img [ref=e287]
+                      - text: Reports & Analytics
+                    - img [ref=e289]
+                  - button "Staff Management" [ref=e291]:
+                    - generic [ref=e292]:
+                      - img [ref=e293]
+                      - text: Staff Management
+                    - img [ref=e298]
+  - navigation [ref=e300]:
+    - generic [ref=e301]:
+      - button "Home" [ref=e302]:
+        - img [ref=e303]
+        - generic [ref=e308]: Home
+      - button "Process" [ref=e309]:
+        - img [ref=e310]
+        - generic [ref=e313]: Process
+      - button "Orders" [ref=e314]:
+        - img [ref=e315]
+        - generic [ref=e318]: Orders
+      - button "Claim" [ref=e319]:
+        - img [ref=e320]
+        - generic [ref=e326]: Claim
+      - button "Profile" [ref=e327]:
+        - img [ref=e328]
+        - generic [ref=e331]: Profile
+  - region "Notifications (F8)":
+    - list
+  - button "Open Next.js Dev Tools" [ref=e44] [cursor=pointer]:
+    - img [ref=e45]
+  - alert [ref=e48]
+  - generic [ref=e49]:
+    - paragraph [ref=e50]: Install LaundryTrack App
+    - paragraph [ref=e51]: Install this app for faster access and better offline use.
+    - generic [ref=e52]:
+      - button "How to Install" [ref=e53]
+      - button "Not now" [ref=e54]

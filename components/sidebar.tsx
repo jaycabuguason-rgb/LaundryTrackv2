@@ -46,6 +46,7 @@ export type Page =
 interface SidebarProps {
   activePage: Page;
   onNavigate: (page: Page) => void;
+  onPreload?: (page: Page) => void;
   loyaltyEnabled: boolean;
   role?: UserRole;
   processingCount?: number;
@@ -76,7 +77,7 @@ const settingsSubItems = [
   { id: "settings-data-import" as Page, label: "Data Import", icon: Upload },
 ];
 
-export default function Sidebar({ activePage, onNavigate, loyaltyEnabled, role = "admin", processingCount = 0 }: SidebarProps) {
+export default function Sidebar({ activePage, onNavigate, onPreload, loyaltyEnabled, role = "admin", processingCount = 0 }: SidebarProps) {
   // On desktop: user can collapse to icon-only. On tablet (md): starts collapsed.
   const [collapsed, setCollapsed] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(activePage.startsWith("settings"));
@@ -126,6 +127,9 @@ export default function Sidebar({ activePage, onNavigate, loyaltyEnabled, role =
             return (
               <li key={item.id}>
                 <button
+                  onPointerDown={() => onPreload?.(item.id)}
+                  onPointerEnter={() => onPreload?.(item.id)}
+                  onFocus={() => onPreload?.(item.id)}
                   onClick={() => onNavigate(item.id)}
                   title={effectiveCollapsed ? item.label : undefined}
                   className={cn(
@@ -165,6 +169,9 @@ export default function Sidebar({ activePage, onNavigate, loyaltyEnabled, role =
           {/* Settings with sub-menu — filtered by role */}
           <li>
             <button
+              onPointerDown={() => onPreload?.("settings-pricing")}
+              onPointerEnter={() => onPreload?.("settings-pricing")}
+              onFocus={() => onPreload?.("settings-pricing")}
               onClick={() => {
                 if (!effectiveCollapsed) setSettingsOpen((prev) => !prev);
                 else onNavigate("settings-pricing");
@@ -197,6 +204,9 @@ export default function Sidebar({ activePage, onNavigate, loyaltyEnabled, role =
                   return (
                     <li key={sub.id}>
                       <button
+                        onPointerDown={() => onPreload?.(sub.id)}
+                        onPointerEnter={() => onPreload?.(sub.id)}
+                        onFocus={() => onPreload?.(sub.id)}
                         onClick={() => onNavigate(sub.id)}
                         className={cn(
                           "w-full flex items-center gap-2.5 rounded-md px-2.5 py-2 text-xs font-medium transition-colors min-h-[44px]",

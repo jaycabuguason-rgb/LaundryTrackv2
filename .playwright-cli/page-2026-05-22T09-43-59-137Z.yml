@@ -1,0 +1,270 @@
+- generic [ref=e1]:
+  - generic [ref=e60]:
+    - complementary [ref=e62]:
+      - generic [ref=e63]:
+        - img [ref=e65]
+        - generic [ref=e69]: LaundryTrack
+      - navigation [ref=e70]:
+        - list [ref=e71]:
+          - listitem [ref=e72]:
+            - button "Dashboard" [ref=e73]:
+              - img [ref=e74]
+              - generic [ref=e80]: Dashboard
+          - listitem [ref=e81]:
+            - button "Processing 2" [ref=e82]:
+              - img [ref=e83]
+              - generic [ref=e86]:
+                - generic [ref=e87]: Processing
+                - generic [ref=e88]: "2"
+          - listitem [ref=e89]:
+            - button "Transactions" [ref=e90]:
+              - img [ref=e91]
+              - generic [ref=e95]: Transactions
+          - listitem [ref=e96]:
+            - button "Claim Verification" [ref=e97]:
+              - img [ref=e98]
+              - generic [ref=e105]: Claim Verification
+          - listitem [ref=e106]:
+            - button "Reports" [ref=e107]:
+              - img [ref=e108]
+              - generic [ref=e111]: Reports
+          - listitem [ref=e112]:
+            - button "Staff Management" [ref=e113]:
+              - img [ref=e114]
+              - generic [ref=e120]: Staff Management
+          - listitem [ref=e121]:
+            - button "Audit Logs" [ref=e122]:
+              - img [ref=e123]
+              - generic [ref=e127]: Audit Logs
+          - listitem [ref=e128]:
+            - button "Loyalty Members" [ref=e129]:
+              - img [ref=e130]
+              - generic [ref=e133]: Loyalty Members
+          - listitem [ref=e134]:
+            - button "Settings" [ref=e135]:
+              - img [ref=e136]
+              - generic [ref=e139]: Settings
+              - img [ref=e333]
+            - list [ref=e335]:
+              - listitem [ref=e336]:
+                - button "Pricing" [active] [ref=e337]:
+                  - img [ref=e338]
+                  - generic [ref=e343]: Pricing
+              - listitem [ref=e344]:
+                - button "Business Profile" [ref=e345]:
+                  - img [ref=e346]
+                  - generic [ref=e350]: Business Profile
+              - listitem [ref=e351]:
+                - button "Loyalty Program" [ref=e352]:
+                  - img [ref=e353]
+                  - generic [ref=e357]: Loyalty Program
+              - listitem [ref=e358]:
+                - button "Backup & Restore" [ref=e359]:
+                  - img [ref=e360]
+                  - generic [ref=e364]: Backup & Restore
+              - listitem [ref=e365]:
+                - button "Data Import" [ref=e366]:
+                  - img [ref=e367]
+                  - generic [ref=e370]: Data Import
+    - generic [ref=e142]:
+      - banner [ref=e143]:
+        - generic [ref=e144]:
+          - button "Open navigation menu" [ref=e145]:
+            - img [ref=e146]
+          - heading "Settings — Pricing" [level=1] [ref=e371]
+        - generic [ref=e148]:
+          - button "Notifications" [ref=e149] [cursor=pointer]:
+            - img [ref=e150]
+          - button "User Profile" [ref=e153] [cursor=pointer]:
+            - img "Jay Cabuguason" [ref=e155]
+      - main [ref=e156]:
+        - generic [ref=e372]:
+          - generic [ref=e373]:
+            - generic [ref=e374]:
+              - generic [ref=e375]: Base Pricing
+              - generic [ref=e376]: Configure how laundry is charged to customers.
+            - generic [ref=e377]:
+              - generic [ref=e378]:
+                - generic [ref=e379]: Pricing Mode
+                - generic [ref=e380]:
+                  - button "Per Kilogram Charge by weight" [ref=e381] [cursor=pointer]:
+                    - img [ref=e383]
+                    - paragraph [ref=e387]: Per Kilogram
+                    - paragraph [ref=e388]: Charge by weight
+                  - button "Per Load Flat rate per load" [ref=e389] [cursor=pointer]:
+                    - img [ref=e391]
+                    - paragraph [ref=e397]: Per Load
+                    - paragraph [ref=e398]: Flat rate per load
+                  - button "Both Staff selects at time of transaction" [ref=e399] [cursor=pointer]:
+                    - img [ref=e401]
+                    - paragraph [ref=e405]: Both
+                    - paragraph [ref=e406]: Staff selects at time of transaction
+              - generic [ref=e407]:
+                - generic [ref=e408]:
+                  - generic [ref=e409]: Price per kg (₱)
+                  - spinbutton [ref=e410]: "30"
+                - generic [ref=e411]:
+                  - generic [ref=e412]: Minimum weight (kg)
+                  - spinbutton [ref=e413]
+          - generic [ref=e414]:
+            - generic [ref=e416]:
+              - generic [ref=e417]:
+                - generic [ref=e418]: Service Types
+                - generic [ref=e419]: Manage available wash service categories.
+              - switch "Toggle service types" [checked] [ref=e420]
+            - generic [ref=e421]:
+              - generic [ref=e422]: Service types define wash categories (Regular, Delicate, Express). If using Per Kilogram only, you can leave these disabled.
+              - generic [ref=e423]:
+                - generic [ref=e424]:
+                  - generic [ref=e425]:
+                    - paragraph [ref=e426]: Regular
+                    - generic [ref=e427]: ₱30
+                    - generic [ref=e428]: Per kg
+                  - paragraph [ref=e429]: Standard wash & dry
+                  - generic [ref=e430]:
+                    - generic [ref=e431]:
+                      - switch [checked] [ref=e432]
+                      - generic [ref=e433]: Show
+                    - generic [ref=e434]:
+                      - switch [checked] [ref=e435]
+                      - generic [ref=e436]: Price
+                    - button [ref=e437]:
+                      - img
+                    - button [ref=e438]:
+                      - img
+                - generic [ref=e439]:
+                  - generic [ref=e440]:
+                    - paragraph [ref=e441]: Delicate
+                    - generic [ref=e442]: ₱40
+                    - generic [ref=e443]: Per kg
+                  - paragraph [ref=e444]: Gentle cycle for delicate fabrics
+                  - generic [ref=e445]:
+                    - generic [ref=e446]:
+                      - switch [checked] [ref=e447]
+                      - generic [ref=e448]: Show
+                    - generic [ref=e449]:
+                      - switch [checked] [ref=e450]
+                      - generic [ref=e451]: Price
+                    - button [ref=e452]:
+                      - img
+                    - button [ref=e453]:
+                      - img
+                - generic [ref=e454]:
+                  - generic [ref=e455]:
+                    - paragraph [ref=e456]: Express
+                    - generic [ref=e457]: ₱50
+                    - generic [ref=e458]: Per kg
+                  - paragraph [ref=e459]: Same-day turnaround
+                  - generic [ref=e460]:
+                    - generic [ref=e461]:
+                      - switch [checked] [ref=e462]
+                      - generic [ref=e463]: Show
+                    - generic [ref=e464]:
+                      - switch [checked] [ref=e465]
+                      - generic [ref=e466]: Price
+                    - button [ref=e467]:
+                      - img
+                    - button [ref=e468]:
+                      - img
+                - generic [ref=e469]:
+                  - generic [ref=e470]:
+                    - paragraph [ref=e471]: Bulk / Commercial
+                    - generic [ref=e472]: Per load
+                  - paragraph [ref=e473]: For 10kg and above
+                  - generic [ref=e474]:
+                    - generic [ref=e475]:
+                      - switch [ref=e476]
+                      - generic [ref=e477]: Show
+                    - generic "Enable Show first":
+                      - switch [disabled]
+                      - generic: Price
+                    - button [ref=e478]:
+                      - img
+                    - button [ref=e479]:
+                      - img
+                - button "Add Service Type" [ref=e481]:
+                  - img
+                  - text: Add Service Type
+          - generic [ref=e482]:
+            - generic [ref=e484]: Add-on Rates
+            - generic [ref=e485]:
+              - generic [ref=e486]:
+                - generic [ref=e487]:
+                  - generic [ref=e488]: Fabcon
+                  - generic [ref=e489]: ₱10
+                  - button [ref=e490]:
+                    - img
+                - generic [ref=e491]:
+                  - generic [ref=e492]: Express (+50%)
+                  - generic [ref=e493]: ₱50
+                  - button [ref=e494]:
+                    - img
+                - generic [ref=e495]:
+                  - generic [ref=e496]: Bleach
+                  - generic [ref=e497]: ₱15
+                  - button [ref=e498]:
+                    - img
+                - generic [ref=e499]:
+                  - generic [ref=e500]: Starch
+                  - generic [ref=e501]: ₱20
+                  - button [ref=e502]:
+                    - img
+              - generic [ref=e503]:
+                - textbox "Add-on name" [ref=e504]
+                - textbox "Rate ₱" [ref=e505]
+                - button [ref=e506]:
+                  - img
+          - generic [ref=e507]:
+            - generic [ref=e508]:
+              - generic [ref=e509]: Price Display Settings
+              - generic [ref=e510]: Control how prices appear to staff during transaction entry.
+            - generic [ref=e512]:
+              - button "Show Price Staff sees the price on each Wash Type and Load Size button, and the fee updates live as they fill out the form. Active" [ref=e513] [cursor=pointer]:
+                - img [ref=e515]
+                - generic [ref=e518]:
+                  - paragraph [ref=e519]: Show Price
+                  - paragraph [ref=e520]: Staff sees the price on each Wash Type and Load Size button, and the fee updates live as they fill out the form.
+                - generic [ref=e521]: Active
+              - button "No Price / Free All fees are set to ₱0. Useful for promo days or owner use. No prices are shown on buttons." [ref=e522] [cursor=pointer]:
+                - img [ref=e524]
+                - generic [ref=e527]:
+                  - paragraph [ref=e528]: No Price / Free
+                  - paragraph [ref=e529]: All fees are set to ₱0. Useful for promo days or owner use. No prices are shown on buttons.
+              - button "Hide Price Prices are kept but hidden from buttons and the live preview. Staff only sees the total on the final confirmation step." [ref=e530] [cursor=pointer]:
+                - img [ref=e532]
+                - generic [ref=e537]:
+                  - paragraph [ref=e538]: Hide Price
+                  - paragraph [ref=e539]: Prices are kept but hidden from buttons and the live preview. Staff only sees the total on the final confirmation step.
+        - generic [ref=e541]:
+          - paragraph [ref=e542]: Make changes above, then click Save to apply them.
+          - button "Save Changes" [ref=e543]:
+            - img
+            - text: Save Changes
+  - navigation [ref=e300]:
+    - generic [ref=e301]:
+      - button "Home" [ref=e302]:
+        - img [ref=e303]
+        - generic [ref=e308]: Home
+      - button "Process" [ref=e309]:
+        - img [ref=e310]
+        - generic [ref=e313]: Process
+      - button "Orders" [ref=e314]:
+        - img [ref=e315]
+        - generic [ref=e318]: Orders
+      - button "Claim" [ref=e319]:
+        - img [ref=e320]
+        - generic [ref=e326]: Claim
+      - button "Profile" [ref=e327]:
+        - img [ref=e328]
+        - generic [ref=e331]: Profile
+  - region "Notifications (F8)":
+    - list
+  - button "Open Next.js Dev Tools" [ref=e44] [cursor=pointer]:
+    - img [ref=e45]
+  - alert [ref=e48]
+  - generic [ref=e49]:
+    - paragraph [ref=e50]: Install LaundryTrack App
+    - paragraph [ref=e51]: Install this app for faster access and better offline use.
+    - generic [ref=e52]:
+      - button "How to Install" [ref=e53]
+      - button "Not now" [ref=e54]

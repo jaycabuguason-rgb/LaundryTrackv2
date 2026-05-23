@@ -13,12 +13,14 @@ declare global {
 }
 
 const DISMISS_KEY = "laundrytrack-install-banner-dismissed";
+const LAST_PROFILE_KEY = "laundrytrack-last-profile";
 
 export default function PwaInit() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [visible, setVisible] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [isCompactMobile, setIsCompactMobile] = useState(false);
+  const [hasActiveAppProfile, setHasActiveAppProfile] = useState(false);
 
   const isStandalone = useMemo(() => {
     if (typeof window === "undefined") {
@@ -88,7 +90,25 @@ export default function PwaInit() {
     return () => media.removeEventListener("change", update);
   }, []);
 
-  if (!visible || isStandalone) {
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const update = () => {
+      setHasActiveAppProfile(Boolean(window.localStorage.getItem(LAST_PROFILE_KEY)));
+    };
+
+    update();
+    window.addEventListener("storage", update);
+    window.addEventListener("focus", update);
+    const interval = window.setInterval(update, 1000);
+    return () => {
+      window.removeEventListener("storage", update);
+      window.removeEventListener("focus", update);
+      window.clearInterval(interval);
+    };
+  }, []);
+
+  if (!visible || isStandalone || hasActiveAppProfile) {
     return null;
   }
 

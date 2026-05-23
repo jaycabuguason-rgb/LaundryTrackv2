@@ -38,11 +38,8 @@ export function getBearerToken(request: Request): string | null {
 function getRoleFromAuthUser(user: User): "admin" | "staff" {
   const appMetadataRole =
     typeof user.app_metadata?.role === "string" ? user.app_metadata.role.toLowerCase() : null;
-  const userMetadataRole =
-    typeof user.user_metadata?.role === "string" ? user.user_metadata.role.toLowerCase() : null;
-  const effectiveRole = appMetadataRole ?? userMetadataRole;
 
-  return effectiveRole === "admin" ? "admin" : "staff";
+  return appMetadataRole === "admin" ? "admin" : "staff";
 }
 
 async function syncMissingProfileFromAuthUser(user: User): Promise<ViewerProfileRow | null> {

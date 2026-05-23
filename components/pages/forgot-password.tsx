@@ -228,9 +228,8 @@ export default function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) 
     if (newPassword.length < 8) { setStep3Error("Password must be at least 8 characters."); return; }
     if (newPassword !== confirmPassword) { setStep3Error("Passwords do not match."); return; }
     setStep3Error(null);
-    sessionStorage.setItem("prefill_email", email);
-    sessionStorage.setItem("prefill_password", newPassword);
-    sessionStorage.setItem("reset_success", "true");
+    setNewPassword("");
+    setConfirmPassword("");
     setStep("success");
   };
 
