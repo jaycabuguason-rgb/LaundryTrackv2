@@ -194,7 +194,7 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
             transactions={txns}
             loading={transactionsLoading}
             error={transactionsError}
-            onUpdateTransaction={async (ticketId, updates) => {
+            onUpdateTransaction={async (ticketId: string, updates: Partial<Transaction>) => {
               return await updateTransaction(ticketId, updates);
             }}
             onViewTransaction={handleTransactionDetail}
@@ -238,7 +238,7 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
       case "staff-management": return <StaffManagementPage />;
       case "audit-logs": return <AuditLogsPage />;
       case "loyalty": return <LoyaltyPage loyaltyEnabled={loyaltyEnabled} />;
-      case "profile": return <ProfilePage userProfile={adminProfile} shopName={businessProfile.shopName} contactNumber={businessProfile.contactNumber} onAvatarUpdate={(url) => onProfileUpdate({ avatarUrl: url })} />;
+      case "profile": return <ProfilePage userProfile={adminProfile} shopName={businessProfile.shopName} contactNumber={businessProfile.contactNumber} onAvatarUpdate={(url: string) => onProfileUpdate({ avatarUrl: url })} />;
       case "change-password": return <ChangePasswordPage adminProfile={adminProfile} onProfileUpdate={onProfileUpdate} />;
       default: return <DashboardPage transactions={txns} loyaltyEnabled={loyaltyEnabled} />;
     }
