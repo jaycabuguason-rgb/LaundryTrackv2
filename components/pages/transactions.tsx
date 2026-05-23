@@ -1283,11 +1283,12 @@ export default function TransactionsPage({
     }
   };
 
-  // Auto-open edit modal if editTicketId is provided
+  // Auto-open view modal first if editTicketId is provided (e.g. from notification "View" button)
+  // User can then click "Edit Status" from the view modal to proceed to the edit modal
   useEffect(() => {
     if (editTicketId) {
       const txn = txns.find(t => t.ticketId === editTicketId);
-      if (txn) openEdit(txn);
+      if (txn) setViewTxn(txn);
     }
   }, [editTicketId]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1783,16 +1784,33 @@ export default function TransactionsPage({
               </div>
 
               {/* View modal actions */}
-              <div className="flex flex-col sm:flex-row gap-2 pt-1">
-                <Button size="sm" variant="outline" className="flex-1 gap-1.5" onClick={() => { setReprintTxn(viewTxn); setViewTxn(null); }}>
-                  <Printer className="w-3.5 h-3.5" /> Reprint QR
-                </Button>
-                <Button size="sm" variant="outline" className="flex-1 gap-1.5" onClick={() => { setPrintTxn(viewTxn); setPrintPostCreate(false); setViewTxn(null); }}>
-                  <Printer className="w-3.5 h-3.5" /> Print Receipt
-                </Button>
-                <Button size="sm" variant="secondary" className="flex-1" onClick={() => setViewTxn(null)}>
-                  <X className="w-3.5 h-3.5 mr-1" /> Close
-                </Button>
+              <div className="flex flex-col gap-2 pt-1">
+                {/* Primary action: Edit Status */}
+                {viewTxn.status !== "Voided" && (
+                  <Button
+                    size="sm"
+                    className="w-full gap-1.5"
+                    onClick={() => {
+                      const txn = viewTxn;
+                      setViewTxn(null);
+                      openEdit(txn);
+                    }}
+                  >
+                    <Edit className="w-3.5 h-3.5" /> Edit Status
+                  </Button>
+                )}
+                {/* Secondary actions */}
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" className="flex-1 gap-1.5" onClick={() => { setReprintTxn(viewTxn); setViewTxn(null); }}>
+                    <Printer className="w-3.5 h-3.5" /> Reprint QR
+                  </Button>
+                  <Button size="sm" variant="outline" className="flex-1 gap-1.5" onClick={() => { setPrintTxn(viewTxn); setPrintPostCreate(false); setViewTxn(null); }}>
+                    <Printer className="w-3.5 h-3.5" /> Print Receipt
+                  </Button>
+                  <Button size="sm" variant="secondary" className="flex-1" onClick={() => setViewTxn(null)}>
+                    <X className="w-3.5 h-3.5 mr-1" /> Close
+                  </Button>
+                </div>
               </div>
             </div>
           )}
