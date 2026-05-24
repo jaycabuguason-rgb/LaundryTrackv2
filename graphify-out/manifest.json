@@ -1,0 +1,972 @@
+{
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components.json": {
+    "mtime": 1779609634.1151094,
+    "ast_hash": "af129da04ff1d4eb3b9eb4db06de64b2",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\next-env.d.ts": {
+    "mtime": 1779609634.205489,
+    "ast_hash": "90426577ad8f38459f3e566411c85589",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\next.config.mjs": {
+    "mtime": 1779609634.2064884,
+    "ast_hash": "12d56452efaa243ab92839ea1238c404",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\package.json": {
+    "mtime": 1779609634.2108939,
+    "ast_hash": "b5216b4840e12165c12e1ea8d45f6989",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\postcss.config.mjs": {
+    "mtime": 1779609634.213896,
+    "ast_hash": "49a3ef9c7152e861100b88ac3b034855",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\SETUP_SUPABASE.sql": {
+    "mtime": 1779609634.0985847,
+    "ast_hash": "3117a429c5e3d8fcc9a5521a3e392026",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\skills-lock.json": {
+    "mtime": 1779609634.2288911,
+    "ast_hash": "8864226a1686ad5e21dfec894f81fa19",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\tsconfig.json": {
+    "mtime": 1779609634.2320924,
+    "ast_hash": "3ce2659c41cc96f3cc1cf41ddd822b79",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\.vscode\\settings.json": {
+    "mtime": 1779609634.088055,
+    "ast_hash": "903f627208adcb3d2af2ade44ecf020e",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\app\\layout.tsx": {
+    "mtime": 1779609634.1111116,
+    "ast_hash": "288a460fa76e398c5ae8bb93cd51b53b",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\app\\manifest.ts": {
+    "mtime": 1779609634.112109,
+    "ast_hash": "c34da12b13e388d59c606a9af186c245",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\app\\page.tsx": {
+    "mtime": 1779609634.113113,
+    "ast_hash": "8ce7066b0838c06437644416597df072",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\app\\api\\audit-logs\\route.ts": {
+    "mtime": 1779609634.0995846,
+    "ast_hash": "58583ce98831a86784963c34b9c883e6",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\app\\api\\loyalty\\route.ts": {
+    "mtime": 1779609634.1015835,
+    "ast_hash": "241de0032e2bbbe7ff959e195e4caa0c",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\app\\api\\loyalty\\[id]\\route.ts": {
+    "mtime": 1779609634.1005838,
+    "ast_hash": "b362b3f2600ab3635b815f9ff98cef7c",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\app\\api\\loyalty\\[id]\\stamps\\route.ts": {
+    "mtime": 1779609634.1015835,
+    "ast_hash": "f73f704e5f2f30642a9af48c72eed5d5",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\app\\api\\profile\\avatar\\route.ts": {
+    "mtime": 1779609634.1025848,
+    "ast_hash": "b9b3f67a1404cb159d99ce5f53d81332",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\app\\api\\qr\\resolve\\route.ts": {
+    "mtime": 1779609634.104114,
+    "ast_hash": "a8f2e97fc48bab9652bd06c84dfd66e3",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\app\\api\\settings\\business-profile\\route.ts": {
+    "mtime": 1779609634.1051097,
+    "ast_hash": "45e292a0bfeda9a8d4c422ac1a3cdfcb",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\app\\api\\settings\\pricing\\route.ts": {
+    "mtime": 1779609634.1051097,
+    "ast_hash": "cfd3d4118c7ba4a74fea5f1637818ebb",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\app\\api\\staff\\route.ts": {
+    "mtime": 1779609634.1091144,
+    "ast_hash": "59c467892f2764c21eb5ada45a463395",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\app\\api\\staff\\login\\route.ts": {
+    "mtime": 1779609634.1081138,
+    "ast_hash": "602277014122e947cec9167121055717",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\app\\api\\staff\\[staffId]\\route.ts": {
+    "mtime": 1779609634.1071105,
+    "ast_hash": "29c36c01729ec14155be38e8bdb85ad1",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\app\\api\\staff\\[staffId]\\password\\route.ts": {
+    "mtime": 1779609634.1071105,
+    "ast_hash": "bd4f06037de067e4f6a5bf7b06b9d593",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\app\\api\\transactions\\route.ts": {
+    "mtime": 1779609634.1101127,
+    "ast_hash": "30f4e406e647d52238249155997eaec7",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\app\\api\\transactions\\[ticketId]\\route.ts": {
+    "mtime": 1779609634.1101127,
+    "ast_hash": "60ea1e56afd69a65c34ebed968b4c542",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\app\\offline\\page.tsx": {
+    "mtime": 1779609634.112109,
+    "ast_hash": "bfe78b407c4b35d8694948acaabe8bcb",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\app\\track\\[token]\\not-found.tsx": {
+    "mtime": 1779609634.1141102,
+    "ast_hash": "86fb5020e65431918f27ffd6d9fe87e0",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\app\\track\\[token]\\page.tsx": {
+    "mtime": 1779609634.1151094,
+    "ast_hash": "4ca855d9316b9aa36f19aa185d03e0ba",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\app-shell.tsx": {
+    "mtime": 1779609673.7881005,
+    "ast_hash": "a14bd4e5b830fb2dc4f62b031a788cee",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\mobile-bottom-nav.tsx": {
+    "mtime": 1779609634.11711,
+    "ast_hash": "ed26da575000f48cb70fae49bb415b3b",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\offline-access-notice.tsx": {
+    "mtime": 1779609634.11711,
+    "ast_hash": "f257323e22347888b59dab547689d826",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\print-receipt-modal.tsx": {
+    "mtime": 1779609634.1335814,
+    "ast_hash": "a4d8e6e7708c99315cdd5afafe4349a6",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\pwa-init.tsx": {
+    "mtime": 1779609634.134582,
+    "ast_hash": "87201beb77972e9217c36409eca9e804",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\qr-scanner.tsx": {
+    "mtime": 1779609634.1355839,
+    "ast_hash": "9ef87c4c658f45ce0d9375e444a83d2f",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\report-pdf.tsx": {
+    "mtime": 1779609871.2039585,
+    "ast_hash": "901d03f705c91051b87eae0a12914c92",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\sidebar.tsx": {
+    "mtime": 1779609634.136584,
+    "ast_hash": "9d6962861aa93bffb54fb00e3207bd42",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\sync-status-detail.tsx": {
+    "mtime": 1779609634.1375806,
+    "ast_hash": "91a9a945dcf03d63c935f1b584fae475",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\theme-provider.tsx": {
+    "mtime": 1779609634.1375806,
+    "ast_hash": "14d10c7a17782fd47cb1057bc3d9baa5",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\topnav.tsx": {
+    "mtime": 1779609634.1385827,
+    "ast_hash": "4272db877e67f639005878554d7872f4",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\transaction-detail-modal.tsx": {
+    "mtime": 1779609634.139583,
+    "ast_hash": "b903b1688edec0f4e8f9c1559ef0b255",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\transaction-edit-modal.tsx": {
+    "mtime": 1779609634.1403837,
+    "ast_hash": "58e9f6e5a5e49e2c95b21d407703d8b9",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\pages\\audit-logs.tsx": {
+    "mtime": 1779609634.118112,
+    "ast_hash": "79733e12d82fde35430a924a21b328dd",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\pages\\claim-verification.tsx": {
+    "mtime": 1779609634.1201093,
+    "ast_hash": "98cb6ce8f5c041e41f68e5c4ff596298",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\pages\\dashboard.tsx": {
+    "mtime": 1779609634.1201093,
+    "ast_hash": "0d57ff0816fa1b8d004b26e6063be606",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\pages\\data-import.tsx": {
+    "mtime": 1779609634.121109,
+    "ast_hash": "4482b2717941e856d4d7fdbc267d61f7",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\pages\\login.tsx": {
+    "mtime": 1779609634.12311,
+    "ast_hash": "e43b6e1176062defee619796860b9a66",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\pages\\loyalty.tsx": {
+    "mtime": 1779609634.1235783,
+    "ast_hash": "bb228a5c8cb071496ddc770d87ab75ba",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\pages\\processing.tsx": {
+    "mtime": 1779609634.1245837,
+    "ast_hash": "cbdee36b4b932020598a7d97ab3d61b7",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\pages\\profile.tsx": {
+    "mtime": 1779609634.125581,
+    "ast_hash": "f2a352227aa8023fa7953d0eff6c4c33",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\pages\\register.tsx": {
+    "mtime": 1779609634.1265838,
+    "ast_hash": "64f912883b8ede08ac2f78dbeafd87cc",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\pages\\reports.tsx": {
+    "mtime": 1779609832.7182565,
+    "ast_hash": "9a80fb2e2b7e9e4055edbe3e4ef36cc0",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\pages\\settings.tsx": {
+    "mtime": 1779609634.1295824,
+    "ast_hash": "3ac34c141661360433f81f5a78521647",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\pages\\staff-login.tsx": {
+    "mtime": 1779609634.1295824,
+    "ast_hash": "0e0042a10c6db8b7a0f80104be7e014f",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\pages\\staff-management.tsx": {
+    "mtime": 1779609634.1305802,
+    "ast_hash": "7770dbc95786baaef5cfd29a7850fbb4",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\pages\\transactions.tsx": {
+    "mtime": 1779609634.1335814,
+    "ast_hash": "76bdd90d31ccc3dded490cb85c53093f",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\accordion.tsx": {
+    "mtime": 1779609634.1423876,
+    "ast_hash": "b179bd0dd7c69ea3b8d39d80046ca6fb",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\alert-dialog.tsx": {
+    "mtime": 1779609634.1423876,
+    "ast_hash": "a57dd43e322d6e0284b4a717f0a1ea3f",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\alert.tsx": {
+    "mtime": 1779609634.1433852,
+    "ast_hash": "916507655c1a82e9fd3f06cae4e4fc9c",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\aspect-ratio.tsx": {
+    "mtime": 1779609634.1433852,
+    "ast_hash": "9a7b5b0677b0e7f7fd6b2d376081b9b9",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\avatar.tsx": {
+    "mtime": 1779609634.1443858,
+    "ast_hash": "1720f59a8e08fae26e3d7af85a54f1e1",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\badge.tsx": {
+    "mtime": 1779609634.1453893,
+    "ast_hash": "ebe4c1537525cac6115da8cc7520c864",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\breadcrumb.tsx": {
+    "mtime": 1779609634.1453893,
+    "ast_hash": "ea590ea463a0e58de7e35696e55a9f09",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\button-group.tsx": {
+    "mtime": 1779609634.1466677,
+    "ast_hash": "e16c2b0ab553f01f9455a5e0cb88eba9",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\button.tsx": {
+    "mtime": 1779609634.147751,
+    "ast_hash": "cc308e419deedcab98521e38f9592101",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\calendar.tsx": {
+    "mtime": 1779609634.147751,
+    "ast_hash": "c5a61da26416e85081a04e02d378f218",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\card.tsx": {
+    "mtime": 1779609634.1487622,
+    "ast_hash": "a3f12d75b687553c356e1cad4c6fd63e",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\carousel.tsx": {
+    "mtime": 1779609634.1495593,
+    "ast_hash": "ece75ae70bc33e55d9ac5c5fb7699721",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\chart.tsx": {
+    "mtime": 1779609634.1495593,
+    "ast_hash": "206ca2adbcfb31edcaadc84e1c752267",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\checkbox.tsx": {
+    "mtime": 1779609634.1495593,
+    "ast_hash": "21b650ad02bd3e16a5293c9a96c3275c",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\collapsible.tsx": {
+    "mtime": 1779609634.1495593,
+    "ast_hash": "66760be0c5e5e549b9dfc81a04a995a0",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\command.tsx": {
+    "mtime": 1779609634.1495593,
+    "ast_hash": "a9311b780841672a9c052e53c10e0274",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\context-menu.tsx": {
+    "mtime": 1779609634.1495593,
+    "ast_hash": "0657fb26fea9a217ee58253a5ed07c81",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\dialog.tsx": {
+    "mtime": 1779609634.1495593,
+    "ast_hash": "274c33053865d4383c70445baddfe8f8",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\drawer.tsx": {
+    "mtime": 1779609634.1536906,
+    "ast_hash": "f3821accf3853ea56382259f208d20e6",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\dropdown-menu.tsx": {
+    "mtime": 1779609634.1536906,
+    "ast_hash": "9adcf8a1328e33178fe840b63d7e2eba",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\empty.tsx": {
+    "mtime": 1779609634.1536906,
+    "ast_hash": "f128701e879017eb907893d620583301",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\field.tsx": {
+    "mtime": 1779609634.1536906,
+    "ast_hash": "c54831ea816208a5ff4303a5920afe95",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\form.tsx": {
+    "mtime": 1779609634.1536906,
+    "ast_hash": "c9063eb498a6311cb5df927b545b04c5",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\hover-card.tsx": {
+    "mtime": 1779609634.1536906,
+    "ast_hash": "81068f604ac26d8be5b3f7200171cb62",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\input-group.tsx": {
+    "mtime": 1779609634.15787,
+    "ast_hash": "c09f7c951cfa1ad541e85a62589da57a",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\input-otp.tsx": {
+    "mtime": 1779609634.1588697,
+    "ast_hash": "81a4bc8a5df25e6e83434387ae669ce8",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\input.tsx": {
+    "mtime": 1779609634.1588697,
+    "ast_hash": "d7b0b07df86dfbe71af4332544dc251c",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\item.tsx": {
+    "mtime": 1779609634.1598687,
+    "ast_hash": "f208715bc4e07e96323ba2784430b38f",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\kbd.tsx": {
+    "mtime": 1779609634.1608982,
+    "ast_hash": "60fea1bcdca7fdb942d5a4f5ea5489c7",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\label.tsx": {
+    "mtime": 1779609634.161869,
+    "ast_hash": "7e7baf4cd009ec0e00aa6f8caa367904",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\menubar.tsx": {
+    "mtime": 1779609634.1628697,
+    "ast_hash": "74f88732f185a5cf36d347652d4a61bf",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\navigation-menu.tsx": {
+    "mtime": 1779609634.1628697,
+    "ast_hash": "9350b6186265a90e331322a2d26ca310",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\pagination.tsx": {
+    "mtime": 1779609634.1638703,
+    "ast_hash": "b383e60afbe9206c9f3e51bf5aa84f60",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\popover.tsx": {
+    "mtime": 1779609634.1648674,
+    "ast_hash": "69e5f5edb0ad06d3a475c2e66135a8e2",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\progress.tsx": {
+    "mtime": 1779609634.1658678,
+    "ast_hash": "1d549779d0365e6d16eecc646fc115bd",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\radio-group.tsx": {
+    "mtime": 1779609634.1668723,
+    "ast_hash": "4fb370b6af72833bd1bdd1fb7f7e4324",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\resizable.tsx": {
+    "mtime": 1779609634.1678677,
+    "ast_hash": "c67c0a2d7de300dfb3cc6142b5c6043b",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\scroll-area.tsx": {
+    "mtime": 1779609634.1688676,
+    "ast_hash": "5d80e4d2b406df4d12e0d31d07cc4b23",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\select.tsx": {
+    "mtime": 1779609634.1688676,
+    "ast_hash": "ffcb4591d8c2aaf37c57b16da2307aa7",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\separator.tsx": {
+    "mtime": 1779609634.169868,
+    "ast_hash": "af33ecd2304792337fb75e28cc7d3902",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\sheet.tsx": {
+    "mtime": 1779609634.1712496,
+    "ast_hash": "9064de6b868a8b6678fa9002edca0f68",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\sidebar.tsx": {
+    "mtime": 1779609634.171784,
+    "ast_hash": "98a5576f524b5662a1a9d74231f09b2a",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\skeleton.tsx": {
+    "mtime": 1779609634.1727755,
+    "ast_hash": "484f814341cb6db488509951f240abef",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\slider.tsx": {
+    "mtime": 1779609634.173474,
+    "ast_hash": "c90d6e414144a5f491b53b20a9b5b7b2",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\sonner.tsx": {
+    "mtime": 1779609634.1735814,
+    "ast_hash": "8cb1e6930bce231ddcbf04b3936c2f99",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\spinner.tsx": {
+    "mtime": 1779609634.1745863,
+    "ast_hash": "927d834b81f30858a59612fceb088d44",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\switch.tsx": {
+    "mtime": 1779609634.1745863,
+    "ast_hash": "57e0e7becfa9e87184abbd7b27fb2be7",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\table.tsx": {
+    "mtime": 1779609634.175588,
+    "ast_hash": "75be3ed6400ca0ac766980a4a31c4693",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\tabs.tsx": {
+    "mtime": 1779609634.175588,
+    "ast_hash": "f6fbce814ef715cc4acd7383d8142d9f",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\textarea.tsx": {
+    "mtime": 1779609634.176586,
+    "ast_hash": "540c5cd983f576f9722171ad320d65f9",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\toast.tsx": {
+    "mtime": 1779609634.176586,
+    "ast_hash": "ab6482e34a32f163eafaed10236be362",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\toaster.tsx": {
+    "mtime": 1779609634.1775844,
+    "ast_hash": "c1dfdd89ee8a7ce4081c5e722fc19dd2",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\toggle-group.tsx": {
+    "mtime": 1779609634.1775844,
+    "ast_hash": "57d2950d0594a219246d66d1e41a155f",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\toggle.tsx": {
+    "mtime": 1779609634.178586,
+    "ast_hash": "d62db05a28945f77154f97e1b8512e83",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\tooltip.tsx": {
+    "mtime": 1779609634.178586,
+    "ast_hash": "bdba705d4511c7bf839403a35a0e6885",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\use-mobile.tsx": {
+    "mtime": 1779609634.1791804,
+    "ast_hash": "fcf1955a57df5349b5d0e9744f75921c",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\components\\ui\\use-toast.ts": {
+    "mtime": 1779609634.180788,
+    "ast_hash": "3225508c71554a17387c67bc46ada1c1",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\hooks\\use-audit-logs.ts": {
+    "mtime": 1779609634.181666,
+    "ast_hash": "1bd5dd4476b856b80d86c2d55d65b4d6",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\hooks\\use-loyalty-members.ts": {
+    "mtime": 1779609634.1821914,
+    "ast_hash": "1dfb4715c6769394d7763ed1845086a0",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\hooks\\use-mobile.ts": {
+    "mtime": 1779609634.1821914,
+    "ast_hash": "fcf1955a57df5349b5d0e9744f75921c",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\hooks\\use-staff-accounts.ts": {
+    "mtime": 1779609634.1831892,
+    "ast_hash": "dcaa6b93f8e9e5b65fcadea1ff492547",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\hooks\\use-toast.ts": {
+    "mtime": 1779609634.1831892,
+    "ast_hash": "3225508c71554a17387c67bc46ada1c1",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\hooks\\use-transactions.ts": {
+    "mtime": 1779609634.1841905,
+    "ast_hash": "cb9389b23464c62d21912b61696b41b9",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\hooks\\usePeakHours.ts": {
+    "mtime": 1779609634.1856,
+    "ast_hash": "80e85682d892286c34786a8d24c4c911",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\lib\\admin-auth.ts": {
+    "mtime": 1779609634.1861296,
+    "ast_hash": "1d54e2975963a58d785d9bbf3bdeed95",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\lib\\audit-log-contracts.ts": {
+    "mtime": 1779609634.1866562,
+    "ast_hash": "eed885914ca25c62295a141df79c70c1",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\lib\\auth.ts": {
+    "mtime": 1779609634.1866562,
+    "ast_hash": "e25a44ce2909127df5d16f1587960375",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\lib\\business-profile.ts": {
+    "mtime": 1779609634.1877258,
+    "ast_hash": "2cba981dad50e91d17f3d7966f2a0ade",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\lib\\data.ts": {
+    "mtime": 1779609634.1882515,
+    "ast_hash": "28b50f9baacd227e489d590bc2f13b56",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\lib\\date-format.ts": {
+    "mtime": 1779609634.1882515,
+    "ast_hash": "1ab4492f3c27b13a7e9b7b7ad088b1c8",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\lib\\format-arrival-time.ts": {
+    "mtime": 1779609634.18925,
+    "ast_hash": "ecf413b8fb2633438d1626b1544197aa",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\lib\\network-status.ts": {
+    "mtime": 1779609634.1912305,
+    "ast_hash": "c52ba4e9347df177374b6991db6bf90e",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\lib\\offline-settings-sync.ts": {
+    "mtime": 1779609634.1912305,
+    "ast_hash": "dc0c7d7c5eee26e21798c1ac0a2c6d41",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\lib\\offline-storage-adapter.ts": {
+    "mtime": 1779609634.1922321,
+    "ast_hash": "0dad48caa9ecaf9aafa5c9c5cf698331",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\lib\\offline-transactions.ts": {
+    "mtime": 1779609634.1932323,
+    "ast_hash": "3dc5c07053d1695a5be9ba213b0dd6f9",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\lib\\settings-store.ts": {
+    "mtime": 1779609634.2004888,
+    "ast_hash": "0ab26d1c244e0d1acecce49c85af4192",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\lib\\staff-contracts.ts": {
+    "mtime": 1779609634.2014883,
+    "ast_hash": "f4a6a01a362a297f739ac9aa1460bafd",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\lib\\supabase.ts": {
+    "mtime": 1779609634.2014883,
+    "ast_hash": "b24f04fb9d648e6e18e0f02a239a25c5",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\lib\\transaction-contracts.ts": {
+    "mtime": 1779609634.20449,
+    "ast_hash": "c06f5253a1d736dca5df1d6f270dfdf3",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\lib\\utils.ts": {
+    "mtime": 1779609634.205489,
+    "ast_hash": "d5fc3afa79f0c3df711898805e5da7b2",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\lib\\server\\audit-log-repository.ts": {
+    "mtime": 1779609634.1942863,
+    "ast_hash": "245a9c2959f875fe72151041283de2d0",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\lib\\server\\laundry-repository.ts": {
+    "mtime": 1779609634.195416,
+    "ast_hash": "b6a075c8bf2289d7bdf0ca40ea39220d",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\lib\\server\\loyalty-repository.ts": {
+    "mtime": 1779609634.1959445,
+    "ast_hash": "831da708274a7748074f62ee2195887e",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\lib\\server\\request-auth.ts": {
+    "mtime": 1779609634.1959445,
+    "ast_hash": "75fdb25efee6c7b7f2c597f5ac85c794",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\lib\\server\\request-meta.ts": {
+    "mtime": 1779609634.1984887,
+    "ast_hash": "2385ef3db40f49c36df23a7bc76bc7e4",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\lib\\server\\staff-repository.ts": {
+    "mtime": 1779609634.1994894,
+    "ast_hash": "c8b71569bc0023f591d029920fdafec2",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\lib\\server\\ttl-cache.ts": {
+    "mtime": 1779609634.2004888,
+    "ast_hash": "5d181dd25eb4ea759755df868773ce87",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\lib\\supabase\\admin.ts": {
+    "mtime": 1779609634.2024884,
+    "ast_hash": "5a39ec5757dff1fadbe738a6a8a6ad80",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\lib\\supabase\\browser-session.ts": {
+    "mtime": 1779609634.2034893,
+    "ast_hash": "fcb84067ae5e551bfb5f6405b250e032",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\lib\\supabase\\client.ts": {
+    "mtime": 1779609634.2034893,
+    "ast_hash": "03bd75f8770d92e2077624e8e3d5c528",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\lib\\supabase\\config.ts": {
+    "mtime": 1779609634.20449,
+    "ast_hash": "547da5de7359586510402665eb178ef1",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\public\\sw.js": {
+    "mtime": 1779609634.2208927,
+    "ast_hash": "165d9db473d920949b2db004166e2716",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\scripts\\001_create_tables.sql": {
+    "mtime": 1779609634.2208927,
+    "ast_hash": "bd486503fbe651a0bafc77b41a94cc6a",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\scripts\\002_public_qr_tracking.sql": {
+    "mtime": 1779609634.2218919,
+    "ast_hash": "e5ea37779bf6a7d91bc1ca7c9c4d06a0",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\scripts\\003_staff_management_realtime.sql": {
+    "mtime": 1779609634.2228935,
+    "ast_hash": "eff691447a7905db0bd38177a0911425",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\scripts\\004_audit_logs_realtime.sql": {
+    "mtime": 1779609634.2235658,
+    "ast_hash": "85b0188585987a15c8241c77c5048bf3",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\scripts\\005_fix_profiles_email.sql": {
+    "mtime": 1779609634.22457,
+    "ast_hash": "d3bb66331c255fd2fe2c0fcbbeded4f7",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\scripts\\006_add_processing_status.sql": {
+    "mtime": 1779609634.2255695,
+    "ast_hash": "c70f8abaef6e139ed9a288b370bd1440",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\scripts\\bootstrap-supabase.mjs": {
+    "mtime": 1779609634.2255695,
+    "ast_hash": "99262e9a92e389a3c491bf458688fa23",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\scripts\\install-packages.mjs": {
+    "mtime": 1779609634.226364,
+    "ast_hash": "08e64e60ab7f13213e84d49b003e74bc",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\scripts\\install-packages.sh": {
+    "mtime": 1779609634.227891,
+    "ast_hash": "cd040dbceb49e0cf0d7ab430703bed0a",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\supabase\\setup_avatars_bucket.sql": {
+    "mtime": 1779609634.2320924,
+    "ast_hash": "2a7e23e5117e12e83ef12ffeeb2aec00",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\supabase\\migrations\\001_create_transactions_table.sql": {
+    "mtime": 1779609634.230892,
+    "ast_hash": "956744beda2a64e8090e69fcbbde8e03",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\DARK_MODE_IMPROVEMENTS.md": {
+    "mtime": 1779609634.0885828,
+    "ast_hash": "54d9c5bbc732e5d93d8e302a685b464d",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\MODAL_FIX_COMPLETE.md": {
+    "mtime": 1779609634.0885828,
+    "ast_hash": "d202a6d5e10b91cb21fa38051097d6eb",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\MODAL_TEST_CHECKLIST.md": {
+    "mtime": 1779609634.090417,
+    "ast_hash": "a624e7b22e549ae4eef577b0c0c8f8f4",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\PEAK_HOURS_IMPLEMENTATION.md": {
+    "mtime": 1779609634.090417,
+    "ast_hash": "c89ba04042a2a24419c5ee4f45dcd057",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\pnpm-workspace.yaml": {
+    "mtime": 1779609634.213896,
+    "ast_hash": "e3441c1bf00ce2bf20c1c913fbd2c277",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\PROCESSING_STATUS_REMOVAL.md": {
+    "mtime": 1779609634.0935838,
+    "ast_hash": "1a902a6b2548281aaa1d1834e82b8593",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\PWA_COMPLETION_SUMMARY.md": {
+    "mtime": 1779609634.0945818,
+    "ast_hash": "eb60619af2449f1146762f05fc074e0f",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\PWA_OFFLINE_FEATURES.md": {
+    "mtime": 1779609634.0945818,
+    "ast_hash": "2eeaa5b805f6f353042b8edfa967c7db",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\PWA_QUICK_REFERENCE.md": {
+    "mtime": 1779609634.0955834,
+    "ast_hash": "e5475f46a0fff9d7b1b8353b9a5a621f",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\PWA_README.md": {
+    "mtime": 1779609634.0965824,
+    "ast_hash": "a00adee8782ce1a64138854db66e53a9",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\PWA_VERIFICATION_CHECKLIST.md": {
+    "mtime": 1779609634.0965824,
+    "ast_hash": "a03233a0462a576cdea6a7e5bf19493f",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\README.md": {
+    "mtime": 1779609634.097583,
+    "ast_hash": "cb660b75646f0a2e76baf3a5cc45fe8c",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\SECURITY.md": {
+    "mtime": 1779609634.097583,
+    "ast_hash": "81051bcc2cf1bedf378224b0a93e2877",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\SETTINGS_PERSISTENCE.md": {
+    "mtime": 1779609634.097583,
+    "ast_hash": "21a9c3802c9dda10899ddafbab38d5a1",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\.agents\\skills\\supabase\\SKILL.md": {
+    "mtime": 1779609634.079499,
+    "ast_hash": "246802af013c0f342fba5c326e3ef9da",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\.agents\\skills\\supabase\\assets\\feedback-issue-template.md": {
+    "mtime": 1779609634.0806239,
+    "ast_hash": "e2c8b4f1a20e46315dd7609540d9b8d4",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\.agents\\skills\\supabase\\references\\skill-feedback.md": {
+    "mtime": 1779609634.081174,
+    "ast_hash": "c9fa098e2ec8bdce9d6a0f8a64d2c6c0",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\.claude\\rules\\cross-agent-protocol.md": {
+    "mtime": 1779609634.0822604,
+    "ast_hash": "bfe7cc328b5b907897b817a891209863",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\.clinerules\\autobuild.md": {
+    "mtime": 1779609634.082804,
+    "ast_hash": "96b9f200ba16a2532f3b5806e33de0ad",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\.clinerules\\cross-agent-protocol.md": {
+    "mtime": 1779609634.0833454,
+    "ast_hash": "719d98c038f9e5e3164963b0a599c557",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\.clinerules\\cross-agent.md": {
+    "mtime": 1779609634.0838904,
+    "ast_hash": "f49e6124974af1d8cbd0bf53ddaa18e3",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\.clinerules\\kdream.md": {
+    "mtime": 1779609634.0844352,
+    "ast_hash": "8f065347df37356146b519032cc8c12d",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\.clinerules\\mateam.md": {
+    "mtime": 1779609634.0849757,
+    "ast_hash": "b6d0b386736fc92787c5c30de246411f",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\.clinerules\\orchestrate.md": {
+    "mtime": 1779609634.0855246,
+    "ast_hash": "0bc9237a8517a4377ac04df81c8c43d6",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\.github\\workflows\\codeql.yml": {
+    "mtime": 1779609634.0867202,
+    "ast_hash": "debeac896e98fa7eee7818aae3bf5b31",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\supabase\\README.md": {
+    "mtime": 1779609634.2298903,
+    "ast_hash": "1d51453de8c6410940e4ce0cd25b085b",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\public\\apple-icon.png": {
+    "mtime": 1779609634.2148936,
+    "ast_hash": "734ce6c878789fcd5843e8a7963e0756",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\public\\icon-dark-32x32.png": {
+    "mtime": 1779609634.2148936,
+    "ast_hash": "abd5ebe9e287ca0a89f4fd3da2b5cf9c",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\public\\icon-light-32x32.png": {
+    "mtime": 1779609634.2168934,
+    "ast_hash": "53426c910bcab7d3e5213cc64aa1b2c5",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\public\\icon.svg": {
+    "mtime": 1779609634.2168934,
+    "ast_hash": "0285a820d3fb2d06a9fb098ef84c1174",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\public\\placeholder-logo.png": {
+    "mtime": 1779609634.217893,
+    "ast_hash": "95d8d1a4a9bbcccc875e2c381e74064a",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\public\\placeholder-logo.svg": {
+    "mtime": 1779609634.2188938,
+    "ast_hash": "1e16dc7df824652c5906a2ab44aef78c",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\public\\placeholder-user.jpg": {
+    "mtime": 1779609634.2188938,
+    "ast_hash": "7ee6562646feae6d6d77e2c72e204591",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\public\\placeholder.jpg": {
+    "mtime": 1779609634.2198913,
+    "ast_hash": "1e533b7b4545d1d605144ce893afc601",
+    "semantic_hash": ""
+  },
+  "F:\\PRGRAM FILES\\VS CODE REPO\\processing-page-forecast\\public\\placeholder.svg": {
+    "mtime": 1779609634.2198913,
+    "ast_hash": "35707bd9960ba5281c72af927b79291f",
+    "semantic_hash": ""
+  }
+}
