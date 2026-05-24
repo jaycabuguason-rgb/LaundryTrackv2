@@ -224,7 +224,7 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
             onResolveScannedValue={resolveScannedValue}
           />
         );
-      case "reports": return <ReportsPage transactions={txns} />;
+      case "reports": return <ReportsPage transactions={txns} shopName={businessProfile.shopName} />;
       case "settings-pricing":
       case "settings-service-types":
       case "settings-backup":
