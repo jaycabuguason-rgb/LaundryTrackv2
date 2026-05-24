@@ -7,6 +7,12 @@ import {
   RefreshCw,
   Search,
   X,
+  Inbox,
+  RotateCw,
+  Wind,
+  Flag,
+  PackageCheck,
+  Ban,
 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,14 +59,15 @@ const STAGES: TransactionStatus[] = ["Received", "Washing", "Drying", "Ready"];
 const ALL_STATUS_OPTIONS: {
   status: TransactionStatus;
   label: string;
-  dotClass: string;
+  dotClass?: string;
+  icon?: any;
 }[] = [
-  { status: "Received",   label: "Received",   dotClass: "bg-blue-500"   },
-  { status: "Washing",    label: "Washing",     dotClass: "bg-yellow-500" },
-  { status: "Drying",     label: "Drying",      dotClass: "bg-orange-500" },
-  { status: "Ready",      label: "Ready",       dotClass: "bg-green-500"  },
-  { status: "Claimed",    label: "Claimed",     dotClass: "bg-gray-500"   },
-  { status: "Voided",     label: "Voided",      dotClass: "bg-red-500"    },
+  { status: "Received",   label: "Received",    icon: Inbox },
+  { status: "Washing",    label: "Washing",     icon: RotateCw },
+  { status: "Drying",     label: "Drying",      icon: Wind },
+  { status: "Ready",      label: "Ready",       icon: Flag },
+  { status: "Claimed",    label: "Claimed",     icon: PackageCheck },
+  { status: "Voided",     label: "Voided",      icon: Ban },
 ];
 
 /** Statuses that require a confirmation dialog before applying */
@@ -450,33 +457,29 @@ export default function ProcessingPage({
                                 <ChevronDown className="h-3 w-3" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="min-w-[180px]">
-                              {ALL_STATUS_OPTIONS.map(({ status, label, dotClass }) => {
+                            <DropdownMenuContent align="end" className="min-w-[180px] rounded-xl border-border/50 shadow-lg p-1.5">
+                              {ALL_STATUS_OPTIONS.map(({ status, label, icon: Icon }) => {
                                 const isCurrent = txn.status === status;
                                 return (
                                   <DropdownMenuItem
                                     key={status}
                                     disabled={isCurrent}
                                     className={cn(
-                                      "cursor-pointer text-xs gap-2",
-                                      isCurrent && "opacity-50 cursor-default",
+                                      "cursor-pointer rounded-lg mb-1 last:mb-0 focus:bg-muted/40",
+                                      isCurrent && "bg-muted/60 opacity-100 cursor-default",
                                     )}
                                     onClick={() => !isCurrent && handleStatusSelect(txn, status)}
                                   >
-                                    {/* Colored dot */}
-                                    <span
-                                      className={cn(
-                                        "inline-flex h-2 w-2 shrink-0 rounded-full",
-                                        dotClass,
-                                        isCurrent && "ring-2 ring-offset-1 ring-current",
+                                    <div className="flex items-center gap-3 w-full">
+                                      <Icon className={cn("w-4 h-4", isCurrent ? "text-foreground" : "text-muted-foreground")} />
+                                      <span className={cn("font-medium text-sm flex-1", isCurrent ? "text-foreground" : "text-muted-foreground")}>{label}</span>
+                                      {isCurrent && (
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Current</span>
+                                          <Check className="w-3.5 h-3.5 text-muted-foreground" />
+                                        </div>
                                       )}
-                                    />
-                                    {/* Label */}
-                                    <span className="flex-1">{label}</span>
-                                    {/* Checkmark for current */}
-                                    {isCurrent && (
-                                      <Check className="ml-auto h-3 w-3 shrink-0 text-muted-foreground" />
-                                    )}
+                                    </div>
                                   </DropdownMenuItem>
                                 );
                               })}

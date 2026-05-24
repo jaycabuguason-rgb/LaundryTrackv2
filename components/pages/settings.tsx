@@ -83,6 +83,37 @@ function PricingSettings() {
   const buildRange = (from: string, to: string, open: boolean) =>
     from ? (open ? `${from} kg+` : to ? `${from} kg – ${to} kg` : `${from} kg`) : "";
 
+  useEffect(() => {
+    let ignore = false;
+    void fetch("/api/settings/pricing", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok || ignore) return;
+        const data = await response.json().catch(() => ({}));
+        if (ignore) return;
+        
+        if (data.pricingConfig) {
+          setPricingMode(data.pricingConfig.pricingMode);
+          setPricePerKg(data.pricingConfig.pricePerKg);
+          setMinWeight(data.pricingConfig.minWeight);
+          setLoadTiers(data.pricingConfig.loadTiers);
+          setTierHistory([]);
+          setTierFuture([]);
+          persistPricingConfig(data.pricingConfig);
+        }
+        if (data.serviceTypes) {
+          setServices(data.serviceTypes);
+          persistServiceTypes(data.serviceTypes);
+        }
+        if (data.addOns) {
+          setAddOns(data.addOns);
+          persistAddOns(data.addOns);
+        }
+      })
+      .catch(() => undefined);
+
+    return () => { ignore = true; };
+  }, []);
+
   // Tier mutation with history tracking
   const commitTiers = (next: LoadTier[]) => {
     setTierHistory((h) => [...h, loadTiers]);
@@ -275,7 +306,7 @@ function PricingSettings() {
           description: "Pricing changes were queued and will sync when online.",
         });
       } else {
-        await fetch("/api/settings/pricing", {
+        const response = await fetch("/api/settings/pricing", {
           method: "PUT",
           headers: await buildAuthHeaders(),
           body: JSON.stringify({
@@ -284,9 +315,20 @@ function PricingSettings() {
             addOns,
           }),
         });
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data.error || "Failed to save settings.");
+        }
       }
     } catch (error) {
       console.error("Failed to save settings to database:", error);
+      toast({
+        title: "Save Failed",
+        description: error instanceof Error ? error.message : "Failed to save settings.",
+        variant: "destructive",
+      });
+      setSaved(false);
+      return;
     }
     
     setSaved(true);
@@ -1433,16 +1475,26 @@ function LoyaltyProgramSettings({ loyaltyEnabled, onLoyaltyEnabledChange }: Loya
           description: "Loyalty settings were queued and will sync when online.",
         });
       } else {
-        await fetch("/api/settings/pricing", {
+        const response = await fetch("/api/settings/pricing", {
           method: "PUT",
           headers: await buildAuthHeaders(),
           body: JSON.stringify({
             loyaltySettings: { enabled, washesPerReward, rewardDescription },
           }),
         });
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data.error || "Failed to save loyalty settings.");
+        }
       }
     } catch (error) {
       console.error("Failed to save loyalty settings to database:", error);
+      toast({
+        title: "Save Failed",
+        description: error instanceof Error ? error.message : "Failed to save settings.",
+        variant: "destructive",
+      });
+      return;
     }
     
     setSaved(true);
