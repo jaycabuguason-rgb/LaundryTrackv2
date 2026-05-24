@@ -946,7 +946,7 @@ function PricingSettings() {
     {/* ── Fixed Save Bar ───────────────────────────────────────────────────── */}
     <div className="fixed bottom-[72px] left-0 right-0 z-50 flex items-center justify-between gap-3 border-t border-border bg-background px-4 py-2.5 lg:bottom-0 lg:px-6 lg:py-3">
       {saved ? (
-        <div className="flex w-full items-center justify-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-700 animate-in fade-in slide-in-from-bottom-1">
+        <div className="flex items-center justify-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-700 animate-in fade-in slide-in-from-bottom-1 ml-auto">
           <CheckCircle2 className="w-4 h-4 shrink-0" />
           Changes saved successfully!
         </div>
@@ -956,7 +956,7 @@ function PricingSettings() {
           <Button
             size="sm"
             onClick={handleSave}
-            className="flex w-full shrink-0 items-center justify-center gap-1.5 sm:w-auto"
+            className="flex shrink-0 items-center justify-center gap-1.5 ml-auto"
           >
             <Save className="w-3.5 h-3.5" /> Save Changes
           </Button>
