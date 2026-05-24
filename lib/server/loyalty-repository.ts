@@ -6,15 +6,15 @@ import { getPublicSupabaseConfig } from "@/lib/supabase/config";
 export type StampAwardResult =
   | { stamped: false; reason: string }
   | {
-      stamped: true;
-      rewarded: boolean;
-      memberName: string;
-      newStampCount: number;
-      cycleStampCount: number;
-      washesPerReward: number;
-      rewardsAvailable: number;
-      rewardDescription: string;
-    };
+    stamped: true;
+    rewarded: boolean;
+    memberName: string;
+    newStampCount: number;
+    cycleStampCount: number;
+    washesPerReward: number;
+    rewardsAvailable: number;
+    rewardDescription: string;
+  };
 
 type LoyaltyMemberRow = {
   id: string;
@@ -35,6 +35,7 @@ type StampHistoryRow = {
   transaction_id: string | null;
   stamps_added: number;
   source: "auto_claim" | "manual";
+  notes?: string | null;
   created_at: string;
   transactions?: { ticket_id: string } | null;
 };
@@ -126,6 +127,7 @@ export async function createLoyaltyMember(input: {
       phone: input.phone?.trim() ?? "",
       stampCount: 0,
       rewardsRedeemed: 0,
+      rewardsAvailable: 0,
       dateJoined: new Date().toISOString().split("T")[0],
       stampHistory: [],
       rewardHistory: [],
@@ -135,7 +137,7 @@ export async function createLoyaltyMember(input: {
     return newMember;
   }
 
-  const rows = await restRequest<LoyaltyMemberRow[]>("loyalty_members?select=id,full_name,phone_number,stamp_count,rewards_redeemed,preferences,date_joined,created_at", {
+  const rows = await restRequest<LoyaltyMemberRow[]>("loyalty_members?select=id,full_name,phone_number,email,stamp_count,rewards_redeemed,rewards_available,preferences,date_joined,created_at", {
     method: "POST",
     headers: { Prefer: "return=representation" },
     body: JSON.stringify({
@@ -173,11 +175,11 @@ export async function updateLoyaltyMember(
     mockMembers = mockMembers.map((m) =>
       m.id === memberId
         ? {
-            ...m,
-            name: input.name ?? m.name,
-            phone: input.phone ?? m.phone,
-            preferences: input.preferences ?? m.preferences,
-          }
+          ...m,
+          name: input.name ?? m.name,
+          phone: input.phone ?? m.phone,
+          preferences: input.preferences ?? m.preferences,
+        }
         : m
     );
     return;
@@ -275,7 +277,7 @@ export async function getLoyaltyMemberWithHistory(memberId: string): Promise<Loy
     stamps: s.stamps_added,
     ticket: s.transactions?.ticket_id ?? "Manual",
     source: s.source as "auto_claim" | "manual",
-    notes: s.notes,
+    notes: s.notes ?? undefined,
   }));
 
   member.rewardHistory = rewards.map((r) => ({

@@ -1241,7 +1241,7 @@ export default function TransactionsPage({
         status: nextStatus,
         washInstructions: editInstructions || editTxn.washInstructions,
       });
-      setEditTxn(updatedTxn);
+      setEditTxn(updatedTxn.transaction);
       showToast(`Ticket #${editTxn.ticketId} moved to ${nextStatus}`);
       return;
     } catch {
@@ -1265,10 +1265,10 @@ export default function TransactionsPage({
         washInstructions: editInstructions,
       });
       showToast(`Ticket #${editTxn.ticketId} updated successfully`);
-      if (res.loyaltyResult?.rewardUnlocked) {
-        toast({ title: "Reward Unlocked! 🎉", description: `Customer earned a free wash! They now have ${res.loyaltyResult.newStampCount} stamps.` });
-      } else if (res.loyaltyResult?.stampAdded) {
-        toast({ title: "Stamp Added 🌟", description: `Customer now has ${res.loyaltyResult.newStampCount} stamps.` });
+      if (res.loyaltyResult?.stamped && res.loyaltyResult.rewarded) {
+        showToast(`Reward Unlocked! 🎉 Customer earned a free wash! They now have ${res.loyaltyResult.newStampCount} stamps.`);
+      } else if (res.loyaltyResult?.stamped) {
+        showToast(`Stamp Added 🌟 Customer now has ${res.loyaltyResult.newStampCount} stamps.`);
       }
       setEditTxn(null);
       onEditComplete?.();
@@ -1290,10 +1290,10 @@ export default function TransactionsPage({
         washInstructions: editInstructions,
       });
       showToast(`Ticket #${editTxn.ticketId} marked as Claimed`);
-      if (res.loyaltyResult?.rewardUnlocked) {
-        toast({ title: "Reward Unlocked! 🎉", description: `Customer earned a free wash! They now have ${res.loyaltyResult.newStampCount} stamps.` });
-      } else if (res.loyaltyResult?.stampAdded) {
-        toast({ title: "Stamp Added 🌟", description: `Customer now has ${res.loyaltyResult.newStampCount} stamps.` });
+      if (res.loyaltyResult?.stamped && res.loyaltyResult.rewarded) {
+        showToast(`Reward Unlocked! 🎉 Customer earned a free wash! They now have ${res.loyaltyResult.newStampCount} stamps.`);
+      } else if (res.loyaltyResult?.stamped) {
+        showToast(`Stamp Added 🌟 Customer now has ${res.loyaltyResult.newStampCount} stamps.`);
       }
       setEditTxn(null);
       onEditComplete?.();
@@ -1328,10 +1328,10 @@ export default function TransactionsPage({
     try {
       const res = await onUpdateTransaction(mobileStatusTxn.ticketId, { status });
       showToast(`Ticket #${mobileStatusTxn.ticketId} moved to ${status}`);
-      if (res.loyaltyResult?.rewardUnlocked) {
-        toast({ title: "Reward Unlocked! 🎉", description: `Customer earned a free wash! They now have ${res.loyaltyResult.newStampCount} stamps.` });
-      } else if (res.loyaltyResult?.stampAdded) {
-        toast({ title: "Stamp Added 🌟", description: `Customer now has ${res.loyaltyResult.newStampCount} stamps.` });
+      if (res.loyaltyResult?.stamped && res.loyaltyResult.rewarded) {
+        showToast(`Reward Unlocked! 🎉 Customer earned a free wash! They now have ${res.loyaltyResult.newStampCount} stamps.`);
+      } else if (res.loyaltyResult?.stamped) {
+        showToast(`Stamp Added 🌟 Customer now has ${res.loyaltyResult.newStampCount} stamps.`);
       }
       setMobileStatusTxn(null);
     } catch {
