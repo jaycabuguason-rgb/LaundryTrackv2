@@ -144,6 +144,10 @@ export async function createLoyaltyMember(input: {
       full_name: input.name.trim(),
       phone_number: input.phone?.trim() || null,
       preferences: input.preferences ?? "",
+      stamp_count: 0,
+      rewards_redeemed: 0,
+      rewards_available: 0,
+      date_joined: new Date().toISOString().split("T")[0],
     }),
   });
 
