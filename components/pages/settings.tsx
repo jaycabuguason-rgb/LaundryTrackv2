@@ -85,7 +85,8 @@ function PricingSettings() {
 
   useEffect(() => {
     let ignore = false;
-    void fetch("/api/settings/pricing", { cache: "no-store" })
+    void buildAuthHeaders()
+      .then(headers => fetch("/api/settings/pricing", { cache: "no-store", headers }))
       .then(async (response) => {
         if (!response.ok || ignore) return;
         const data = await response.json().catch(() => ({}));
@@ -192,9 +193,8 @@ function PricingSettings() {
   useEffect(() => {
     let ignore = false;
 
-    void fetch("/api/settings/pricing", {
-      cache: "no-store",
-    })
+    void buildAuthHeaders()
+      .then(headers => fetch("/api/settings/pricing", { cache: "no-store", headers }))
       .then(async (response) => {
         const data = await response.json().catch(() => ({}));
         if (!response.ok || ignore) return;

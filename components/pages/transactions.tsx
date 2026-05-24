@@ -329,12 +329,21 @@ function NewTransactionWizard({
 
       // Fetch latest settings from server in background to sync
       let ignore = false;
-      void fetch("/api/settings/pricing", { cache: "no-store" })
-        .then(async (response) => {
-          const data = await response.json().catch(() => ({}));
-          if (!response.ok || ignore) return;
+      void (async () => {
+        const headers: Record<string, string> = {};
+        const { getBrowserAccessToken } = await import("@/lib/supabase/browser-session");
+        const { getSupabaseBrowserClient } = await import("@/lib/supabase/client");
+        if (getSupabaseBrowserClient()) {
+          const token = await getBrowserAccessToken();
+          if (token) headers.Authorization = `Bearer ${token}`;
+        }
+        if (ignore) return;
+        const response = await fetch("/api/settings/pricing", { cache: "no-store", headers }).catch(() => null);
+        if (!response || ignore) return;
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || ignore) return;
 
-          if (data.pricingConfig) {
+        if (data.pricingConfig) {
             persistPricingConfig(data.pricingConfig);
             setBasePerKg(data.pricingConfig.pricePerKg || "0");
             setMinWeightSetting(data.pricingConfig.minWeight || "0");
@@ -354,8 +363,7 @@ function NewTransactionWizard({
             persistAddOns(data.addOns);
             setAddOnOptions(data.addOns);
           }
-        })
-        .catch(() => undefined);
+      })();
 
       return () => { ignore = true; };
     }
