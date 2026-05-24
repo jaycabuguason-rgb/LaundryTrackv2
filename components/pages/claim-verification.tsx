@@ -244,7 +244,7 @@ export default function ClaimVerificationPage({
             <CardTitle className="text-sm font-semibold">Manual Lookup</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -436,7 +436,48 @@ export default function ClaimVerificationPage({
           <CardTitle className="text-sm font-semibold">Audit Log</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          <div className="divide-y divide-border md:hidden">
+            {logs.map((log) => (
+              <div key={log.id} className="space-y-3 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-mono text-xs font-semibold text-primary">{log.ticketId}</p>
+                    <p className="mt-0.5 truncate text-sm font-medium text-foreground">{log.customerName || "-"}</p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">{log.dateTime}</p>
+                  </div>
+                  <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium", actionBadgeColor(log.action))}>
+                    {log.action}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 rounded-md bg-muted/30 p-2.5">
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">Payment</p>
+                    {log.paymentStatus ? (
+                      <span
+                        className={cn(
+                          "mt-0.5 inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase",
+                          log.paymentStatus === "paid" ? "bg-green-500 text-white" : "bg-red-500 text-white",
+                        )}
+                      >
+                        {log.paymentStatus}
+                      </span>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">-</p>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">Staff</p>
+                    <p className="mt-0.5 text-xs font-medium text-foreground">{log.staff}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-[10px] text-muted-foreground">Notes</p>
+                    <p className="mt-0.5 text-xs text-foreground">{log.notes || "-"}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full min-w-[700px] text-sm">
               <thead>
                 <tr className="border-y border-border bg-muted/40">

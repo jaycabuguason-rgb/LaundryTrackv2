@@ -13,6 +13,7 @@ import {
 } from "@/lib/offline-transactions";
 import { isOnline, subscribeNetworkStatus } from "@/lib/network-status";
 import { getBrowserAccessToken } from "@/lib/supabase/browser-session";
+import { refreshBrowserSession } from "@/lib/supabase/browser-session";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { CreateTransactionInput, UpdateTransactionInput } from "@/lib/transaction-contracts";
 
@@ -29,19 +30,34 @@ interface ResolveResponse {
 }
 
 async function readJson<T>(response: Response): Promise<T> {
-  const data = await response.json().catch(() => ({}));
+  const rawText = await response.text();
+  let data: unknown = {};
+  if (rawText) {
+    try {
+      data = JSON.parse(rawText) as unknown;
+    } catch {
+      data = {};
+    }
+  }
   if (!response.ok) {
+    const fallbackText = rawText.trim();
     const message =
       typeof data === "object" && data && "error" in data && typeof data.error === "string"
         ? data.error
-        : "Request failed.";
+        : fallbackText
+          ? `Request failed (${response.status}): ${fallbackText.slice(0, 300)}`
+          : `Request failed (${response.status}).`;
     throw new Error(message);
   }
   return data as T;
 }
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
-  const accessToken = await getBrowserAccessToken();
+  let accessToken = await getBrowserAccessToken();
+  if (!accessToken) {
+    const refreshed = await refreshBrowserSession();
+    accessToken = refreshed?.access_token ?? null;
+  }
   if (!accessToken) {
     return {};
   }
@@ -123,9 +139,12 @@ export function useTransactions() {
         }
       }
       setError(null);
+      setLastSyncError(null);
       setSyncStatus("online");
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Unable to load transactions.");
+      const message = requestError instanceof Error ? requestError.message : "Unable to load transactions.";
+      setError(message);
+      setLastSyncError(message);
       setSyncStatus(isOnline() ? "error" : "offline");
     } finally {
       setLoading(false);

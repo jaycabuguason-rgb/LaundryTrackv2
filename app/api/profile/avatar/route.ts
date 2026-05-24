@@ -63,7 +63,8 @@ export async function POST(req: NextRequest) {
       });
 
     if (uploadError) {
-      console.error("[avatar-upload] Storage error:", uploadError);
+      const safeMsg = uploadError.message.replace(/[\r\n]/g, " ");
+      console.error("[avatar-upload] Storage error:", safeMsg);
       return NextResponse.json(
         { error: uploadError.message },
         { status: 500 },

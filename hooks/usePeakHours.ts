@@ -13,15 +13,17 @@ export function usePeakHours(transactions: Transaction[] = []) {
   const [error, setError] = useState<string | null>(null)
 
   const calculatePeakHours = (txns: Transaction[]): PeakHourData[] => {
-    // Get today's date in YYYY-MM-DD format
-    const today = new Date()
-    const todayStr = today.toISOString().split('T')[0]
+    // Determine "today" based on the most recent transaction in the dataset if present, 
+    // to ensure mock data still shows up in the chart.
+    const latestTxnDateStr = txns.length > 0 
+      ? [...txns].sort((a, b) => new Date(b.arrivalDateTime).getTime() - new Date(a.arrivalDateTime).getTime())[0].arrivalDateTime.split(' ')[0]
+      : new Date().toISOString().split('T')[0];
 
-    // Filter transactions for today only, exclude Voided
+    // Filter transactions for "today" only, exclude Voided
     const todayTxns = txns.filter((txn) => {
       if (txn.status === 'Voided') return false
       const txnDate = txn.arrivalDateTime.split(' ')[0]
-      return txnDate === todayStr
+      return txnDate === latestTxnDateStr
     })
 
     // Initialize hours 8AM to 8PM

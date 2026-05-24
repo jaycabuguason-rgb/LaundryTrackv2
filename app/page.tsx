@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import AppShell from "@/components/app-shell";
+import dynamic from "next/dynamic";
 import LoginPage from "@/components/pages/login";
 import StaffLoginPage from "@/components/pages/staff-login";
 import {
@@ -10,9 +10,10 @@ import {
   signInAdmin,
   signOutAdmin,
 } from "@/lib/admin-auth";
-import { authenticateStaff, type UserProfile } from "@/lib/auth";
+import type { UserProfile } from "@/lib/auth";
 import { setBrowserSessionCache } from "@/lib/supabase/browser-session";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { isOnline } from "@/lib/network-status";
 
 // Legacy type alias kept for ChangePasswordPage compat
 export interface AdminProfile {
@@ -25,6 +26,18 @@ export interface AdminProfile {
 type AuthView = "role-select" | "admin-login" | "staff-login" | "app";
 const AUTH_VIEW_STORAGE_KEY = "laundrytrack-auth-view";
 const LAST_PROFILE_KEY = "laundrytrack-last-profile";
+
+const AppShell = dynamic(() => import("@/components/app-shell"), {
+  loading: () => (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="w-full max-w-sm rounded-xl border border-border bg-card p-5 shadow-sm">
+        <div className="h-4 w-36 animate-pulse rounded bg-muted" />
+        <div className="mt-3 h-3 w-full animate-pulse rounded bg-muted" />
+        <div className="mt-2 h-3 w-2/3 animate-pulse rounded bg-muted" />
+      </div>
+    </div>
+  ),
+});
 
 async function readJson<T>(response: Response): Promise<T> {
   const data = await response.json().catch(() => ({}));
@@ -85,10 +98,14 @@ export default function Home() {
         parsedFallback = null;
       }
     }
-    const effectiveProfile = profile ?? parsedFallback;
+    const effectiveProfile = profile ?? (!isOnline() ? parsedFallback : null);
 
     if (profile && typeof window !== "undefined") {
       window.localStorage.setItem(LAST_PROFILE_KEY, JSON.stringify(profile));
+    }
+
+    if (!profile && typeof window !== "undefined" && isOnline()) {
+      window.localStorage.removeItem(LAST_PROFILE_KEY);
     }
 
     setView(effectiveProfile ? "app" : initialView);
@@ -114,15 +131,7 @@ export default function Home() {
     const supabase = getSupabaseBrowserClient();
 
     if (!supabase) {
-      const profile = authenticateStaff(credentials.login, credentials.password);
-      if (!profile) {
-        throw new Error("Invalid username or password.");
-      }
-
-      setUserProfile(profile);
-      setView("app");
-      setStoredView("app");
-      return;
+      throw new Error("Supabase staff authentication is not configured.");
     }
 
     const response = await fetch("/api/staff/login", {

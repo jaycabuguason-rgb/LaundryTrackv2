@@ -121,144 +121,144 @@ export default function RegisterPage({ onBack }: RegisterPageProps) {
             </div>
           ) : (
 
-          <div className="flex flex-col gap-4">
-            {/* Full Name */}
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="fullName" className="text-xs font-medium text-foreground">
-                Full Name
-              </Label>
-              <Input
-                id="fullName"
-                type="text"
-                placeholder="e.g. Juan dela Cruz"
-                value={fullName}
-                onChange={(e) => { setFullName(e.target.value); clearError("fullName"); }}
-                onKeyDown={handleKeyDown}
-                className={errors.fullName ? "border-destructive focus-visible:ring-destructive" : ""}
-                autoComplete="name"
-              />
-              {errors.fullName && (
-                <p className="text-[11px] text-destructive">{errors.fullName}</p>
-              )}
-            </div>
-
-            {/* Email */}
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="reg-email" className="text-xs font-medium text-foreground">
-                Email
-              </Label>
-              <Input
-                id="reg-email"
-                type="email"
-                placeholder="admin@laundrytrack.ph"
-                value={email}
-                onChange={(e) => { setEmail(e.target.value); clearError("email"); }}
-                onKeyDown={handleKeyDown}
-                className={errors.email ? "border-destructive focus-visible:ring-destructive" : ""}
-                autoComplete="email"
-              />
-              {errors.email && (
-                <p className="text-[11px] text-destructive">{errors.email}</p>
-              )}
-            </div>
-
-            {/* Username */}
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="username" className="text-xs font-medium text-foreground">
-                Username
-              </Label>
-              <Input
-                id="username"
-                type="text"
-                placeholder="e.g. admin_juan"
-                value={username}
-                onChange={(e) => { setUsername(e.target.value); clearError("username"); }}
-                onKeyDown={handleKeyDown}
-                className={errors.username ? "border-destructive focus-visible:ring-destructive" : ""}
-                autoComplete="username"
-              />
-              {errors.username && (
-                <p className="text-[11px] text-destructive">{errors.username}</p>
-              )}
-            </div>
-
-            {/* Password */}
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="reg-password" className="text-xs font-medium text-foreground">
-                Password
-              </Label>
-              <div className="relative">
+            <div className="flex flex-col gap-4">
+              {/* Full Name */}
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="fullName" className="text-xs font-medium text-foreground">
+                  Full Name
+                </Label>
                 <Input
-                  id="reg-password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="At least 8 characters"
-                  value={password}
-                  onChange={(e) => { setPassword(e.target.value); clearError("password"); }}
+                  id="fullName"
+                  type="text"
+                  placeholder="e.g. Juan dela Cruz"
+                  value={fullName}
+                  onChange={(e) => { setFullName(e.target.value); clearError("fullName"); }}
                   onKeyDown={handleKeyDown}
-                  className={`pr-10 ${errors.password ? "border-destructive focus-visible:ring-destructive" : ""}`}
-                  autoComplete="new-password"
+                  className={errors.fullName ? "border-destructive focus-visible:ring-destructive" : ""}
+                  autoComplete="name"
                 />
+                {errors.fullName && (
+                  <p className="text-[11px] text-destructive">{errors.fullName}</p>
+                )}
+              </div>
+
+              {/* Email */}
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="reg-email" className="text-xs font-medium text-foreground">
+                  Email
+                </Label>
+                <Input
+                  id="reg-email"
+                  type="email"
+                  placeholder="admin@laundrytrack.ph"
+                  value={email}
+                  onChange={(e) => { setEmail(e.target.value); clearError("email"); }}
+                  onKeyDown={handleKeyDown}
+                  className={errors.email ? "border-destructive focus-visible:ring-destructive" : ""}
+                  autoComplete="email"
+                />
+                {errors.email && (
+                  <p className="text-[11px] text-destructive">{errors.email}</p>
+                )}
+              </div>
+
+              {/* Username */}
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="username" className="text-xs font-medium text-foreground">
+                  Username
+                </Label>
+                <Input
+                  id="username"
+                  type="text"
+                  placeholder="e.g. admin_juan"
+                  value={username}
+                  onChange={(e) => { setUsername(e.target.value); clearError("username"); }}
+                  onKeyDown={handleKeyDown}
+                  className={errors.username ? "border-destructive focus-visible:ring-destructive" : ""}
+                  autoComplete="username"
+                />
+                {errors.username && (
+                  <p className="text-[11px] text-destructive">{errors.username}</p>
+                )}
+              </div>
+
+              {/* Password */}
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="reg-password" className="text-xs font-medium text-foreground">
+                  Password
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="reg-password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="At least 8 characters"
+                    value={password}
+                    onChange={(e) => { setPassword(e.target.value); clearError("password"); }}
+                    onKeyDown={handleKeyDown}
+                    className={`pr-10 ${errors.password ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {errors.password && (
+                  <p className="text-[11px] text-destructive">{errors.password}</p>
+                )}
+              </div>
+
+              {/* Confirm Password */}
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="confirmPassword" className="text-xs font-medium text-foreground">
+                  Confirm Password
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Re-enter your password"
+                    value={confirmPassword}
+                    onChange={(e) => { setConfirmPassword(e.target.value); clearError("confirmPassword"); }}
+                    onKeyDown={handleKeyDown}
+                    className={`pr-10 ${errors.confirmPassword ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {errors.confirmPassword && (
+                  <p className="text-[11px] text-destructive">{errors.confirmPassword}</p>
+                )}
+              </div>
+
+              {/* Submit */}
+              <Button className="w-full mt-1 cursor-pointer" onClick={handleSubmit}>
+                Create Account
+              </Button>
+
+              {/* Back to login */}
+              <p className="text-xs text-muted-foreground text-center">
+                Already have an account?{" "}
                 <button
                   type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  onClick={onBack}
+                  className="text-primary font-medium hover:underline cursor-pointer"
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  Login
                 </button>
-              </div>
-              {errors.password && (
-                <p className="text-[11px] text-destructive">{errors.password}</p>
-              )}
+              </p>
             </div>
-
-            {/* Confirm Password */}
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="confirmPassword" className="text-xs font-medium text-foreground">
-                Confirm Password
-              </Label>
-              <div className="relative">
-                <Input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  placeholder="Re-enter your password"
-                  value={confirmPassword}
-                  onChange={(e) => { setConfirmPassword(e.target.value); clearError("confirmPassword"); }}
-                  onKeyDown={handleKeyDown}
-                  className={`pr-10 ${errors.confirmPassword ? "border-destructive focus-visible:ring-destructive" : ""}`}
-                  autoComplete="new-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
-                >
-                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              {errors.confirmPassword && (
-                <p className="text-[11px] text-destructive">{errors.confirmPassword}</p>
-              )}
-            </div>
-
-            {/* Submit */}
-            <Button className="w-full mt-1 cursor-pointer" onClick={handleSubmit}>
-              Create Account
-            </Button>
-
-            {/* Back to login */}
-            <p className="text-xs text-muted-foreground text-center">
-              Already have an account?{" "}
-              <button
-                type="button"
-                onClick={onBack}
-                className="text-primary font-medium hover:underline cursor-pointer"
-              >
-                Login
-              </button>
-            </p>
-          </div>
           )}
         </div>
 

@@ -3,11 +3,12 @@ import { NextResponse } from "next/server";
 import { normalizeBusinessProfile, type BusinessProfile } from "@/lib/business-profile";
 import { createAuditLog } from "@/lib/server/audit-log-repository";
 import { getBusinessProfile, saveBusinessProfile } from "@/lib/server/laundry-repository";
-import { getRequestActor } from "@/lib/server/request-auth";
+import { getRequestActor, requireAuthRequest } from "@/lib/server/request-auth";
 import { getRequestIp } from "@/lib/server/request-meta";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    await requireAuthRequest(request);
     const profile = await getBusinessProfile();
     return NextResponse.json({ profile });
   } catch (error) {
@@ -18,9 +19,20 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
-    const actor = await getRequestActor(request);
-    const body = (await request.json()) as Partial<BusinessProfile>;
-    const profile = await saveBusinessProfile(normalizeBusinessProfile(body));
+    const actor = await requireAuthRequest(request);
+    const raw = await request.json();
+    if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
+      return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+    }
+    const sanitized: Partial<BusinessProfile> = {};
+    const stringFields: (keyof BusinessProfile)[] = ["shopName", "tagline", "address", "contactNumber", "email", "receiptFooter", "pickupInstructions"];
+    for (const field of stringFields) {
+      if (raw[field] != null) sanitized[field] = String(raw[field]).trim().slice(0, 1000);
+    }
+    if (raw.logoDataUrl != null) {
+      sanitized.logoDataUrl = String(raw.logoDataUrl).trim();
+    }
+    const profile = await saveBusinessProfile(normalizeBusinessProfile(sanitized));
 
     await createAuditLog({
       action: "settings_changed",

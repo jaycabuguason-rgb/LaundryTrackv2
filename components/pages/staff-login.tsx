@@ -82,7 +82,7 @@ export default function StaffLoginPage({
 
           {!authConfigured && (
             <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">
-              Supabase staff auth is not configured yet, so this page uses the built-in demo accounts.
+              Supabase staff auth is not configured yet. Staff sign-in is disabled until your project keys are set.
             </div>
           )}
 
@@ -137,7 +137,7 @@ export default function StaffLoginPage({
             </p>
 
             {/* Login button */}
-            <Button className="w-full cursor-pointer" onClick={() => void handleLogin()} disabled={submitting}>
+            <Button className="w-full cursor-pointer" onClick={() => void handleLogin()} disabled={submitting || !authConfigured}>
               {submitting ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />

@@ -1,4 +1,4 @@
-export type TransactionStatus = "Received" | "Washing" | "Drying" | "Processing" | "Ready" | "Claimed" | "Voided";
+export type TransactionStatus = "Received" | "Washing" | "Drying" | "Ready" | "Claimed" | "Voided";
 export type PaymentStatus = "unpaid" | "paid";
 
 export interface Transaction {
@@ -271,10 +271,9 @@ export const statusColors: Record<TransactionStatus, string> = {
   Received:   "bg-blue-100 text-blue-700",
   Washing:    "bg-yellow-100 text-yellow-700",
   Drying:     "bg-orange-100 text-orange-700",
-  Processing: "bg-purple-100 text-purple-700",
   Ready:      "bg-green-100 text-green-700",
   Claimed:    "bg-gray-100 text-gray-600",
   Voided:     "bg-red-100 text-red-800",
 };
 
-export const statusOrder: TransactionStatus[] = ["Received", "Washing", "Drying", "Processing", "Ready", "Claimed"];
+export const statusOrder: TransactionStatus[] = ["Received", "Washing", "Drying", "Ready", "Claimed"];

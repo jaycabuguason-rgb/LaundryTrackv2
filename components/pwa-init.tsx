@@ -13,11 +13,14 @@ declare global {
 }
 
 const DISMISS_KEY = "laundrytrack-install-banner-dismissed";
+const LAST_PROFILE_KEY = "laundrytrack-last-profile";
 
 export default function PwaInit() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [visible, setVisible] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [isCompactMobile, setIsCompactMobile] = useState(false);
+  const [hasActiveAppProfile, setHasActiveAppProfile] = useState(false);
 
   const isStandalone = useMemo(() => {
     if (typeof window === "undefined") {
@@ -78,7 +81,34 @@ export default function PwaInit() {
     };
   }, [isStandalone]);
 
-  if (!visible || isStandalone) {
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia("(max-width: 640px)");
+    const update = () => setIsCompactMobile(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const update = () => {
+      setHasActiveAppProfile(Boolean(window.localStorage.getItem(LAST_PROFILE_KEY)));
+    };
+
+    update();
+    window.addEventListener("storage", update);
+    window.addEventListener("focus", update);
+    const interval = window.setInterval(update, 1000);
+    return () => {
+      window.removeEventListener("storage", update);
+      window.removeEventListener("focus", update);
+      window.clearInterval(interval);
+    };
+  }, []);
+
+  if (!visible || isStandalone || hasActiveAppProfile) {
     return null;
   }
 
@@ -106,7 +136,14 @@ export default function PwaInit() {
       && !("BeforeInstallPromptEvent" in window);
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-6 md:max-w-sm rounded-xl border border-border bg-card shadow-lg p-4">
+    <div
+      className="fixed left-4 right-4 z-50 rounded-xl border border-border bg-card p-4 shadow-lg md:left-auto md:right-6 md:max-w-sm"
+      style={{
+        bottom: isCompactMobile
+          ? "calc(env(safe-area-inset-bottom, 0px) + 68px)"
+          : "1rem",
+      }}
+    >
       <p className="text-sm font-semibold text-foreground">Install LaundryTrack App</p>
       <p className="text-xs text-muted-foreground mt-1">
         {iosHelp

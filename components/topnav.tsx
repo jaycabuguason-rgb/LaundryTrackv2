@@ -93,23 +93,15 @@ export default function TopNav({ activePage, onNavigate, onSignOut, adminProfile
 
   const viewNotif = (notif: Notification, e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    // For UNCLAIMED notifications, open Edit modal
-    if (notif.type === 'unclaimed' && onEditTransaction) {
-      setNotifOpen(false);
-      // Small delay to ensure dropdown closes before modal opens
-      setTimeout(() => {
-        onEditTransaction(notif.ticketId);
-      }, 100);
-    } else if (onTransactionDetail) {
-      setNotifOpen(false);
-      setTimeout(() => {
+    setNotifOpen(false);
+    // Open the detail modal first — "Edit Status" button inside goes directly to Edit Ticket modal
+    setTimeout(() => {
+      if (onTransactionDetail) {
         onTransactionDetail(notif.ticketId);
-      }, 100);
-    } else {
-      setNotifOpen(false);
-      onNavigate("transactions");
-    }
+      } else {
+        onNavigate("transactions");
+      }
+    }, 100);
   };
 
   return (
@@ -166,7 +158,7 @@ export default function TopNav({ activePage, onNavigate, onSignOut, adminProfile
         {/* Notifications */}
         <DropdownMenu open={notifOpen} onOpenChange={setNotifOpen}>
           <DropdownMenuTrigger asChild>
-            <button className="relative p-2 rounded-md cursor-pointer hover:bg-accent transition-colors active:scale-95 min-h-[44px] min-w-[44px] flex items-center justify-center">
+            <button aria-label="Notifications" className="relative p-2 rounded-md cursor-pointer hover:bg-accent transition-colors active:scale-95 min-h-[44px] min-w-[44px] flex items-center justify-center">
               <Bell className="w-4 h-4 text-muted-foreground" />
               {badgeCount > 0 && (
                 <Badge className="absolute -top-0.5 -right-0.5 h-4 w-4 p-0 flex items-center justify-center text-[10px] bg-primary text-primary-foreground border-0">
@@ -246,13 +238,14 @@ export default function TopNav({ activePage, onNavigate, onSignOut, adminProfile
         {/* Admin profile */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-2 rounded-md px-2 py-1.5 cursor-pointer hover:bg-accent transition-colors active:scale-95 min-h-[44px]">
+            <button aria-label="User Profile" className="flex items-center gap-2 rounded-md px-2 py-1.5 cursor-pointer hover:bg-accent transition-colors active:scale-95 min-h-[44px]">
               <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center shrink-0 overflow-hidden">
                 {adminProfile.avatarUrl ? (
                   <img
-                    src={adminProfile.avatarUrl}
+                    src={`${adminProfile.avatarUrl}?width=70&height=70&resize=cover`}
                     alt={adminProfile.name}
                     className="w-full h-full object-cover"
+                    loading="lazy"
                   />
                 ) : (
                   <span className="text-[11px] font-bold text-primary-foreground select-none">

@@ -83,6 +83,38 @@ function PricingSettings() {
   const buildRange = (from: string, to: string, open: boolean) =>
     from ? (open ? `${from} kg+` : to ? `${from} kg – ${to} kg` : `${from} kg`) : "";
 
+  useEffect(() => {
+    let ignore = false;
+    void buildAuthHeaders()
+      .then(headers => fetch("/api/settings/pricing", { cache: "no-store", headers }))
+      .then(async (response) => {
+        if (!response.ok || ignore) return;
+        const data = await response.json().catch(() => ({}));
+        if (ignore) return;
+        
+        if (data.pricingConfig) {
+          setPricingMode(data.pricingConfig.pricingMode);
+          setPricePerKg(data.pricingConfig.pricePerKg);
+          setMinWeight(data.pricingConfig.minWeight);
+          setLoadTiers(data.pricingConfig.loadTiers);
+          setTierHistory([]);
+          setTierFuture([]);
+          persistPricingConfig(data.pricingConfig);
+        }
+        if (data.serviceTypes) {
+          setServices(data.serviceTypes);
+          persistServiceTypes(data.serviceTypes);
+        }
+        if (data.addOns) {
+          setAddOns(data.addOns);
+          persistAddOns(data.addOns);
+        }
+      })
+      .catch(() => undefined);
+
+    return () => { ignore = true; };
+  }, []);
+
   // Tier mutation with history tracking
   const commitTiers = (next: LoadTier[]) => {
     setTierHistory((h) => [...h, loadTiers]);
@@ -161,9 +193,8 @@ function PricingSettings() {
   useEffect(() => {
     let ignore = false;
 
-    void fetch("/api/settings/pricing", {
-      cache: "no-store",
-    })
+    void buildAuthHeaders()
+      .then(headers => fetch("/api/settings/pricing", { cache: "no-store", headers }))
       .then(async (response) => {
         const data = await response.json().catch(() => ({}));
         if (!response.ok || ignore) return;
@@ -275,7 +306,7 @@ function PricingSettings() {
           description: "Pricing changes were queued and will sync when online.",
         });
       } else {
-        await fetch("/api/settings/pricing", {
+        const response = await fetch("/api/settings/pricing", {
           method: "PUT",
           headers: await buildAuthHeaders(),
           body: JSON.stringify({
@@ -284,9 +315,20 @@ function PricingSettings() {
             addOns,
           }),
         });
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data.error || "Failed to save settings.");
+        }
       }
     } catch (error) {
       console.error("Failed to save settings to database:", error);
+      toast({
+        title: "Save Failed",
+        description: error instanceof Error ? error.message : "Failed to save settings.",
+        variant: "destructive",
+      });
+      setSaved(false);
+      return;
     }
     
     setSaved(true);
@@ -308,7 +350,7 @@ function PricingSettings() {
           {/* Pricing Mode toggle */}
           <div className="space-y-2">
             <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Pricing Mode</Label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               {MODES.map(({ value, icon, label, sub }) => (
                 <button
                   key={value}
@@ -341,7 +383,7 @@ function PricingSettings() {
               {pricingMode === "both" && (
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Per Kilogram</p>
               )}
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
                 <Label className="text-sm w-36 shrink-0">Price per kg (₱)</Label>
                 <Input
                   type="number"
@@ -356,10 +398,10 @@ function PricingSettings() {
                       e.preventDefault();
                     }
                   }}
-                  className="w-28 h-9 text-sm"
+                  className="h-9 w-full text-sm sm:w-28"
                 />
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
                 <Label className="text-sm w-36 shrink-0">Minimum weight (kg)</Label>
                 <Input
                   type="number"
@@ -375,7 +417,7 @@ function PricingSettings() {
                       e.preventDefault();
                     }
                   }}
-                  className="w-28 h-9 text-sm"
+                  className="h-9 w-full text-sm sm:w-28"
                 />
               </div>
             </div>
@@ -399,33 +441,33 @@ function PricingSettings() {
                   <Redo2 className="w-3 h-3" /> Redo
                 </Button>
               </div>
-              <div className="rounded-lg border border-border overflow-hidden">
-                <table className="w-full text-sm">
+              <div className="rounded-lg border border-border overflow-x-auto">
+                <table className="w-full text-sm min-w-[450px]">
                   <thead>
                     <tr className="bg-muted/40 border-b border-border">
-                      <th className="text-left px-3 py-2 text-xs font-semibold text-muted-foreground">Load Size</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold text-muted-foreground">Weight Range</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold text-muted-foreground">Price (₱)</th>
-                      <th className="w-8" />
+                      <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wider font-semibold text-muted-foreground whitespace-nowrap">Load Size</th>
+                      <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wider font-semibold text-muted-foreground whitespace-nowrap">Weight Range</th>
+                      <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wider font-semibold text-muted-foreground whitespace-nowrap">Price</th>
+                      <th className="w-10" />
                     </tr>
                   </thead>
                   <tbody>
                     {loadTiers.map((tier) => {
                       const parsed = parseRange(tier.range);
                       return (
-                        <tr key={tier.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
+                        <tr key={tier.id} className="border-b border-border last:border-0 hover:bg-muted/10 transition-colors">
                           {/* Load Size — editable */}
-                          <td className="px-3 py-2">
+                          <td className="px-3 py-2.5 align-middle">
                             <Input
                               value={tier.name}
                               onChange={(e) => updateTier(tier.id, { name: e.target.value })}
-                              className="h-7 text-sm w-28"
-                              placeholder="e.g. Small"
+                              className="h-8 text-xs w-20 sm:w-28 px-2"
+                              placeholder="Name"
                             />
                           </td>
                           {/* Weight Range — two number inputs */}
-                          <td className="px-3 py-2">
-                            <div className="flex items-center gap-1 flex-wrap">
+                          <td className="px-3 py-2.5 align-middle whitespace-nowrap">
+                            <div className="flex items-center gap-1.5 flex-nowrap">
                               <Input
                                 type="number"
                                 min="0"
@@ -439,12 +481,12 @@ function PricingSettings() {
                                     e.preventDefault();
                                   }
                                 }}
-                                className="w-14 h-7 text-xs"
+                                className="w-12 sm:w-14 h-8 text-xs px-1.5 text-center"
                                 placeholder="0"
                               />
-                              <span className="text-xs text-muted-foreground">kg —</span>
+                              <span className="text-[11px] sm:text-xs text-muted-foreground font-medium">kg —</span>
                               {parsed.open ? (
-                                <span className="text-xs font-medium text-foreground px-1">above</span>
+                                <span className="text-[11px] sm:text-xs font-medium text-foreground px-1">above</span>
                               ) : (
                                 <>
                                   <Input
@@ -460,31 +502,31 @@ function PricingSettings() {
                                         e.preventDefault();
                                       }
                                     }}
-                                    className="w-14 h-7 text-xs"
+                                    className="w-12 sm:w-14 h-8 text-xs px-1.5 text-center"
                                     placeholder="0"
                                   />
-                                  <span className="text-xs text-muted-foreground">kg</span>
+                                  <span className="text-[11px] sm:text-xs text-muted-foreground font-medium">kg</span>
                                 </>
                               )}
                               <button
                                 type="button"
                                 onClick={() => updateTier(tier.id, { from: parsed.from, to: parsed.to, open: !parsed.open })}
                                 className={cn(
-                                  "text-[10px] px-1.5 py-0.5 rounded border transition-colors cursor-pointer",
+                                  "text-[10px] px-1.5 py-0.5 h-6 rounded border transition-colors cursor-pointer ml-1 shrink-0",
                                   parsed.open
                                     ? "bg-primary/10 border-primary/30 text-primary"
                                     : "bg-muted border-border text-muted-foreground hover:border-primary/40"
                                 )}
                                 title="Toggle open-ended (e.g. 10 kg+)"
                               >
-                                +
+                                {parsed.open ? "Open" : "+"}
                               </button>
                             </div>
                           </td>
                           {/* Price */}
-                          <td className="px-3 py-2">
+                          <td className="px-3 py-2.5 align-middle">
                             <div className="flex items-center gap-1">
-                              <span className="text-xs text-muted-foreground">₱</span>
+                              <span className="text-[11px] sm:text-xs text-muted-foreground font-medium">₱</span>
                               <Input
                                 type="number"
                                 min="0"
@@ -498,18 +540,18 @@ function PricingSettings() {
                                     e.preventDefault();
                                   }
                                 }}
-                                className="w-20 h-7 text-sm"
+                                className="w-16 sm:w-20 h-8 text-xs sm:text-sm px-2"
                               />
                             </div>
                           </td>
-                          <td className="px-2 py-2">
+                          <td className="px-2 py-2.5 align-middle text-right">
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
                               onClick={() => setDeleteTierId(tier.id)}
                             >
-                              <Trash2 className="w-3 h-3" />
+                              <Trash2 className="w-4 h-4" />
                             </Button>
                           </td>
                         </tr>
@@ -897,24 +939,22 @@ function PricingSettings() {
         </CardContent>
       </Card>
 
-      {/* bottom spacer so content isn't hidden behind fixed bar */}
-      <div className="h-20" />
+      {/* bottom spacer so content isn't hidden behind floating button */}
+      <div className="h-24" />
     </div>
 
-    {/* ── Fixed Save Bar ───────────────────────────────────────────────────── */}
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border px-6 py-3 flex items-center justify-between gap-3">
-      {saved ? (
-        <div className="flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-2 text-sm animate-in fade-in slide-in-from-bottom-1">
+    {/* ── Floating Save Button ─────────────────────────────────────────────── */}
+    <div className="fixed bottom-[76px] right-4 z-50 flex flex-col items-end gap-2 lg:bottom-6 lg:right-6">
+      {saved && (
+        <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-sm text-green-700 shadow-md animate-in fade-in slide-in-from-bottom-2">
           <CheckCircle2 className="w-4 h-4 shrink-0" />
-          Changes saved successfully!
+          <span>Changes saved!</span>
         </div>
-      ) : (
-        <p className="text-xs text-muted-foreground">Make changes above, then click Save to apply them.</p>
       )}
       <Button
         size="sm"
         onClick={handleSave}
-        className="flex items-center gap-1.5 shrink-0"
+        className="flex items-center gap-1.5 shadow-lg shadow-primary/30 h-9 px-4"
       >
         <Save className="w-3.5 h-3.5" /> Save Changes
       </Button>
@@ -1433,16 +1473,26 @@ function LoyaltyProgramSettings({ loyaltyEnabled, onLoyaltyEnabledChange }: Loya
           description: "Loyalty settings were queued and will sync when online.",
         });
       } else {
-        await fetch("/api/settings/pricing", {
+        const response = await fetch("/api/settings/pricing", {
           method: "PUT",
           headers: await buildAuthHeaders(),
           body: JSON.stringify({
             loyaltySettings: { enabled, washesPerReward, rewardDescription },
           }),
         });
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data.error || "Failed to save loyalty settings.");
+        }
       }
     } catch (error) {
       console.error("Failed to save loyalty settings to database:", error);
+      toast({
+        title: "Save Failed",
+        description: error instanceof Error ? error.message : "Failed to save settings.",
+        variant: "destructive",
+      });
+      return;
     }
     
     setSaved(true);

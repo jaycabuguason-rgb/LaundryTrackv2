@@ -12,6 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useLoyaltyMembers } from "@/hooks/use-loyalty-members";
 import { type LoyaltyMember } from "@/lib/data";
 import { toast } from "@/hooks/use-toast";
+import { getBrowserAccessToken, refreshBrowserSession } from "@/lib/supabase/browser-session";
 
 function StampDots({ count, max = 21 }: { count: number; max?: number }) {
   return (
@@ -41,10 +42,23 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
   const washesPerReward = 10;
   const rewardName = "Free wash";
 
+  async function getAuthHeaders(extra: Record<string, string> = {}) {
+    let accessToken = await getBrowserAccessToken();
+    if (!accessToken) {
+      const refreshed = await refreshBrowserSession();
+      accessToken = refreshed?.access_token ?? null;
+    }
+
+    const headers: Record<string, string> = { ...extra };
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`;
+    }
+
+    return headers;
+  }
+
   const filtered = members.filter(
-    (m) =>
-      m.name.toLowerCase().includes(search.toLowerCase()) ||
-      m.phone.includes(search)
+    (m) => m.name.toLowerCase().includes(search.toLowerCase()) || m.phone.includes(search)
   );
 
   async function handleAddMember(e: React.FormEvent<HTMLFormElement>) {
@@ -55,7 +69,7 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
     try {
       const res = await fetch("/api/loyalty", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await getAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({
           name: data.get("name"),
           phone: data.get("phone"),
@@ -83,7 +97,7 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
     try {
       const res = await fetch(`/api/loyalty/${editModal.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: await getAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({
           name: data.get("name"),
           phone: data.get("phone"),
@@ -105,7 +119,10 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
     if (!deleteModal) return;
     setSaving(true);
     try {
-      const res = await fetch(`/api/loyalty/${deleteModal.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/loyalty/${deleteModal.id}`, {
+        method: "DELETE",
+        headers: await getAuthHeaders(),
+      });
       if (!res.ok) throw new Error("Failed to delete member");
       toast({ title: "Member deleted successfully" });
       setDeleteModal(null);
@@ -127,7 +144,7 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
     try {
       const res = await fetch(`/api/loyalty/${stampModal.id}/stamps`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await getAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ stamps }),
       });
       if (!res.ok) throw new Error("Failed to add stamps");
@@ -144,12 +161,14 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
   if (selected) {
     return (
       <div className="space-y-5">
-        <button
-          onClick={() => setSelected(null)}
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ChevronLeft className="w-4 h-4" /> Back to Members
-        </button>
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => setSelected(null)}
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" /> Back to Members
+          </button>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Profile Card */}
@@ -202,7 +221,25 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
                     );
                   })()}
                 </div>
-                <table className="w-full text-sm">
+                <div className="divide-y divide-border md:hidden">
+                  {(() => {
+                    const currentCycleStamps = selected.stampCount % washesPerReward;
+                    const currentCycleHistory = selected.stampHistory.slice(-currentCycleStamps);
+                    if (currentCycleHistory.length === 0) {
+                      return <div className="py-6 text-center text-xs text-muted-foreground">No stamps in current cycle</div>;
+                    }
+                    return currentCycleHistory.map((s, i) => (
+                      <div key={i} className="flex items-center justify-between gap-3 px-4 py-3">
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-foreground">{s.date}</p>
+                          <p className="mt-0.5 font-mono text-[11px] text-primary">{s.ticket}</p>
+                        </div>
+                        <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-[11px] font-semibold text-yellow-700">+{s.stamps}</span>
+                      </div>
+                    ));
+                  })()}
+                </div>
+                <table className="hidden w-full text-sm md:table">
                   <thead>
                     <tr className="border-y border-border bg-muted/40">
                       {["Date", "Ticket", "Stamps"].map((h) => (
@@ -238,7 +275,23 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
                 <CardTitle className="text-sm">Reward History</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                <table className="w-full text-sm">
+                <div className="divide-y divide-border md:hidden">
+                  {selected.rewardHistory.length === 0 ? (
+                    <div className="py-6 text-center text-xs text-muted-foreground">No rewards redeemed yet</div>
+                  ) : (
+                    selected.rewardHistory.map((r, i) => (
+                      <button
+                        key={i}
+                        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/20"
+                        onClick={() => setRewardCycleModal(r)}
+                      >
+                        <span className="text-xs font-medium text-foreground">{r.date}</span>
+                        <span className="truncate text-xs font-semibold text-green-700">{r.reward}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+                <table className="hidden w-full text-sm md:table">
                   <thead>
                     <tr className="border-y border-border bg-muted/40">
                       {["Date", "Reward"].map((h) => (
@@ -280,7 +333,22 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
               {/* Cycle visits */}
               <div>
                 <p className="text-xs font-semibold text-muted-foreground mb-2">Visits in this cycle:</p>
-                <table className="w-full text-sm border border-border rounded-lg overflow-hidden">
+                <div className="divide-y divide-border overflow-hidden rounded-lg border border-border md:hidden">
+                  {Array.from({ length: washesPerReward }, (_, i) => ({
+                    date: `2026-0${(i % 3) + 1}-${10 + i}`,
+                    ticket: `TKT-00${70 + i}`,
+                    stamps: 1,
+                  })).map((v, i) => (
+                    <div key={i} className="flex items-center justify-between gap-3 px-3 py-2.5">
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-foreground">{v.date}</p>
+                        <p className="mt-0.5 font-mono text-[11px] text-primary">{v.ticket}</p>
+                      </div>
+                      <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-[11px] font-semibold text-yellow-700">+{v.stamps}</span>
+                    </div>
+                  ))}
+                </div>
+                <table className="hidden w-full text-sm border border-border rounded-lg overflow-hidden md:table">
                   <thead>
                     <tr className="bg-muted/40 border-b border-border">
                       <th className="text-left text-xs font-medium text-muted-foreground px-3 py-2">Date</th>
@@ -366,19 +434,73 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
       </div>
 
       {/* Summary */}
-      <div className="max-w-xs">
-        <Card className="border border-border shadow-none">
+      <div className="flex flex-wrap gap-4">
+        <Card className="border border-border shadow-none w-full max-w-xs">
           <CardContent className="p-4 text-center">
             <p className="text-2xl font-bold text-foreground">{loading ? "..." : members.length}</p>
             <p className="text-xs text-muted-foreground mt-0.5">Total Members</p>
           </CardContent>
         </Card>
+
       </div>
 
       {/* Members Table */}
       <Card className="border border-border shadow-none">
         <CardContent className="p-0">
-          <table className="w-full text-sm">
+          <div className="divide-y divide-border md:hidden">
+            {filtered.map((m) => (
+              <div key={m.id} className="space-y-3 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="truncate text-sm font-semibold text-foreground">{m.name}</p>
+                    </div>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{m.phone || "-"}</p>
+                  </div>
+                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setSelected(m)}>
+                    View
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/30 p-3">
+                  <div>
+                    <p className="text-[11px] text-muted-foreground">Stamps</p>
+                    <div className="mt-1 flex items-center gap-1">
+                      <Star className="h-3 w-3 text-yellow-500" />
+                      <span className="text-sm font-semibold text-foreground">{m.stampCount}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-muted-foreground">Rewards</p>
+                    <p className="mt-1 text-sm font-semibold text-foreground">{m.rewardsRedeemed}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-muted-foreground">Joined</p>
+                    <p className="mt-1 truncate text-xs text-foreground">{m.dateJoined}</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" className="h-8 flex-1 text-xs" onClick={() => setEditModal(m)}>
+                    <Edit className="mr-1 h-3 w-3" />
+                    Edit
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-8 flex-1 text-xs text-red-600 hover:text-red-700" onClick={() => setDeleteModal(m)}>
+                    <Trash2 className="mr-1 h-3 w-3" />
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div className="py-10 text-center text-sm text-muted-foreground">Loading...</div>
+            )}
+            {!loading && filtered.length === 0 && (
+              <div className="py-10 text-center text-sm text-muted-foreground">No members found.</div>
+            )}
+          </div>
+
+          <table className="hidden w-full text-sm md:table">
             <thead>
               <tr className="border-b border-border bg-muted/40">
                 {["Name", "Phone", "Stamps", "Rewards Redeemed", "Date Joined", ""].map((h) => (
@@ -389,7 +511,9 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
             <tbody>
               {filtered.map((m) => (
                 <tr key={m.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
-                  <td className="px-4 py-3 text-xs font-semibold text-foreground">{m.name}</td>
+                  <td className="px-4 py-3 text-xs font-semibold text-foreground">
+                    {m.name}
+                  </td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">{m.phone}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1.5">

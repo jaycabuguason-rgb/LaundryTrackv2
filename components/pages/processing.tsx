@@ -2,10 +2,17 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  Check,
   ChevronDown,
   RefreshCw,
   Search,
   X,
+  Inbox,
+  RotateCw,
+  Wind,
+  Flag,
+  PackageCheck,
+  Ban,
 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,13 +24,21 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import {
   statusColors,
   type Transaction,
   type TransactionStatus,
 } from "@/lib/data";
-import { TransactionDetailModal } from "@/components/transaction-detail-modal";
+import { StatusUpdateSheet } from "@/components/status-update-sheet";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -38,23 +53,30 @@ interface ProcessingPageProps {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const STAGES: TransactionStatus[] = ["Received", "Washing", "Drying", "Processing", "Ready"];
+const STAGES: TransactionStatus[] = ["Received", "Washing", "Drying", "Ready"];
 
-const NEXT_STATUSES: Record<TransactionStatus, TransactionStatus[]> = {
-  Received:   ["Washing"],
-  Washing:    ["Drying"],
-  Drying:     ["Processing", "Ready"],
-  Processing: ["Ready"],
-  Ready:      ["Claimed"],
-  Claimed:    [],
-  Voided:     [],
-};
+/** All statuses shown in the dropdown, in order */
+const ALL_STATUS_OPTIONS: {
+  status: TransactionStatus;
+  label: string;
+  dotClass?: string;
+  icon?: any;
+}[] = [
+  { status: "Received",   label: "Received",    icon: Inbox },
+  { status: "Washing",    label: "Washing",     icon: RotateCw },
+  { status: "Drying",     label: "Drying",      icon: Wind },
+  { status: "Ready",      label: "Ready",       icon: Flag },
+  { status: "Claimed",    label: "Claimed",     icon: PackageCheck },
+  { status: "Voided",     label: "Voided",      icon: Ban },
+];
+
+/** Statuses that require a confirmation dialog before applying */
+const IRREVERSIBLE_STATUSES: TransactionStatus[] = ["Claimed", "Voided"];
 
 const STAGE_BADGE_COLORS: Record<TransactionStatus, string> = {
   Received:   "bg-blue-100 text-blue-700 border-blue-200",
   Washing:    "bg-yellow-100 text-yellow-700 border-yellow-200",
   Drying:     "bg-orange-100 text-orange-700 border-orange-200",
-  Processing: "bg-purple-100 text-purple-700 border-purple-200",
   Ready:      "bg-green-100 text-green-700 border-green-200",
   Claimed:    "bg-gray-100 text-gray-600 border-gray-200",
   Voided:     "bg-red-100 text-red-700 border-red-200",
@@ -64,7 +86,6 @@ const STAGE_CARD_ACCENT: Record<TransactionStatus, string> = {
   Received:   "border-blue-200",
   Washing:    "border-yellow-200",
   Drying:     "border-orange-200",
-  Processing: "border-purple-200",
   Ready:      "border-green-200",
   Claimed:    "border-gray-200",
   Voided:     "border-red-200",
@@ -111,6 +132,33 @@ function formatLastUpdated(date: Date): string {
   return `${mins} min ago`;
 }
 
+// ─── Toast ────────────────────────────────────────────────────────────────────
+
+interface ToastMsg { id: number; text: string; }
+
+function ToastContainer({ toasts, onDismiss }: { toasts: ToastMsg[]; onDismiss: (id: number) => void }) {
+  return (
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none">
+      {toasts.map((t) => (
+        <div
+          key={t.id}
+          className="pointer-events-auto flex items-center gap-3 rounded-lg border border-border bg-popover px-4 py-3 text-sm font-medium text-popover-foreground shadow-lg animate-in fade-in slide-in-from-bottom-2"
+        >
+          <Check className="h-4 w-4 shrink-0 text-green-500" />
+          {t.text}
+          <button
+            onClick={() => onDismiss(t.id)}
+            className="ml-auto text-muted-foreground hover:text-foreground"
+            aria-label="Dismiss"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function ProcessingPage({
@@ -126,9 +174,29 @@ export default function ProcessingPage({
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [tick, setTick] = useState(0); // force re-render for relative time
   const [updatingTicket, setUpdatingTicket] = useState<string | null>(null);
-  const [detailTxn, setDetailTxn] = useState<Transaction | null>(null);
-  const [detailOpen, setDetailOpen] = useState(false);
+  const [sheetTxn, setSheetTxn] = useState<Transaction | null>(null);
   const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // ── Confirmation dialog state ──────────────────────────────────────────────
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    txn: Transaction | null;
+    targetStatus: TransactionStatus | null;
+  }>({ open: false, txn: null, targetStatus: null });
+
+  // ── Toast state ───────────────────────────────────────────────────────────
+  const [toasts, setToasts] = useState<ToastMsg[]>([]);
+  const toastIdRef = useRef(0);
+
+  const pushToast = useCallback((text: string) => {
+    const id = ++toastIdRef.current;
+    setToasts((prev) => [...prev, { id, text }]);
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000);
+  }, []);
+
+  const dismissToast = useCallback((id: number) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
 
   // Active (non-claimed, non-voided) transactions
   const activeTransactions = useMemo(
@@ -189,20 +257,46 @@ export default function ProcessingPage({
     setExpandedStage((prev) => (prev === stage ? null : stage));
   };
 
-  const handleUpdateStatus = async (txn: Transaction, newStatus: TransactionStatus) => {
+  // Core update – called after any confirmation / immediate click
+  const applyStatusUpdate = async (txn: Transaction, newStatus: TransactionStatus) => {
     if (!onUpdateTransaction) return;
     setUpdatingTicket(txn.ticketId);
     try {
       await onUpdateTransaction(txn.ticketId, { status: newStatus });
       setLastUpdated(new Date());
+      pushToast(`${txn.ticketId} moved to ${newStatus}`);
+      setSheetTxn(null);
+      return true;
+    } catch {
+      pushToast("Unable to update the ticket status right now");
+      return false;
     } finally {
       setUpdatingTicket(null);
     }
   };
 
+  // Called when user clicks a status option in the dropdown
+  const handleStatusSelect = (txn: Transaction, newStatus: TransactionStatus) => {
+    if (newStatus === txn.status) return; // already active — no-op
+
+    if (IRREVERSIBLE_STATUSES.includes(newStatus)) {
+      setConfirmDialog({ open: true, txn, targetStatus: newStatus });
+      return;
+    }
+
+    applyStatusUpdate(txn, newStatus);
+  };
+
+  // Confirm button inside the dialog
+  const handleConfirmStatus = async () => {
+    const { txn, targetStatus } = confirmDialog;
+    setConfirmDialog({ open: false, txn: null, targetStatus: null });
+    if (txn && targetStatus) {
+      await applyStatusUpdate(txn, targetStatus);
+    }
+  };
+
   const handleViewTicket = (txn: Transaction) => {
-    setDetailTxn(txn);
-    setDetailOpen(true);
     if (onViewTransaction) onViewTransaction(txn.ticketId);
   };
 
@@ -230,7 +324,68 @@ export default function ProcessingPage({
               No tickets in this stage.
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+            <div className="divide-y divide-border md:hidden">
+              {items.map((txn) => {
+                const hoursInStage = getHoursInStage(txn.arrivalDateTime);
+                const isPriorityReady = stage === "Ready" && hoursInStage >= 2;
+                const isUpdating = updatingTicket === txn.ticketId;
+                return (
+                  <div key={txn.id} className="space-y-3 px-4 py-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <button
+                          onClick={() => handleViewTicket(txn)}
+                          className="text-xs font-mono font-semibold text-primary hover:underline cursor-pointer"
+                          title="View ticket details"
+                        >
+                          {txn.ticketId}
+                        </button>
+                        <p className="truncate text-xs font-medium text-foreground">{txn.customerName}</p>
+                        <p className="mt-0.5 text-[11px] text-muted-foreground">{txn.arrivalDateTime}</p>
+                      </div>
+                      <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap", statusColors[txn.status])}>
+                        {txn.status}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/30 p-2.5">
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">Wash</p>
+                        <p className="truncate text-xs font-medium text-foreground">{txn.washType}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">Weight</p>
+                        <p className="text-xs font-medium text-foreground">{txn.weight > 0 ? `${txn.weight} kg` : "-"}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">In Stage</p>
+                        <p className={cn("text-xs font-medium", getTimeInStageColor(txn.arrivalDateTime))}>{formatTimeInStage(txn.arrivalDateTime)}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      {isPriorityReady ? (
+                        <span className="inline-flex items-center rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-semibold text-orange-700">
+                          Waiting {Math.floor(hoursInStage)}h
+                        </span>
+                      ) : <span />}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={isUpdating}
+                        className="h-8 gap-1.5 text-xs px-2.5"
+                        onClick={() => setSheetTxn(txn)}
+                      >
+                        {isUpdating ? "Updating..." : "Update Status"}
+                        <ChevronDown className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full min-w-[820px] text-sm">
                 <thead>
                   <tr className="border-y border-border bg-muted/40">
@@ -248,7 +403,6 @@ export default function ProcessingPage({
                   {items.map((txn) => {
                     const hoursInStage = getHoursInStage(txn.arrivalDateTime);
                     const isPriorityReady = stage === "Ready" && hoursInStage >= 2;
-                    const nextStatuses = NEXT_STATUSES[txn.status] ?? [];
                     const isUpdating = updatingTicket === txn.ticketId;
 
                     return (
@@ -290,44 +444,47 @@ export default function ProcessingPage({
                           </span>
                         </td>
                         <td className="px-3 py-3 pr-4 md:pr-5">
-                          {nextStatuses.length > 0 ? (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  disabled={isUpdating}
-                                  className="h-7 gap-1.5 text-xs px-2.5 cursor-pointer"
-                                >
-                                  {isUpdating ? "Updating…" : "Update Status"}
-                                  <ChevronDown className="h-3 w-3" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="min-w-[160px]">
-                                {nextStatuses.map((next) => (
+                          {/* Update Status dropdown — shows ALL statuses */}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={isUpdating}
+                                className="h-7 gap-1.5 text-xs px-2.5 cursor-pointer"
+                              >
+                                {isUpdating ? "Updating…" : "Update Status"}
+                                <ChevronDown className="h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="min-w-[180px] rounded-xl border-border/50 shadow-lg p-1.5">
+                              {ALL_STATUS_OPTIONS.map(({ status, label, icon: Icon }) => {
+                                const isCurrent = txn.status === status;
+                                return (
                                   <DropdownMenuItem
-                                    key={next}
-                                    className="cursor-pointer text-xs"
-                                    onClick={() => handleUpdateStatus(txn, next)}
+                                    key={status}
+                                    disabled={isCurrent}
+                                    className={cn(
+                                      "cursor-pointer rounded-lg mb-1 last:mb-0 focus:bg-muted/40",
+                                      isCurrent && "bg-muted/60 opacity-100 cursor-default",
+                                    )}
+                                    onClick={() => !isCurrent && handleStatusSelect(txn, status)}
                                   >
-                                    <span
-                                      className={cn(
-                                        "mr-2 inline-flex h-2 w-2 rounded-full",
-                                        next === "Washing" && "bg-yellow-500",
-                                        next === "Drying" && "bg-orange-500",
-                                        next === "Processing" && "bg-purple-500",
-                                        next === "Ready" && "bg-green-500",
-                                        next === "Claimed" && "bg-gray-500",
+                                    <div className="flex items-center gap-3 w-full">
+                                      <Icon className={cn("w-4 h-4", isCurrent ? "text-foreground" : "text-muted-foreground")} />
+                                      <span className={cn("font-medium text-sm flex-1", isCurrent ? "text-foreground" : "text-muted-foreground")}>{label}</span>
+                                      {isCurrent && (
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Current</span>
+                                          <Check className="w-3.5 h-3.5 text-muted-foreground" />
+                                        </div>
                                       )}
-                                    />
-                                    Mark as {next}
+                                    </div>
                                   </DropdownMenuItem>
-                                ))}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">—</span>
-                          )}
+                                );
+                              })}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </td>
                       </tr>
                     );
@@ -335,6 +492,7 @@ export default function ProcessingPage({
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </CardContent>
       </Card>
@@ -413,7 +571,7 @@ export default function ProcessingPage({
         ) : (
           <>
             {/* Stage cards — horizontal row */}
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {filteredGrouped.map(({ stage, items }) => {
                 const isOpen = expandedStage === stage;
                 const allItems = grouped.find((g) => g.stage === stage)?.items ?? [];
@@ -486,11 +644,56 @@ export default function ProcessingPage({
         )}
       </div>
 
-      {/* Read-only ticket detail modal */}
-      <TransactionDetailModal
-        open={detailOpen}
-        onOpenChange={setDetailOpen}
-        transaction={detailTxn}
+
+      {/* ── Irreversible-action confirmation dialog ─────────────────────────── */}
+      <Dialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => {
+          if (!open) setConfirmDialog({ open: false, txn: null, targetStatus: null });
+        }}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {confirmDialog.targetStatus === "Voided"
+                ? `Void ${confirmDialog.txn?.ticketId}?`
+                : `Mark ${confirmDialog.txn?.ticketId} as Claimed?`}
+            </DialogTitle>
+            <DialogDescription>
+              This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmDialog({ open: false, txn: null, targetStatus: null })}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant={confirmDialog.targetStatus === "Voided" ? "destructive" : "default"}
+              onClick={handleConfirmStatus}
+            >
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Toast notifications ─────────────────────────────────────────────── */}
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+
+      <StatusUpdateSheet
+        open={!!sheetTxn}
+        onOpenChange={(open) => !open && setSheetTxn(null)}
+        ticketId={sheetTxn?.ticketId}
+        currentStatus={sheetTxn?.status ?? "Received"}
+        options={ALL_STATUS_OPTIONS}
+        disabled={Boolean(sheetTxn && updatingTicket === sheetTxn.ticketId)}
+        onSelectStatus={async (status) => {
+          if (!sheetTxn) return;
+          handleStatusSelect(sheetTxn, status);
+        }}
       />
     </>
   );

@@ -1,0 +1,201 @@
+- generic [ref=e1]:
+  - generic [ref=e68]:
+    - complementary [ref=e70]:
+      - generic [ref=e71]:
+        - img [ref=e73]
+        - generic [ref=e77]: LaundryTrack
+      - navigation [ref=e78]:
+        - list [ref=e79]:
+          - listitem [ref=e80]:
+            - button "Dashboard" [ref=e81]:
+              - img [ref=e82]
+              - generic [ref=e88]: Dashboard
+          - listitem [ref=e89]:
+            - button "Processing 3" [ref=e90]:
+              - img [ref=e91]
+              - generic [ref=e94]:
+                - generic [ref=e95]: Processing
+                - generic [ref=e96]: "3"
+          - listitem [ref=e97]:
+            - button "Transactions" [ref=e98]:
+              - img [ref=e99]
+              - generic [ref=e103]: Transactions
+          - listitem [ref=e104]:
+            - button "Claim Verification" [ref=e105]:
+              - img [ref=e106]
+              - generic [ref=e113]: Claim Verification
+          - listitem [ref=e114]:
+            - button "Reports" [ref=e115]:
+              - img [ref=e116]
+              - generic [ref=e119]: Reports
+          - listitem [ref=e120]:
+            - button "Staff Management" [ref=e121]:
+              - img [ref=e122]
+              - generic [ref=e128]: Staff Management
+          - listitem [ref=e129]:
+            - button "Audit Logs" [ref=e130]:
+              - img [ref=e131]
+              - generic [ref=e135]: Audit Logs
+          - listitem [ref=e136]:
+            - button "Loyalty Members" [ref=e137]:
+              - img [ref=e138]
+              - generic [ref=e141]: Loyalty Members
+          - listitem [ref=e142]:
+            - button "Settings" [ref=e143]:
+              - img [ref=e144]
+              - generic [ref=e147]: Settings
+              - img [ref=e148]
+    - generic [ref=e150]:
+      - banner [ref=e151]:
+        - generic [ref=e152]:
+          - button "Open navigation menu" [active] [ref=e153]:
+            - img [ref=e154]
+          - heading "Dashboard" [level=1] [ref=e155]
+        - generic [ref=e156]:
+          - button "Notifications" [ref=e157] [cursor=pointer]:
+            - img [ref=e158]
+          - button "User Profile" [ref=e161] [cursor=pointer]:
+            - img "Jay Cabuguason" [ref=e163]
+      - main [ref=e164]:
+        - generic [ref=e165]:
+          - generic [ref=e166]:
+            - generic [ref=e169]:
+              - generic [ref=e170]:
+                - paragraph [ref=e171]: Total Transactions Today
+                - paragraph [ref=e172]: "3"
+                - paragraph [ref=e173]: +3 from yesterday
+              - img [ref=e175]
+            - generic [ref=e180]:
+              - generic [ref=e181]:
+                - paragraph [ref=e182]: Total Revenue Today
+                - paragraph [ref=e183]: ₱414
+                - paragraph [ref=e184]: +12% vs yesterday
+              - generic [ref=e186]: ₱
+            - generic [ref=e189]:
+              - generic [ref=e190]:
+                - paragraph [ref=e191]: Ready for Pickup
+                - paragraph [ref=e192]: "1"
+                - paragraph [ref=e193]: Waiting to be claimed
+              - img [ref=e195]
+            - generic [ref=e199]:
+              - generic [ref=e200]:
+                - paragraph [ref=e201]: Active Orders
+                - paragraph [ref=e202]: "2"
+                - paragraph [ref=e203]: In progress
+              - img [ref=e205]
+          - generic [ref=e207]:
+            - generic [ref=e209]:
+              - generic [ref=e211]: Recent Transactions
+              - table [ref=e214]:
+                - rowgroup [ref=e215]:
+                  - row "Ticket ID Customer Status Actions" [ref=e378]:
+                    - columnheader "Ticket ID" [ref=e217]
+                    - columnheader "Customer" [ref=e218]
+                    - columnheader "Status" [ref=e219]
+                    - columnheader "Actions" [ref=e220]
+                - rowgroup [ref=e221]:
+                  - row "TKT-0011 s Received View details for ticket TKT-0011" [ref=e379]:
+                    - cell "TKT-0011" [ref=e223]:
+                      - button "TKT-0011" [ref=e224] [cursor=pointer]
+                    - cell "s" [ref=e225]
+                    - cell "Received" [ref=e226]:
+                      - generic [ref=e227]: Received
+                    - cell "View details for ticket TKT-0011" [ref=e228]:
+                      - button "View details for ticket TKT-0011" [ref=e229]:
+                        - img
+                  - row "TKT-0010 s Received View details for ticket TKT-0010" [ref=e380]:
+                    - cell "TKT-0010" [ref=e231]:
+                      - button "TKT-0010" [ref=e232] [cursor=pointer]
+                    - cell "s" [ref=e233]
+                    - cell "Received" [ref=e234]:
+                      - generic [ref=e235]: Received
+                    - cell "View details for ticket TKT-0010" [ref=e236]:
+                      - button "View details for ticket TKT-0010" [ref=e237]:
+                        - img
+                  - row "TKT-0009 m Claimed View details for ticket TKT-0009" [ref=e381]:
+                    - cell "TKT-0009" [ref=e239]:
+                      - button "TKT-0009" [ref=e240] [cursor=pointer]
+                    - cell "m" [ref=e241]
+                    - cell "Claimed" [ref=e242]:
+                      - generic [ref=e243]: Claimed
+                    - cell "View details for ticket TKT-0009" [ref=e244]:
+                      - button "View details for ticket TKT-0009" [ref=e245]:
+                        - img
+                  - row "TKT-0008 y Ready View details for ticket TKT-0008" [ref=e382]:
+                    - cell "TKT-0008" [ref=e247]:
+                      - button "TKT-0008" [ref=e248] [cursor=pointer]
+                    - cell "y" [ref=e249]
+                    - cell "Ready" [ref=e250]:
+                      - generic [ref=e251]: Ready
+                    - cell "View details for ticket TKT-0008" [ref=e252]:
+                      - button "View details for ticket TKT-0008" [ref=e253]:
+                        - img
+                  - row "TKT-0007 j Claimed View details for ticket TKT-0007" [ref=e383]:
+                    - cell "TKT-0007" [ref=e255]:
+                      - button "TKT-0007" [ref=e256] [cursor=pointer]
+                    - cell "j" [ref=e257]
+                    - cell "Claimed" [ref=e258]:
+                      - generic [ref=e259]: Claimed
+                    - cell "View details for ticket TKT-0007" [ref=e260]:
+                      - button "View details for ticket TKT-0007" [ref=e261]:
+                        - img
+                  - row "TKT-0006 w Claimed View details for ticket TKT-0006" [ref=e384]:
+                    - cell "TKT-0006" [ref=e263]:
+                      - button "TKT-0006" [ref=e264] [cursor=pointer]
+                    - cell "w" [ref=e265]
+                    - cell "Claimed" [ref=e266]:
+                      - generic [ref=e267]: Claimed
+                    - cell "View details for ticket TKT-0006" [ref=e268]:
+                      - button "View details for ticket TKT-0006" [ref=e269]:
+                        - img
+            - generic [ref=e270]:
+              - generic [ref=e271]:
+                - generic [ref=e273]: Peak Hours Today
+                - paragraph [ref=e276]: No transactions yet today
+              - generic [ref=e279]:
+                - img [ref=e281]
+                - generic [ref=e286]:
+                  - paragraph [ref=e288]: Loyalty Members
+                  - paragraph [ref=e289]: "5"
+                  - paragraph [ref=e290]: Active enrolled members
+              - generic [ref=e291]:
+                - generic [ref=e293]: Quick Links
+                - generic [ref=e294]:
+                  - button "Reports & Analytics" [ref=e295]:
+                    - generic [ref=e296]:
+                      - img [ref=e297]
+                      - text: Reports & Analytics
+                    - img [ref=e299]
+                  - button "Staff Management" [ref=e301]:
+                    - generic [ref=e302]:
+                      - img [ref=e303]
+                      - text: Staff Management
+                    - img [ref=e308]
+  - navigation [ref=e310]:
+    - generic [ref=e311]:
+      - button "Home" [ref=e312]:
+        - img [ref=e313]
+        - generic [ref=e318]: Home
+      - button "Process" [ref=e319]:
+        - img [ref=e320]
+        - generic [ref=e323]: Process
+      - button "Orders" [ref=e324]:
+        - img [ref=e325]
+        - generic [ref=e328]: Orders
+      - button "Claim" [ref=e329]:
+        - img [ref=e330]
+        - generic [ref=e336]: Claim
+      - button "Profile" [ref=e337]:
+        - img [ref=e338]
+        - generic [ref=e341]: Profile
+  - region "Notifications (F8)":
+    - list
+  - button "Open Next.js Dev Tools" [ref=e25] [cursor=pointer]:
+    - img [ref=e26]
+  - alert [ref=e29]: LaundryTrack - Laundry Shop Management System
+  - generic [ref=e30]:
+    - paragraph [ref=e31]: Install LaundryTrack App
+    - paragraph [ref=e32]: Install this app for faster access and better offline use.
+    - generic [ref=e33]:
+      - button "How to Install" [ref=e34]
+      - button "Not now" [ref=e35]

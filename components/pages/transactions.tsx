@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Search, Eye, EyeOff, Edit, Ban, Printer, ChevronRight, X, QrCode, CalendarIcon,
   Undo2, Redo2, AlertTriangle, Plus, User, Star, Camera, CameraOff,
-  ChevronLeft, Check, RefreshCw,
+  ChevronLeft, Check, RefreshCw, Inbox, RotateCw, Wind, Flag, PackageCheck
 } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
@@ -37,21 +37,25 @@ import {
   loadServiceTypes,
   loadAddOns,
   loadPricingConfig,
+  persistPricingConfig,
+  persistServiceTypes,
+  persistAddOns,
 } from "@/lib/settings-store";
 import type { CreateTransactionInput, UpdateTransactionInput } from "@/lib/transaction-contracts";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { PrintReceiptModal } from "@/components/print-receipt-modal";
+import { StatusUpdateSheet, type StatusOption } from "@/components/status-update-sheet";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // QR Scanner (inline, no package)
 // ─────────────────────────────────────────────────────────────────────────────
 function InlineQRScanner({ onScan, onClose }: { onScan: (v: string) => void; onClose: () => void }) {
-  const videoRef  = useRef<HTMLVideoElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const rafRef    = useRef<number | null>(null);
+  const rafRef = useRef<number | null>(null);
   const [active, setActive] = useState(false);
-  const [error, setError]   = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const stop = useCallback(() => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -130,7 +134,7 @@ function StampCard({ count, highlight }: { count: number; highlight?: boolean })
     <div className="flex flex-wrap gap-1.5">
       {Array.from({ length: STAMP_MILESTONE }).map((_, i) => {
         const filled = i < count % STAMP_MILESTONE || (count > 0 && count % STAMP_MILESTONE === 0 && i < STAMP_MILESTONE);
-        const isNew  = highlight && i === (count - 1) % STAMP_MILESTONE;
+        const isNew = highlight && i === (count - 1) % STAMP_MILESTONE;
         return (
           <div key={i} className={cn(
             "w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs transition-all",
@@ -153,9 +157,9 @@ function StampCard({ count, highlight }: { count: number; highlight?: boolean })
 // ──────────────────────────────────────────────────────────���──────────────────
 function MemberCard({ member, onClear, stampAfter }: { member: LoyaltyMember; onClear?: () => void; stampAfter?: boolean }) {
   const completedCycles = Math.floor(member.stampCount / STAMP_MILESTONE);
-  const currentStamp    = member.stampCount % STAMP_MILESTONE;
-  const newStamp        = stampAfter ? currentStamp + 1 : currentStamp;
-  const willUnlock      = stampAfter && newStamp >= STAMP_MILESTONE;
+  const currentStamp = member.stampCount % STAMP_MILESTONE;
+  const newStamp = stampAfter ? currentStamp + 1 : currentStamp;
+  const willUnlock = stampAfter && newStamp >= STAMP_MILESTONE;
 
   return (
     <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 space-y-3">
@@ -241,13 +245,13 @@ function NewTransactionWizard({
 }) {
   // Dynamic settings loaded from shared store
   const { members: loyaltyMembers } = useLoyaltyMembers();
-  const [serviceTypes, setServiceTypes]   = useState<ServiceType[]>([]);
-  const [svcEnabled, setSvcEnabled]       = useState(true);
-  const [basePerKg, setBasePerKg]         = useState("0");
-  const [addOnOptions, setAddOnOptions]   = useState<AddOn[]>([]);
-  const [minWeight, setMinWeightSetting]  = useState("0");
+  const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
+  const [svcEnabled, setSvcEnabled] = useState(true);
+  const [basePerKg, setBasePerKg] = useState("0");
+  const [addOnOptions, setAddOnOptions] = useState<AddOn[]>([]);
+  const [minWeight, setMinWeightSetting] = useState("0");
   const [pricingMode, setPricingModeSetting] = useState<PricingMode>("per-kg");
-  const [loadTiers, setLoadTiersSetting]  = useState<LoadTier[]>([]);
+  const [loadTiers, setLoadTiersSetting] = useState<LoadTier[]>([]);
   // For "both" mode — which method staff picks for this transaction (persisted across opens)
   const [chargingMode, setChargingMode] = useState<"per-kg" | "per-load">(() => {
     if (typeof window === "undefined") return "per-kg";
@@ -278,11 +282,11 @@ function NewTransactionWizard({
   });
 
   // Loyalty search state
-  const [memberSearch, setMemberSearch]     = useState("");
+  const [memberSearch, setMemberSearch] = useState("");
   const [memberSearchRes, setMemberSearchRes] = useState<LoyaltyMember[]>([]);
-  const [manualId, setManualId]             = useState("");
-  const [manualError, setManualError]       = useState("");
-  const [showScanner, setShowScanner]       = useState(false);
+  const [manualId, setManualId] = useState("");
+  const [manualError, setManualError] = useState("");
+  const [showScanner, setShowScanner] = useState(false);
 
   // Reset when dialog opens — also re-read settings so changes in Settings tab are reflected
   useEffect(() => {
@@ -322,6 +326,46 @@ function NewTransactionWizard({
       setManualId("");
       setManualError("");
       setShowScanner(false);
+
+      // Fetch latest settings from server in background to sync
+      let ignore = false;
+      void (async () => {
+        const headers: Record<string, string> = {};
+        const { getBrowserAccessToken } = await import("@/lib/supabase/browser-session");
+        const { getSupabaseBrowserClient } = await import("@/lib/supabase/client");
+        if (getSupabaseBrowserClient()) {
+          const token = await getBrowserAccessToken();
+          if (token) headers.Authorization = `Bearer ${token}`;
+        }
+        if (ignore) return;
+        const response = await fetch("/api/settings/pricing", { cache: "no-store", headers }).catch(() => null);
+        if (!response || ignore) return;
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || ignore) return;
+
+        if (data.pricingConfig) {
+          persistPricingConfig(data.pricingConfig);
+          setBasePerKg(data.pricingConfig.pricePerKg || "0");
+          setMinWeightSetting(data.pricingConfig.minWeight || "0");
+          setPricingModeSetting(data.pricingConfig.pricingMode);
+          setLoadTiersSetting(data.pricingConfig.loadTiers);
+          setPriceDisplayMode(data.pricingConfig.priceDisplayMode ?? "show");
+          if (!data.pricingConfig.loadTiers.find((t: LoadTier) => t.id === selectedTierId)) {
+            setSelectedTierId(data.pricingConfig.loadTiers[0]?.id ?? "");
+          }
+        }
+        if (data.serviceTypes) {
+          persistServiceTypes(data.serviceTypes);
+          const enabled = svcOn ? data.serviceTypes.filter((s: ServiceType) => s.active) : [];
+          setServiceTypes(enabled);
+        }
+        if (data.addOns) {
+          persistAddOns(data.addOns);
+          setAddOnOptions(data.addOns);
+        }
+      })();
+
+      return () => { ignore = true; };
     }
   }, [open]);
 
@@ -366,10 +410,10 @@ function NewTransactionWizard({
     pricingMode === "both" ? chargingMode : (pricingMode === "per-load" ? "per-load" : "per-kg");
 
   const selectedService = serviceTypes.find((s) => s.name === form.washType);
-  const selectedTier    = loadTiers.find((t) => t.id === selectedTierId);
-  const weight          = parseFloat(form.weight) || 0;
-  const numberOfLoads   = parseInt(form.numberOfLoads) || 0;
-  const minWeightNum    = parseFloat(minWeight) || 0;
+  const selectedTier = loadTiers.find((t) => t.id === selectedTierId);
+  const weight = parseFloat(form.weight) || 0;
+  const numberOfLoads = parseInt(form.numberOfLoads) || 0;
+  const minWeightNum = parseFloat(minWeight) || 0;
 
   // ── Fee calculation ──────────────────────────────────────────���─────────────
   let baseFee = 0;
@@ -434,8 +478,8 @@ function NewTransactionWizard({
       {loyaltyEnabled && (
         <div className="grid grid-cols-2 gap-3">
           {([
-            { type: "walkin",  icon: User,  label: "Walk-in Customer",  sub: "No loyalty account" },
-            { type: "loyalty", icon: Star,  label: "Loyalty Member",     sub: "Has a loyalty account" },
+            { type: "walkin", icon: User, label: "Walk-in Customer", sub: "No loyalty account" },
+            { type: "loyalty", icon: Star, label: "Loyalty Member", sub: "Has a loyalty account" },
           ] as const).map(({ type, icon: Icon, label, sub }) => (
             <button
               key={type}
@@ -612,7 +656,7 @@ function NewTransactionWizard({
   // ── Step 2: Service Details ───────────────────────────────────────────────
   const renderStep2 = () => {
     // Filter services by the effective charging mode's pricingType
-    const perKgServices  = serviceTypes.filter((s) => s.pricingType === "per-kg" || s.pricingType === "per-piece");
+    const perKgServices = serviceTypes.filter((s) => s.pricingType === "per-kg" || s.pricingType === "per-piece");
     const perLoadServices = serviceTypes.filter((s) => s.pricingType === "per-load");
     const visibleServices = effectiveMode === "per-load" ? perLoadServices : perKgServices;
     const svcCols = visibleServices.length <= 2 ? visibleServices.length || 1 : visibleServices.length === 4 ? 2 : 3;
@@ -932,16 +976,16 @@ function NewTransactionWizard({
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Transaction Summary</p>
           <div className="grid grid-cols-2 gap-2 text-sm">
             {[
-              { label: "Customer",   value: form.customerName },
-              { label: "Phone",      value: form.phone || "—" },
-              { label: "Arrival",    value: form.arrivalDateTime },
+              { label: "Customer", value: form.customerName },
+              { label: "Phone", value: form.phone || "—" },
+              { label: "Arrival", value: form.arrivalDateTime },
               effectiveMode === "per-load"
-                ? { label: "Load Size",  value: selectedTier ? `${selectedTier.name} (${selectedTier.range})` : "—" }
-                : { label: "Wash Type",  value: form.washType || "Per Kilogram" },
+                ? { label: "Load Size", value: selectedTier ? `${selectedTier.name} (${selectedTier.range})` : "—" }
+                : { label: "Wash Type", value: form.washType || "Per Kilogram" },
               effectiveMode === "per-load"
-                ? { label: "Pricing",    value: "Per Load" }
-                : { label: "Weight",     value: `${form.weight} kg` },
-              { label: "Add-ons",    value: form.addOns.length ? form.addOns.join(", ") : "None" },
+                ? { label: "Pricing", value: "Per Load" }
+                : { label: "Weight", value: `${form.weight} kg` },
+              { label: "Add-ons", value: form.addOns.length ? form.addOns.join(", ") : "None" },
             ].map((row) => (
               <div key={row.label} className="bg-background/60 rounded-md p-2.5">
                 <p className="text-[10px] text-muted-foreground">{row.label}</p>
@@ -1103,6 +1147,15 @@ interface TransactionsPageProps {
   onEditComplete?: () => void;
 }
 
+const MOBILE_STATUS_OPTIONS: StatusOption[] = [
+  { status: "Received", label: "Received", dotClass: "bg-blue-500" },
+  { status: "Washing", label: "Washing", dotClass: "bg-yellow-500" },
+  { status: "Drying", label: "Drying", dotClass: "bg-orange-500" },
+  { status: "Ready", label: "Ready", dotClass: "bg-green-500" },
+  { status: "Claimed", label: "Claimed", dotClass: "bg-gray-500" },
+  { status: "Voided", label: "Voided", dotClass: "bg-red-500" },
+];
+
 export default function TransactionsPage({
   transactions: txns,
   loading = false,
@@ -1124,16 +1177,18 @@ export default function TransactionsPage({
   const [showWizard, setShowWizard] = useState(false);
 
   // Modals
-  const [viewTxn, setViewTxn]         = useState<Transaction | null>(null);
-  const [editTxn, setEditTxn]         = useState<Transaction | null>(null);
+  const [viewTxn, setViewTxn] = useState<Transaction | null>(null);
+  const [editTxn, setEditTxn] = useState<Transaction | null>(null);
   const [editInstructions, setEditInstructions] = useState("");
-  const [editStatus, setEditStatus]   = useState<Transaction["status"]>("Received");
+  const [editStatus, setEditStatus] = useState<Transaction["status"]>("Received");
   const [editPaymentStatus, setEditPaymentStatus] = useState<PaymentStatus>("unpaid");
-  const [voidTxn, setVoidTxn]         = useState<Transaction | null>(null);
-  const [voidReason, setVoidReason]   = useState("");
-  const [reprintTxn, setReprintTxn]   = useState<Transaction | null>(null);
-  const [printTxn, setPrintTxn]       = useState<Transaction | null>(null);
+  const [voidTxn, setVoidTxn] = useState<Transaction | null>(null);
+  const [voidReason, setVoidReason] = useState("");
+  const [reprintTxn, setReprintTxn] = useState<Transaction | null>(null);
+  const [printTxn, setPrintTxn] = useState<Transaction | null>(null);
   const [printPostCreate, setPrintPostCreate] = useState(false);
+  const [mobileStatusTxn, setMobileStatusTxn] = useState<Transaction | null>(null);
+  const [mobileStatusBusyTicket, setMobileStatusBusyTicket] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   // Toast
@@ -1247,11 +1302,40 @@ export default function TransactionsPage({
     setEditPaymentStatus(txn.paymentStatus);
   };
 
-  // Auto-open edit modal if editTicketId is provided
+  const handleMobileStatusSelect = async (status: Transaction["status"]) => {
+    if (!mobileStatusTxn || status === mobileStatusTxn.status) return;
+    if (status === "Claimed" && mobileStatusTxn.paymentStatus === "unpaid") {
+      showToast("Mark payment as Paid first before claiming this ticket.");
+      return;
+    }
+    if (status === "Voided") {
+      setVoidTxn(mobileStatusTxn);
+      setVoidReason("");
+      setMobileStatusTxn(null);
+      return;
+    }
+    setMobileStatusBusyTicket(mobileStatusTxn.ticketId);
+    try {
+      await onUpdateTransaction(mobileStatusTxn.ticketId, { status });
+      showToast(`Ticket #${mobileStatusTxn.ticketId} moved to ${status}`);
+      setMobileStatusTxn(null);
+    } catch {
+      showToast("Unable to update the ticket status right now");
+    } finally {
+      setMobileStatusBusyTicket(null);
+    }
+  };
+
+  // Auto-open Edit modal directly when editTicketId is provided (e.g. from notification "View" button)
+  const handledEditTicketRef = useRef<string | null>(null);
   useEffect(() => {
-    if (editTicketId) {
+    if (editTicketId && editTicketId !== handledEditTicketRef.current) {
+      handledEditTicketRef.current = editTicketId;
       const txn = txns.find(t => t.ticketId === editTicketId);
       if (txn) openEdit(txn);
+    }
+    if (!editTicketId) {
+      handledEditTicketRef.current = null;
     }
   }, [editTicketId]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1286,7 +1370,7 @@ export default function TransactionsPage({
   const activeStatuses = new Set(["Received", "Washing", "Drying"]);
 
   const smartPriority = (t: Transaction): number => {
-    if (t.status === "Voided")  return 90;
+    if (t.status === "Voided") return 90;
     if (t.status === "Claimed") return 80;
     // Unpaid + Active (not Ready) — Priority 1
     if (t.paymentStatus === "unpaid" && activeStatuses.has(t.status)) return 1;
@@ -1472,7 +1556,100 @@ export default function TransactionsPage({
 
       {/* Table */}
       <div className="bg-card border border-border rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="divide-y divide-border md:hidden">
+          {filtered.map((txn) => {
+            const isVoided = txn.status === "Voided";
+            const isClaimed = txn.status === "Claimed";
+            return (
+              <div
+                key={txn.id}
+                className={cn(
+                  "space-y-3 px-4 py-3",
+                  isVoided ? "bg-muted/30 opacity-70" : "",
+                  isClaimed ? "text-muted-foreground/70" : ""
+                )}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <button
+                      onClick={() => setViewTxn(txn)}
+                      className={cn("text-xs font-mono font-semibold text-primary hover:underline cursor-pointer text-left", isVoided && "line-through")}
+                      title="View ticket details"
+                    >
+                      {txn.ticketId}
+                    </button>
+                    <p className={cn("truncate text-xs font-medium text-foreground", isVoided && "line-through")}>{txn.customerName}</p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">{txn.arrivalDateTime}</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1.5">
+                    <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap", statusColors[txn.status])}>
+                      {txn.status}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2.5 text-[11px]"
+                      disabled={isVoided || mobileStatusBusyTicket === txn.ticketId}
+                      onClick={() => setMobileStatusTxn(txn)}
+                    >
+                      {mobileStatusBusyTicket === txn.ticketId ? "Updating..." : "Update Status"}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/30 p-2.5">
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">Weight</p>
+                    <p className="text-xs font-medium text-foreground">{txn.weight} kg</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">Type</p>
+                    <p className="truncate text-xs font-medium text-foreground">{txn.washType}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">Fee</p>
+                    <p className="text-xs font-medium text-foreground">₱{txn.fee}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className={cn(
+                    "inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap",
+                    txn.paymentStatus === "paid"
+                      ? "bg-green-50 text-green-700 border border-green-200"
+                      : "bg-red-50 text-red-600 border border-red-200"
+                  )}>
+                    {txn.paymentStatus === "paid" ? "Paid" : "Unpaid"}
+                  </span>
+                  <div className="flex items-center gap-0.5">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" title="View" onClick={() => setViewTxn(txn)}>
+                      <Eye className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" title="Edit" disabled={isVoided} onClick={() => openEdit(txn)}>
+                      <Edit className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost" size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      title="Void"
+                      disabled={isVoided}
+                      onClick={() => { setVoidTxn(txn); setVoidReason(""); }}
+                    >
+                      <Ban className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          {filtered.length === 0 && (
+            <div className="text-center py-10 text-sm text-muted-foreground">
+              {loading ? "Loading transactions..." : "No transactions found."}
+            </div>
+          )}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr className="border-b border-border bg-muted/40">
@@ -1489,7 +1666,7 @@ export default function TransactionsPage({
             </thead>
             <tbody>
               {filtered.map((txn) => {
-                const isVoided  = txn.status === "Voided";
+                const isVoided = txn.status === "Voided";
                 const isClaimed = txn.status === "Claimed";
                 const visualCls = rowVisualClass(txn);
                 return (
@@ -1497,13 +1674,21 @@ export default function TransactionsPage({
                     key={txn.id}
                     className={cn(
                       "border-b border-border last:border-0 transition-colors",
-                      isVoided  ? "bg-muted/30 opacity-50" : "",
+                      isVoided ? "bg-muted/30 opacity-50" : "",
                       isClaimed ? "text-muted-foreground/60" : "",
                       !isVoided && !isClaimed ? "hover:bg-muted/20" : "",
                       visualCls
                     )}
                   >
-                    <td className={cn("px-4 py-3 text-xs font-mono font-semibold text-primary", isVoided && "line-through", isClaimed && "text-muted-foreground/60")}>{txn.ticketId}</td>
+                    <td className={cn("px-4 py-3 text-xs font-mono font-semibold text-primary", isVoided && "line-through", isClaimed && "text-muted-foreground/60")}>
+                      <button
+                        onClick={() => setViewTxn(txn)}
+                        className="hover:underline cursor-pointer"
+                        title="View ticket details"
+                      >
+                        {txn.ticketId}
+                      </button>
+                    </td>
                     <td className={cn("px-4 py-3 text-xs font-medium", isVoided && "line-through text-foreground", isClaimed ? "text-muted-foreground/60" : "text-foreground")}>{txn.customerName}</td>
                     <td className={cn("px-4 py-3 text-xs text-muted-foreground whitespace-nowrap hidden md:table-cell", isVoided && "line-through", isClaimed && "text-muted-foreground/50")}>{txn.arrivalDateTime}</td>
                     <td className={cn("px-4 py-3 text-xs text-muted-foreground hidden sm:table-cell", isVoided && "line-through", isClaimed && "text-muted-foreground/50")}>{txn.weight} kg</td>
@@ -1565,7 +1750,7 @@ export default function TransactionsPage({
       </div>
 
       {/* ── VIEW MODAL (read-only) ──────────────────────────────────────────── */}
-      <Dialog open={!!viewTxn} onOpenChange={(open) => !open && setViewTxn(null)}>
+      <Dialog open={!!viewTxn} onOpenChange={(open) => { if (!open) { setViewTxn(null); onEditComplete?.(); } }}>
         <DialogContent className="w-[calc(100vw-1rem)] sm:w-auto max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Ticket Details — {viewTxn?.ticketId}</DialogTitle>
@@ -1576,14 +1761,14 @@ export default function TransactionsPage({
               {/* Details grid */}
               <div className="grid grid-cols-2 gap-2 text-sm">
                 {[
-                  { label: "Ticket ID",           value: viewTxn.ticketId,                                          span: false },
-                  { label: "Customer Name",        value: viewTxn.customerName,                                      span: false },
-                  { label: "Arrival Date & Time",  value: viewTxn.arrivalDateTime,                                   span: true  },
-                  { label: "Weight (kg)",          value: `${viewTxn.weight} kg`,                                    span: false },
-                  { label: "Wash Type",            value: viewTxn.washType,                                          span: false },
-                  { label: "Add-ons",              value: viewTxn.addOns.length ? viewTxn.addOns.join(", ") : "None", span: false },
-                  { label: "Total Fee",            value: `₱${viewTxn.fee}`,                                         span: false },
-                  { label: "ETA",                  value: viewTxn.eta ? formatReadableDateTime(viewTxn.eta) : "Awaiting estimate", span: false },
+                  { label: "Ticket ID", value: viewTxn.ticketId, span: false },
+                  { label: "Customer Name", value: viewTxn.customerName, span: false },
+                  { label: "Arrival Date & Time", value: viewTxn.arrivalDateTime, span: true },
+                  { label: "Weight (kg)", value: `${viewTxn.weight} kg`, span: false },
+                  { label: "Wash Type", value: viewTxn.washType, span: false },
+                  { label: "Add-ons", value: viewTxn.addOns.length ? viewTxn.addOns.join(", ") : "None", span: false },
+                  { label: "Total Fee", value: `₱${viewTxn.fee}`, span: false },
+                  { label: "ETA", value: viewTxn.eta ? formatReadableDateTime(viewTxn.eta) : "Awaiting estimate", span: false },
                 ].map((row) => (
                   <div key={row.label} className={cn("bg-muted/30 rounded-md p-2.5", row.span && "col-span-2")}>
                     <p className="text-[11px] text-muted-foreground">{row.label}</p>
@@ -1625,8 +1810,8 @@ export default function TransactionsPage({
                   {statusOrder.map((step, idx) => {
                     const stepIdx = statusOrder.indexOf(viewTxn.status as (typeof statusOrder)[number]);
                     const isCompleted = idx < stepIdx;
-                    const isCurrent   = idx === stepIdx;
-                    const isLast      = idx === statusOrder.length - 1;
+                    const isCurrent = idx === stepIdx;
+                    const isLast = idx === statusOrder.length - 1;
                     return (
                       <div key={step} className="flex items-center flex-1 last:flex-none">
                         <div className="flex flex-col items-center">
@@ -1660,16 +1845,33 @@ export default function TransactionsPage({
               </div>
 
               {/* View modal actions */}
-              <div className="flex flex-col sm:flex-row gap-2 pt-1">
-                <Button size="sm" variant="outline" className="flex-1 gap-1.5" onClick={() => { setReprintTxn(viewTxn); setViewTxn(null); }}>
-                  <Printer className="w-3.5 h-3.5" /> Reprint QR
-                </Button>
-                <Button size="sm" variant="outline" className="flex-1 gap-1.5" onClick={() => { setPrintTxn(viewTxn); setPrintPostCreate(false); setViewTxn(null); }}>
-                  <Printer className="w-3.5 h-3.5" /> Print Receipt
-                </Button>
-                <Button size="sm" variant="secondary" className="flex-1" onClick={() => setViewTxn(null)}>
-                  <X className="w-3.5 h-3.5 mr-1" /> Close
-                </Button>
+              <div className="flex flex-col gap-2 pt-1">
+                {/* Primary action: Edit Status */}
+                {viewTxn.status !== "Voided" && (
+                  <Button
+                    size="sm"
+                    className="w-full gap-1.5"
+                    onClick={() => {
+                      const txn = viewTxn;
+                      setViewTxn(null);
+                      openEdit(txn);
+                    }}
+                  >
+                    <Edit className="w-3.5 h-3.5" /> Edit Status
+                  </Button>
+                )}
+                {/* Secondary actions */}
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" className="flex-1 gap-1.5" onClick={() => { setReprintTxn(viewTxn); setViewTxn(null); onEditComplete?.(); }}>
+                    <Printer className="w-3.5 h-3.5" /> Reprint QR
+                  </Button>
+                  <Button size="sm" variant="outline" className="flex-1 gap-1.5" onClick={() => { setPrintTxn(viewTxn); setPrintPostCreate(false); setViewTxn(null); onEditComplete?.(); }}>
+                    <Printer className="w-3.5 h-3.5" /> Print Receipt
+                  </Button>
+                  <Button size="sm" variant="secondary" className="flex-1" onClick={() => { setViewTxn(null); onEditComplete?.(); }}>
+                    <X className="w-3.5 h-3.5 mr-1" /> Close
+                  </Button>
+                </div>
               </div>
             </div>
           )}
@@ -1679,53 +1881,99 @@ export default function TransactionsPage({
       {/* ── EDIT MODAL ────────���────────────────────────────────────────────── */}
       <Dialog open={!!editTxn} onOpenChange={(open) => { if (!open) { setEditTxn(null); onEditComplete?.(); } }}>
         <DialogContent className="w-[calc(100vw-1rem)] sm:w-auto max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Ticket — {editTxn?.ticketId}</DialogTitle>
-            <DialogDescription>Update status and payment for this transaction.</DialogDescription>
+          <DialogHeader className="text-left space-y-1.5">
+            <div className="flex justify-between items-start pr-4">
+              <DialogTitle className="text-lg font-bold">Edit Ticket — {editTxn?.ticketId}</DialogTitle>
+              {editTxn && (
+                <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold border shadow-sm mt-0.5", statusColors[editTxn.status])}>
+                  {editTxn.status}
+                </span>
+              )}
+            </div>
+            <DialogDescription className="text-sm text-muted-foreground font-medium">
+              Update status and payment for this transaction.
+            </DialogDescription>
           </DialogHeader>
           {editTxn && (
-            <div className="space-y-5">
+            <div className="space-y-6 mt-1">
               {/* Summary */}
-              <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="grid grid-cols-2 gap-2.5 text-sm">
                 {[
-                  { label: "Customer",  value: editTxn.customerName },
+                  { label: "Customer", value: editTxn.customerName },
                   { label: "Wash Type", value: editTxn.washType },
-                  { label: "Weight",    value: `${editTxn.weight} kg` },
-                  { label: "Fee",       value: `₱${editTxn.fee}` },
+                  { label: "Weight", value: `${editTxn.weight} kg` },
+                  { label: "Fee", value: `₱${editTxn.fee}` },
                 ].map((row) => (
-                  <div key={row.label} className="bg-muted/30 rounded-md p-2.5">
-                    <p className="text-[11px] text-muted-foreground">{row.label}</p>
-                    <p className="font-medium text-foreground text-xs mt-0.5">{row.value}</p>
+                  <div key={row.label} className="bg-muted/40 rounded-xl p-3 border border-border/40 flex flex-col justify-center">
+                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">{row.label}</p>
+                    <p className="font-bold text-foreground text-[13px]">{row.value}</p>
                   </div>
                 ))}
               </div>
 
+              {/* Status stepper — dynamic based on editStatus */}
+              <div>
+                <p className="text-xs font-bold text-foreground mb-3 block">Status Progress</p>
+                <div className="flex items-center">
+                  {statusOrder.map((step, idx) => {
+                    const stepIdx = statusOrder.indexOf(editStatus as typeof statusOrder[number]);
+                    const isCompleted = idx < stepIdx;
+                    const isCurrent = idx === stepIdx;
+                    const isLast = idx === statusOrder.length - 1;
+                    return (
+                      <div key={step} className="flex items-center flex-1 last:flex-none">
+                        <div className="flex flex-col items-center">
+                          <div className={cn(
+                            "w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold border-2 transition-all duration-300 shadow-sm",
+                            isCompleted ? "bg-primary border-primary text-primary-foreground" :
+                              isCurrent ? "bg-background border-primary text-primary ring-2 ring-primary/20 ring-offset-1 ring-offset-background" : "bg-muted/50 border-border text-muted-foreground"
+                          )}>
+                            {isCompleted ? <Check className="w-3.5 h-3.5" /> : idx + 1}
+                          </div>
+                          <span className={cn("text-[9px] mt-2 text-center w-11 md:w-12 leading-tight transition-colors duration-300 uppercase tracking-wide", isCurrent ? "text-primary font-bold" : "text-muted-foreground font-semibold")}>
+                            {step}
+                          </span>
+                        </div>
+                        {!isLast && <div className={cn("flex-1 h-0.5 mb-6 mx-1 transition-colors duration-300 rounded-full", isCompleted ? "bg-primary" : "bg-border")} />}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Status dropdown */}
               <div>
-                <label className="text-xs font-medium text-foreground mb-1.5 block">Current Status</label>
+                <label className="text-xs font-bold text-foreground mb-1.5 block">Current Status</label>
                 <Select
                   value={editStatus}
                   onValueChange={(v) => setEditStatus(v as Transaction["status"])}
                 >
-                  <SelectTrigger className="h-9 text-sm transition-colors duration-200 hover:border-blue-400 focus:border-blue-500 cursor-pointer">
+                  <SelectTrigger className="h-11 text-sm bg-background border-border hover:border-primary/50 transition-colors cursor-pointer rounded-xl font-semibold shadow-sm focus:ring-primary/20">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="rounded-xl border-border/50 shadow-lg p-1.5">
                     {([
-                      { value: "Received", dot: "bg-blue-500",   text: "text-blue-700"   },
-                      { value: "Washing",  dot: "bg-yellow-500", text: "text-yellow-700" },
-                      { value: "Drying",   dot: "bg-orange-500", text: "text-orange-700" },
-                      { value: "Ready",    dot: "bg-green-500",  text: "text-green-700"  },
-                      { value: "Claimed",  dot: "bg-gray-400",   text: "text-gray-600"   },
-                    ] as const).map(({ value, dot, text }) => {
+                      { value: "Received", icon: Inbox },
+                      { value: "Washing", icon: RotateCw },
+                      { value: "Drying", icon: Wind },
+                      { value: "Ready", icon: Flag },
+                      { value: "Claimed", icon: PackageCheck },
+                    ] as const).map(({ value, icon: Icon }) => {
                       const isClaimedBlocked = value === "Claimed" && editPaymentStatus === "unpaid";
+                      const isCurrent = value === editStatus;
                       return (
-                        <SelectItem key={value} value={value} disabled={isClaimedBlocked}>
-                          <div className="flex items-center gap-2">
-                            <span className={cn("w-2 h-2 rounded-full shrink-0", dot)} />
-                            <span className={cn("font-medium text-xs", text)}>{value}</span>
-                            {isClaimedBlocked && (
-                              <span className="ml-1 text-[10px] text-muted-foreground">(payment required)</span>
+                        <SelectItem key={value} value={value} disabled={isClaimedBlocked} className={cn("cursor-pointer rounded-lg mb-1 last:mb-0", isCurrent ? "bg-muted/60" : "focus:bg-muted/40")}>
+                          <div className="flex items-center gap-3 py-1.5 w-full pr-4">
+                            <Icon className={cn("w-4 h-4", isCurrent ? "text-foreground" : "text-muted-foreground")} />
+                            <span className={cn("font-medium text-[15px] flex-1 text-left", isCurrent ? "text-foreground" : "text-muted-foreground")}>{value}</span>
+                            {isCurrent && (
+                              <div className="flex items-center gap-1.5 ml-3">
+                                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Current</span>
+                                <Check className="w-3.5 h-3.5 text-muted-foreground" />
+                              </div>
+                            )}
+                            {isClaimedBlocked && !isCurrent && (
+                              <span className="ml-2 text-[10px] text-muted-foreground font-medium uppercase tracking-wider">(Payment Required)</span>
                             )}
                           </div>
                         </SelectItem>
@@ -1737,75 +1985,70 @@ export default function TransactionsPage({
 
               {/* Payment Status */}
               <div>
-                <label className="text-xs font-medium text-foreground mb-1.5 block">Payment Status</label>
-                <div className="grid grid-cols-2 gap-2">
+                <label className="text-xs font-bold text-foreground mb-1.5 block">Payment Status</label>
+                <div className="grid grid-cols-2 gap-2.5">
                   {(["unpaid", "paid"] as const).map((ps) => (
                     <button
                       key={ps}
                       onClick={() => setEditPaymentStatus(ps)}
                       className={cn(
-                        "rounded-lg border-2 py-2.5 px-3 text-xs font-semibold transition-all duration-200 cursor-pointer",
+                        "rounded-xl border-2 py-2.5 px-3 text-[13px] font-bold transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
                         ps === "unpaid"
                           ? editPaymentStatus === "unpaid"
-                            ? "border-red-500 bg-red-50 text-red-600"
-                            : "border-border bg-background text-muted-foreground hover:border-red-400 hover:bg-red-50 hover:text-red-600"
+                            ? "border-red-500 bg-red-50 text-red-700 shadow-sm"
+                            : "border-border/60 bg-muted/20 text-muted-foreground hover:border-red-300 hover:bg-red-50/50 hover:text-red-600"
                           : editPaymentStatus === "paid"
-                            ? "border-green-500 bg-green-50 text-green-600"
-                            : "border-border bg-background text-muted-foreground hover:border-green-400 hover:bg-green-50 hover:text-green-600"
+                            ? "border-green-500 bg-green-50 text-green-700 shadow-sm"
+                            : "border-border/60 bg-muted/20 text-muted-foreground hover:border-green-300 hover:bg-green-50/50 hover:text-green-600"
                       )}
                     >
                       {ps === "unpaid" ? "Unpaid" : "Paid"}
                     </button>
                   ))}
                 </div>
-                {editPaymentStatus === "paid" && (
-                  <p className="text-[11px] text-green-600 mt-1">Marked as paid. This will be recorded in the transaction log.</p>
-                )}
               </div>
 
               {/* Wash instructions */}
               <div>
-                <label className="text-xs font-medium text-foreground mb-1.5 block">Wash Instructions</label>
+                <label className="text-xs font-bold text-foreground mb-1.5 block">Wash Instructions</label>
                 <Textarea
                   placeholder="Add special wash instructions..."
                   value={editInstructions}
                   onChange={(e) => setEditInstructions(e.target.value)}
-                  className="text-sm resize-none"
-                  rows={2}
+                  className="text-sm resize-none rounded-xl border-border focus:border-primary/50 shadow-sm min-h-[80px]"
                 />
               </div>
 
               {/* Warning when payment is Unpaid and user is trying to claim */}
-              {editPaymentStatus === "unpaid" && (editStatus === "Ready" || editStatus === "Claimed") && (
-                <div className="flex items-start gap-2 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2.5 text-sm text-orange-800">
-                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                  <span>Mark payment as Paid first before claiming this ticket.</span>
+              {editPaymentStatus === "unpaid" && editStatus === "Ready" && (
+                <div className="flex items-start gap-3 bg-orange-50 border border-orange-200 rounded-xl px-3.5 py-3 text-sm text-orange-800 shadow-sm">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-orange-600" />
+                  <span className="font-semibold leading-tight">Mark payment as Paid first before claiming this ticket.</span>
                 </div>
               )}
 
               {/* Edit actions */}
-              <div className="flex flex-col sm:flex-row gap-2 pt-1">
+              <div className="flex flex-col gap-2.5 pt-3 border-t border-border/40 mt-2">
                 {editStatus === "Ready" && editPaymentStatus === "paid" && (
-                  <Button size="sm" onClick={markAsClaimed} className="flex-1 gap-1.5 transition-all duration-200 hover:scale-[1.02] cursor-pointer">
-                    <Check className="w-3.5 h-3.5" />
-                    Move to Claimed
+                  <Button size="lg" onClick={markAsClaimed} className="w-full gap-2 transition-all duration-200 hover:scale-[1.02] bg-green-600 hover:bg-green-700 text-white shadow-sm font-bold text-sm h-12 rounded-xl">
+                    <Check className="w-4 h-4" /> Move to Claimed
                   </Button>
                 )}
                 <Button
-                  size="sm"
-                  variant="secondary"
+                  size="lg"
+                  variant="default"
                   onClick={saveInstructions}
-                  className="flex-1 transition-all duration-200 hover:bg-blue-500 hover:text-white hover:border-blue-500 hover:scale-[1.02] cursor-pointer"
+                  className="w-full transition-all duration-200 hover:scale-[1.02] shadow-sm font-bold text-sm h-12 rounded-xl"
                 >
                   Save Changes
                 </Button>
                 <Button
-                  size="sm"
+                  size="lg"
                   variant="outline"
                   onClick={() => { setEditTxn(null); onEditComplete?.(); }}
-                  className="flex-1 transition-all duration-200 hover:bg-red-50 hover:text-red-600 hover:border-red-400 cursor-pointer"
+                  className="w-full transition-all duration-200 hover:bg-muted cursor-pointer font-bold text-sm h-12 rounded-xl border-border/60"
                 >
-                  <X className="w-3.5 h-3.5 mr-1 transition-transform duration-200 group-hover:rotate-90" /> Cancel
+                  <X className="w-4 h-4 mr-1.5 opacity-70" /> Cancel
                 </Button>
               </div>
             </div>
@@ -1915,6 +2158,16 @@ export default function TransactionsPage({
           )}
         </DialogContent>
       </Dialog>
+
+      <StatusUpdateSheet
+        open={!!mobileStatusTxn}
+        onOpenChange={(open) => !open && setMobileStatusTxn(null)}
+        ticketId={mobileStatusTxn?.ticketId}
+        currentStatus={mobileStatusTxn?.status ?? "Received"}
+        options={MOBILE_STATUS_OPTIONS}
+        disabled={Boolean(mobileStatusTxn && mobileStatusBusyTicket === mobileStatusTxn.ticketId)}
+        onSelectStatus={handleMobileStatusSelect}
+      />
     </div>
   );
 }

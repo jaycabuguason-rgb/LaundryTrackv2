@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
-import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from '@/components/ui/toaster'
 import PwaInit from '@/components/pwa-init'
 import { ThemeProvider } from '@/components/theme-provider'
@@ -11,7 +10,7 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: 'LaundryTrack - Laundry Shop Management System',
-  description: 'Professional admin panel for laundry shop management',
+  description: 'LaundryTrack helps laundry shops manage orders, processing, claims, reports, staff, and customer loyalty from one admin dashboard.',
   generator: 'v0.app',
   manifest: '/manifest.webmanifest',
   icons: {
@@ -50,7 +49,6 @@ export default function RootLayout({
           {children}
           <Toaster />
           <PwaInit />
-          {process.env.NODE_ENV === 'production' && <Analytics />}
         </ThemeProvider>
       </body>
     </html>

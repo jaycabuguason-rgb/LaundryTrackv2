@@ -1,0 +1,6 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e4]:
+    - paragraph [ref=e5]: Loading LaundryTrack...
+    - paragraph [ref=e6]: Checking your Supabase admin session.
+  - region "Notifications (F8)":
+    - list
