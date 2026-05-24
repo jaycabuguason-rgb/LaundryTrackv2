@@ -1142,7 +1142,7 @@ interface TransactionsPageProps {
   error?: string | null;
   loyaltyEnabled?: boolean;
   onCreateTransaction: (input: CreateTransactionInput) => Promise<Transaction>;
-  onUpdateTransaction: (ticketId: string, updates: UpdateTransactionInput) => Promise<Transaction>;
+  onUpdateTransaction: (ticketId: string, updates: UpdateTransactionInput) => Promise<{ transaction: Transaction; loyaltyResult?: import("@/lib/transaction-contracts").StampAwardResult }>;
   editTicketId?: string;
   onEditComplete?: () => void;
 }
@@ -1206,12 +1206,12 @@ export default function TransactionsPage({
     return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(`${origin}${path}`)}`;
   };
 
-  // ── History helpers ──────────────────────────────────────────────���───────
+  // ── History helpers ─────────────────────────────────────────────────────────────
   const commit = (..._args: unknown[]) => undefined;
   const undo = () => undefined;
   const redo = () => undefined;
 
-  // ── Actions ──────────────────────────����───────────────────────────────────
+  // ── Actions ──────────────────────────────────────────────────────────────────
   const confirmVoid = async () => {
     if (!voidTxn || !voidReason.trim()) return;
     setBusy(true);
@@ -1259,12 +1259,17 @@ export default function TransactionsPage({
     }
     setBusy(true);
     try {
-      await onUpdateTransaction(editTxn.ticketId, {
+      const res = await onUpdateTransaction(editTxn.ticketId, {
         status: editStatus,
         paymentStatus: editPaymentStatus,
         washInstructions: editInstructions,
       });
       showToast(`Ticket #${editTxn.ticketId} updated successfully`);
+      if (res.loyaltyResult?.rewardUnlocked) {
+        toast({ title: "Reward Unlocked! 🎉", description: `Customer earned a free wash! They now have ${res.loyaltyResult.newStampCount} stamps.` });
+      } else if (res.loyaltyResult?.stampAdded) {
+        toast({ title: "Stamp Added 🌟", description: `Customer now has ${res.loyaltyResult.newStampCount} stamps.` });
+      }
       setEditTxn(null);
       onEditComplete?.();
       return;
@@ -1279,12 +1284,17 @@ export default function TransactionsPage({
     if (!editTxn) return;
     setBusy(true);
     try {
-      await onUpdateTransaction(editTxn.ticketId, {
+      const res = await onUpdateTransaction(editTxn.ticketId, {
         status: "Claimed",
         paymentStatus: editPaymentStatus,
         washInstructions: editInstructions,
       });
       showToast(`Ticket #${editTxn.ticketId} marked as Claimed`);
+      if (res.loyaltyResult?.rewardUnlocked) {
+        toast({ title: "Reward Unlocked! 🎉", description: `Customer earned a free wash! They now have ${res.loyaltyResult.newStampCount} stamps.` });
+      } else if (res.loyaltyResult?.stampAdded) {
+        toast({ title: "Stamp Added 🌟", description: `Customer now has ${res.loyaltyResult.newStampCount} stamps.` });
+      }
       setEditTxn(null);
       onEditComplete?.();
       return;
@@ -1316,8 +1326,13 @@ export default function TransactionsPage({
     }
     setMobileStatusBusyTicket(mobileStatusTxn.ticketId);
     try {
-      await onUpdateTransaction(mobileStatusTxn.ticketId, { status });
+      const res = await onUpdateTransaction(mobileStatusTxn.ticketId, { status });
       showToast(`Ticket #${mobileStatusTxn.ticketId} moved to ${status}`);
+      if (res.loyaltyResult?.rewardUnlocked) {
+        toast({ title: "Reward Unlocked! 🎉", description: `Customer earned a free wash! They now have ${res.loyaltyResult.newStampCount} stamps.` });
+      } else if (res.loyaltyResult?.stampAdded) {
+        toast({ title: "Stamp Added 🌟", description: `Customer now has ${res.loyaltyResult.newStampCount} stamps.` });
+      }
       setMobileStatusTxn(null);
     } catch {
       showToast("Unable to update the ticket status right now");

@@ -11,10 +11,11 @@ export async function POST(
     const { id } = await params;
     const raw = await request.json();
     const stamps = Number(raw?.stamps);
+    const reason = raw?.reason ? String(raw.reason).trim() : "Manual entry";
     if (!Number.isInteger(stamps) || stamps < 1 || stamps > 100) {
       return NextResponse.json({ error: "Invalid stamps value." }, { status: 400 });
     }
-    await addStampsToMember(id, stamps);
+    await addStampsToMember(id, stamps, reason);
     return NextResponse.json({ success: true });
   } catch (error) {
     const authStatus = getAuthErrorStatus(error);

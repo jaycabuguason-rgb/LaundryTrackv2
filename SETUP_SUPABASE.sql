@@ -206,12 +206,18 @@ create table if not exists public.loyalty_members (
 alter table public.loyalty_members
   add column if not exists full_name text,
   add column if not exists phone_number text,
+  add column if not exists email text,
   add column if not exists stamp_count integer not null default 0,
   add column if not exists rewards_redeemed integer not null default 0,
+  add column if not exists rewards_available integer not null default 0,
   add column if not exists preferences text not null default '',
   add column if not exists date_joined timestamp with time zone not null default now(),
   add column if not exists created_at timestamp with time zone not null default now(),
   add column if not exists updated_at timestamp with time zone not null default now();
+
+create unique index if not exists loyalty_members_email_unique_idx
+  on public.loyalty_members (lower(email))
+  where email is not null;
 
 create unique index if not exists loyalty_members_phone_unique_idx
   on public.loyalty_members (phone_number)
@@ -443,7 +449,13 @@ alter table public.stamp_history
   add column if not exists member_id uuid references public.loyalty_members(id) on delete cascade,
   add column if not exists transaction_id uuid references public.transactions(id) on delete set null,
   add column if not exists stamps_added integer not null default 1,
+  add column if not exists source text not null default 'manual' check (source in ('auto_claim', 'manual')),
+  add column if not exists notes text,
   add column if not exists created_at timestamp with time zone not null default now();
+
+create unique index if not exists stamp_history_transaction_id_unique_idx
+  on public.stamp_history (transaction_id)
+  where transaction_id is not null;
 
 alter table public.stamp_history enable row level security;
 

@@ -26,6 +26,19 @@ export interface UpdateTransactionInput {
   voidReason?: string | null;
 }
 
+export type StampAwardResult =
+  | { stamped: false; reason: string }
+  | {
+      stamped: true;
+      rewarded: boolean;
+      memberName: string;
+      newStampCount: number;
+      cycleStampCount: number;
+      washesPerReward: number;
+      rewardsAvailable: number;
+      rewardDescription: string;
+    };
+
 export type PublicShopProfile = Pick<
   BusinessProfile,
   | "shopName"

@@ -26,9 +26,10 @@ export interface LoyaltyMember {
   email?: string;
   phone: string;
   stampCount: number;
+  rewardsAvailable: number;
   rewardsRedeemed: number;
   dateJoined: string;
-  stampHistory: { date: string; stamps: number; ticket: string }[];
+  stampHistory: { date: string; stamps: number; ticket: string; source?: "auto_claim" | "manual"; notes?: string }[];
   rewardHistory: { date: string; reward: string }[];
   preferences: string;
   notes?: string;
@@ -68,11 +69,11 @@ export const transactions: Transaction[] = [
 ];
 
 export const loyaltyMembers: LoyaltyMember[] = [
-  { id: "1", name: "Maria Santos",   phone: "09171234567", stampCount: 12, rewardsRedeemed: 1, dateJoined: "2025-10-15", stampHistory: [{ date: "2026-04-05", stamps: 1, ticket: "TKT-0001" }, { date: "2026-03-20", stamps: 1, ticket: "TKT-0089" }], rewardHistory: [{ date: "2026-01-10", reward: "Free Wash" }],   preferences: "Cold water, no bleach" },
-  { id: "2", name: "Jose Reyes",     phone: "09281234567", stampCount: 7,  rewardsRedeemed: 0, dateJoined: "2025-11-02", stampHistory: [{ date: "2026-04-05", stamps: 1, ticket: "TKT-0002" }],                                                          rewardHistory: [],                                              preferences: "Regular wash" },
-  { id: "3", name: "Rosa Dela Cruz", phone: "09571234567", stampCount: 21, rewardsRedeemed: 3, dateJoined: "2025-08-20", stampHistory: [{ date: "2026-04-04", stamps: 1, ticket: "TKT-0005" }],                                                          rewardHistory: [{ date: "2026-03-01", reward: "Free Wash" }, { date: "2026-01-15", reward: "Free Fabcon" }], preferences: "Express only" },
-  { id: "4", name: "Carlos Garcia",  phone: "09681234567", stampCount: 4,  rewardsRedeemed: 0, dateJoined: "2026-01-10", stampHistory: [{ date: "2026-04-04", stamps: 1, ticket: "TKT-0006" }],                                                          rewardHistory: [],                                              preferences: "" },
-  { id: "5", name: "Eduardo Lim",    phone: "09041234567", stampCount: 9,  rewardsRedeemed: 1, dateJoined: "2025-12-05", stampHistory: [],                                                                                                                  rewardHistory: [{ date: "2026-02-14", reward: "Free Wash" }],   preferences: "Delicate care" },
+  { id: "1", name: "Maria Santos",   phone: "09171234567", stampCount: 12, rewardsAvailable: 0, rewardsRedeemed: 1, dateJoined: "2025-10-15", stampHistory: [{ date: "2026-04-05", stamps: 1, ticket: "TKT-0001" }, { date: "2026-03-20", stamps: 1, ticket: "TKT-0089" }], rewardHistory: [{ date: "2026-01-10", reward: "Free Wash" }],   preferences: "Cold water, no bleach" },
+  { id: "2", name: "Jose Reyes",     phone: "09281234567", stampCount: 7,  rewardsAvailable: 0, rewardsRedeemed: 0, dateJoined: "2025-11-02", stampHistory: [{ date: "2026-04-05", stamps: 1, ticket: "TKT-0002" }],                                                          rewardHistory: [],                                              preferences: "Regular wash" },
+  { id: "3", name: "Rosa Dela Cruz", phone: "09571234567", stampCount: 21, rewardsAvailable: 0, rewardsRedeemed: 3, dateJoined: "2025-08-20", stampHistory: [{ date: "2026-04-04", stamps: 1, ticket: "TKT-0005" }],                                                          rewardHistory: [{ date: "2026-03-01", reward: "Free Wash" }, { date: "2026-01-15", reward: "Free Fabcon" }], preferences: "Express only" },
+  { id: "4", name: "Carlos Garcia",  phone: "09681234567", stampCount: 4,  rewardsAvailable: 0, rewardsRedeemed: 0, dateJoined: "2026-01-10", stampHistory: [{ date: "2026-04-04", stamps: 1, ticket: "TKT-0006" }],                                                          rewardHistory: [],                                              preferences: "" },
+  { id: "5", name: "Eduardo Lim",    phone: "09041234567", stampCount: 9,  rewardsAvailable: 0, rewardsRedeemed: 1, dateJoined: "2025-12-05", stampHistory: [],                                                                                                                  rewardHistory: [{ date: "2026-02-14", reward: "Free Wash" }],   preferences: "Delicate care" },
 ];
 
 export const auditLogs: AuditLog[] = [

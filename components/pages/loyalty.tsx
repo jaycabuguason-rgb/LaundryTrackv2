@@ -58,8 +58,25 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
   }
 
   const filtered = members.filter(
-    (m) => m.name.toLowerCase().includes(search.toLowerCase()) || m.phone.includes(search)
+    (m) =>
+      m.name.toLowerCase().includes(search.toLowerCase()) ||
+      (m.phone && m.phone.includes(search))
   );
+
+  async function handleSelectMember(m: LoyaltyMember) {
+    setSelected(m);
+    try {
+      const res = await fetch(`/api/loyalty/${m.id}`, {
+        headers: await getAuthHeaders(),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.member) setSelected(data.member);
+      }
+    } catch (e) {
+      console.error("Failed to load member history", e);
+    }
+  }
 
   async function handleAddMember(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -141,11 +158,12 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
     const form = e.currentTarget;
     const data = new FormData(form);
     const stamps = parseInt(data.get("stamps") as string);
+    const reason = data.get("reason") as string;
     try {
       const res = await fetch(`/api/loyalty/${stampModal.id}/stamps`, {
         method: "POST",
         headers: await getAuthHeaders({ "Content-Type": "application/json" }),
-        body: JSON.stringify({ stamps }),
+        body: JSON.stringify({ stamps, reason }),
       });
       if (!res.ok) throw new Error("Failed to add stamps");
       toast({ title: "Stamps added successfully" });
@@ -232,7 +250,10 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
                       <div key={i} className="flex items-center justify-between gap-3 px-4 py-3">
                         <div className="min-w-0">
                           <p className="text-xs font-medium text-foreground">{s.date}</p>
-                          <p className="mt-0.5 font-mono text-[11px] text-primary">{s.ticket}</p>
+                          <p className="mt-0.5 font-mono text-[11px] text-primary">
+                            {s.ticket}
+                            {s.notes && <span className="ml-1 text-muted-foreground font-sans truncate">({s.notes})</span>}
+                          </p>
                         </div>
                         <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-[11px] font-semibold text-yellow-700">+{s.stamps}</span>
                       </div>
@@ -260,7 +281,10 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
                       return currentCycleHistory.map((s, i) => (
                         <tr key={i} className="border-b border-border last:border-0">
                           <td className="px-4 py-2.5 text-xs text-muted-foreground">{s.date}</td>
-                          <td className="px-4 py-2.5 text-xs font-mono text-primary">{s.ticket}</td>
+                          <td className="px-4 py-2.5 text-xs font-mono text-primary">
+                            {s.ticket}
+                            {s.notes && <span className="ml-1 text-muted-foreground font-sans truncate">({s.notes})</span>}
+                          </td>
                           <td className="px-4 py-2.5 text-xs font-medium">+{s.stamps}</td>
                         </tr>
                       ));
@@ -457,7 +481,7 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
                     </div>
                     <p className="mt-0.5 text-xs text-muted-foreground">{m.phone || "-"}</p>
                   </div>
-                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setSelected(m)}>
+                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleSelectMember(m)}>
                     View
                   </Button>
                 </div>
@@ -525,7 +549,7 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
                   <td className="px-4 py-3 text-xs text-muted-foreground">{m.dateJoined}</td>
                   <td className="px-4 py-3">
                     <div className="flex gap-1">
-                      <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setSelected(m)}>
+                      <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleSelectMember(m)}>
                         View
                       </Button>
                       <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setEditModal(m)}>
@@ -635,6 +659,10 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
             <div>
               <Label htmlFor="stamps">Number of Stamps *</Label>
               <Input id="stamps" name="stamps" type="number" min="1" defaultValue="1" required className="mt-1" />
+            </div>
+            <div>
+              <Label htmlFor="reason">Reason (Optional)</Label>
+              <Input id="reason" name="reason" type="text" placeholder="e.g. Promo, Apology, etc." className="mt-1" />
             </div>
             <div className="flex gap-2">
               <Button type="button" variant="outline" className="flex-1" onClick={() => setStampModal(null)}>Cancel</Button>

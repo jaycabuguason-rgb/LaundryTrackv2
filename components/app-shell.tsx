@@ -195,7 +195,8 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
             loading={transactionsLoading}
             error={transactionsError}
             onUpdateTransaction={async (ticketId: string, updates: Partial<Transaction>) => {
-              return await updateTransaction(ticketId, updates);
+              const res = await updateTransaction(ticketId, updates);
+              return res;
             }}
             onViewTransaction={handleTransactionDetail}
             adminName={adminProfile.name}
