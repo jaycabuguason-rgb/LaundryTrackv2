@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Search, Eye, EyeOff, Edit, Ban, Printer, ChevronRight, X, QrCode, CalendarIcon,
   Undo2, Redo2, AlertTriangle, Plus, User, Star, Camera, CameraOff,
-  ChevronLeft, Check, RefreshCw,
+  ChevronLeft, Check, RefreshCw, Inbox, RotateCw, Wind, Flag, PackageCheck
 } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
@@ -1283,12 +1283,16 @@ export default function TransactionsPage({
     }
   };
 
-  // Auto-open view modal first if editTicketId is provided (e.g. from notification "View" button)
-  // User can then click "Edit Status" from the view modal to proceed to the edit modal
+  // Auto-open Edit modal directly when editTicketId is provided (e.g. from notification "View" button)
+  const handledEditTicketRef = useRef<string | null>(null);
   useEffect(() => {
-    if (editTicketId) {
+    if (editTicketId && editTicketId !== handledEditTicketRef.current) {
+      handledEditTicketRef.current = editTicketId;
       const txn = txns.find(t => t.ticketId === editTicketId);
-      if (txn) setViewTxn(txn);
+      if (txn) openEdit(txn);
+    }
+    if (!editTicketId) {
+      handledEditTicketRef.current = null;
     }
   }, [editTicketId]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1524,7 +1528,13 @@ export default function TransactionsPage({
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className={cn("text-xs font-mono font-semibold text-primary", isVoided && "line-through")}>{txn.ticketId}</p>
+                    <button
+                      onClick={() => setViewTxn(txn)}
+                      className={cn("text-xs font-mono font-semibold text-primary hover:underline cursor-pointer text-left", isVoided && "line-through")}
+                      title="View ticket details"
+                    >
+                      {txn.ticketId}
+                    </button>
                     <p className={cn("truncate text-xs font-medium text-foreground", isVoided && "line-through")}>{txn.customerName}</p>
                     <p className="mt-0.5 text-[11px] text-muted-foreground">{txn.arrivalDateTime}</p>
                   </div>
@@ -1627,7 +1637,15 @@ export default function TransactionsPage({
                       visualCls
                     )}
                   >
-                    <td className={cn("px-4 py-3 text-xs font-mono font-semibold text-primary", isVoided && "line-through", isClaimed && "text-muted-foreground/60")}>{txn.ticketId}</td>
+                    <td className={cn("px-4 py-3 text-xs font-mono font-semibold text-primary", isVoided && "line-through", isClaimed && "text-muted-foreground/60")}>
+                      <button
+                        onClick={() => setViewTxn(txn)}
+                        className="hover:underline cursor-pointer"
+                        title="View ticket details"
+                      >
+                        {txn.ticketId}
+                      </button>
+                    </td>
                     <td className={cn("px-4 py-3 text-xs font-medium", isVoided && "line-through text-foreground", isClaimed ? "text-muted-foreground/60" : "text-foreground")}>{txn.customerName}</td>
                     <td className={cn("px-4 py-3 text-xs text-muted-foreground whitespace-nowrap hidden md:table-cell", isVoided && "line-through", isClaimed && "text-muted-foreground/50")}>{txn.arrivalDateTime}</td>
                     <td className={cn("px-4 py-3 text-xs text-muted-foreground hidden sm:table-cell", isVoided && "line-through", isClaimed && "text-muted-foreground/50")}>{txn.weight} kg</td>
@@ -1689,7 +1707,7 @@ export default function TransactionsPage({
       </div>
 
       {/* ── VIEW MODAL (read-only) ──────────────────────────────────────────── */}
-      <Dialog open={!!viewTxn} onOpenChange={(open) => !open && setViewTxn(null)}>
+      <Dialog open={!!viewTxn} onOpenChange={(open) => { if (!open) { setViewTxn(null); onEditComplete?.(); } }}>
         <DialogContent className="w-[calc(100vw-1rem)] sm:w-auto max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Ticket Details — {viewTxn?.ticketId}</DialogTitle>
@@ -1801,13 +1819,13 @@ export default function TransactionsPage({
                 )}
                 {/* Secondary actions */}
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline" className="flex-1 gap-1.5" onClick={() => { setReprintTxn(viewTxn); setViewTxn(null); }}>
+                  <Button size="sm" variant="outline" className="flex-1 gap-1.5" onClick={() => { setReprintTxn(viewTxn); setViewTxn(null); onEditComplete?.(); }}>
                     <Printer className="w-3.5 h-3.5" /> Reprint QR
                   </Button>
-                  <Button size="sm" variant="outline" className="flex-1 gap-1.5" onClick={() => { setPrintTxn(viewTxn); setPrintPostCreate(false); setViewTxn(null); }}>
+                  <Button size="sm" variant="outline" className="flex-1 gap-1.5" onClick={() => { setPrintTxn(viewTxn); setPrintPostCreate(false); setViewTxn(null); onEditComplete?.(); }}>
                     <Printer className="w-3.5 h-3.5" /> Print Receipt
                   </Button>
-                  <Button size="sm" variant="secondary" className="flex-1" onClick={() => setViewTxn(null)}>
+                  <Button size="sm" variant="secondary" className="flex-1" onClick={() => { setViewTxn(null); onEditComplete?.(); }}>
                     <X className="w-3.5 h-3.5 mr-1" /> Close
                   </Button>
                 </div>
@@ -1820,53 +1838,99 @@ export default function TransactionsPage({
       {/* ── EDIT MODAL ────────���────────────────────────────────────────────── */}
       <Dialog open={!!editTxn} onOpenChange={(open) => { if (!open) { setEditTxn(null); onEditComplete?.(); } }}>
         <DialogContent className="w-[calc(100vw-1rem)] sm:w-auto max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Ticket — {editTxn?.ticketId}</DialogTitle>
-            <DialogDescription>Update status and payment for this transaction.</DialogDescription>
+          <DialogHeader className="text-left space-y-1.5">
+            <div className="flex justify-between items-start pr-4">
+              <DialogTitle className="text-lg font-bold">Edit Ticket — {editTxn?.ticketId}</DialogTitle>
+              {editTxn && (
+                <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold border shadow-sm mt-0.5", statusColors[editTxn.status])}>
+                  {editTxn.status}
+                </span>
+              )}
+            </div>
+            <DialogDescription className="text-sm text-muted-foreground font-medium">
+              Update status and payment for this transaction.
+            </DialogDescription>
           </DialogHeader>
           {editTxn && (
-            <div className="space-y-5">
+            <div className="space-y-6 mt-1">
               {/* Summary */}
-              <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="grid grid-cols-2 gap-2.5 text-sm">
                 {[
                   { label: "Customer", value: editTxn.customerName },
                   { label: "Wash Type", value: editTxn.washType },
                   { label: "Weight", value: `${editTxn.weight} kg` },
                   { label: "Fee", value: `₱${editTxn.fee}` },
                 ].map((row) => (
-                  <div key={row.label} className="bg-muted/30 rounded-md p-2.5">
-                    <p className="text-[11px] text-muted-foreground">{row.label}</p>
-                    <p className="font-medium text-foreground text-xs mt-0.5">{row.value}</p>
+                  <div key={row.label} className="bg-muted/40 rounded-xl p-3 border border-border/40 flex flex-col justify-center">
+                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">{row.label}</p>
+                    <p className="font-bold text-foreground text-[13px]">{row.value}</p>
                   </div>
                 ))}
               </div>
 
+              {/* Status stepper — dynamic based on editStatus */}
+              <div>
+                <p className="text-xs font-bold text-foreground mb-3 block">Status Progress</p>
+                <div className="flex items-center">
+                  {statusOrder.map((step, idx) => {
+                    const stepIdx = statusOrder.indexOf(editStatus as typeof statusOrder[number]);
+                    const isCompleted = idx < stepIdx;
+                    const isCurrent = idx === stepIdx;
+                    const isLast = idx === statusOrder.length - 1;
+                    return (
+                      <div key={step} className="flex items-center flex-1 last:flex-none">
+                        <div className="flex flex-col items-center">
+                          <div className={cn(
+                            "w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold border-2 transition-all duration-300 shadow-sm",
+                            isCompleted ? "bg-primary border-primary text-primary-foreground" :
+                              isCurrent ? "bg-background border-primary text-primary ring-2 ring-primary/20 ring-offset-1 ring-offset-background" : "bg-muted/50 border-border text-muted-foreground"
+                          )}>
+                            {isCompleted ? <Check className="w-3.5 h-3.5" /> : idx + 1}
+                          </div>
+                          <span className={cn("text-[9px] mt-2 text-center w-11 md:w-12 leading-tight transition-colors duration-300 uppercase tracking-wide", isCurrent ? "text-primary font-bold" : "text-muted-foreground font-semibold")}>
+                            {step}
+                          </span>
+                        </div>
+                        {!isLast && <div className={cn("flex-1 h-0.5 mb-6 mx-1 transition-colors duration-300 rounded-full", isCompleted ? "bg-primary" : "bg-border")} />}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Status dropdown */}
               <div>
-                <label className="text-xs font-medium text-foreground mb-1.5 block">Current Status</label>
+                <label className="text-xs font-bold text-foreground mb-1.5 block">Current Status</label>
                 <Select
                   value={editStatus}
                   onValueChange={(v) => setEditStatus(v as Transaction["status"])}
                 >
-                  <SelectTrigger className="h-9 text-sm transition-colors duration-200 hover:border-blue-400 focus:border-blue-500 cursor-pointer">
+                  <SelectTrigger className="h-11 text-sm bg-background border-border hover:border-primary/50 transition-colors cursor-pointer rounded-xl font-semibold shadow-sm focus:ring-primary/20">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="rounded-xl border-border/50 shadow-lg p-1.5">
                     {([
-                      { value: "Received", dot: "bg-blue-500", text: "text-blue-700" },
-                      { value: "Washing", dot: "bg-yellow-500", text: "text-yellow-700" },
-                      { value: "Drying", dot: "bg-orange-500", text: "text-orange-700" },
-                      { value: "Ready", dot: "bg-green-500", text: "text-green-700" },
-                      { value: "Claimed", dot: "bg-gray-400", text: "text-gray-600" },
-                    ] as const).map(({ value, dot, text }) => {
+                      { value: "Received", icon: Inbox },
+                      { value: "Washing", icon: RotateCw },
+                      { value: "Drying", icon: Wind },
+                      { value: "Ready", icon: Flag },
+                      { value: "Claimed", icon: PackageCheck },
+                    ] as const).map(({ value, icon: Icon }) => {
                       const isClaimedBlocked = value === "Claimed" && editPaymentStatus === "unpaid";
+                      const isCurrent = value === editStatus;
                       return (
-                        <SelectItem key={value} value={value} disabled={isClaimedBlocked}>
-                          <div className="flex items-center gap-2">
-                            <span className={cn("w-2 h-2 rounded-full shrink-0", dot)} />
-                            <span className={cn("font-medium text-xs", text)}>{value}</span>
-                            {isClaimedBlocked && (
-                              <span className="ml-1 text-[10px] text-muted-foreground">(payment required)</span>
+                        <SelectItem key={value} value={value} disabled={isClaimedBlocked} className={cn("cursor-pointer rounded-lg mb-1 last:mb-0", isCurrent ? "bg-muted/60" : "focus:bg-muted/40")}>
+                          <div className="flex items-center gap-3 py-1.5 w-full pr-4">
+                            <Icon className={cn("w-4 h-4", isCurrent ? "text-foreground" : "text-muted-foreground")} />
+                            <span className={cn("font-medium text-[15px] flex-1 text-left", isCurrent ? "text-foreground" : "text-muted-foreground")}>{value}</span>
+                            {isCurrent && (
+                              <div className="flex items-center gap-1.5 ml-3">
+                                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Current</span>
+                                <Check className="w-3.5 h-3.5 text-muted-foreground" />
+                              </div>
+                            )}
+                            {isClaimedBlocked && !isCurrent && (
+                              <span className="ml-2 text-[10px] text-muted-foreground font-medium uppercase tracking-wider">(Payment Required)</span>
                             )}
                           </div>
                         </SelectItem>
@@ -1878,75 +1942,70 @@ export default function TransactionsPage({
 
               {/* Payment Status */}
               <div>
-                <label className="text-xs font-medium text-foreground mb-1.5 block">Payment Status</label>
-                <div className="grid grid-cols-2 gap-2">
+                <label className="text-xs font-bold text-foreground mb-1.5 block">Payment Status</label>
+                <div className="grid grid-cols-2 gap-2.5">
                   {(["unpaid", "paid"] as const).map((ps) => (
                     <button
                       key={ps}
                       onClick={() => setEditPaymentStatus(ps)}
                       className={cn(
-                        "rounded-lg border-2 py-2.5 px-3 text-xs font-semibold transition-all duration-200 cursor-pointer",
+                        "rounded-xl border-2 py-2.5 px-3 text-[13px] font-bold transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
                         ps === "unpaid"
                           ? editPaymentStatus === "unpaid"
-                            ? "border-red-500 bg-red-50 text-red-600"
-                            : "border-border bg-background text-muted-foreground hover:border-red-400 hover:bg-red-50 hover:text-red-600"
+                            ? "border-red-500 bg-red-50 text-red-700 shadow-sm"
+                            : "border-border/60 bg-muted/20 text-muted-foreground hover:border-red-300 hover:bg-red-50/50 hover:text-red-600"
                           : editPaymentStatus === "paid"
-                            ? "border-green-500 bg-green-50 text-green-600"
-                            : "border-border bg-background text-muted-foreground hover:border-green-400 hover:bg-green-50 hover:text-green-600"
+                            ? "border-green-500 bg-green-50 text-green-700 shadow-sm"
+                            : "border-border/60 bg-muted/20 text-muted-foreground hover:border-green-300 hover:bg-green-50/50 hover:text-green-600"
                       )}
                     >
                       {ps === "unpaid" ? "Unpaid" : "Paid"}
                     </button>
                   ))}
                 </div>
-                {editPaymentStatus === "paid" && (
-                  <p className="text-[11px] text-green-600 mt-1">Marked as paid. This will be recorded in the transaction log.</p>
-                )}
               </div>
 
               {/* Wash instructions */}
               <div>
-                <label className="text-xs font-medium text-foreground mb-1.5 block">Wash Instructions</label>
+                <label className="text-xs font-bold text-foreground mb-1.5 block">Wash Instructions</label>
                 <Textarea
                   placeholder="Add special wash instructions..."
                   value={editInstructions}
                   onChange={(e) => setEditInstructions(e.target.value)}
-                  className="text-sm resize-none"
-                  rows={2}
+                  className="text-sm resize-none rounded-xl border-border focus:border-primary/50 shadow-sm min-h-[80px]"
                 />
               </div>
 
               {/* Warning when payment is Unpaid and user is trying to claim */}
-              {editPaymentStatus === "unpaid" && (editStatus === "Ready" || editStatus === "Claimed") && (
-                <div className="flex items-start gap-2 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2.5 text-sm text-orange-800">
-                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                  <span>Mark payment as Paid first before claiming this ticket.</span>
+              {editPaymentStatus === "unpaid" && editStatus === "Ready" && (
+                <div className="flex items-start gap-3 bg-orange-50 border border-orange-200 rounded-xl px-3.5 py-3 text-sm text-orange-800 shadow-sm">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-orange-600" />
+                  <span className="font-semibold leading-tight">Mark payment as Paid first before claiming this ticket.</span>
                 </div>
               )}
 
               {/* Edit actions */}
-              <div className="flex flex-col sm:flex-row gap-2 pt-1">
+              <div className="flex flex-col gap-2.5 pt-3 border-t border-border/40 mt-2">
                 {editStatus === "Ready" && editPaymentStatus === "paid" && (
-                  <Button size="sm" onClick={markAsClaimed} className="flex-1 gap-1.5 transition-all duration-200 hover:scale-[1.02] cursor-pointer">
-                    <Check className="w-3.5 h-3.5" />
-                    Move to Claimed
+                  <Button size="lg" onClick={markAsClaimed} className="w-full gap-2 transition-all duration-200 hover:scale-[1.02] bg-green-600 hover:bg-green-700 text-white shadow-sm font-bold text-sm h-12 rounded-xl">
+                    <Check className="w-4 h-4" /> Move to Claimed
                   </Button>
                 )}
                 <Button
-                  size="sm"
-                  variant="secondary"
+                  size="lg"
+                  variant="default"
                   onClick={saveInstructions}
-                  className="flex-1 transition-all duration-200 hover:bg-blue-500 hover:text-white hover:border-blue-500 hover:scale-[1.02] cursor-pointer"
+                  className="w-full transition-all duration-200 hover:scale-[1.02] shadow-sm font-bold text-sm h-12 rounded-xl"
                 >
                   Save Changes
                 </Button>
                 <Button
-                  size="sm"
+                  size="lg"
                   variant="outline"
                   onClick={() => { setEditTxn(null); onEditComplete?.(); }}
-                  className="flex-1 transition-all duration-200 hover:bg-red-50 hover:text-red-600 hover:border-red-400 cursor-pointer"
+                  className="w-full transition-all duration-200 hover:bg-muted cursor-pointer font-bold text-sm h-12 rounded-xl border-border/60"
                 >
-                  <X className="w-3.5 h-3.5 mr-1 transition-transform duration-200 group-hover:rotate-90" /> Cancel
+                  <X className="w-4 h-4 mr-1.5 opacity-70" /> Cancel
                 </Button>
               </div>
             </div>

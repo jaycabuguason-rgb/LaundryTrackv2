@@ -32,7 +32,6 @@ import {
   type Transaction,
   type TransactionStatus,
 } from "@/lib/data";
-import { TransactionDetailModal } from "@/components/transaction-detail-modal";
 import { StatusUpdateSheet } from "@/components/status-update-sheet";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -169,8 +168,6 @@ export default function ProcessingPage({
   const [tick, setTick] = useState(0); // force re-render for relative time
   const [updatingTicket, setUpdatingTicket] = useState<string | null>(null);
   const [sheetTxn, setSheetTxn] = useState<Transaction | null>(null);
-  const [detailTxn, setDetailTxn] = useState<Transaction | null>(null);
-  const [detailOpen, setDetailOpen] = useState(false);
   const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ── Confirmation dialog state ──────────────────────────────────────────────
@@ -293,8 +290,6 @@ export default function ProcessingPage({
   };
 
   const handleViewTicket = (txn: Transaction) => {
-    setDetailTxn(txn);
-    setDetailOpen(true);
     if (onViewTransaction) onViewTransaction(txn.ticketId);
   };
 
@@ -646,12 +641,6 @@ export default function ProcessingPage({
         )}
       </div>
 
-      {/* Read-only ticket detail modal */}
-      <TransactionDetailModal
-        open={detailOpen}
-        onOpenChange={setDetailOpen}
-        transaction={detailTxn}
-      />
 
       {/* ── Irreversible-action confirmation dialog ─────────────────────────── */}
       <Dialog

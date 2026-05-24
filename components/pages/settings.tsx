@@ -399,126 +399,33 @@ function PricingSettings() {
                   <Redo2 className="w-3 h-3" /> Redo
                 </Button>
               </div>
-              <div className="rounded-lg border border-border overflow-hidden">
-                <div className="divide-y divide-border md:hidden">
-                  {loadTiers.map((tier) => {
-                    const parsed = parseRange(tier.range);
-                    return (
-                      <div key={tier.id} className="space-y-3 p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0 flex-1">
-                            <Label className="mb-1 block text-[10px] text-muted-foreground">Load Size</Label>
-                            <Input
-                              value={tier.name}
-                              onChange={(e) => updateTier(tier.id, { name: e.target.value })}
-                              className="h-9 text-sm"
-                              placeholder="e.g. Small"
-                            />
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="mt-4 h-9 w-9 text-muted-foreground hover:text-destructive"
-                            onClick={() => setDeleteTierId(tier.id)}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <Label className="mb-1 block text-[10px] text-muted-foreground">From (kg)</Label>
-                            <Input
-                              type="number"
-                              min="0"
-                              value={parsed.from}
-                              onChange={(e) => {
-                                const value = e.target.value.replace(/[^0-9.]/g, '');
-                                updateTier(tier.id, { from: value, to: parsed.to, open: parsed.open });
-                              }}
-                              className="h-9 text-xs"
-                              placeholder="0"
-                            />
-                          </div>
-                          <div>
-                            <Label className="mb-1 block text-[10px] text-muted-foreground">To (kg)</Label>
-                            {parsed.open ? (
-                              <div className="flex h-9 items-center rounded-md border border-border px-3 text-xs font-medium text-foreground">above</div>
-                            ) : (
-                              <Input
-                                type="number"
-                                min="0"
-                                value={parsed.to}
-                                onChange={(e) => {
-                                  const value = e.target.value.replace(/[^0-9.]/g, '');
-                                  updateTier(tier.id, { from: parsed.from, to: value, open: false });
-                                }}
-                                className="h-9 text-xs"
-                                placeholder="0"
-                              />
-                            )}
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-[1fr_auto] gap-2">
-                          <div>
-                            <Label className="mb-1 block text-[10px] text-muted-foreground">Price</Label>
-                            <div className="flex items-center gap-1">
-                              <span className="text-xs text-muted-foreground">â‚±</span>
-                              <Input
-                                type="number"
-                                min="0"
-                                value={tier.price}
-                                onChange={(e) => {
-                                  const value = e.target.value.replace(/[^0-9.]/g, '');
-                                  updateTier(tier.id, { price: value });
-                                }}
-                                className="h-9 text-sm"
-                              />
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => updateTier(tier.id, { from: parsed.from, to: parsed.to, open: !parsed.open })}
-                            className={cn(
-                              "mt-5 h-9 rounded border px-3 text-xs font-medium transition-colors",
-                              parsed.open
-                                ? "bg-primary/10 border-primary/30 text-primary"
-                                : "bg-muted border-border text-muted-foreground hover:border-primary/40",
-                            )}
-                            title="Toggle open-ended"
-                          >
-                            {parsed.open ? "Open" : "Closed"}
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <table className="hidden w-full text-sm md:table">
+              <div className="rounded-lg border border-border overflow-x-auto">
+                <table className="w-full text-sm min-w-[450px]">
                   <thead>
                     <tr className="bg-muted/40 border-b border-border">
-                      <th className="text-left px-3 py-2 text-xs font-semibold text-muted-foreground">Load Size</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold text-muted-foreground">Weight Range</th>
-                      <th className="text-left px-3 py-2 text-xs font-semibold text-muted-foreground">Price (₱)</th>
-                      <th className="w-8" />
+                      <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wider font-semibold text-muted-foreground whitespace-nowrap">Load Size</th>
+                      <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wider font-semibold text-muted-foreground whitespace-nowrap">Weight Range</th>
+                      <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wider font-semibold text-muted-foreground whitespace-nowrap">Price</th>
+                      <th className="w-10" />
                     </tr>
                   </thead>
                   <tbody>
                     {loadTiers.map((tier) => {
                       const parsed = parseRange(tier.range);
                       return (
-                        <tr key={tier.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
+                        <tr key={tier.id} className="border-b border-border last:border-0 hover:bg-muted/10 transition-colors">
                           {/* Load Size — editable */}
-                          <td className="px-3 py-2">
+                          <td className="px-3 py-2.5 align-middle">
                             <Input
                               value={tier.name}
                               onChange={(e) => updateTier(tier.id, { name: e.target.value })}
-                              className="h-7 text-sm w-28"
-                              placeholder="e.g. Small"
+                              className="h-8 text-xs w-20 sm:w-28 px-2"
+                              placeholder="Name"
                             />
                           </td>
                           {/* Weight Range — two number inputs */}
-                          <td className="px-3 py-2">
-                            <div className="flex items-center gap-1 flex-wrap">
+                          <td className="px-3 py-2.5 align-middle">
+                            <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap">
                               <Input
                                 type="number"
                                 min="0"
@@ -532,12 +439,12 @@ function PricingSettings() {
                                     e.preventDefault();
                                   }
                                 }}
-                                className="w-14 h-7 text-xs"
+                                className="w-12 sm:w-14 h-8 text-xs px-1.5 text-center"
                                 placeholder="0"
                               />
-                              <span className="text-xs text-muted-foreground">kg —</span>
+                              <span className="text-[11px] sm:text-xs text-muted-foreground font-medium">kg —</span>
                               {parsed.open ? (
-                                <span className="text-xs font-medium text-foreground px-1">above</span>
+                                <span className="text-[11px] sm:text-xs font-medium text-foreground px-1">above</span>
                               ) : (
                                 <>
                                   <Input
@@ -553,31 +460,31 @@ function PricingSettings() {
                                         e.preventDefault();
                                       }
                                     }}
-                                    className="w-14 h-7 text-xs"
+                                    className="w-12 sm:w-14 h-8 text-xs px-1.5 text-center"
                                     placeholder="0"
                                   />
-                                  <span className="text-xs text-muted-foreground">kg</span>
+                                  <span className="text-[11px] sm:text-xs text-muted-foreground font-medium">kg</span>
                                 </>
                               )}
                               <button
                                 type="button"
                                 onClick={() => updateTier(tier.id, { from: parsed.from, to: parsed.to, open: !parsed.open })}
                                 className={cn(
-                                  "text-[10px] px-1.5 py-0.5 rounded border transition-colors cursor-pointer",
+                                  "text-[10px] px-1.5 py-0.5 h-6 rounded border transition-colors cursor-pointer ml-1 shrink-0",
                                   parsed.open
                                     ? "bg-primary/10 border-primary/30 text-primary"
                                     : "bg-muted border-border text-muted-foreground hover:border-primary/40"
                                 )}
                                 title="Toggle open-ended (e.g. 10 kg+)"
                               >
-                                +
+                                {parsed.open ? "Open" : "+"}
                               </button>
                             </div>
                           </td>
                           {/* Price */}
-                          <td className="px-3 py-2">
+                          <td className="px-3 py-2.5 align-middle">
                             <div className="flex items-center gap-1">
-                              <span className="text-xs text-muted-foreground">₱</span>
+                              <span className="text-[11px] sm:text-xs text-muted-foreground font-medium">₱</span>
                               <Input
                                 type="number"
                                 min="0"
@@ -591,18 +498,18 @@ function PricingSettings() {
                                     e.preventDefault();
                                   }
                                 }}
-                                className="w-20 h-7 text-sm"
+                                className="w-16 sm:w-20 h-8 text-xs sm:text-sm px-2"
                               />
                             </div>
                           </td>
-                          <td className="px-2 py-2">
+                          <td className="px-2 py-2.5 align-middle text-right">
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
                               onClick={() => setDeleteTierId(tier.id)}
                             >
-                              <Trash2 className="w-3 h-3" />
+                              <Trash2 className="w-4 h-4" />
                             </Button>
                           </td>
                         </tr>

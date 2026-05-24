@@ -93,23 +93,15 @@ export default function TopNav({ activePage, onNavigate, onSignOut, adminProfile
 
   const viewNotif = (notif: Notification, e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    // For UNCLAIMED notifications, open Edit modal
-    if (notif.type === 'unclaimed' && onEditTransaction) {
-      setNotifOpen(false);
-      // Small delay to ensure dropdown closes before modal opens
-      setTimeout(() => {
-        onEditTransaction(notif.ticketId);
-      }, 100);
-    } else if (onTransactionDetail) {
-      setNotifOpen(false);
-      setTimeout(() => {
+    setNotifOpen(false);
+    // Open the detail modal first — "Edit Status" button inside goes directly to Edit Ticket modal
+    setTimeout(() => {
+      if (onTransactionDetail) {
         onTransactionDetail(notif.ticketId);
-      }, 100);
-    } else {
-      setNotifOpen(false);
-      onNavigate("transactions");
-    }
+      } else {
+        onNavigate("transactions");
+      }
+    }, 100);
   };
 
   return (
