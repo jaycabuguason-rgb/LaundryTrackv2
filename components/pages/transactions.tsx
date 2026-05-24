@@ -344,25 +344,25 @@ function NewTransactionWizard({
         if (!response.ok || ignore) return;
 
         if (data.pricingConfig) {
-            persistPricingConfig(data.pricingConfig);
-            setBasePerKg(data.pricingConfig.pricePerKg || "0");
-            setMinWeightSetting(data.pricingConfig.minWeight || "0");
-            setPricingModeSetting(data.pricingConfig.pricingMode);
-            setLoadTiersSetting(data.pricingConfig.loadTiers);
-            setPriceDisplayMode(data.pricingConfig.priceDisplayMode ?? "show");
-            if (!data.pricingConfig.loadTiers.find((t: LoadTier) => t.id === selectedTierId)) {
-              setSelectedTierId(data.pricingConfig.loadTiers[0]?.id ?? "");
-            }
+          persistPricingConfig(data.pricingConfig);
+          setBasePerKg(data.pricingConfig.pricePerKg || "0");
+          setMinWeightSetting(data.pricingConfig.minWeight || "0");
+          setPricingModeSetting(data.pricingConfig.pricingMode);
+          setLoadTiersSetting(data.pricingConfig.loadTiers);
+          setPriceDisplayMode(data.pricingConfig.priceDisplayMode ?? "show");
+          if (!data.pricingConfig.loadTiers.find((t: LoadTier) => t.id === selectedTierId)) {
+            setSelectedTierId(data.pricingConfig.loadTiers[0]?.id ?? "");
           }
-          if (data.serviceTypes) {
-            persistServiceTypes(data.serviceTypes);
-            const enabled = svcOn ? data.serviceTypes.filter((s: ServiceType) => s.active) : [];
-            setServiceTypes(enabled);
-          }
-          if (data.addOns) {
-            persistAddOns(data.addOns);
-            setAddOnOptions(data.addOns);
-          }
+        }
+        if (data.serviceTypes) {
+          persistServiceTypes(data.serviceTypes);
+          const enabled = svcOn ? data.serviceTypes.filter((s: ServiceType) => s.active) : [];
+          setServiceTypes(enabled);
+        }
+        if (data.addOns) {
+          persistAddOns(data.addOns);
+          setAddOnOptions(data.addOns);
+        }
       })();
 
       return () => { ignore = true; };
