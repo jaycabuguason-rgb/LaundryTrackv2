@@ -20,10 +20,10 @@ type LoyaltyMemberRow = {
   id: string;
   full_name: string | null;
   phone_number: string | null;
-  email: string | null;
+  email?: string | null;
   stamp_count: number;
   rewards_redeemed: number;
-  rewards_available: number;
+  rewards_available?: number;
   preferences: string;
   date_joined: string;
   created_at: string;
@@ -110,7 +110,7 @@ export async function listLoyaltyMembers(): Promise<LoyaltyMember[]> {
   if (!hasSupabaseConfig()) return [...mockMembers];
 
   const rows = await restRequest<LoyaltyMemberRow[]>(
-    "loyalty_members?select=id,full_name,phone_number,email,stamp_count,rewards_redeemed,rewards_available,preferences,date_joined,created_at&order=date_joined.desc"
+    "loyalty_members?select=id,full_name,phone_number,stamp_count,rewards_redeemed,preferences,date_joined,created_at&order=date_joined.desc"
   );
   return rows.map(mapRowToMember);
 }
@@ -137,7 +137,7 @@ export async function createLoyaltyMember(input: {
     return newMember;
   }
 
-  const rows = await restRequest<LoyaltyMemberRow[]>("loyalty_members?select=id,full_name,phone_number,email,stamp_count,rewards_redeemed,rewards_available,preferences,date_joined,created_at", {
+  const rows = await restRequest<LoyaltyMemberRow[]>("loyalty_members?select=id,full_name,phone_number,stamp_count,rewards_redeemed,preferences,date_joined,created_at", {
     method: "POST",
     headers: { Prefer: "return=representation" },
     body: JSON.stringify({
@@ -146,7 +146,6 @@ export async function createLoyaltyMember(input: {
       preferences: input.preferences ?? "",
       stamp_count: 0,
       rewards_redeemed: 0,
-      rewards_available: 0,
       date_joined: new Date().toISOString().split("T")[0],
     }),
   });
@@ -261,7 +260,7 @@ export async function getLoyaltyMemberWithHistory(memberId: string): Promise<Loy
 
   // 1. Fetch member
   const rows = await restRequest<LoyaltyMemberRow[]>(
-    `loyalty_members?id=eq.${encodeURIComponent(memberId)}&select=id,full_name,phone_number,email,stamp_count,rewards_redeemed,rewards_available,preferences,date_joined,created_at`
+    `loyalty_members?id=eq.${encodeURIComponent(memberId)}&select=id,full_name,phone_number,stamp_count,rewards_redeemed,preferences,date_joined,created_at`
   );
   if (!rows || rows.length === 0) throw new Error("Member not found");
   const member = mapRowToMember(rows[0]);
@@ -318,7 +317,7 @@ export async function awardClaimStamp(
   }
 
   const memberRows = await restRequest<LoyaltyMemberRow[]>(
-    `loyalty_members?${memberQuery}&select=id,full_name,stamp_count,rewards_available`
+    `loyalty_members?${memberQuery}&select=id,full_name,stamp_count`
   );
   if (!memberRows || memberRows.length === 0) {
     return { stamped: false, reason: "Customer is not a registered loyalty member" };
@@ -337,14 +336,13 @@ export async function awardClaimStamp(
   const currentStamps = member.stamp_count;
   const newStamps = currentStamps + 1;
   const earnedReward = (newStamps % settings.washes_per_reward) === 0;
-  const newRewardsAvailable = earnedReward ? member.rewards_available + 1 : member.rewards_available;
+  const newRewardsAvailable = earnedReward ? (member.rewards_available || 0) + 1 : (member.rewards_available || 0);
 
   // 5. Update member
   await restRequest(`loyalty_members?id=eq.${encodeURIComponent(member.id)}`, {
     method: "PATCH",
     body: JSON.stringify({
-      stamp_count: newStamps,
-      rewards_available: newRewardsAvailable
+      stamp_count: newStamps
     })
   });
 
