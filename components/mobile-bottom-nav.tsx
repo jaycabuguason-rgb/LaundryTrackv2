@@ -13,7 +13,7 @@ interface MobileBottomNavProps {
 const ITEMS: Array<{ page: Page; label: string; icon: typeof LayoutDashboard }> = [
   { page: "dashboard", label: "Home", icon: LayoutDashboard },
   { page: "processing", label: "Process", icon: ListTodo },
-  { page: "transactions", label: "Orders", icon: Receipt },
+  { page: "transactions", label: "Transactions", icon: Receipt },
   { page: "claim-verification", label: "Claim", icon: QrCode },
   { page: "profile", label: "Profile", icon: User },
 ];
