@@ -466,8 +466,8 @@ function PricingSettings() {
                             />
                           </td>
                           {/* Weight Range — two number inputs */}
-                          <td className="px-3 py-2.5 align-middle">
-                            <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap">
+                          <td className="px-3 py-2.5 align-middle whitespace-nowrap">
+                            <div className="flex items-center gap-1.5 flex-nowrap">
                               <Input
                                 type="number"
                                 min="0"
