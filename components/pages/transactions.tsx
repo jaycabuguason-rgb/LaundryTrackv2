@@ -37,6 +37,9 @@ import {
   loadServiceTypes,
   loadAddOns,
   loadPricingConfig,
+  persistPricingConfig,
+  persistServiceTypes,
+  persistAddOns,
 } from "@/lib/settings-store";
 import type { CreateTransactionInput, UpdateTransactionInput } from "@/lib/transaction-contracts";
 import { cn } from "@/lib/utils";
@@ -323,6 +326,38 @@ function NewTransactionWizard({
       setManualId("");
       setManualError("");
       setShowScanner(false);
+
+      // Fetch latest settings from server in background to sync
+      let ignore = false;
+      void fetch("/api/settings/pricing", { cache: "no-store" })
+        .then(async (response) => {
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok || ignore) return;
+
+          if (data.pricingConfig) {
+            persistPricingConfig(data.pricingConfig);
+            setBasePerKg(data.pricingConfig.pricePerKg || "0");
+            setMinWeightSetting(data.pricingConfig.minWeight || "0");
+            setPricingModeSetting(data.pricingConfig.pricingMode);
+            setLoadTiersSetting(data.pricingConfig.loadTiers);
+            setPriceDisplayMode(data.pricingConfig.priceDisplayMode ?? "show");
+            if (!data.pricingConfig.loadTiers.find((t: LoadTier) => t.id === selectedTierId)) {
+              setSelectedTierId(data.pricingConfig.loadTiers[0]?.id ?? "");
+            }
+          }
+          if (data.serviceTypes) {
+            persistServiceTypes(data.serviceTypes);
+            const enabled = svcOn ? data.serviceTypes.filter((s: ServiceType) => s.active) : [];
+            setServiceTypes(enabled);
+          }
+          if (data.addOns) {
+            persistAddOns(data.addOns);
+            setAddOnOptions(data.addOns);
+          }
+        })
+        .catch(() => undefined);
+
+      return () => { ignore = true; };
     }
   }, [open]);
 
