@@ -939,30 +939,25 @@ function PricingSettings() {
         </CardContent>
       </Card>
 
-      {/* bottom spacer so content isn't hidden behind fixed bar */}
-      <div className="h-36 lg:h-20" />
+      {/* bottom spacer so content isn't hidden behind floating button */}
+      <div className="h-24" />
     </div>
 
-    {/* ── Fixed Save Bar ───────────────────────────────────────────────────── */}
-    <div className="fixed bottom-[72px] left-0 right-0 z-50 flex items-center justify-end gap-3 border-t border-border bg-background px-4 py-2.5 lg:bottom-0 lg:px-6 lg:py-3">
-      {saved ? (
-        <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-sm text-green-700 animate-in fade-in slide-in-from-bottom-1">
+    {/* ── Floating Save Button ─────────────────────────────────────────────── */}
+    <div className="fixed bottom-[76px] right-4 z-50 flex flex-col items-end gap-2 lg:bottom-6 lg:right-6">
+      {saved && (
+        <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-sm text-green-700 shadow-md animate-in fade-in slide-in-from-bottom-2">
           <CheckCircle2 className="w-4 h-4 shrink-0" />
-          <span className="hidden sm:inline">Changes saved successfully!</span>
-          <span className="sm:hidden">Saved!</span>
+          <span>Changes saved!</span>
         </div>
-      ) : (
-        <p className="hidden text-xs text-muted-foreground sm:block mr-auto">Make changes above, then click Save to apply them.</p>
       )}
-      {!saved && (
-        <Button
-          size="sm"
-          onClick={handleSave}
-          className="w-auto shrink-0 flex items-center gap-1.5"
-        >
-          <Save className="w-3.5 h-3.5" /> Save Changes
-        </Button>
-      )}
+      <Button
+        size="sm"
+        onClick={handleSave}
+        className="flex items-center gap-1.5 shadow-lg shadow-primary/30 h-9 px-4"
+      >
+        <Save className="w-3.5 h-3.5" /> Save Changes
+      </Button>
     </div>
     </>
   );
