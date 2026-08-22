@@ -87,6 +87,39 @@ const S = StyleSheet.create({
   colSm:  { flex: 0.7 },
   colMd:  { flex: 1 },
   colLg:  { flex: 1.4 },
+  summaryGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginBottom: 8,
+  },
+  summaryCard: {
+    width: "48%",
+    border: "1px solid #dbeafe",
+    padding: 8,
+    marginRight: 6,
+    marginBottom: 6,
+  },
+  summaryLabel: {
+    fontSize: 8,
+    color: "#475569",
+    marginBottom: 3,
+  },
+  summaryValue: {
+    fontSize: 13,
+    fontFamily: "Helvetica-Bold",
+    color: "#1d4ed8",
+  },
+  insightBox: {
+    border: "1px solid #bfdbfe",
+    backgroundColor: "#eff6ff",
+    padding: 10,
+    marginTop: 8,
+  },
+  insightText: {
+    fontSize: 9,
+    lineHeight: 1.5,
+    color: "#1e3a8a",
+  },
 });
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -228,6 +261,118 @@ export async function downloadReportPdf(props: ReportPdfProps) {
   const a    = document.createElement("a");
   a.href     = url;
   a.download = `LaundryTrack_Report_${props.exportFrom}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+export interface ForecastPdfMetrics {
+  busyDays: Array<{ label: string; customers: number; total: number }>;
+  busyHours: Array<{ label: string; customers: number; count: number }>;
+  monthlyTrend: Array<{ label: string; transactions: number }>;
+  busiestDay: string;
+  slowestDay: string;
+  peak: string;
+  secondPeak: string;
+  busiestWeek: number;
+  staffLift: number;
+  trendPercent: number;
+  insight: string;
+  transactionCount: number;
+}
+
+export interface ForecastReportPdfProps {
+  shopName: string;
+  exportFrom: string;
+  exportTo: string;
+  metrics: ForecastPdfMetrics;
+}
+
+function ForecastReportDocument({ shopName, exportFrom, exportTo, metrics }: ForecastReportPdfProps) {
+  return (
+    <Document title={`LaundryTrack_Forecast_Report_${exportFrom}`}>
+      <Page size="A4" style={S.page}>
+        <View style={S.headerBand}>
+          <Text style={S.headerTitle}>LaundryTrack Forecast Report</Text>
+          <Text style={S.headerMeta}>
+            Shop: {shopName}{"   "}|{"   "}Date range: {exportFrom} to {exportTo}{"   "}|{"   "}Generated: {new Date().toLocaleDateString()}
+          </Text>
+        </View>
+        <View style={S.body}>
+          <Text style={S.sectionTitle}>Forecast Summary</Text>
+          <View style={S.summaryGrid}>
+            <View style={S.summaryCard}>
+              <Text style={S.summaryLabel}>Best Day to Staff Up</Text>
+              <Text style={S.summaryValue}>{metrics.busiestDay}</Text>
+              <Text style={S.summaryLabel}>{metrics.staffLift > 0 ? `Expect ${metrics.staffLift}% more customers` : "No lift detected yet"}</Text>
+            </View>
+            <View style={S.summaryCard}>
+              <Text style={S.summaryLabel}>Peak Drop-off Time</Text>
+              <Text style={S.summaryValue}>{metrics.peak}</Text>
+              <Text style={S.summaryLabel}>Highest volume window</Text>
+            </View>
+            <View style={S.summaryCard}>
+              <Text style={S.summaryLabel}>Busiest Week</Text>
+              <Text style={S.summaryValue}>{metrics.busiestWeek ? `Week ${metrics.busiestWeek}` : "-"}</Text>
+              <Text style={S.summaryLabel}>Strongest monthly pattern</Text>
+            </View>
+            <View style={S.summaryCard}>
+              <Text style={S.summaryLabel}>Weather Impact</Text>
+              <Text style={S.summaryValue}>Not connected</Text>
+              <Text style={S.summaryLabel}>Weather data unavailable</Text>
+            </View>
+          </View>
+
+          <Text style={S.sectionTitle}>Predicted Busy Days</Text>
+          <Table
+            headers={["Day", "Predicted Customers", "Total Transactions"]}
+            rows={metrics.busyDays.map((row) => [row.label, String(row.customers), String(row.total)])}
+            flexes={[1, 1.2, 1.2]}
+          />
+
+          <Text style={S.sectionTitle}>Predicted Peak Hours</Text>
+          <Table
+            headers={["Hour", "Predicted Customers", "Total Transactions"]}
+            rows={metrics.busyHours.map((row) => [row.label, String(row.customers), String(row.count)])}
+            flexes={[1, 1.2, 1.2]}
+          />
+        </View>
+      </Page>
+
+      <Page size="A4" style={S.page}>
+        <View style={S.headerBand}>
+          <Text style={S.headerTitle}>LaundryTrack Forecast Report</Text>
+          <Text style={S.headerMeta}>
+            Shop: {shopName}{"   "}|{"   "}Date range: {exportFrom} to {exportTo}
+          </Text>
+        </View>
+        <View style={S.body}>
+          <Text style={S.sectionTitle}>Monthly Customer Trend</Text>
+          <Table
+            headers={["Month", "Transactions"]}
+            rows={metrics.monthlyTrend.map((row) => [row.label, String(row.transactions)])}
+          />
+          <Text style={S.sectionTitle}>Trend Direction</Text>
+          <Text style={S.td}>
+            {metrics.trendPercent >= 0 ? "Increase" : "Decrease"} of {Math.abs(metrics.trendPercent)}% vs last month, based on {metrics.transactionCount} transactions in range.
+          </Text>
+          <Text style={S.sectionTitle}>Forecast Insight</Text>
+          <View style={S.insightBox}>
+            <Text style={S.insightText}>{metrics.insight}</Text>
+          </View>
+        </View>
+      </Page>
+    </Document>
+  );
+}
+
+export async function downloadForecastReportPdf(props: ForecastReportPdfProps) {
+  const blob = await pdf(<ForecastReportDocument {...props} />).toBlob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `LaundryTrack_Forecast_Report_${props.exportFrom}.pdf`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
