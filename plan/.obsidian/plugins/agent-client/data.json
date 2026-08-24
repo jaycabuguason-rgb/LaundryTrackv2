@@ -1,0 +1,144 @@
+{
+  "presetAgents": {
+    "claude-code-acp": {
+      "id": "claude-code-acp",
+      "displayName": "Claude Code",
+      "apiKeySecretId": "",
+      "command": "claude-agent-acp",
+      "args": [],
+      "env": [],
+      "enabled": true
+    },
+    "codex-acp": {
+      "id": "codex-acp",
+      "displayName": "Codex",
+      "apiKeySecretId": "",
+      "command": "codex-acp",
+      "args": [],
+      "env": [],
+      "enabled": true
+    },
+    "gemini-cli": {
+      "id": "gemini-cli",
+      "displayName": "Gemini CLI",
+      "apiKeySecretId": "",
+      "command": "gemini",
+      "args": [
+        "--experimental-acp"
+      ],
+      "env": [],
+      "enabled": true
+    },
+    "mistral-vibe": {
+      "id": "mistral-vibe",
+      "displayName": "Mistral Vibe",
+      "apiKeySecretId": "",
+      "command": "vibe-acp",
+      "args": [],
+      "env": [],
+      "enabled": true
+    },
+    "opencode": {
+      "id": "opencode",
+      "displayName": "OpenCode",
+      "apiKeySecretId": "",
+      "command": "opencode",
+      "args": [
+        "acp"
+      ],
+      "env": [],
+      "enabled": true
+    },
+    "kiro-cli": {
+      "id": "kiro-cli",
+      "displayName": "Kiro",
+      "apiKeySecretId": "",
+      "command": "kiro-cli",
+      "args": [
+        "acp"
+      ],
+      "env": [],
+      "enabled": true
+    },
+    "hermes-agent": {
+      "id": "hermes-agent",
+      "displayName": "Hermes Agent",
+      "apiKeySecretId": "",
+      "command": "hermes",
+      "args": [
+        "acp"
+      ],
+      "env": [],
+      "enabled": true
+    }
+  },
+  "customAgents": [],
+  "defaultAgentId": "claude-code-acp",
+  "autoAllowPermissions": false,
+  "autoMentionActiveNote": true,
+  "expandWikilinkContext": true,
+  "enableSystemNotifications": true,
+  "promptInjection": {
+    "enabled": true,
+    "latex": true,
+    "wikiLinks": true,
+    "tables": true
+  },
+  "debugMode": false,
+  "nodePath": "",
+  "exportSettings": {
+    "defaultFolder": "Agent Client",
+    "filenameTemplate": "agent_client_{date}_{time}",
+    "autoExportOnNewChat": false,
+    "autoExportOnCloseChat": false,
+    "openFileAfterExport": true,
+    "includeImages": true,
+    "imageLocation": "obsidian",
+    "imageCustomFolder": "Agent Client",
+    "frontmatterTag": "agent-client"
+  },
+  "windowsWslMode": false,
+  "sendMessageShortcut": "enter",
+  "chatViewLocation": "right-tab",
+  "displaySettings": {
+    "autoCollapseDiffs": false,
+    "diffCollapseThreshold": 10,
+    "maxNoteLength": 10000,
+    "maxSelectionLength": 10000,
+    "showEmojis": true,
+    "fontSize": null
+  },
+  "savedSessions": [
+    {
+      "sessionId": "ses_01dc9808bffesXcZhsuf7WzvS0",
+      "agentId": "opencode",
+      "cwd": "E:\\sample project\\LaundryTrackv2-pr-11\\plan",
+      "title": "hi",
+      "createdAt": "2026-08-08T16:33:13.608Z",
+      "updatedAt": "2026-08-08T16:39:06.001Z"
+    },
+    {
+      "sessionId": "ses_01dd77b10ffe7EGMAspZQ3eeWe",
+      "agentId": "opencode",
+      "cwd": "E:\\sample project\\LaundryTrackv2-pr-11\\plan",
+      "title": "hi",
+      "createdAt": "2026-08-08T16:16:48.345Z",
+      "updatedAt": "2026-08-08T16:17:27.230Z"
+    }
+  ],
+  "lastUsedModels": {
+    "opencode": "omniroute/tokenrouter/anthropic/claude-sonnet-4.6"
+  },
+  "lastUsedModes": {
+    "opencode": "build"
+  },
+  "lastUsedConfigOptions": {},
+  "enableFloatingChat": false,
+  "floatingButtonImage": "",
+  "floatingWindowSize": {
+    "width": 400,
+    "height": 500
+  },
+  "floatingWindowPosition": null,
+  "floatingButtonPosition": null
+}

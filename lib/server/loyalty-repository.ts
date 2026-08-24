@@ -3,17 +3,61 @@ import "server-only";
 import { loyaltyMembers as seedMembers, type LoyaltyMember } from "@/lib/data";
 import { getPublicSupabaseConfig } from "@/lib/supabase/config";
 
+<<<<<<< HEAD
+=======
+export type StampAwardResult =
+  | { stamped: false; reason: string }
+  | {
+    stamped: true;
+    rewarded: boolean;
+    memberName: string;
+    newStampCount: number;
+    cycleStampCount: number;
+    washesPerReward: number;
+    rewardsAvailable: number;
+    rewardDescription: string;
+  };
+
+>>>>>>> main
 type LoyaltyMemberRow = {
   id: string;
   full_name: string | null;
   phone_number: string | null;
+<<<<<<< HEAD
   stamp_count: number;
   rewards_redeemed: number;
+=======
+  email?: string | null;
+  stamp_count: number;
+  rewards_redeemed: number;
+  rewards_available?: number;
+>>>>>>> main
   preferences: string;
   date_joined: string;
   created_at: string;
 };
 
+<<<<<<< HEAD
+=======
+type StampHistoryRow = {
+  id: string;
+  member_id: string;
+  transaction_id: string | null;
+  stamps_added: number;
+  source: "auto_claim" | "manual";
+  notes?: string | null;
+  created_at: string;
+  transactions?: { ticket_id: string } | null;
+};
+
+type RewardHistoryRow = {
+  id: string;
+  member_id: string;
+  reward_type: string | null;
+  redeemed_at: string;
+};
+
+>>>>>>> main
 function hasSupabaseConfig(): boolean {
   return Boolean(getPublicSupabaseConfig() && process.env.SUPABASE_SERVICE_ROLE_KEY);
 }
@@ -53,8 +97,15 @@ function mapRowToMember(row: LoyaltyMemberRow): LoyaltyMember {
   return {
     id: row.id,
     name: row.full_name ?? "",
+<<<<<<< HEAD
     phone: row.phone_number ?? "",
     stampCount: row.stamp_count,
+=======
+    email: row.email ?? undefined,
+    phone: row.phone_number ?? "",
+    stampCount: row.stamp_count,
+    rewardsAvailable: row.rewards_available ?? 0,
+>>>>>>> main
     rewardsRedeemed: row.rewards_redeemed,
     dateJoined: row.date_joined
       ? new Date(row.date_joined).toISOString().split("T")[0]
@@ -92,6 +143,10 @@ export async function createLoyaltyMember(input: {
       phone: input.phone?.trim() ?? "",
       stampCount: 0,
       rewardsRedeemed: 0,
+<<<<<<< HEAD
+=======
+      rewardsAvailable: 0,
+>>>>>>> main
       dateJoined: new Date().toISOString().split("T")[0],
       stampHistory: [],
       rewardHistory: [],
@@ -108,6 +163,12 @@ export async function createLoyaltyMember(input: {
       full_name: input.name.trim(),
       phone_number: input.phone?.trim() || null,
       preferences: input.preferences ?? "",
+<<<<<<< HEAD
+=======
+      stamp_count: 0,
+      rewards_redeemed: 0,
+      date_joined: new Date().toISOString().split("T")[0],
+>>>>>>> main
     }),
   });
 
@@ -139,11 +200,19 @@ export async function updateLoyaltyMember(
     mockMembers = mockMembers.map((m) =>
       m.id === memberId
         ? {
+<<<<<<< HEAD
             ...m,
             name: input.name ?? m.name,
             phone: input.phone ?? m.phone,
             preferences: input.preferences ?? m.preferences,
           }
+=======
+          ...m,
+          name: input.name ?? m.name,
+          phone: input.phone ?? m.phone,
+          preferences: input.preferences ?? m.preferences,
+        }
+>>>>>>> main
         : m
     );
     return;
@@ -173,7 +242,12 @@ export async function deleteLoyaltyMember(memberId: string): Promise<void> {
 
 export async function addStampsToMember(
   memberId: string,
+<<<<<<< HEAD
   stamps: number
+=======
+  stamps: number,
+  notes: string = "Manual entry"
+>>>>>>> main
 ): Promise<void> {
   if (!hasSupabaseConfig()) {
     mockMembers = mockMembers.map((m) =>
@@ -192,4 +266,142 @@ export async function addStampsToMember(
     method: "PATCH",
     body: JSON.stringify({ stamp_count: newCount }),
   });
+<<<<<<< HEAD
+=======
+
+  await restRequest(`stamp_history`, {
+    method: "POST",
+    body: JSON.stringify({
+      member_id: memberId,
+      stamps_added: stamps,
+      source: "manual",
+      notes: notes,
+    }),
+  });
+}
+
+export async function getLoyaltySettings(): Promise<{ loyalty_enabled: boolean; washes_per_reward: number; reward_description: string }> {
+  if (!hasSupabaseConfig()) return { loyalty_enabled: true, washes_per_reward: 10, reward_description: "Free Wash" };
+  const rows = await restRequest<any[]>("settings?select=loyalty_enabled,washes_per_reward,reward_description");
+  if (!rows || rows.length === 0) return { loyalty_enabled: true, washes_per_reward: 10, reward_description: "Free Wash" };
+  return rows[0];
+}
+
+export async function getLoyaltyMemberWithHistory(memberId: string): Promise<LoyaltyMember> {
+  if (!hasSupabaseConfig()) {
+    const member = mockMembers.find((m) => m.id === memberId);
+    if (!member) throw new Error("Member not found");
+    return member;
+  }
+
+  // 1. Fetch member
+  const rows = await restRequest<LoyaltyMemberRow[]>(
+    `loyalty_members?id=eq.${encodeURIComponent(memberId)}&select=id,full_name,phone_number,stamp_count,rewards_redeemed,preferences,date_joined,created_at`
+  );
+  if (!rows || rows.length === 0) throw new Error("Member not found");
+  const member = mapRowToMember(rows[0]);
+
+  // 2. Fetch stamp history
+  const stamps = await restRequest<StampHistoryRow[]>(
+    `stamp_history?member_id=eq.${encodeURIComponent(memberId)}&select=id,member_id,transaction_id,stamps_added,source,notes,created_at,transactions(ticket_id)&order=created_at.desc`
+  );
+
+  // 3. Fetch reward history
+  const rewards = await restRequest<RewardHistoryRow[]>(
+    `reward_history?member_id=eq.${encodeURIComponent(memberId)}&select=id,member_id,reward_type,redeemed_at&order=redeemed_at.desc`
+  );
+
+  member.stampHistory = stamps.map((s) => ({
+    date: new Date(s.created_at).toISOString().split("T")[0],
+    stamps: s.stamps_added,
+    ticket: s.transactions?.ticket_id ?? "Manual",
+    source: s.source as "auto_claim" | "manual",
+    notes: s.notes ?? undefined,
+  }));
+
+  member.rewardHistory = rewards.map((r) => ({
+    date: new Date(r.redeemed_at).toISOString().split("T")[0],
+    reward: r.reward_type ?? "Unknown Reward",
+  }));
+
+  return member;
+}
+
+export async function awardClaimStamp(
+  transactionId: string,
+  phone: string | null,
+  email: string | null
+): Promise<StampAwardResult> {
+  if (!hasSupabaseConfig()) return { stamped: false, reason: "Supabase not configured" };
+
+  // 1. Check if loyalty is enabled
+  const settings = await getLoyaltySettings();
+  if (!settings.loyalty_enabled) {
+    return { stamped: false, reason: "Loyalty program is disabled" };
+  }
+
+  // 2. Find member by phone or email
+  let memberQuery = "";
+  if (phone && email) {
+    memberQuery = `or=(phone_number.eq.${encodeURIComponent(phone)},email.eq.${encodeURIComponent(email)})`;
+  } else if (phone) {
+    memberQuery = `phone_number=eq.${encodeURIComponent(phone)}`;
+  } else if (email) {
+    memberQuery = `email=eq.${encodeURIComponent(email)}`;
+  } else {
+    return { stamped: false, reason: "No phone or email provided for customer" };
+  }
+
+  const memberRows = await restRequest<LoyaltyMemberRow[]>(
+    `loyalty_members?${memberQuery}&select=id,full_name,stamp_count`
+  );
+  if (!memberRows || memberRows.length === 0) {
+    return { stamped: false, reason: "Customer is not a registered loyalty member" };
+  }
+  const member = memberRows[0];
+
+  // 3. Check if stamp already awarded for this transaction
+  const existingStamps = await restRequest<any[]>(
+    `stamp_history?transaction_id=eq.${encodeURIComponent(transactionId)}&select=id`
+  );
+  if (existingStamps && existingStamps.length > 0) {
+    return { stamped: false, reason: "Stamp already awarded for this transaction" };
+  }
+
+  // 4. Calculate new counts
+  const currentStamps = member.stamp_count;
+  const newStamps = currentStamps + 1;
+  const earnedReward = (newStamps % settings.washes_per_reward) === 0;
+  const newRewardsAvailable = earnedReward ? (member.rewards_available || 0) + 1 : (member.rewards_available || 0);
+
+  // 5. Update member
+  await restRequest(`loyalty_members?id=eq.${encodeURIComponent(member.id)}`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      stamp_count: newStamps
+    })
+  });
+
+  // 6. Insert stamp history
+  await restRequest(`stamp_history`, {
+    method: "POST",
+    body: JSON.stringify({
+      member_id: member.id,
+      transaction_id: transactionId,
+      stamps_added: 1,
+      source: "auto_claim"
+    })
+  });
+
+  return {
+    stamped: true,
+    rewarded: earnedReward,
+    memberName: member.full_name || "Customer",
+    newStampCount: newStamps,
+    cycleStampCount: newStamps % settings.washes_per_reward === 0 ? settings.washes_per_reward : newStamps % settings.washes_per_reward,
+    washesPerReward: settings.washes_per_reward,
+    rewardsAvailable: newRewardsAvailable,
+    rewardDescription: settings.reward_description
+  };
+>>>>>>> main
 }

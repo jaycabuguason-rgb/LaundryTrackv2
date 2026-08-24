@@ -1,0 +1,28 @@
+
+> my-project@0.1.0 dev
+> next dev -p 3005
+
+   ▲ Next.js 15.5.18
+   - Local:        http://localhost:3005
+   - Network:      http://10.231.14.117:3005
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 5.1s
+ ○ Compiling / ...
+ ✓ Compiled / in 31.8s (4251 modules)
+ GET / 200 in 272ms
+ GET / 200 in 289ms
+ GET / 200 in 323ms
+ ○ Compiling /offline ...
+ ✓ Compiled /offline in 8.6s (4246 modules)
+ GET /offline 200 in 10026ms
+ GET / 200 in 1196ms
+ ○ Compiling /api/transactions ...
+ ✓ Compiled /api/transactions in 4.5s (4296 modules)
+ GET /api/transactions 200 in 5640ms
+ GET /api/transactions 200 in 5679ms
+ GET / 200 in 3093ms
+ GET / 200 in 522ms
+ GET / 200 in 360ms
+[?25h

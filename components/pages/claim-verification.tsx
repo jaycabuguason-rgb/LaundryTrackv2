@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿"use client";
+=======
+"use client";
+>>>>>>> main
 
 import { useCallback, useEffect, useState } from "react";
 import { Search, CheckCircle, XCircle, AlertTriangle, Printer } from "lucide-react";
@@ -16,7 +20,11 @@ interface ClaimVerificationPageProps {
   transactions: Transaction[];
   loading?: boolean;
   error?: string | null;
+<<<<<<< HEAD
   onUpdateTransaction: (ticketId: string, updates: UpdateTransactionInput) => Promise<Transaction>;
+=======
+  onUpdateTransaction: (ticketId: string, updates: UpdateTransactionInput) => Promise<{ transaction: Transaction; loyaltyResult?: import("@/lib/transaction-contracts").StampAwardResult }>;
+>>>>>>> main
   onResolveScannedValue: (value: string) => Promise<string | null>;
 }
 
@@ -148,10 +156,18 @@ export default function ClaimVerificationPage({
 
     setSubmitting(true);
     try {
+<<<<<<< HEAD
       const updated = await onUpdateTransaction(result.ticketId, {
         status: "Claimed",
         paymentStatus: paymentToggle,
       });
+=======
+      const res = await onUpdateTransaction(result.ticketId, {
+        status: "Claimed",
+        paymentStatus: paymentToggle,
+      });
+      const updated = res.transaction;
+>>>>>>> main
       addLog(updated.ticketId, "Claimed", "Via Claim Verification", paymentToggle, updated.customerName);
       setSuccessMessage(
         `${updated.ticketId} claimed. Payment marked as ${paymentToggle === "paid" ? "Paid" : "Unpaid"}.`,

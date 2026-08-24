@@ -1,7 +1,33 @@
 import { NextResponse } from "next/server";
+<<<<<<< HEAD
 import { updateLoyaltyMember, deleteLoyaltyMember } from "@/lib/server/loyalty-repository";
 import { getAuthErrorStatus, requireAuthRequest } from "@/lib/server/request-auth";
 
+=======
+import { updateLoyaltyMember, deleteLoyaltyMember, getLoyaltyMemberWithHistory } from "@/lib/server/loyalty-repository";
+import { getAuthErrorStatus, requireAuthRequest } from "@/lib/server/request-auth";
+
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    await requireAuthRequest(request);
+    const { id } = await params;
+    const member = await getLoyaltyMemberWithHistory(id);
+    return NextResponse.json({ member });
+  } catch (error) {
+    const authStatus = getAuthErrorStatus(error);
+    if (authStatus) {
+      const message = error instanceof Error ? error.message : "Unauthorized.";
+      return NextResponse.json({ error: message }, { status: authStatus });
+    }
+    const message = error instanceof Error ? error.message : "Unable to fetch member.";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+>>>>>>> main
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }

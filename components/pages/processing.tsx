@@ -46,7 +46,11 @@ interface ProcessingPageProps {
   transactions: Transaction[];
   loading?: boolean;
   error?: string | null;
+<<<<<<< HEAD
   onUpdateTransaction?: (ticketId: string, updates: { status: TransactionStatus }) => Promise<Transaction>;
+=======
+  onUpdateTransaction?: (ticketId: string, updates: { status: TransactionStatus }) => Promise<{ transaction: Transaction; loyaltyResult?: import("@/lib/transaction-contracts").StampAwardResult }>;
+>>>>>>> main
   onViewTransaction?: (ticketId: string) => void;
   adminName?: string;
 }
@@ -262,9 +266,20 @@ export default function ProcessingPage({
     if (!onUpdateTransaction) return;
     setUpdatingTicket(txn.ticketId);
     try {
+<<<<<<< HEAD
       await onUpdateTransaction(txn.ticketId, { status: newStatus });
       setLastUpdated(new Date());
       pushToast(`${txn.ticketId} moved to ${newStatus}`);
+=======
+      const res = await onUpdateTransaction(txn.ticketId, { status: newStatus });
+      setLastUpdated(new Date());
+      pushToast(`${txn.ticketId} moved to ${newStatus}`);
+      if (res.loyaltyResult?.stamped && res.loyaltyResult.rewarded) {
+        pushToast(`Reward Unlocked! Customer earned a free wash! They now have ${res.loyaltyResult.newStampCount} stamps.`);
+      } else if (res.loyaltyResult?.stamped) {
+        pushToast(`Stamp Added! Customer now has ${res.loyaltyResult.newStampCount} stamps.`);
+      }
+>>>>>>> main
       setSheetTxn(null);
       return true;
     } catch {
