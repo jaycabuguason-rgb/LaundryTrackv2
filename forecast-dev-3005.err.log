@@ -1,0 +1,54 @@
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: RangeError: Failed to allocate memory
+[RangeError: Failed to allocate memory] {
+  code: 'ERR_MEMORY_ALLOCATION_FAILED'
+}
+ ⨯ uncaughtException: [RangeError: Failed to allocate memory] {
+  code: 'ERR_MEMORY_ALLOCATION_FAILED'
+}
+ ⨯ uncaughtException:  [RangeError: Failed to allocate memory] {
+  code: 'ERR_MEMORY_ALLOCATION_FAILED'
+}
+RangeError: Failed to allocate memory
+    at new Promise (<anonymous>) {
+  code: 'ERR_MEMORY_ALLOCATION_FAILED'
+}
+ ⨯ unhandledRejection: RangeError: Failed to allocate memory
+    at new Promise (<anonymous>) {
+  code: 'ERR_MEMORY_ALLOCATION_FAILED'
+}
+ ⨯ unhandledRejection:  RangeError: Failed to allocate memory
+    at new Promise (<anonymous>) {
+  code: 'ERR_MEMORY_ALLOCATION_FAILED'
+}
+
+<--- Last few GCs --->
+
+[27304:0000016FDC884000]   603976 ms: Scavenge (interleaved) 821.0 (843.4) -> 820.5 (843.9) MB, pooled: 0 MB, 7.08 / 0.00 ms  (average mu = 0.042, current mu = 0.000) allocation failure; 
+[27304:0000016FDC884000]   604002 ms: Scavenge (interleaved) 821.5 (843.9) -> 821.4 (850.4) MB, pooled: 0 MB, 24.78 / 0.00 ms  (average mu = 0.042, current mu = 0.000) allocation failure; 
+
+FATAL ERROR: Committing semi space failed. Allocation failed - JavaScript heap out of memory
+----- Native stack trace -----
+
+ 1: 00007FF76B23C36F 
+ 2: 00007FF76BE84D77 
+ 3: 00007FF76BC85467 
+ 4: 00007FF76BC1DE8B 
+ 5: 00007FF76BBF58DE 
+ 6: 00007FF76BC87F02 
+ 7: 00007FF76BC86EB7 
+ 8: 00007FF76BC97E22 
+ 9: 00007FF76BC9794B 
+10: 00007FF76D11DAED 
+11: 00007FF76BC82F30 
+12: 00007FF76BC9D7BA 
+13: 00007FF76BCA9618 
+14: 00007FF76BCC0ACC 
+15: 00007FF76BAA3281 
+16: 00007FF76BAA3070 
+17: 00007FF76BAA2120 
+18: 00007FF76BA3926E 
+19: 00007FF76B9AF357 
+20: 00007FF76B9ADB6F 
+21: 00007FF76B871B86 
+22: 00007FF76B872FF1 
+23: 0000016F9FE7733A 

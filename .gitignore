@@ -1,0 +1,33 @@
+# v0 sandbox internal files
+__v0_runtime_loader.js
+__v0_devtools.tsx
+__v0_jsx-dev-runtime.ts
+.snowflake/
+.v0-trash/
+.vercel/
+next.user-config.*
+
+# Environment variables
+.env*.local
+.env
+
+# Common ignores
+node_modules
+.next/
+.DS_Store
+# AutoClaw KDream data
+.autoclaw/
+
+# TypeScript
+tsconfig.tsbuildinfo
+ts_error.log
+
+# Build & Test output
+output/
+.playwright-cli/
+
+# IDE & AI Agent folders
+.vscode/
+.agents/
+.claude/
+.codex/
