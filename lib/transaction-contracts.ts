@@ -26,8 +26,6 @@ export interface UpdateTransactionInput {
   voidReason?: string | null;
 }
 
-<<<<<<< HEAD
-=======
 export type StampAwardResult =
   | { stamped: false; reason: string }
   | {
@@ -41,7 +39,6 @@ export type StampAwardResult =
       rewardDescription: string;
     };
 
->>>>>>> main
 export type PublicShopProfile = Pick<
   BusinessProfile,
   | "shopName"

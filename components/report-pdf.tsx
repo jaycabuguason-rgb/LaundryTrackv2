@@ -87,7 +87,6 @@ const S = StyleSheet.create({
   colSm:  { flex: 0.7 },
   colMd:  { flex: 1 },
   colLg:  { flex: 1.4 },
-<<<<<<< HEAD
   summaryGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -121,8 +120,6 @@ const S = StyleSheet.create({
     lineHeight: 1.5,
     color: "#1e3a8a",
   },
-=======
->>>>>>> main
 });
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -269,7 +266,6 @@ export async function downloadReportPdf(props: ReportPdfProps) {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
-<<<<<<< HEAD
 
 export interface ForecastPdfMetrics {
   busyDays: Array<{ label: string; customers: number; total: number }>;
@@ -382,5 +378,3 @@ export async function downloadForecastReportPdf(props: ForecastReportPdfProps) {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
-=======
->>>>>>> main

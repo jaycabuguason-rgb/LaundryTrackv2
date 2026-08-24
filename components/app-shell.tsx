@@ -195,12 +195,7 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
             loading={transactionsLoading}
             error={transactionsError}
             onUpdateTransaction={async (ticketId: string, updates: Partial<Transaction>) => {
-<<<<<<< HEAD
               return await updateTransaction(ticketId, updates);
-=======
-              const res = await updateTransaction(ticketId, updates);
-              return res;
->>>>>>> main
             }}
             onViewTransaction={handleTransactionDetail}
             adminName={adminProfile.name}
@@ -229,11 +224,7 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
             onResolveScannedValue={resolveScannedValue}
           />
         );
-<<<<<<< HEAD
       case "reports": return <ReportsPage transactions={txns} shopName={businessProfile.shopName} />;
-=======
-      case "reports": return <ReportsPage transactions={txns} />;
->>>>>>> main
       case "settings-pricing":
       case "settings-service-types":
       case "settings-backup":

@@ -3,8 +3,6 @@ import "server-only";
 import { loyaltyMembers as seedMembers, type LoyaltyMember } from "@/lib/data";
 import { getPublicSupabaseConfig } from "@/lib/supabase/config";
 
-<<<<<<< HEAD
-=======
 export type StampAwardResult =
   | { stamped: false; reason: string }
   | {
@@ -18,27 +16,19 @@ export type StampAwardResult =
     rewardDescription: string;
   };
 
->>>>>>> main
 type LoyaltyMemberRow = {
   id: string;
   full_name: string | null;
   phone_number: string | null;
-<<<<<<< HEAD
-  stamp_count: number;
-  rewards_redeemed: number;
-=======
   email?: string | null;
   stamp_count: number;
   rewards_redeemed: number;
   rewards_available?: number;
->>>>>>> main
   preferences: string;
   date_joined: string;
   created_at: string;
 };
 
-<<<<<<< HEAD
-=======
 type StampHistoryRow = {
   id: string;
   member_id: string;
@@ -57,7 +47,6 @@ type RewardHistoryRow = {
   redeemed_at: string;
 };
 
->>>>>>> main
 function hasSupabaseConfig(): boolean {
   return Boolean(getPublicSupabaseConfig() && process.env.SUPABASE_SERVICE_ROLE_KEY);
 }
@@ -97,15 +86,10 @@ function mapRowToMember(row: LoyaltyMemberRow): LoyaltyMember {
   return {
     id: row.id,
     name: row.full_name ?? "",
-<<<<<<< HEAD
-    phone: row.phone_number ?? "",
-    stampCount: row.stamp_count,
-=======
     email: row.email ?? undefined,
     phone: row.phone_number ?? "",
     stampCount: row.stamp_count,
     rewardsAvailable: row.rewards_available ?? 0,
->>>>>>> main
     rewardsRedeemed: row.rewards_redeemed,
     dateJoined: row.date_joined
       ? new Date(row.date_joined).toISOString().split("T")[0]
@@ -143,10 +127,7 @@ export async function createLoyaltyMember(input: {
       phone: input.phone?.trim() ?? "",
       stampCount: 0,
       rewardsRedeemed: 0,
-<<<<<<< HEAD
-=======
       rewardsAvailable: 0,
->>>>>>> main
       dateJoined: new Date().toISOString().split("T")[0],
       stampHistory: [],
       rewardHistory: [],
@@ -163,12 +144,9 @@ export async function createLoyaltyMember(input: {
       full_name: input.name.trim(),
       phone_number: input.phone?.trim() || null,
       preferences: input.preferences ?? "",
-<<<<<<< HEAD
-=======
       stamp_count: 0,
       rewards_redeemed: 0,
       date_joined: new Date().toISOString().split("T")[0],
->>>>>>> main
     }),
   });
 
@@ -200,19 +178,11 @@ export async function updateLoyaltyMember(
     mockMembers = mockMembers.map((m) =>
       m.id === memberId
         ? {
-<<<<<<< HEAD
-            ...m,
-            name: input.name ?? m.name,
-            phone: input.phone ?? m.phone,
-            preferences: input.preferences ?? m.preferences,
-          }
-=======
           ...m,
           name: input.name ?? m.name,
           phone: input.phone ?? m.phone,
           preferences: input.preferences ?? m.preferences,
         }
->>>>>>> main
         : m
     );
     return;
@@ -242,12 +212,8 @@ export async function deleteLoyaltyMember(memberId: string): Promise<void> {
 
 export async function addStampsToMember(
   memberId: string,
-<<<<<<< HEAD
-  stamps: number
-=======
   stamps: number,
   notes: string = "Manual entry"
->>>>>>> main
 ): Promise<void> {
   if (!hasSupabaseConfig()) {
     mockMembers = mockMembers.map((m) =>
@@ -266,8 +232,6 @@ export async function addStampsToMember(
     method: "PATCH",
     body: JSON.stringify({ stamp_count: newCount }),
   });
-<<<<<<< HEAD
-=======
 
   await restRequest(`stamp_history`, {
     method: "POST",
@@ -403,5 +367,4 @@ export async function awardClaimStamp(
     rewardsAvailable: newRewardsAvailable,
     rewardDescription: settings.reward_description
   };
->>>>>>> main
 }

@@ -15,11 +15,7 @@ import { isOnline, subscribeNetworkStatus } from "@/lib/network-status";
 import { getBrowserAccessToken } from "@/lib/supabase/browser-session";
 import { refreshBrowserSession } from "@/lib/supabase/browser-session";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-<<<<<<< HEAD
-import type { CreateTransactionInput, UpdateTransactionInput } from "@/lib/transaction-contracts";
-=======
 import type { CreateTransactionInput, UpdateTransactionInput, StampAwardResult } from "@/lib/transaction-contracts";
->>>>>>> main
 
 interface TransactionsResponse {
   transactions: Transaction[];
@@ -27,10 +23,7 @@ interface TransactionsResponse {
 
 interface TransactionResponse {
   transaction: Transaction;
-<<<<<<< HEAD
-=======
   loyaltyResult?: StampAwardResult;
->>>>>>> main
 }
 
 interface ResolveResponse {
@@ -341,11 +334,7 @@ export function useTransactions() {
         ),
       );
       const updated = transactions.find((transaction) => transaction.ticketId === ticketId);
-<<<<<<< HEAD
-      return { ...(updated ?? {}), ...updates } as Transaction;
-=======
       return { transaction: { ...(updated ?? {}), ...updates } as Transaction };
->>>>>>> main
     }
 
     const headers = await getAuthHeaders();
@@ -364,11 +353,7 @@ export function useTransactions() {
         transaction.ticketId === data.transaction.ticketId ? data.transaction : transaction,
       ),
     );
-<<<<<<< HEAD
-    return data.transaction;
-=======
     return { transaction: data.transaction, loyaltyResult: data.loyaltyResult };
->>>>>>> main
   }, [transactions, updateTransactions]);
 
   const resolveScannedValue = useCallback(async (value: string) => {

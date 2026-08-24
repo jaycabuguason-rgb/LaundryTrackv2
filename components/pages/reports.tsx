@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import {
   CalendarIcon,
-<<<<<<< HEAD
   Clock,
   CloudRain,
   Download,
@@ -12,26 +11,15 @@ import {
   PieChart as PieChartIcon,
   TrendingUp,
 } from "lucide-react";
-import { format, subDays } from "date-fns";
-=======
-  Download,
-  FileText,
-  PieChart as PieChartIcon,
-  TrendingUp,
-} from "lucide-react";
 import { addDays, addMonths, format, subDays } from "date-fns";
->>>>>>> main
 import {
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
   Legend,
-<<<<<<< HEAD
   Line,
   LineChart,
-=======
->>>>>>> main
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -45,27 +33,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-<<<<<<< HEAD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-=======
->>>>>>> main
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Transaction } from "@/lib/data";
 import { statusColors } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
 type ExportSection = "transactions" | "analytics" | "customers";
-<<<<<<< HEAD
 type ForecastRange = "7d" | "30d" | "3m" | "6m" | "custom";
+type RangePreset = "day" | "week" | "month" | "year";
 
 type ReportsPageProps = {
   transactions: Transaction[];
   shopName?: string;
-=======
-
-type ReportsPageProps = {
-  transactions: Transaction[];
->>>>>>> main
 };
 
 type ServiceRevenueRow = {
@@ -81,7 +61,6 @@ const exportOptions: Array<{ id: ExportSection; label: string }> = [
 ];
 
 const PIE_COLORS = ["#2563eb", "#0f766e", "#f59e0b", "#dc2626", "#7c3aed", "#475569"];
-<<<<<<< HEAD
 const BUSY_BAR = "#1e3a8a";
 const NORMAL_BAR = "#93c5fd";
 const MUTED_BAR = "#cbd5e1";
@@ -95,8 +74,6 @@ const forecastRangeOptions: Array<{ value: ForecastRange; label: string }> = [
   { value: "6m", label: "Last 6 months" },
   { value: "custom", label: "Custom range" },
 ];
-=======
->>>>>>> main
 
 function formatCurrency(value: number) {
   return `₱${value.toLocaleString()}`;
@@ -117,7 +94,6 @@ function getDateKey(transaction: Transaction) {
   return transaction.dropOffDate;
 }
 
-<<<<<<< HEAD
 function getDateOnly(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
@@ -128,12 +104,6 @@ function toDateKey(date: Date) {
 
 function parseDateKey(dateKey: string) {
   return new Date(`${dateKey}T00:00:00`);
-}
-
-function addDays(date: Date, days: number) {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-  return next;
 }
 
 function subMonthsLocal(date: Date, months: number) {
@@ -307,8 +277,6 @@ function buildForecastMetrics(transactions: Transaction[], from: Date, to: Date)
   };
 }
 
-=======
->>>>>>> main
 function getCustomerSummaryRows(transactions: Transaction[]) {
   const customerMap = new Map<string, { name: string; phone: string; count: number; spent: number }>();
 
@@ -329,7 +297,6 @@ function getCustomerSummaryRows(transactions: Transaction[]) {
   return [...customerMap.values()].sort((a, b) => b.spent - a.spent);
 }
 
-<<<<<<< HEAD
 export default function ReportsPage({ transactions, shopName = "LaundryTrack" }: ReportsPageProps) {
   const [summaryDate, setSummaryDate] = useState<Date>(new Date());
   const [exportFromDate, setExportFromDate] = useState<Date>(subDays(new Date(), 30));
@@ -341,15 +308,7 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
   const [exportFormat, setExportFormat] = useState<"pdf" | "csv">("pdf");
   const [pdfGenerating, setPdfGenerating] = useState(false);
   const [forecastPdfGenerating, setForecastPdfGenerating] = useState(false);
-=======
-export default function ReportsPage({ transactions }: ReportsPageProps) {
-  const [summaryDate, setSummaryDate] = useState<Date>(new Date());
-  const [exportFromDate, setExportFromDate] = useState<Date>(subDays(new Date(), 30));
-  const [exportToDate, setExportToDate] = useState<Date>(new Date());
-  const [selectedExports, setSelectedExports] = useState<ExportSection[]>(["transactions", "analytics"]);
-  const [exportFormat, setExportFormat] = useState<"pdf" | "csv">("pdf");
-  const [pdfGenerating, setPdfGenerating] = useState(false);
-  const [rangePreset, setRangePreset] = useState<"day" | "week" | "month" | "year">("month");
+  const [rangePreset, setRangePreset] = useState<RangePreset>("month");
 
   const periodRanges = {
     day: { from: new Date(), to: new Date() },
@@ -358,17 +317,15 @@ export default function ReportsPage({ transactions }: ReportsPageProps) {
     year: { from: subDays(new Date(), 364), to: new Date() },
   };
 
-  const applyPreset = (preset: "day" | "week" | "month" | "year") => {
+  const applyPreset = (preset: RangePreset) => {
     setRangePreset(preset);
     setExportFromDate(periodRanges[preset].from);
     setExportToDate(periodRanges[preset].to);
   };
->>>>>>> main
 
   const summaryDateKey = format(summaryDate, "yyyy-MM-dd");
   const exportFrom = format(exportFromDate, "yyyy-MM-dd");
   const exportTo = format(exportToDate, "yyyy-MM-dd");
-<<<<<<< HEAD
   const forecastDates = useMemo(
     () => getForecastRangeDates(forecastRange, forecastFromDate, forecastToDate),
     [forecastFromDate, forecastRange, forecastToDate],
@@ -377,8 +334,6 @@ export default function ReportsPage({ transactions }: ReportsPageProps) {
     () => buildForecastMetrics(transactions, forecastDates.from, forecastDates.to),
     [forecastDates.from, forecastDates.to, transactions],
   );
-=======
->>>>>>> main
 
   const filteredTransactions = useMemo(
     () => transactions.filter((transaction) => {
@@ -450,29 +405,6 @@ export default function ReportsPage({ transactions }: ReportsPageProps) {
 
   const salesTrendData = useMemo(() => {
     const salesMap = new Map<string, { label: string; revenue: number; count: number }>();
-<<<<<<< HEAD
-
-    for (let offset = 6; offset >= 0; offset -= 1) {
-      const day = subDays(new Date(), offset);
-      const key = format(day, "yyyy-MM-dd");
-      salesMap.set(key, {
-        label: format(day, "MMM d"),
-        revenue: 0,
-        count: 0,
-      });
-    }
-
-    for (const transaction of transactions) {
-      const key = transaction.dropOffDate;
-      const existing = salesMap.get(key);
-      if (!existing) continue;
-      existing.revenue += transaction.fee;
-      existing.count += 1;
-    }
-
-    return [...salesMap.values()];
-  }, [transactions]);
-=======
     const seed = (key: string, label: string) => {
       salesMap.set(key, { label, revenue: 0, count: 0 });
     };
@@ -516,7 +448,6 @@ export default function ReportsPage({ transactions }: ReportsPageProps) {
 
     return [...salesMap.values()];
   }, [rangePreset, exportFromDate, exportToDate, filteredTransactions]);
->>>>>>> main
 
   const peakHourData = useMemo(() => {
     const hourMap = new Map<string, number>();
@@ -621,7 +552,6 @@ export default function ReportsPage({ transactions }: ReportsPageProps) {
     }
   };
 
-<<<<<<< HEAD
   const handleForecastPdfExport = async () => {
     if (forecastPdfGenerating) return;
 
@@ -652,8 +582,6 @@ export default function ReportsPage({ transactions }: ReportsPageProps) {
     }
   };
 
-=======
->>>>>>> main
   return (
     <div className="min-h-[60vh] space-y-4">
       <div className="flex items-center justify-between">
@@ -672,10 +600,7 @@ export default function ReportsPage({ transactions }: ReportsPageProps) {
         <TabsList className="grid h-auto w-full grid-cols-2 gap-1 bg-muted/40 p-1 sm:flex sm:h-9">
           <TabsTrigger value="overview" className="min-h-[40px] text-xs sm:min-h-0">Daily Summary</TabsTrigger>
           <TabsTrigger value="analytics" className="min-h-[40px] text-xs sm:min-h-0">Sales Analytics</TabsTrigger>
-<<<<<<< HEAD
           <TabsTrigger value="forecast" className="min-h-[40px] text-xs sm:min-h-0">Forecast</TabsTrigger>
-=======
->>>>>>> main
           <TabsTrigger value="unclaimed" className="min-h-[40px] text-xs sm:min-h-0">Unclaimed Items</TabsTrigger>
           <TabsTrigger value="export" className="min-h-[40px] text-xs sm:min-h-0">Export</TabsTrigger>
         </TabsList>
@@ -791,8 +716,6 @@ export default function ReportsPage({ transactions }: ReportsPageProps) {
       </TabsContent>
 
       <TabsContent value="analytics" className="space-y-4">
-<<<<<<< HEAD
-=======
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground">Period:</span>
           {(["day", "week", "month", "year"] as const).map((preset) => (
@@ -808,7 +731,6 @@ export default function ReportsPage({ transactions }: ReportsPageProps) {
           ))}
         </div>
 
->>>>>>> main
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <Card className="border border-border shadow-none">
             <CardContent className="p-5">
@@ -1028,7 +950,6 @@ export default function ReportsPage({ transactions }: ReportsPageProps) {
         </Card>
       </TabsContent>
 
-<<<<<<< HEAD
       <TabsContent value="forecast" className="space-y-4">
         <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3 shadow-none sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -1237,8 +1158,6 @@ export default function ReportsPage({ transactions }: ReportsPageProps) {
         </Card>
       </TabsContent>
 
-=======
->>>>>>> main
       <TabsContent value="unclaimed">
         <Card className="border border-border shadow-none">
           <CardHeader className="pb-3">

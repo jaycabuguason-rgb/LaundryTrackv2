@@ -1,9 +1,4 @@
 import { NextResponse } from "next/server";
-<<<<<<< HEAD
-import { updateLoyaltyMember, deleteLoyaltyMember } from "@/lib/server/loyalty-repository";
-import { getAuthErrorStatus, requireAuthRequest } from "@/lib/server/request-auth";
-
-=======
 import { updateLoyaltyMember, deleteLoyaltyMember, getLoyaltyMemberWithHistory } from "@/lib/server/loyalty-repository";
 import { getAuthErrorStatus, requireAuthRequest } from "@/lib/server/request-auth";
 
@@ -27,7 +22,6 @@ export async function GET(
   }
 }
 
->>>>>>> main
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }

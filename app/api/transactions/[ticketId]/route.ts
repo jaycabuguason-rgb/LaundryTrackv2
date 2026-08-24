@@ -2,10 +2,7 @@ import { NextResponse } from "next/server";
 
 import { createAuditLog } from "@/lib/server/audit-log-repository";
 import { updateTransaction } from "@/lib/server/laundry-repository";
-<<<<<<< HEAD
-=======
 import { awardClaimStamp, type StampAwardResult } from "@/lib/server/loyalty-repository";
->>>>>>> main
 import { getAuthErrorStatus, requireAuthRequest } from "@/lib/server/request-auth";
 import { getRequestIp } from "@/lib/server/request-meta";
 import type { UpdateTransactionInput } from "@/lib/transaction-contracts";
@@ -65,9 +62,6 @@ export async function PATCH(
       },
     }).catch(() => undefined);
 
-<<<<<<< HEAD
-    return NextResponse.json({ transaction });
-=======
     let loyaltyResult: StampAwardResult | undefined;
     if (body.status === "Claimed") {
       try {
@@ -82,7 +76,6 @@ export async function PATCH(
     }
 
     return NextResponse.json({ transaction, loyaltyResult });
->>>>>>> main
   } catch (error) {
     const authStatus = getAuthErrorStatus(error);
     if (authStatus) {
