@@ -86,14 +86,14 @@ The FreshSpin inventory refers to `src/app` and `src/components`, but this repos
 
 | Area | Actual repository path |
 |---|---|
-| Main app entry | [`app/page.tsx`](./app/page.tsx) |
-| Public tracking | [`app/track/[token]/page.tsx`](./app/track/%5Btoken%5D/page.tsx) |
-| Offline fallback | [`app/offline/page.tsx`](./app/offline/page.tsx) |
-| App shell | [`components/app-shell.tsx`](./components/app-shell.tsx) |
-| Page components | [`components/pages/`](./components/pages/) |
-| Navigation | [`components/sidebar.tsx`](./components/sidebar.tsx), [`components/topnav.tsx`](./components/topnav.tsx), and [`components/mobile-bottom-nav.tsx`](./components/mobile-bottom-nav.tsx) |
-| Specialized widgets | [`components/qr-scanner.tsx`](./components/qr-scanner.tsx), [`components/peak-hours-chart.tsx`](./components/peak-hours-chart.tsx), and [`components/report-pdf.tsx`](./components/report-pdf.tsx) |
-| Shared primitives | [`components/ui/`](./components/ui/) |
+| Main app entry | [`app/page.tsx`](../../app/page.tsx) |
+| Public tracking | [`app/track/[token]/page.tsx`](../../app/track/%5Btoken%5D/page.tsx) |
+| Offline fallback | [`app/offline/page.tsx`](../../app/offline/page.tsx) |
+| App shell | [`components/app-shell.tsx`](../../components/app-shell.tsx) |
+| Page components | [`components/pages/`](../../components/pages/) |
+| Navigation | [`components/sidebar.tsx`](../../components/sidebar.tsx), [`components/topnav.tsx`](../../components/topnav.tsx), and [`components/mobile-bottom-nav.tsx`](../../components/mobile-bottom-nav.tsx) |
+| Specialized widgets | [`components/qr-scanner.tsx`](../../components/qr-scanner.tsx), [`components/peak-hours-chart.tsx`](../../components/peak-hours-chart.tsx), and [`components/report-pdf.tsx`](../../components/report-pdf.tsx) |
+| Shared primitives | [`components/ui/`](../../components/ui/) |
 
 The official guide's older examples such as `components/app-shell.tsx` are useful conceptually and match this repository, but any redesign work should use the actual paths above.
 
@@ -201,8 +201,8 @@ Use this checklist for every screen, component, and workflow during the redesign
 
 ## Known Risks to Recheck
 
-- The graph artifact is available under `graphify-out/`, but the repository's documented graph reference is [`docs/PROJECT_GRAPH.md`](./docs/PROJECT_GRAPH.md), which may be stale or absent.
-- The QR scanner includes a demo-only simulated scan path in [`components/qr-scanner.tsx`](./components/qr-scanner.tsx).
+- The graph artifact is available under `graphify-out/`, but the repository's documented graph reference is [`docs/PROJECT_GRAPH.md`](../PROJECT_GRAPH.md), which may be stale or absent.
+- The QR scanner includes a demo-only simulated scan path in [`components/qr-scanner.tsx`](../../components/qr-scanner.tsx).
 - Forecast report values are partly hardcoded in the reports implementation.
 - Member visit history and reward details include explicitly mocked data.
 - Authentication uses a client-side auth store; verify that credentials are not persisted insecurely before production use.
