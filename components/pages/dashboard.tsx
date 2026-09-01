@@ -70,32 +70,32 @@ export default function DashboardPage({
       label: "Total Transactions Today",
       value: todayTransactions.length,
       icon: ShoppingBag,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
+      color: "text-primary",
+      bg: "bg-primary/10",
       change: "+3 from yesterday",
     },
     {
       label: "Total Revenue Today",
       value: formatCurrency(totalRevenue),
       icon: null,
-      color: "text-green-600",
-      bg: "bg-green-50",
+      color: "text-chart-4",
+      bg: "bg-chart-4/10",
       change: "+12% vs yesterday",
     },
     {
       label: "Ready for Pickup",
       value: readyForPickup,
       icon: AlertCircle,
-      color: "text-orange-600",
-      bg: "bg-orange-50",
+      color: "text-chart-3",
+      bg: "bg-chart-3/10",
       change: "Waiting to be claimed",
     },
     {
       label: "Active Orders",
       value: activeOrders,
       icon: Loader2,
-      color: "text-purple-600",
-      bg: "bg-purple-50",
+      color: "text-primary",
+      bg: "bg-primary/10",
       change: "In progress",
     },
   ];
@@ -261,8 +261,8 @@ export default function DashboardPage({
               <Card className="border border-border shadow-none">
                 <CardContent className="p-4 md:p-5">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-yellow-50">
-                      <Users className="h-5 w-5 text-yellow-600" />
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10">
+                      <Users className="h-5 w-5 text-accent-foreground" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
