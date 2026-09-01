@@ -1095,8 +1095,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\UI_REDESIGN_GUIDE.md": {
-    "mtime": 1787555264.258597,
-    "ast_hash": "3b747935f405648ee44e10a0a68813c0",
+    "mtime": 1787568444.467607,
+    "ast_hash": "d8389eec8f3e26c15aac059eaaf1fb02",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\.clinerules\\autobuild.md": {
@@ -1287,6 +1287,16 @@
   "E:\\sample project\\LaundryTrackv2-pr-11\\public\\placeholder.svg": {
     "mtime": 1779652981.0,
     "ast_hash": "35707bd9960ba5281c72af927b79291f",
+    "semantic_hash": ""
+  },
+  "E:\\sample project\\LaundryTrackv2-pr-11\\UI_CROSS_EXAMINATION.md": {
+    "mtime": 1787804594.3562076,
+    "ast_hash": "4a348f2ba8f7f406642d5a81a3fb82e7",
+    "semantic_hash": ""
+  },
+  "E:\\sample project\\LaundryTrackv2-pr-11\\UI_FEATURES_AND_WORKFLOWS.md": {
+    "mtime": 1787881711.0115488,
+    "ast_hash": "3abc62ff7563278357c56b0ba2fc46c9",
     "semantic_hash": ""
   }
 }

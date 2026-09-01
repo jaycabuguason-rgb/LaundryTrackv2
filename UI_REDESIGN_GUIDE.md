@@ -116,6 +116,37 @@
 - [ ] `app/globals.css` / `styles/globals.css` — Tailwind v4 tokens + chart overrides
 - [ ] `components.json` — shadcn config (`new-york`, `neutral`, `lucide`)
 
+### 4.7 Recently Added / High-Churn Features — Detailed Cross-Check
+
+> Added in `codex/foreast` merge (reports forecast + loyalty history + settings persistence). Verify these exist 1:1 in the new design repo.
+
+#### A. Reports Page — `components/pages/reports.tsx` + `components/report-pdf.tsx`
+- [ ] **Tab bar** — 5 tabs: `Daily Summary` | `Sales Analytics` | `Forecast` | `Unclaimed Items` | `Export` (`Tabs`, `TabsList`, `TabsTrigger`)
+- [ ] **Daily Summary tab** — 4 summary cards (Total Transactions, Total Revenue, Total Weight, Ready for Pickup) + date picker (`Popover` + `Calendar`) + transactions table (columns: Ticket ID, Customer, Arrival, Service, Weight, Fee, Status) with mobile card layout
+- [ ] **Sales Analytics tab** — period presets `Day`/`Week`/`Month`/`Year` (buttons switch `rangePreset`) + 4 KPI cards (Sales in Range, Orders in Range, Average Order Value, Peak Claim Window) + Sales Trend `BarChart` + Market/Sales Mix `PieChart` (service mix, paid/unpaid split, status distribution, peak analysis cards) + Service Revenue Table (mobile cards / desktop table)
+- [ ] **Forecast tab (NEW)** — header with `ForecastRange` select (`7d`/`30d`/`3m`/`6m`/`custom` → `getForecastRangeDates`) + `Export Forecast Report` button (`downloadForecastReportPdf`, `forecastPdfGenerating`) + conditional custom date range pickers + 4 metric cards (Best Day to Staff Up / Peak Drop-off Time / Busiest Week / Weather Impact) + `Predicted Busy Days` vertical `BarChart` (highlight `BUSY_BAR` vs `NORMAL_BAR`, footer badges busiest/slowest) + `Predicted Peak Hours` horizontal `BarChart` (highlight peak window) + `Monthly Customer Trend` `LineChart` (6-month trend, `trendPercent`) + insight text + `BUSY_BAR`/`NORMAL_BAR`/`MUTED_BAR` color constants — preserve `buildForecastMetrics`, `getPeakWindows`
+- [ ] **Unclaimed Items tab** — `Ready` filter table
+- [ ] **Export tab** — checkboxes for `Transactions` / `Sales and Analytics` / `Customers`, format toggle `pdf`/`csv`, handlers `handleCsvExport` / `handlePdfExport` (`downloadReportPdf`)
+- [ ] **PDF templates** — `report-pdf.tsx` exports `downloadReportPdf` + `downloadForecastReportPdf` (`@react-pdf/renderer`); keep import paths when restyling
+
+#### B. Loyalty Page — `components/pages/loyalty.tsx` (`hooks/use-loyalty-members.ts`, `/api/loyalty*`)
+- [ ] **Disabled banner** — conditional `!loyaltyEnabled` yellow `AlertTriangle` banner
+- [ ] **Search + Add Member** — `Search` input (name/phone filter) + `Add Member` button → `Dialog` (Name/Phone/Preferences, `handleAddMember`, `getAuthHeaders`)
+- [ ] **Summary card** — Total Members count
+- [ ] **Members list/table** — desktop `table` (Name, Phone, Stamps w/ `Star`, Rewards Redeemed, Date Joined, View/Edit/Delete) + mobile card layout; rows wired to `handleSelectMember` (fetch `/api/loyalty/${id}`), `setEditModal`, `setDeleteModal`
+- [ ] **Member detail view** (`selected` state) — Back button + Profile `Card` (avatar `Star`, stamp count, rewards, `Add Stamps` button, preferences) + Current Cycle Progress `Card` (`StampDots` 10-dot row, history tables filtered to `currentCycleStamps = stampCount % washesPerReward`) + Reward History table (rows clickable → `rewardCycleModal` `Dialog` with cycle visits + summary)
+- [ ] **Modals** — Edit Member `Dialog`, Delete `AlertDialog`, Add Stamps `Dialog` (stamps number + reason, `handleAddStamps` → `/api/loyalty/${id}/stamps`), Reward Cycle `Dialog`; preserve `useLoyaltyMembers().refetch()` + `toast` + `saving` disables
+
+#### C. Settings Page — `components/pages/settings.tsx` (`lib/settings-store.ts`, `/api/settings/pricing`, `/api/settings/business-profile`, `lib/offline-settings-sync.ts`)
+- [ ] **PricingSettings — Base Pricing card** — `PricingMode` toggle 3 buttons (Per Kilogram / Per Load / Both with `Scale`/`ShoppingBasket`/`Package` icons) → conditional Per-Kg fields (`pricePerKg`, `minWeight` numeric sanitized) + Per-Load tier table (editable Load Size name, Weight Range From/To + open-ended `Open` toggle, Price, delete `Trash2` → confirm dialog) + Undo/Redo tier history (`Undo2`/`Redo2`) + Add Custom Tier panel (`buildRange`/`parseRange`)
+- [ ] **Service Types card** — helper text + enabled `Switch` (`laundrytrack_svc_enabled`) + service rows (name, description, price badge, pricing type badge, Show/Price toggles, Edit `Edit` → `Dialog`, Delete `Trash2`) + Add Service Type form (name/desc/price/pricingType/ShowInTxn/ShowPrice) + Edit `Dialog` (`svcEdit*` state)
+- [ ] **Add-on Rates card** — list + add row (name + rate ₱ + `Plus`)
+- [ ] **Price Display Settings card** — 3 modes `Show Price` (`Eye`) / `No Price / Free` (`Tag`) / `Hide Price` (`EyeOff`) — `PriceDisplayMode` buttons
+- [ ] **Floating Save** — fixed bottom `Save Changes` button + `CheckCircle2` "Changes saved!" toast; `handleSave` persists via `persistPricingConfig`/`persistAddOns`/`persistServiceTypes` + `PUT /api/settings/pricing` (queues via `enqueueSettingsMutation` when offline) — preserve `isOnline` branch
+- [ ] **BusinessProfileSettings** — shop name/tagline/address/contact/email/logo upload (`logoDataUrl`), receipt footer, pickup instructions; dirty check `isDirty`, `saveError`, reset confirm — keep `buildAuthHeaders` + Supabase browser client wiring
+- [ ] **Offline sync** — `enqueueSettingsMutation`, `isOnline` guard visible in save flows; do not remove when restyling cards/buttons
+- [ ] **Cross-check in new repo:** every editable table row, inline switch, numeric sanitizer (`replace(/[^0-9.]/g,'')`), and PUT queue path must have an equivalent
+
 ---
 
 ## 5. Phased AI Prompt Playbook (Copy-Paste)
@@ -226,8 +257,8 @@ Report discrepancies.
 1. Branch + baseline test
 2. Prompt 0 (guardrails) → Prompt 1 (tokens + button/card/badge/input)
 3. Prompt 2 (shell/nav)
-4. Prompt 3 loop: `dashboard` → `transactions` → `processing` → `claim-verification` → `loyalty` → `reports` → `staff-management` → `settings` → `profile` → `audit-logs` → `data-import` → `login/register/password` → `track/[token]` / `offline`
-5. Prompt 4 for modals/widgets as needed
+4. Prompt 3 loop: `dashboard` → `transactions` → `processing` → `claim-verification` → `loyalty` (verify 4.7.B) → `reports` (verify 4.7.A forecast + 5-tab bar + both PDF exports) → `staff-management` → `settings` (verify 4.7.C tiers/services/add-ons/price modes + offline queue) → `profile` → `audit-logs` → `data-import` → `login/register/password` → `track/[token]` / `offline`
+5. Prompt 4 for modals/widgets as needed (QR `video`/`canvas` refs, `print-receipt-modal` `@media print`, `report-pdf` templates)
 6. Prompt 5 after each file + commit (`git commit -m "style: redesign [page]"`)
 
 ---
