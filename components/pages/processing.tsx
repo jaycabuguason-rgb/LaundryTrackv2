@@ -74,18 +74,18 @@ const ALL_STATUS_OPTIONS: {
 const IRREVERSIBLE_STATUSES: TransactionStatus[] = ["Claimed", "Voided"];
 
 const STAGE_BADGE_COLORS: Record<TransactionStatus, string> = {
-  Received:   "bg-blue-100 text-blue-700 border-blue-200",
-  Washing:    "bg-yellow-100 text-yellow-700 border-yellow-200",
-  Drying:     "bg-orange-100 text-orange-700 border-orange-200",
-  Ready:      "bg-green-100 text-green-700 border-green-200",
-  Claimed:    "bg-gray-100 text-gray-600 border-gray-200",
-  Voided:     "bg-red-100 text-red-700 border-red-200",
+  Received:   "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300",
+  Washing:    "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300",
+  Drying:     "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300",
+  Ready:      "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300",
+  Claimed:    "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400",
+  Voided:     "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300",
 };
 
 const STAGE_CARD_ACCENT: Record<TransactionStatus, string> = {
-  Received:   "border-blue-200",
-  Washing:    "border-yellow-200",
-  Drying:     "border-orange-200",
+  Received:   "border-purple-200",
+  Washing:    "border-blue-200",
+  Drying:     "border-blue-200",
   Ready:      "border-green-200",
   Claimed:    "border-gray-200",
   Voided:     "border-red-200",
@@ -371,7 +371,7 @@ export default function ProcessingPage({
 
                     <div className="flex items-center justify-between">
                       {isPriorityReady ? (
-                        <span className="inline-flex items-center rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-semibold text-orange-700">
+                        <span className="inline-flex items-center rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
                           Waiting {Math.floor(hoursInStage)}h
                         </span>
                       ) : <span />}
@@ -415,7 +415,7 @@ export default function ProcessingPage({
                         key={txn.id}
                         className={cn(
                           "border-b border-border last:border-0 transition-colors hover:bg-muted/20",
-                          isPriorityReady && "border-l-2 border-l-orange-400",
+                          isPriorityReady && "border-l-2 border-l-amber-400",
                         )}
                       >
                         <td className="px-4 py-3 md:px-5">
@@ -428,7 +428,7 @@ export default function ProcessingPage({
                           </button>
                           {isPriorityReady && (
                             <span
-                              className="ml-1.5 inline-block rounded bg-orange-100 px-1 py-0.5 text-[10px] font-semibold text-orange-700"
+                              className="ml-1.5 inline-block rounded bg-amber-100 px-1 py-0.5 text-[10px] font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
                               title={`Waiting for pickup for ${Math.floor(hoursInStage)} hrs`}
                             >
                               Waiting {Math.floor(hoursInStage)}h

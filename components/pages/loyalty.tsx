@@ -20,7 +20,7 @@ function StampDots({ count, max = 21 }: { count: number; max?: number }) {
       {Array.from({ length: max }).map((_, i) => (
         <div
           key={i}
-          className={`w-4 h-4 rounded-full border ${i < count ? "bg-yellow-400 border-yellow-500" : "bg-muted border-border"}`}
+          className={`w-4 h-4 rounded-full border ${i < count ? "bg-primary border-primary" : "bg-muted border-border"}`}
         />
       ))}
     </div>
@@ -192,8 +192,8 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
           {/* Profile Card */}
           <Card className="border border-border shadow-none">
             <CardContent className="p-5 text-center space-y-2">
-              <div className="w-14 h-14 rounded-full bg-yellow-100 flex items-center justify-center mx-auto">
-                <Star className="w-7 h-7 text-yellow-500" />
+              <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center mx-auto">
+                <Star className="w-7 h-7 text-primary-foreground" />
               </div>
               <h2 className="font-semibold text-base text-foreground">{selected.name}</h2>
               <p className="text-xs text-muted-foreground">{selected.phone}</p>
@@ -207,7 +207,7 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
               </Button>
               <div>
                 <p className="text-xs text-muted-foreground">Rewards Redeemed</p>
-                <p className="text-xl font-bold text-yellow-600">{selected.rewardsRedeemed}</p>
+                <p className="text-xl font-bold text-primary">{selected.rewardsRedeemed}</p>
               </div>
               {selected.preferences && (
                 <div className="text-left bg-muted/30 rounded p-2 mt-1">
@@ -255,7 +255,7 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
                             {s.notes && <span className="ml-1 text-muted-foreground font-sans truncate">({s.notes})</span>}
                           </p>
                         </div>
-                        <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-[11px] font-semibold text-yellow-700">+{s.stamps}</span>
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800 border border-amber-200">+{s.stamps}</span>
                       </div>
                     ));
                   })()}
@@ -368,7 +368,7 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
                         <p className="text-xs font-medium text-foreground">{v.date}</p>
                         <p className="mt-0.5 font-mono text-[11px] text-primary">{v.ticket}</p>
                       </div>
-                      <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-[11px] font-semibold text-yellow-700">+{v.stamps}</span>
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800 border border-amber-200">+{v.stamps}</span>
                     </div>
                   ))}
                 </div>
@@ -490,7 +490,7 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
                   <div>
                     <p className="text-[11px] text-muted-foreground">Stamps</p>
                     <div className="mt-1 flex items-center gap-1">
-                      <Star className="h-3 w-3 text-yellow-500" />
+                      <Star className="h-3 w-3 text-amber-500" />
                       <span className="text-sm font-semibold text-foreground">{m.stampCount}</span>
                     </div>
                   </div>
@@ -541,7 +541,7 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
                   <td className="px-4 py-3 text-xs text-muted-foreground">{m.phone}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1.5">
-                      <Star className="w-3 h-3 text-yellow-500" />
+                      <Star className="w-3 h-3 text-amber-500" />
                       <span className="text-xs font-semibold text-foreground">{m.stampCount}</span>
                     </div>
                   </td>

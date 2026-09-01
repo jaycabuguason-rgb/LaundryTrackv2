@@ -793,7 +793,7 @@ function NewTransactionWizard({
                   className={cn(
                     "rounded-lg border-2 py-2.5 text-sm font-medium transition-all cursor-pointer",
                     chargingMode === mode
-                      ? "border-primary bg-primary/5 text-primary"
+                      ? "border-primary bg-primary/10 text-primary"
                       : "border-border bg-background hover:border-primary/40 text-foreground"
                   )}
                 >
@@ -1071,7 +1071,7 @@ function NewTransactionWizard({
                     "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold border-2 transition-all",
                     done ? "bg-primary border-primary text-primary-foreground"
                       : active ? "bg-primary border-primary text-primary-foreground"
-                        : "bg-background border-border text-muted-foreground"
+                        : "bg-muted border-border text-muted-foreground"
                   )}>
                     {done ? <Check className="w-3 h-3" /> : i}
                   </div>
@@ -1172,6 +1172,7 @@ export default function TransactionsPage({
   const [filterPayment, setFilterPayment] = useState("all");
   const [filterDate, setFilterDate] = useState<Date | undefined>(undefined);
   const [sortBy, setSortBy] = useState<"smart" | "newest" | "oldest" | "unpaid-first" | "ready-first" | "status-az">("smart");
+  const [activeTab, setActiveTab] = useState<"transactions" | "claimed">("transactions");
 
   // New Transaction wizard
   const [showWizard, setShowWizard] = useState(false);
@@ -1411,13 +1412,14 @@ export default function TransactionsPage({
   // ── Derived ──────────────────────────────────────────────────────────────
   const filtered = (() => {
     const base = txns.filter((t) => {
+      const matchTab = activeTab === "claimed" ? t.status === "Claimed" : t.status !== "Claimed";
       const matchSearch =
         t.customerName.toLowerCase().includes(search.toLowerCase()) ||
         t.ticketId.toLowerCase().includes(search.toLowerCase());
       const matchStatus = filterStatus === "all" || t.status === filterStatus;
       const matchPayment = filterPayment === "all" || t.paymentStatus === filterPayment;
       const matchDate = !filterDate || t.dropOffDate === format(filterDate, "yyyy-MM-dd");
-      return matchSearch && matchStatus && matchPayment && matchDate;
+      return matchTab && matchSearch && matchStatus && matchPayment && matchDate;
     });
 
     const sorted = [...base];
@@ -1468,6 +1470,28 @@ export default function TransactionsPage({
           {error}
         </div>
       )}
+
+      {/* Tab bar — Transactions vs Claimed */}
+      <div className="flex border-b border-border -mb-4">
+        <button
+          onClick={() => setActiveTab("transactions")}
+          className={cn(
+            "px-4 py-2.5 text-sm font-medium border-b-2 transition-colors",
+            activeTab === "transactions" ? "border-primary text-primary font-semibold" : "border-transparent text-muted-foreground hover:text-foreground"
+          )}
+        >
+          Transactions
+        </button>
+        <button
+          onClick={() => setActiveTab("claimed")}
+          className={cn(
+            "px-4 py-2.5 text-sm font-medium border-b-2 transition-colors",
+            activeTab === "claimed" ? "border-primary text-primary font-semibold" : "border-transparent text-muted-foreground hover:text-foreground"
+          )}
+        >
+          Claimed
+        </button>
+      </div>
 
       {/* Filter bar */}
       <div className="bg-card border border-border rounded-lg p-3 md:p-4 flex flex-col sm:flex-row flex-wrap gap-3">
@@ -1588,7 +1612,7 @@ export default function TransactionsPage({
                   <div className="min-w-0">
                     <button
                       onClick={() => setViewTxn(txn)}
-                      className={cn("text-xs font-mono font-semibold text-primary hover:underline cursor-pointer text-left", isVoided && "line-through")}
+                      className={cn("inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 font-mono text-xs font-semibold text-primary hover:underline cursor-pointer text-left", isVoided && "line-through")}
                       title="View ticket details"
                     >
                       {txn.ticketId}
@@ -1691,14 +1715,14 @@ export default function TransactionsPage({
                       "border-b border-border last:border-0 transition-colors",
                       isVoided ? "bg-muted/30 opacity-50" : "",
                       isClaimed ? "text-muted-foreground/60" : "",
-                      !isVoided && !isClaimed ? "hover:bg-muted/20" : "",
+                      !isVoided && !isClaimed ? "hover:bg-muted/30" : "",
                       visualCls
                     )}
                   >
-                    <td className={cn("px-4 py-3 text-xs font-mono font-semibold text-primary", isVoided && "line-through", isClaimed && "text-muted-foreground/60")}>
+                    <td className="px-4 py-3">
                       <button
                         onClick={() => setViewTxn(txn)}
-                        className="hover:underline cursor-pointer"
+                        className={cn("inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 font-mono text-xs font-semibold text-primary hover:underline cursor-pointer", isVoided && "line-through", isClaimed && "text-muted-foreground/60")}
                         title="View ticket details"
                       >
                         {txn.ticketId}
@@ -1713,8 +1737,8 @@ export default function TransactionsPage({
                       <span className={cn(
                         "inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap",
                         txn.paymentStatus === "paid"
-                          ? "bg-green-50 text-green-700 border border-green-200"
-                          : "bg-red-50 text-red-600 border border-red-200"
+                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                          : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
                       )}>
                         {txn.paymentStatus === "paid" ? "Paid" : "Unpaid"}
                       </span>

@@ -442,7 +442,7 @@ export default function ClaimVerificationPage({
               <div key={log.id} className="space-y-3 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="font-mono text-xs font-semibold text-primary">{log.ticketId}</p>
+                    <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 font-mono text-xs font-semibold text-primary">{log.ticketId}</span>
                     <p className="mt-0.5 truncate text-sm font-medium text-foreground">{log.customerName || "-"}</p>
                     <p className="mt-0.5 text-[11px] text-muted-foreground">{log.dateTime}</p>
                   </div>
@@ -491,9 +491,9 @@ export default function ClaimVerificationPage({
               </thead>
               <tbody>
                 {logs.map((log) => (
-                  <tr key={log.id} className="border-b border-border last:border-0 hover:bg-muted/20">
+                  <tr key={log.id} className="border-b border-border last:border-0 hover:bg-muted/30">
                     <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">{log.dateTime}</td>
-                    <td className="px-4 py-3 text-xs font-semibold text-primary">{log.ticketId}</td>
+                    <td className="px-4 py-3"><span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 font-mono text-xs font-semibold text-primary">{log.ticketId}</span></td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">{log.customerName || "-"}</td>
                     <td className="px-4 py-3">
                       <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium", actionBadgeColor(log.action))}>

@@ -60,10 +60,10 @@ const exportOptions: Array<{ id: ExportSection; label: string }> = [
   { id: "customers", label: "Customer Summary" },
 ];
 
-const PIE_COLORS = ["#2563eb", "#0f766e", "#f59e0b", "#dc2626", "#7c3aed", "#475569"];
-const BUSY_BAR = "#1e3a8a";
-const NORMAL_BAR = "#93c5fd";
-const MUTED_BAR = "#cbd5e1";
+const PIE_COLORS = ["hsl(257 58% 49%)", "hsl(214 62% 59%)", "hsl(39 79% 54%)", "hsl(142 42% 46%)", "hsl(266 17% 53%)", "hsl(44 83% 61%)"];
+const BUSY_BAR = "hsl(257 58% 49%)";
+const NORMAL_BAR = "hsl(257 58% 49% / 0.35)";
+const MUTED_BAR = "hsl(35 28% 92%)";
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const ORDERED_DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const FORECAST_HOURS = Array.from({ length: 16 }, (_, index) => index + 6);
@@ -415,7 +415,7 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
         seed(label, label);
       }
       for (const transaction of filteredTransactions) {
-        const label = getHourLabel(transaction.arrivalDateTime);
+        const label = getHourLabel(transaction);
         const existing = salesMap.get(label);
         if (!existing) continue;
         existing.revenue += transaction.fee;
@@ -771,11 +771,11 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
               <div className="h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={salesTrendData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(33 18% 82%)" vertical={false} />
                     <XAxis dataKey="label" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                     <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                     <Tooltip formatter={(value: number) => [formatCurrency(value), "Revenue"]} />
-                    <Bar dataKey="revenue" radius={[6, 6, 0, 0]} fill="#2563eb" />
+                    <Bar dataKey="revenue" radius={[6, 6, 0, 0]} fill="hsl(257 58% 49%)" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -1074,7 +1074,7 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
               <div className="h-[260px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={forecastMetrics.busyDays}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(33 18% 82%)" vertical={false} />
                     <XAxis dataKey="label" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                     <YAxis allowDecimals={false} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                     <Tooltip formatter={(value: number) => [value, "Predicted customers"]} />
@@ -1102,7 +1102,7 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
               <div className="h-[260px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={forecastMetrics.busyHours} layout="vertical" margin={{ left: 8 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(33 18% 82%)" horizontal={false} />
                     <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                     <YAxis type="category" dataKey="label" width={42} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                     <Tooltip formatter={(value: number) => [value, "Predicted customers"]} />
@@ -1131,11 +1131,11 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
             <div className="h-[280px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={forecastMetrics.monthlyTrend}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(33 18% 82%)" vertical={false} />
                   <XAxis dataKey="label" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                   <YAxis allowDecimals={false} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                   <Tooltip formatter={(value: number) => [value, "Transactions"]} />
-                  <Line type="monotone" dataKey="transactions" stroke="#1d4ed8" strokeWidth={2.5} dot={{ r: 4, fill: "#1d4ed8" }} />
+                  <Line type="monotone" dataKey="transactions" stroke="hsl(257 58% 49%)" strokeWidth={2.5} dot={{ r: 4, fill: "hsl(257 58% 49%)" }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -1145,13 +1145,13 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
           </CardContent>
         </Card>
 
-        <Card className="border border-blue-100 bg-blue-50 shadow-none">
+        <Card className="border border-border bg-card shadow-none">
           <CardContent className="flex gap-3 p-4">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
               <Lightbulb className="h-4 w-4" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-blue-950">Forecast insight</p>
+              <p className="text-sm font-semibold text-foreground">Forecast insight</p>
               <p className="mt-1 text-sm leading-6 text-blue-900">{forecastMetrics.insight}</p>
             </div>
           </CardContent>
