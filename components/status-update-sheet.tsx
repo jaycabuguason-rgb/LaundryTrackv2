@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Inbox, RotateCw, Wind, Flag, PackageCheck, Ban } from "lucide-react";
+import { Check } from "lucide-react";
 
 import {
   Drawer,
@@ -9,13 +9,13 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
+import { getStatusIcon } from "@/components/status-badge";
 import { cn } from "@/lib/utils";
 import type { TransactionStatus } from "@/lib/data";
 
 export type StatusOption = {
   status: TransactionStatus;
   label: string;
-  dotClass?: string; // Kept for backwards compatibility if passed, but ignored in UI
 };
 
 interface StatusUpdateSheetProps {
@@ -28,25 +28,6 @@ interface StatusUpdateSheetProps {
   onSelectStatus: (status: TransactionStatus) => Promise<void> | void;
 }
 
-const getStatusIcon = (status: TransactionStatus) => {
-  switch (status) {
-    case "Received":
-      return <Inbox className="w-4 h-4" />;
-    case "Washing":
-      return <RotateCw className="w-4 h-4" />;
-    case "Drying":
-      return <Wind className="w-4 h-4" />;
-    case "Ready":
-      return <Flag className="w-4 h-4" />;
-    case "Claimed":
-      return <PackageCheck className="w-4 h-4" />;
-    case "Voided":
-      return <Ban className="w-4 h-4" />;
-    default:
-      return <Inbox className="w-4 h-4" />;
-  }
-};
-
 export function StatusUpdateSheet({
   open,
   onOpenChange,
@@ -58,11 +39,11 @@ export function StatusUpdateSheet({
 }: StatusUpdateSheetProps) {
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="bg-[#1a1a2e]/95 backdrop-blur-md border-t border-white/10 text-white shadow-2xl">
-        <div className="mx-auto mt-2 h-1.5 w-12 rounded-full bg-white/20" />
+      <DrawerContent className="bg-card border-t border-border text-foreground shadow-2xl">
+        <div className="mx-auto mt-2 h-1.5 w-12 rounded-full bg-muted-foreground/30" />
         <DrawerHeader className="text-center pt-6 pb-4">
-          <DrawerTitle className="text-lg font-semibold text-white">Update Status</DrawerTitle>
-          <DrawerDescription className="text-white/60 mt-1">
+          <DrawerTitle className="text-lg font-semibold text-foreground">Update Status</DrawerTitle>
+          <DrawerDescription className="text-muted-foreground mt-1">
             {ticketId ? `Ticket ${ticketId}` : "Select a new status"}
           </DrawerDescription>
         </DrawerHeader>
@@ -77,10 +58,10 @@ export function StatusUpdateSheet({
                   type="button"
                   disabled={isDisabled}
                   className={cn(
-                    "flex items-center w-full min-h-[52px] px-4 rounded-xl transition-all duration-200 outline-none border border-transparent",
+                    "flex items-center w-full min-h-[52px] px-4 rounded-xl transition-all duration-200 outline-none border border-transparent cursor-pointer",
                     isCurrent
-                      ? "bg-white/10 border-white/20"
-                      : "hover:bg-white/5 hover:border-white/10 focus-visible:bg-white/5 active:bg-white/10"
+                      ? "bg-primary/10 border-primary/30 text-primary font-semibold"
+                      : "hover:bg-muted/40 hover:border-border text-foreground focus-visible:bg-muted/40 active:bg-muted/60"
                   )}
                   onClick={() => {
                     if (!isDisabled) void onSelectStatus(status);
@@ -88,20 +69,20 @@ export function StatusUpdateSheet({
                 >
                   <div className={cn(
                     "flex items-center justify-center w-8 h-8 rounded-lg mr-3 transition-colors",
-                    isCurrent ? "text-white" : "text-white/70"
+                    isCurrent ? "text-primary" : "text-muted-foreground"
                   )}>
                     {getStatusIcon(status)}
                   </div>
                   <span className={cn(
                     "flex-1 text-left font-medium text-[15px]",
-                    isCurrent ? "text-white" : "text-white/80"
+                    isCurrent ? "text-primary" : "text-foreground"
                   )}>
                     {label}
                   </span>
                   {isCurrent && (
                     <div className="flex items-center gap-1.5 pl-3">
-                      <Check className="h-4 w-4 text-white/50" />
-                      <span className="text-xs font-medium text-white/50">Current</span>
+                      <Check className="h-4 w-4 text-primary" />
+                      <span className="text-xs font-medium text-primary">Current</span>
                     </div>
                   )}
                 </button>
@@ -109,7 +90,7 @@ export function StatusUpdateSheet({
             })}
           </div>
           {disabled && (
-            <p className="mt-4 text-center text-xs font-medium text-white/50 animate-pulse">Updating...</p>
+            <p className="mt-4 text-center text-xs font-medium text-muted-foreground animate-pulse">Updating...</p>
           )}
         </div>
       </DrawerContent>

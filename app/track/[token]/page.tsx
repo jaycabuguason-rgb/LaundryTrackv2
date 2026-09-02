@@ -3,18 +3,31 @@ import { headers } from "next/headers";
 import { CheckCircle2, Clock3, MapPin, Phone, Mail, Shirt, ShieldCheck, Package } from "lucide-react";
 
 import { formatReadableDateTime } from "@/lib/date-format";
-import { statusColors, statusOrder } from "@/lib/data";
+import { StatusBadge } from "@/components/status-badge";
 import { getPublicTrackingRecord } from "@/lib/server/laundry-repository";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
+const TRACKING_STEPS = [
+  { id: "Received", label: "Received" },
+  { id: "Washed", label: "Washed" },
+  { id: "Ready", label: "Ready" },
+] as const;
+
+function getTrackingProgressIndex(status: string): number {
+  if (status === "Claimed") return 3; // All 3 stages completed
+  if (status === "Ready") return 2;   // Step 3 (Ready) active
+  if (status === "Washing" || status === "Drying") return 1; // Step 2 (Washed) active
+  return 0; // Step 1 (Received) active
+}
+
 function StatusStepper({ status }: { status: string }) {
-  const activeIndex = statusOrder.indexOf(status as (typeof statusOrder)[number]);
+  const activeIndex = getTrackingProgressIndex(status);
 
   if (status === "Voided") {
     return (
-      <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+      <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-300">
         This order was voided. Please contact the shop for assistance.
       </div>
     );
@@ -22,15 +35,15 @@ function StatusStepper({ status }: { status: string }) {
 
   return (
     <div className="flex items-start justify-between gap-2 overflow-x-auto pb-1">
-      {statusOrder.map((step, index) => {
-        const completed = index < activeIndex;
-        const current = index === activeIndex;
+      {TRACKING_STEPS.map((step, index) => {
+        const completed = index < activeIndex || status === "Claimed";
+        const current = index === activeIndex && status !== "Claimed";
         return (
-          <div key={step} className="flex min-w-[64px] flex-1 items-start">
+          <div key={step.id} className="flex min-w-[80px] flex-1 items-start">
             <div className="flex w-full flex-col items-center gap-2">
               <div
                 className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold",
+                  "flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold transition-colors",
                   completed || current
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-border bg-background text-muted-foreground",
@@ -41,17 +54,21 @@ function StatusStepper({ status }: { status: string }) {
               <span
                 className={cn(
                   "text-center text-[11px] leading-tight",
-                  current ? "font-semibold text-foreground" : "text-muted-foreground",
+                  current
+                    ? "font-semibold text-primary"
+                    : completed
+                      ? "font-medium text-foreground"
+                      : "text-muted-foreground",
                 )}
               >
-                {step}
+                {step.label}
               </span>
             </div>
-            {index < statusOrder.length - 1 && (
+            {index < TRACKING_STEPS.length - 1 && (
               <div
                 className={cn(
-                  "mt-4 h-0.5 flex-1",
-                  index < activeIndex ? "bg-primary" : "bg-border",
+                  "mt-4 h-0.5 flex-1 transition-colors",
+                  index < activeIndex || status === "Claimed" ? "bg-primary" : "bg-border",
                 )}
               />
             )}
@@ -85,7 +102,7 @@ export default async function PublicTrackingPage(
         : "Your laundry is still in progress.";
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.08),_transparent_32%),linear-gradient(180deg,#f8fafc_0%,#eef2ff_100%)] px-4 py-8 text-foreground">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(139,92,246,0.08),_transparent_32%),linear-gradient(180deg,var(--background)_0%,hsl(35,28%,92%)_100%)] dark:bg-background px-4 py-8 text-foreground">
       <div className="mx-auto max-w-2xl space-y-6">
         {/* Header with Logo and Shop Name */}
         <div className="flex flex-col items-center gap-3 text-center">
@@ -119,14 +136,7 @@ export default async function PublicTrackingPage(
                 </p>
               )}
             </div>
-            <span
-              className={cn(
-                "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold",
-                statusColors[record.status],
-              )}
-            >
-              {record.status}
-            </span>
+            <StatusBadge status={record.status} className="px-3 py-1 text-xs font-semibold" />
           </div>
 
           {/* Status Timeline */}
@@ -199,7 +209,7 @@ export default async function PublicTrackingPage(
               </p>
             </div>
           </div>
-          <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-800">
+          <div className="mt-4 rounded-lg border border-purple-200 bg-purple-50 dark:border-purple-800/40 dark:bg-purple-950/30 px-3 py-2.5 text-xs text-purple-900 dark:text-purple-200">
             Online payment is not available here. Please settle any unpaid balance at the shop during pickup.
           </div>
         </section>

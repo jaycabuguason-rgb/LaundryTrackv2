@@ -2,17 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  AlertTriangle,
   Check,
   ChevronDown,
+  PackageCheck,
   RefreshCw,
   Search,
   X,
-  Inbox,
-  RotateCw,
-  Wind,
-  Flag,
-  PackageCheck,
-  Ban,
 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,11 +30,11 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import {
-  statusColors,
   type Transaction,
   type TransactionStatus,
 } from "@/lib/data";
 import { StatusUpdateSheet } from "@/components/status-update-sheet";
+import { STATUS_ICONS, StatusBadge } from "@/components/status-badge";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -53,21 +49,51 @@ interface ProcessingPageProps {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const STAGES: TransactionStatus[] = ["Received", "Washing", "Drying", "Ready"];
+export type ProcessingStageId = "Received" | "Washed" | "Ready";
+
+interface ProcessingStageConfig {
+  id: ProcessingStageId;
+  label: string;
+  statuses: TransactionStatus[];
+  badgeColor: string;
+  accent: string;
+}
+
+const STAGES: ProcessingStageConfig[] = [
+  {
+    id: "Received",
+    label: "Received",
+    statuses: ["Received"],
+    badgeColor: "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300",
+    accent: "border-purple-300 bg-purple-50/50 dark:bg-purple-950/20 dark:border-purple-800",
+  },
+  {
+    id: "Washed",
+    label: "Washed",
+    statuses: ["Washing", "Drying"],
+    badgeColor: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300",
+    accent: "border-blue-300 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800",
+  },
+  {
+    id: "Ready",
+    label: "Ready",
+    statuses: ["Ready"],
+    badgeColor: "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300",
+    accent: "border-green-300 bg-green-50/50 dark:bg-green-950/20 dark:border-green-800",
+  },
+];
 
 /** All statuses shown in the dropdown, in order */
 const ALL_STATUS_OPTIONS: {
   status: TransactionStatus;
   label: string;
-  dotClass?: string;
-  icon?: any;
 }[] = [
-  { status: "Received",   label: "Received",    icon: Inbox },
-  { status: "Washing",    label: "Washing",     icon: RotateCw },
-  { status: "Drying",     label: "Drying",      icon: Wind },
-  { status: "Ready",      label: "Ready",       icon: Flag },
-  { status: "Claimed",    label: "Claimed",     icon: PackageCheck },
-  { status: "Voided",     label: "Voided",      icon: Ban },
+  { status: "Received",   label: "Received" },
+  { status: "Washing",    label: "Washed / In Progress" },
+  { status: "Drying",     label: "Drying" },
+  { status: "Ready",      label: "Ready" },
+  { status: "Claimed",    label: "Claimed" },
+  { status: "Voided",     label: "Voided" },
 ];
 
 /** Statuses that require a confirmation dialog before applying */
@@ -83,12 +109,12 @@ const STAGE_BADGE_COLORS: Record<TransactionStatus, string> = {
 };
 
 const STAGE_CARD_ACCENT: Record<TransactionStatus, string> = {
-  Received:   "border-purple-200",
-  Washing:    "border-blue-200",
-  Drying:     "border-blue-200",
-  Ready:      "border-green-200",
-  Claimed:    "border-gray-200",
-  Voided:     "border-red-200",
+  Received:   "border-purple-300 bg-purple-50/50 dark:bg-purple-950/20 dark:border-purple-800",
+  Washing:    "border-blue-300 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800",
+  Drying:     "border-blue-300 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800",
+  Ready:      "border-green-300 bg-green-50/50 dark:bg-green-950/20 dark:border-green-800",
+  Claimed:    "border-gray-300 bg-gray-50/50 dark:bg-gray-900/20 dark:border-gray-700",
+  Voided:     "border-red-300 bg-red-50/50 dark:bg-red-950/20 dark:border-red-800",
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -169,7 +195,7 @@ export default function ProcessingPage({
   onViewTransaction,
   adminName,
 }: ProcessingPageProps) {
-  const [expandedStage, setExpandedStage] = useState<TransactionStatus | null>(null);
+  const [expandedStage, setExpandedStage] = useState<ProcessingStageId | null>("Received");
   const [search, setSearch] = useState("");
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [tick, setTick] = useState(0); // force re-render for relative time
@@ -198,18 +224,21 @@ export default function ProcessingPage({
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  // Active (non-claimed, non-voided) transactions
+  // Active (non-claimed, non-voided) transactions: Received, Washing, Drying, Ready
   const activeTransactions = useMemo(
-    () => transactions.filter((t) => STAGES.includes(t.status)),
+    () => transactions.filter((t) => ["Received", "Washing", "Drying", "Ready"].includes(t.status)),
     [transactions],
   );
 
-  // Grouped by stage
+  // Grouped by simplified 3 operational stages
   const grouped = useMemo(
     () =>
-      STAGES.map((stage) => ({
-        stage,
-        items: activeTransactions.filter((t) => t.status === stage),
+      STAGES.map((s) => ({
+        stage: s.id,
+        label: s.label,
+        badgeColor: s.badgeColor,
+        accent: s.accent,
+        items: activeTransactions.filter((t) => s.statuses.includes(t.status)),
       })),
     [activeTransactions],
   );
@@ -218,15 +247,15 @@ export default function ProcessingPage({
   const searchLower = search.trim().toLowerCase();
   const filteredGrouped = useMemo(
     () =>
-      grouped.map(({ stage, items }) => ({
-        stage,
+      grouped.map((g) => ({
+        ...g,
         items: searchLower
-          ? items.filter(
+          ? g.items.filter(
               (t) =>
                 t.ticketId.toLowerCase().includes(searchLower) ||
                 t.customerName.toLowerCase().includes(searchLower),
             )
-          : items,
+          : g.items,
       })),
     [grouped, searchLower],
   );
@@ -253,7 +282,7 @@ export default function ProcessingPage({
     setTick((n) => n + 1);
   }, []);
 
-  const handleToggleStage = (stage: TransactionStatus) => {
+  const handleToggleStage = (stage: ProcessingStageId) => {
     setExpandedStage((prev) => (prev === stage ? null : stage));
   };
 
@@ -307,18 +336,18 @@ export default function ProcessingPage({
 
   // ─── Stage list table ──────────────────────────────────────────────────────
 
-  const renderList = (stage: TransactionStatus, items: Transaction[]) => {
+  const renderList = (stage: ProcessingStageId, label: string, badgeColor: string, items: Transaction[]) => {
     return (
       <Card className="border border-border shadow-none">
         <CardHeader className="px-4 pb-3 pt-4 md:px-5 md:pt-5">
           <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
             <span
               className={cn(
-                "inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold",
-                STAGE_BADGE_COLORS[stage],
+                "inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold",
+                badgeColor,
               )}
             >
-              {stage}
+              {label}
             </span>
             <span className="text-muted-foreground font-normal">— {items.length} ticket{items.length !== 1 ? "s" : ""}</span>
           </CardTitle>
@@ -341,17 +370,15 @@ export default function ProcessingPage({
                       <div className="min-w-0">
                         <button
                           onClick={() => handleViewTicket(txn)}
-                          className="text-xs font-mono font-semibold text-primary hover:underline cursor-pointer"
+                          className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 font-mono text-xs font-semibold text-primary hover:underline cursor-pointer"
                           title="View ticket details"
                         >
                           {txn.ticketId}
                         </button>
-                        <p className="truncate text-xs font-medium text-foreground">{txn.customerName}</p>
+                        <p className="mt-1 truncate text-xs font-medium text-foreground">{txn.customerName}</p>
                         <p className="mt-0.5 text-[11px] text-muted-foreground">{txn.arrivalDateTime}</p>
                       </div>
-                      <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap", statusColors[txn.status])}>
-                        {txn.status}
-                      </span>
+                      <StatusBadge status={txn.status} />
                     </div>
 
                     <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/30 p-2.5">
@@ -421,7 +448,7 @@ export default function ProcessingPage({
                         <td className="px-4 py-3 md:px-5">
                           <button
                             onClick={() => handleViewTicket(txn)}
-                            className="font-mono text-xs font-semibold text-primary hover:underline cursor-pointer"
+                            className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 font-mono text-xs font-semibold text-primary hover:underline cursor-pointer"
                             title="View ticket details"
                           >
                             {txn.ticketId}
@@ -456,32 +483,35 @@ export default function ProcessingPage({
                                 variant="outline"
                                 size="sm"
                                 disabled={isUpdating}
-                                className="h-7 gap-1.5 text-xs px-2.5 cursor-pointer"
+                                className="h-8 gap-1.5 text-xs px-3 rounded-xl border-border/80 font-medium hover:bg-muted/50 cursor-pointer shadow-xs"
                               >
                                 {isUpdating ? "Updating…" : "Update Status"}
-                                <ChevronDown className="h-3 w-3" />
+                                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="min-w-[180px] rounded-xl border-border/50 shadow-lg p-1.5">
-                              {ALL_STATUS_OPTIONS.map(({ status, label, icon: Icon }) => {
+                            <DropdownMenuContent align="end" className="min-w-[200px] rounded-2xl border-border/60 bg-card p-1.5 shadow-xl">
+                              {ALL_STATUS_OPTIONS.map(({ status, label }) => {
                                 const isCurrent = txn.status === status;
+                                const StatusIcon = STATUS_ICONS[status];
                                 return (
                                   <DropdownMenuItem
                                     key={status}
                                     disabled={isCurrent}
                                     className={cn(
-                                      "cursor-pointer rounded-lg mb-1 last:mb-0 focus:bg-muted/40",
-                                      isCurrent && "bg-muted/60 opacity-100 cursor-default",
+                                      "cursor-pointer rounded-xl px-3 py-2.5 mb-1 last:mb-0 transition-all duration-150 outline-none border",
+                                      isCurrent
+                                        ? "bg-primary/10 border-primary/20 text-primary font-semibold cursor-default"
+                                        : "border-transparent text-foreground hover:bg-muted/50 hover:border-border/40 focus:bg-muted/50",
                                     )}
                                     onClick={() => !isCurrent && handleStatusSelect(txn, status)}
                                   >
                                     <div className="flex items-center gap-3 w-full">
-                                      <Icon className={cn("w-4 h-4", isCurrent ? "text-foreground" : "text-muted-foreground")} />
-                                      <span className={cn("font-medium text-sm flex-1", isCurrent ? "text-foreground" : "text-muted-foreground")}>{label}</span>
+                                      <StatusIcon className={cn("w-4 h-4 shrink-0", isCurrent ? "text-primary" : "text-muted-foreground")} aria-hidden="true" />
+                                      <span className={cn("text-sm flex-1", isCurrent ? "font-semibold text-primary" : "font-medium text-foreground")}>{label}</span>
                                       {isCurrent && (
-                                        <div className="flex items-center gap-1.5">
-                                          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Current</span>
-                                          <Check className="w-3.5 h-3.5 text-muted-foreground" />
+                                        <div className="flex items-center gap-1 pl-2">
+                                          <span className="text-[10px] font-bold text-primary uppercase tracking-wider">Current</span>
+                                          <Check className="w-3.5 h-3.5 text-primary" />
                                         </div>
                                       )}
                                     </div>
@@ -512,7 +542,7 @@ export default function ProcessingPage({
         {/* Top row: total card + search + refresh */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           {/* Total Ongoing Transactions */}
-          <Card className="border border-border shadow-none sm:min-w-[240px]">
+          <Card className="border border-border/80 bg-card shadow-xs sm:min-w-[240px]">
             <CardContent className="flex items-center justify-between gap-4 p-4">
               <p className="text-sm font-medium text-muted-foreground">Total Ongoing Transactions</p>
               <span className="rounded-full bg-primary/10 px-3 py-1 text-sm font-bold text-primary">
@@ -575,9 +605,9 @@ export default function ProcessingPage({
           </Card>
         ) : (
           <>
-            {/* Stage cards — horizontal row */}
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {filteredGrouped.map(({ stage, items }) => {
+            {/* Stage cards — 3 operational process stages */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {filteredGrouped.map(({ stage, label, badgeColor, accent, items }) => {
                 const isOpen = expandedStage === stage;
                 const allItems = grouped.find((g) => g.stage === stage)?.items ?? [];
 
@@ -586,18 +616,18 @@ export default function ProcessingPage({
                     key={stage}
                     onClick={() => handleToggleStage(stage)}
                     className={cn(
-                      "rounded-xl border p-4 text-left transition-colors",
+                      "rounded-xl border p-4 text-left transition-all duration-200 cursor-pointer",
                       isOpen
-                        ? cn("border-2", STAGE_CARD_ACCENT[stage], "bg-muted/40")
-                        : "border-border bg-card hover:bg-muted/30",
+                        ? cn("border-2 shadow-xs", accent)
+                        : "border-border/80 bg-card hover:bg-muted/30 shadow-xs",
                     )}
                   >
                     <div className="flex items-start justify-between gap-1">
-                      <p className="text-xs font-semibold text-foreground">{stage}</p>
+                      <p className="text-xs font-semibold text-foreground">{label}</p>
                       <span
                         className={cn(
-                          "shrink-0 rounded-full border px-1.5 py-0.5 text-[11px] font-bold",
-                          STAGE_BADGE_COLORS[stage],
+                          "shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-bold",
+                          badgeColor,
                         )}
                       >
                         {searchLower ? items.length : allItems.length}
@@ -624,7 +654,7 @@ export default function ProcessingPage({
             {expandedStage && (() => {
               const group = filteredGrouped.find((g) => g.stage === expandedStage);
               if (!group) return null;
-              return renderList(group.stage, group.items);
+              return renderList(group.stage, group.label, group.badgeColor, group.items);
             })()}
 
             {/* Empty overall */}
@@ -657,29 +687,67 @@ export default function ProcessingPage({
           if (!open) setConfirmDialog({ open: false, txn: null, targetStatus: null });
         }}
       >
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>
-              {confirmDialog.targetStatus === "Voided"
-                ? `Void ${confirmDialog.txn?.ticketId}?`
-                : `Mark ${confirmDialog.txn?.ticketId} as Claimed?`}
-            </DialogTitle>
-            <DialogDescription>
-              This cannot be undone.
-            </DialogDescription>
+        <DialogContent className="max-w-md rounded-2xl border border-border/80 bg-card p-6 shadow-xl sm:max-w-md">
+          <DialogHeader className="gap-2">
+            <div className="flex items-center gap-3">
+              <div
+                className={cn(
+                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+                  confirmDialog.targetStatus === "Voided"
+                    ? "bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-300"
+                    : "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",
+                )}
+              >
+                {confirmDialog.targetStatus === "Voided" ? (
+                  <AlertTriangle className="h-5 w-5" />
+                ) : (
+                  <PackageCheck className="h-5 w-5" />
+                )}
+              </div>
+              <div>
+                <DialogTitle className="text-base font-semibold text-foreground">
+                  {confirmDialog.targetStatus === "Voided"
+                    ? `Void Ticket ${confirmDialog.txn?.ticketId}?`
+                    : `Mark ${confirmDialog.txn?.ticketId} as Claimed?`}
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground">
+                  This action is irreversible. Please confirm to proceed.
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
+
+          {confirmDialog.txn && (
+            <div className="my-2 rounded-xl border border-border/60 bg-muted/30 p-3.5 text-xs space-y-1.5">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Customer:</span>
+                <span className="font-semibold text-foreground">{confirmDialog.txn.customerName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Service:</span>
+                <span className="font-medium text-foreground">{confirmDialog.txn.washType} ({confirmDialog.txn.weight > 0 ? `${confirmDialog.txn.weight} kg` : "—"})</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Current Status:</span>
+                <span className="font-medium text-foreground">{confirmDialog.txn.status}</span>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="mt-4 flex flex-row items-center justify-end gap-2.5">
             <Button
               variant="outline"
+              className="rounded-xl border-border/80 text-xs font-medium cursor-pointer"
               onClick={() => setConfirmDialog({ open: false, txn: null, targetStatus: null })}
             >
               Cancel
             </Button>
             <Button
               variant={confirmDialog.targetStatus === "Voided" ? "destructive" : "default"}
+              className="rounded-xl text-xs font-medium cursor-pointer shadow-xs"
               onClick={handleConfirmStatus}
             >
-              Confirm
+              Confirm {confirmDialog.targetStatus}
             </Button>
           </DialogFooter>
         </DialogContent>

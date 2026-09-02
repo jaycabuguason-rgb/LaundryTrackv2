@@ -18,6 +18,7 @@ import {
   FileBarChart2,
   Loader2,
   RefreshCw,
+  Users,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import type { AuditActionType, AuditLogEntry } from "@/lib/audit-log-contracts";
 import { useAuditLogs } from "@/hooks/use-audit-logs";
+import { cn } from "@/lib/utils";
 
 const ACTION_TYPES: AuditActionType[] = [
   "all",
@@ -95,23 +97,23 @@ const ACTION_ICONS: Record<AuditActionType, React.ElementType> = {
 };
 
 const ACTION_COLORS: Record<AuditActionType, string> = {
-  all: "bg-muted text-muted-foreground",
-  transaction_created: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
-  transaction_updated: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
-  status_changed: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
-  claim_verified: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
-  loyalty_stamp: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
-  reward_redeemed: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
-  settings_changed: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
-  staff_created: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
-  staff_updated: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
-  staff_deactivated: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
-  staff_reactivated: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
-  staff_password_reset: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
-  login: "bg-muted text-muted-foreground",
-  logout: "bg-muted text-muted-foreground",
-  report_exported: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
-  other: "bg-muted text-muted-foreground",
+  all: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
+  transaction_created: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
+  transaction_updated: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
+  status_changed: "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800",
+  claim_verified: "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800",
+  loyalty_stamp: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800",
+  reward_redeemed: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800",
+  settings_changed: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
+  staff_created: "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800",
+  staff_updated: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
+  staff_deactivated: "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800",
+  staff_reactivated: "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800",
+  staff_password_reset: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800",
+  login: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
+  logout: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
+  report_exported: "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800",
+  other: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
 };
 
 function formatTimestamp(iso: string) {
@@ -143,8 +145,9 @@ function AuditRow({ entry }: { entry: AuditLogEntry }) {
   const colorClass = ACTION_COLORS[entry.action] ?? ACTION_COLORS.other;
 
   return (
-    <div className="border-b border-border last:border-0">
+    <div className="border-b border-border last:border-0 transition-colors">
       <button
+        type="button"
         className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/30 md:px-5"
         onClick={() => setExpanded((current) => !current)}
       >
@@ -153,55 +156,72 @@ function AuditRow({ entry }: { entry: AuditLogEntry }) {
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="text-xs font-semibold text-foreground">{entry.staffName}</span>
             <Badge
               variant="secondary"
-              className={`px-1.5 py-0 text-[10px] font-medium ${
+              className={`px-1.5 py-0 text-[10px] font-medium border ${
                 entry.staffRole === "Admin"
-                  ? "bg-primary/10 text-primary"
+                  ? "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800"
                   : entry.staffRole === "Staff"
-                    ? "bg-teal-100 text-teal-700"
-                    : "bg-muted text-muted-foreground"
+                    ? "bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-800"
+                    : "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
               }`}
             >
               {entry.staffRole}
             </Badge>
-            <span className="text-xs text-muted-foreground">{entry.summary}</span>
+
+            <Badge
+              variant="outline"
+              className={cn("px-1.5 py-0 text-[10px] font-medium border", colorClass)}
+            >
+              {ACTION_LABELS[entry.action] ?? entry.action}
+            </Badge>
+
+            <span className="text-xs text-muted-foreground truncate max-w-md">{entry.summary}</span>
           </div>
 
-          <div className="mt-0.5 flex flex-wrap items-center gap-x-3">
-            <span className="text-[11px] text-muted-foreground">{formatTimestamp(entry.timestamp)}</span>
-            <span className="text-[11px] text-muted-foreground/60">{timeAgo(entry.timestamp)}</span>
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
+            <span>{formatTimestamp(entry.timestamp)}</span>
+            <span className="text-muted-foreground/60">({timeAgo(entry.timestamp)})</span>
             {entry.ticketId && (
-              <span className="text-[11px] text-muted-foreground/60">Ticket: {entry.ticketId}</span>
+              <span className="font-mono text-muted-foreground/70">Ticket: #{entry.ticketId}</span>
             )}
             {entry.ipAddress && (
-              <span className="hidden text-[11px] text-muted-foreground/60 md:inline">IP: {entry.ipAddress}</span>
+              <span className="hidden font-mono text-muted-foreground/70 md:inline">IP: {entry.ipAddress}</span>
             )}
           </div>
         </div>
 
         <div className="mt-1 shrink-0 text-muted-foreground/50">
-          {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+          {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         </div>
       </button>
 
       {expanded && (
-        <div className="px-4 pb-3 pl-[52px] md:px-5 md:pl-[60px]">
-          <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
-            {entry.details}
-          </p>
-          {entry.ipAddress && (
-            <p className="mt-1.5 text-[11px] text-muted-foreground md:hidden">IP: {entry.ipAddress}</p>
-          )}
+        <div className="px-4 pb-3.5 pl-[52px] md:px-5 md:pl-[60px]">
+          <div className="rounded-md border border-border bg-muted/40 p-3 font-mono text-xs leading-relaxed text-foreground">
+            <div className="mb-2 grid grid-cols-1 gap-1 sm:grid-cols-2 text-[11px] font-sans text-muted-foreground">
+              <div><span className="font-semibold text-foreground">Event ID:</span> <span className="font-mono">{entry.id}</span></div>
+              <div><span className="font-semibold text-foreground">Timestamp:</span> <span className="font-mono">{new Date(entry.timestamp).toISOString()}</span></div>
+              <div><span className="font-semibold text-foreground">Staff Member:</span> {entry.staffName} ({entry.staffRole})</div>
+              {entry.ipAddress && <div><span className="font-semibold text-foreground">IP Address:</span> <span className="font-mono">{entry.ipAddress}</span></div>}
+              {entry.ticketId && <div><span className="font-semibold text-foreground">Ticket ID:</span> <span className="font-mono">#{entry.ticketId}</span></div>}
+              {entry.customerName && <div><span className="font-semibold text-foreground">Customer:</span> {entry.customerName}</div>}
+              {entry.paymentStatus && <div><span className="font-semibold text-foreground">Payment Status:</span> {entry.paymentStatus}</div>}
+            </div>
+            <div className="border-t border-border/50 pt-2">
+              <p className="mb-1 text-[11px] font-semibold font-sans text-muted-foreground">Event Details:</p>
+              <p className="whitespace-pre-wrap font-mono text-xs text-foreground">{entry.details}</p>
+            </div>
+          </div>
         </div>
       )}
     </div>
   );
 }
 
-export default function AuditLogsPage() {
+export function AuditLogsView({ onTabChange }: { onTabChange?: (tab: "staff" | "audit") => void }) {
   const { auditLogs, loading, error, refresh, staffOptions, usingSupabase } = useAuditLogs();
   const [search, setSearch] = useState("");
   const [actionFilter, setActionFilter] = useState<AuditActionType>("all");
@@ -282,8 +302,44 @@ export default function AuditLogsPage() {
 
   return (
     <div className="w-full max-w-5xl space-y-5">
+      {/* Header & Tab Switcher */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">Staff & Audit Logs</h1>
+            <p className="text-xs text-muted-foreground sm:text-sm">Team management and system activity</p>
+          </div>
+        </div>
+
+        {/* Tab Switcher */}
+        <div className="flex items-center gap-6 border-b border-border">
+          <button
+            type="button"
+            onClick={() => onTabChange?.("staff")}
+            className={cn(
+              "flex items-center gap-2 pb-2.5 text-sm font-medium transition-colors border-b-2",
+              "border-transparent text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Users className="h-4 w-4" />
+            Staff Management
+          </button>
+          <button
+            type="button"
+            onClick={() => onTabChange?.("audit")}
+            className={cn(
+              "flex items-center gap-2 pb-2.5 text-sm font-medium transition-colors border-b-2",
+              "border-primary text-primary font-semibold"
+            )}
+          >
+            <ScrollText className="h-4 w-4" />
+            Audit Logs
+          </button>
+        </div>
+      </div>
+
       {!usingSupabase && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-800">
+        <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-800 dark:border-blue-900/40 dark:bg-blue-950/40 dark:text-blue-300">
           Supabase is not configured in this browser session, so Audit Logs is showing demo data.
         </div>
       )}
@@ -294,9 +350,10 @@ export default function AuditLogsPage() {
         </div>
       )}
 
+      {/* Filter Bar */}
       <Card className="border border-border shadow-none">
         <CardContent className="p-4">
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <div className="relative min-w-[200px] flex-1">
               <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -334,20 +391,27 @@ export default function AuditLogsPage() {
               </SelectContent>
             </Select>
 
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={(event) => setDateFrom(event.target.value)}
-              className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              aria-label="From date"
-            />
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(event) => setDateTo(event.target.value)}
-              className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              aria-label="To date"
-            />
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground hidden sm:inline">From:</span>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(event) => setDateFrom(event.target.value)}
+                className="h-9 rounded-md border border-input bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                aria-label="From date"
+              />
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground hidden sm:inline">To:</span>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(event) => setDateTo(event.target.value)}
+                className="h-9 rounded-md border border-input bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                aria-label="To date"
+              />
+            </div>
 
             <Button
               variant="outline"
@@ -362,12 +426,13 @@ export default function AuditLogsPage() {
 
             <Button variant="outline" size="sm" className="flex h-9 shrink-0 items-center gap-1.5 text-xs" onClick={exportCsv}>
               <Download className="h-3.5 w-3.5" />
-              Export
+              Export CSV
             </Button>
           </div>
         </CardContent>
       </Card>
 
+      {/* Log Entries Card */}
       <Card className="overflow-hidden border border-border shadow-none">
         <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-3 md:px-5">
           <p className="flex items-center gap-2 text-xs font-semibold text-foreground">
@@ -389,6 +454,7 @@ export default function AuditLogsPage() {
             <ScrollText className="mb-3 h-10 w-10 text-muted-foreground/20" />
             <p className="text-sm text-muted-foreground">No log entries match your filters.</p>
             <button
+              type="button"
               className="mt-2 cursor-pointer text-xs text-primary hover:underline"
               onClick={() => {
                 setSearch("");
@@ -415,4 +481,21 @@ export default function AuditLogsPage() {
       </p>
     </div>
   );
+}
+
+export default function AuditLogsPage({ initialTab = "audit" }: { initialTab?: "staff" | "audit" }) {
+  const [activeTab, setActiveTab] = useState<"staff" | "audit">(initialTab);
+
+  if (activeTab === "staff") {
+    // Return dynamically rendered staff management view if toggled to staff tab
+    return <StaffTabRedirect onTabChange={setActiveTab} />;
+  }
+
+  return <AuditLogsView onTabChange={setActiveTab} />;
+}
+
+function StaffTabRedirect({ onTabChange }: { onTabChange: (tab: "staff" | "audit") => void }) {
+  // Lazily require or render Staff view
+  const StaffManagementPage = require("@/components/pages/staff-management").default;
+  return <StaffManagementPage initialTab="staff" onTabChange={onTabChange} />;
 }

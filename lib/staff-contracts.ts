@@ -7,6 +7,8 @@ export interface StaffAccountSummary {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  role?: "Admin" | "Staff" | "Cashier" | string;
+  shiftStatus?: "On Shift" | "On Break" | "Off Duty" | string;
 }
 
 export interface CreateStaffAccountInput {

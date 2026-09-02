@@ -32,8 +32,8 @@ export default function OfflinePage() {
     <main className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md space-y-6">
         <div className="rounded-xl border border-border bg-card p-6 text-center space-y-4">
-          <div className="w-16 h-16 mx-auto rounded-full bg-orange-100 flex items-center justify-center">
-            <WifiOff className="w-8 h-8 text-orange-600" />
+          <div className="w-16 h-16 mx-auto rounded-full bg-amber-100 dark:bg-amber-950/40 flex items-center justify-center">
+            <WifiOff className="w-8 h-8 text-amber-700 dark:text-amber-400" />
           </div>
           
           <div className="space-y-2">
@@ -81,9 +81,9 @@ export default function OfflinePage() {
         </div>
 
         {!isOnline && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-xs text-blue-800 space-y-2">
+          <div className="bg-purple-50 border border-purple-200 dark:bg-purple-950/30 dark:border-purple-800 rounded-lg p-4 text-xs text-purple-900 dark:text-purple-200 space-y-2">
             <p className="font-semibold">Offline Features Available:</p>
-            <ul className="list-disc list-inside space-y-1 text-blue-700">
+            <ul className="list-disc list-inside space-y-1 text-purple-800 dark:text-purple-300">
               <li>View cached transactions</li>
               <li>Create new transactions (will sync when online)</li>
               <li>Update transaction status</li>

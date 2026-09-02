@@ -15,10 +15,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   transactions as initialTransactions,
-  statusColors,
   loyaltyMembers,
   type Transaction,
 } from "@/lib/data";
+import { StatusBadge } from "@/components/status-badge";
 import { TransactionDetailModal } from "@/components/transaction-detail-modal";
 import type { Page } from "@/components/sidebar";
 import dynamic from "next/dynamic";
@@ -166,9 +166,7 @@ export default function DashboardPage({
                           </button>
                           <p className="truncate text-xs text-foreground">{txn.customerName}</p>
                         </div>
-                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${statusColors[txn.status]}`}>
-                          {txn.status}
-                        </span>
+                        <StatusBadge status={txn.status} />
                       </div>
                       <div className="flex items-center justify-between">
                         <p className="text-[11px] text-muted-foreground">{txn.dropOffDate}</p>
@@ -213,9 +211,7 @@ export default function DashboardPage({
                           <td className="hidden px-3 py-3 text-xs text-muted-foreground md:table-cell">{txn.dropOffDate}</td>
                           <td className="hidden px-3 py-3 text-xs text-muted-foreground md:table-cell">{txn.washType}</td>
                           <td className="px-3 py-3">
-                            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${statusColors[txn.status]}`}>
-                              {txn.status}
-                            </span>
+                            <StatusBadge status={txn.status} />
                           </td>
                           <td className="px-3 py-3 pr-4 md:pr-5">
                             <Button

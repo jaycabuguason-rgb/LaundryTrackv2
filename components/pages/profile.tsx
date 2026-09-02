@@ -149,7 +149,7 @@ export default function ProfilePage({ userProfile, shopName, contactNumber, onAv
                 {isStaff ? (
                   <Badge
                     variant="secondary"
-                    className="text-[11px] px-2 py-0.5 bg-teal-100 text-teal-700 border-teal-200"
+                    className="text-[11px] px-2 py-0.5 bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800"
                   >
                     Staff
                   </Badge>

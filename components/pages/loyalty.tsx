@@ -14,15 +14,31 @@ import { type LoyaltyMember } from "@/lib/data";
 import { toast } from "@/hooks/use-toast";
 import { getBrowserAccessToken, refreshBrowserSession } from "@/lib/supabase/browser-session";
 
-function StampDots({ count, max = 21 }: { count: number; max?: number }) {
+function getInitials(name: string) {
+  return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+}
+
+function StampDots({ count, max = 10 }: { count: number; max?: number }) {
+  const pct = Math.min(100, (count / max) * 100);
   return (
-    <div className="flex flex-wrap gap-1 mt-2 max-w-xs">
-      {Array.from({ length: max }).map((_, i) => (
-        <div
-          key={i}
-          className={`w-4 h-4 rounded-full border ${i < count ? "bg-primary border-primary" : "bg-muted border-border"}`}
-        />
-      ))}
+    <div className="space-y-2">
+      <div className="flex flex-wrap gap-1.5 max-w-xs">
+        {Array.from({ length: max }).map((_, i) => (
+          <div
+            key={i}
+            className={`w-6 h-6 rounded-full border flex items-center justify-center text-xs font-semibold transition-all ${
+              i < count
+                ? "bg-primary border-primary text-primary-foreground shadow-sm"
+                : "bg-muted/50 border-border text-muted-foreground"
+            }`}
+          >
+            {i < count ? <Star className="w-3 h-3 fill-current" /> : i + 1}
+          </div>
+        ))}
+      </div>
+      <div className="h-2 w-full max-w-xs rounded-full bg-muted overflow-hidden">
+        <div className="h-full bg-primary rounded-full transition-all duration-300" style={{ width: `${pct}%` }} />
+      </div>
     </div>
   );
 }
@@ -191,27 +207,34 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Profile Card */}
           <Card className="border border-border shadow-none">
-            <CardContent className="p-5 text-center space-y-2">
-              <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center mx-auto">
-                <Star className="w-7 h-7 text-primary-foreground" />
+            <CardContent className="p-5 text-center space-y-3">
+              <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground font-bold flex items-center justify-center text-xl mx-auto shadow-sm">
+                {getInitials(selected.name)}
               </div>
-              <h2 className="font-semibold text-base text-foreground">{selected.name}</h2>
-              <p className="text-xs text-muted-foreground">{selected.phone}</p>
-              <p className="text-xs text-muted-foreground">Joined: {selected.dateJoined}</p>
-              <div className="pt-2 border-t border-border">
-                <p className="text-xs text-muted-foreground">Total Stamps</p>
-                <p className="text-3xl font-bold text-foreground">{selected.stampCount}</p>
-              </div>
-              <Button size="sm" variant="outline" onClick={() => setStampModal(selected)} className="w-full">
-                <Plus className="w-3 h-3 mr-1" /> Add Stamps
-              </Button>
               <div>
-                <p className="text-xs text-muted-foreground">Rewards Redeemed</p>
+                <h2 className="font-semibold text-base text-foreground">{selected.name}</h2>
+                <p className="text-xs text-muted-foreground">{selected.phone || "No phone provided"}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Joined: {selected.dateJoined}</p>
+              </div>
+              <div className="pt-3 border-t border-border space-y-1">
+                <p className="text-xs font-medium text-muted-foreground">Total Stamps</p>
+                <p className="text-3xl font-extrabold text-foreground">{selected.stampCount}</p>
+                <div className="pt-0.5">
+                  <span className="inline-flex items-center rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 px-2 py-0.5 text-xs font-semibold">
+                    {selected.stampCount % washesPerReward}/{washesPerReward} in cycle
+                  </span>
+                </div>
+              </div>
+              <Button size="sm" onClick={() => setStampModal(selected)} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+                <Plus className="w-4 h-4 mr-1.5" /> Add Stamps
+              </Button>
+              <div className="pt-2 border-t border-border">
+                <p className="text-xs font-medium text-muted-foreground">Rewards Redeemed</p>
                 <p className="text-xl font-bold text-primary">{selected.rewardsRedeemed}</p>
               </div>
               {selected.preferences && (
-                <div className="text-left bg-muted/30 rounded p-2 mt-1">
-                  <p className="text-[11px] text-muted-foreground">Preferences</p>
+                <div className="text-left bg-muted/40 rounded-lg p-3 border border-border mt-2">
+                  <p className="text-[11px] font-medium text-muted-foreground">Preferences</p>
                   <p className="text-xs text-foreground mt-0.5">{selected.preferences}</p>
                 </div>
               )}
@@ -255,7 +278,7 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
                             {s.notes && <span className="ml-1 text-muted-foreground font-sans truncate">({s.notes})</span>}
                           </p>
                         </div>
-                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800 border border-amber-200">+{s.stamps}</span>
+                        <span className="rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 px-2 py-0.5 text-xs font-semibold">+{s.stamps}</span>
                       </div>
                     ));
                   })()}
@@ -264,7 +287,7 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
                   <thead>
                     <tr className="border-y border-border bg-muted/40">
                       {["Date", "Ticket", "Stamps"].map((h) => (
-                        <th key={h} className="text-left text-xs font-medium text-muted-foreground px-4 py-2">{h}</th>
+                        <th key={h} className="text-left text-xs font-medium text-muted-foreground px-4 py-2.5">{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -285,7 +308,9 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
                             {s.ticket}
                             {s.notes && <span className="ml-1 text-muted-foreground font-sans truncate">({s.notes})</span>}
                           </td>
-                          <td className="px-4 py-2.5 text-xs font-medium">+{s.stamps}</td>
+                          <td className="px-4 py-2.5 text-xs font-medium">
+                            <span className="inline-flex items-center rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 px-2 py-0.5 text-xs font-semibold">+{s.stamps}</span>
+                          </td>
                         </tr>
                       ));
                     })()}
@@ -452,7 +477,7 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
             className="pl-9 h-9 text-sm"
           />
         </div>
-        <Button size="sm" onClick={() => setAddModal(true)}>
+        <Button size="sm" onClick={() => setAddModal(true)} className="bg-primary text-primary-foreground hover:bg-primary/90">
           <Plus className="w-4 h-4 mr-1" /> Add Member
         </Button>
       </div>
@@ -472,16 +497,19 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
       <Card className="border border-border shadow-none">
         <CardContent className="p-0">
           <div className="divide-y divide-border md:hidden">
-            {filtered.map((m) => (
+            {filtered.map((m) => {
+              const progress = m.stampCount % washesPerReward;
+              return (
               <div key={m.id} className="space-y-3 p-4">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold shrink-0">{getInitials(m.name)}</div>
+                    <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-foreground">{m.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{m.phone || "-"}</p>
                     </div>
-                    <p className="mt-0.5 text-xs text-muted-foreground">{m.phone || "-"}</p>
                   </div>
-                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleSelectMember(m)}>
+                  <Button size="sm" variant="outline" className="h-7 text-xs shrink-0" onClick={() => handleSelectMember(m)}>
                     View
                   </Button>
                 </div>
@@ -489,10 +517,7 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
                 <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/30 p-3">
                   <div>
                     <p className="text-[11px] text-muted-foreground">Stamps</p>
-                    <div className="mt-1 flex items-center gap-1">
-                      <Star className="h-3 w-3 text-amber-500" />
-                      <span className="text-sm font-semibold text-foreground">{m.stampCount}</span>
-                    </div>
+                    <span className="mt-1 inline-flex items-center rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 px-2 py-0.5 text-[11px] font-semibold">{m.stampCount} stamps · {progress}/{washesPerReward}</span>
                   </div>
                   <div>
                     <p className="text-[11px] text-muted-foreground">Rewards</p>
@@ -515,7 +540,8 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
                   </Button>
                 </div>
               </div>
-            ))}
+              );
+            })}
             {loading && (
               <div className="py-10 text-center text-sm text-muted-foreground">Loading...</div>
             )}
@@ -535,15 +561,15 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
             <tbody>
               {filtered.map((m) => (
                 <tr key={m.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
-                  <td className="px-4 py-3 text-xs font-semibold text-foreground">
-                    {m.name}
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[11px] font-bold shrink-0">{getInitials(m.name)}</div>
+                      <span className="text-xs font-semibold text-foreground">{m.name}</span>
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">{m.phone}</td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-1.5">
-                      <Star className="w-3 h-3 text-amber-500" />
-                      <span className="text-xs font-semibold text-foreground">{m.stampCount}</span>
-                    </div>
+                    <span className="inline-flex items-center rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 px-2 py-0.5 text-[11px] font-semibold">{m.stampCount} · {m.stampCount % washesPerReward}/{washesPerReward}</span>
                   </td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">{m.rewardsRedeemed}</td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">{m.dateJoined}</td>
@@ -598,7 +624,7 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
             </div>
             <div className="flex gap-2">
               <Button type="button" variant="outline" className="flex-1" onClick={() => setAddModal(false)}>Cancel</Button>
-              <Button type="submit" className="flex-1" disabled={saving}>{saving ? "Adding..." : "Add Member"}</Button>
+              <Button type="submit" className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90" disabled={saving}>{saving ? "Adding..." : "Add Member"}</Button>
             </div>
           </form>
         </DialogContent>
@@ -625,7 +651,7 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
             </div>
             <div className="flex gap-2">
               <Button type="button" variant="outline" className="flex-1" onClick={() => setEditModal(null)}>Cancel</Button>
-              <Button type="submit" className="flex-1" disabled={saving}>{saving ? "Saving..." : "Save Changes"}</Button>
+              <Button type="submit" className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90" disabled={saving}>{saving ? "Saving..." : "Save Changes"}</Button>
             </div>
           </form>
         </DialogContent>
@@ -642,7 +668,7 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteMember} disabled={saving} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction onClick={handleDeleteMember} disabled={saving} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {saving ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -666,7 +692,7 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
             </div>
             <div className="flex gap-2">
               <Button type="button" variant="outline" className="flex-1" onClick={() => setStampModal(null)}>Cancel</Button>
-              <Button type="submit" className="flex-1" disabled={saving}>{saving ? "Adding..." : "Add Stamps"}</Button>
+              <Button type="submit" className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90" disabled={saving}>{saving ? "Adding..." : "Add Stamps"}</Button>
             </div>
           </form>
         </DialogContent>

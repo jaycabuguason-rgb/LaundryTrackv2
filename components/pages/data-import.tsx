@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   XCircle,
+  Check,
   ChevronRight,
   ChevronLeft,
   Wand2,
@@ -117,8 +118,8 @@ function StepIndicator({ current }: { current: StepId }) {
               <div
                 className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-colors",
-                  done   && "bg-primary border-primary text-white",
-                  active && "bg-white border-primary text-primary",
+                  done   && "bg-primary border-primary text-primary-foreground",
+                  active && "bg-card border-primary text-primary",
                   !done && !active && "bg-muted border-border text-muted-foreground"
                 )}
               >
@@ -466,7 +467,7 @@ export default function DataImportPage({ onViewTransactions }: DataImportProps) 
                     dataType === opt.value ? "border-primary" : "border-muted-foreground/40"
                   )}>
                     {dataType === opt.value && (
-                      <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+                      <Check className="w-3 h-3 text-primary" aria-hidden="true" />
                     )}
                   </div>
                   <span className="text-lg">{opt.icon}</span>

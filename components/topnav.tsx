@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { initialNotifications, transactions, type Notification } from "@/lib/data";
+import { PaymentBadge } from "@/components/status-badge";
 import {
   Dialog,
   DialogContent,
@@ -198,10 +199,8 @@ export default function TopNav({ activePage, onNavigate, onSignOut, adminProfile
                         {(() => {
                           const txn = liveTransactions.find((t) => t.ticketId === notif.ticketId);
                           if (!txn) return null;
-                          return txn.paymentStatus === "paid" ? (
-                            <span className="inline-block px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-green-500 text-white">PAID</span>
-                          ) : (
-                            <span className="inline-block px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-500 text-white">UNPAID</span>
+                          return (
+                            <PaymentBadge paymentStatus={txn.paymentStatus} className="px-1.5 text-[10px] font-bold uppercase" iconClassName="w-2.5 h-2.5" />
                           );
                         })()}
                         <span className="text-[11px] text-muted-foreground">{notif.time}</span>

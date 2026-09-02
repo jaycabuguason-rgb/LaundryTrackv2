@@ -1,10 +1,10 @@
 "use client";
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { type Transaction, type TransactionStatus, statusColors } from "@/lib/data";
-import { CheckCircle2, Circle, Edit } from "lucide-react";
+import { type Transaction, type TransactionStatus } from "@/lib/data";
+import { StatusBadge, PaymentBadge } from "@/components/status-badge";
+import { CheckCircle2, Circle, CircleDot, Edit } from "lucide-react";
 
 interface TransactionDetailModalProps {
   open: boolean;
@@ -32,9 +32,7 @@ export function TransactionDetailModal({ open, onOpenChange, transaction, onEdit
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3 text-base">
             <span className="font-mono text-primary">{transaction.ticketId}</span>
-            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusColors[transaction.status]}`}>
-              {transaction.status}
-            </span>
+            <StatusBadge status={transaction.status} />
           </DialogTitle>
           <DialogDescription className="sr-only">
             Transaction details for {transaction.ticketId} — {transaction.customerName}
@@ -98,11 +96,9 @@ export function TransactionDetailModal({ open, onOpenChange, transaction, onEdit
                         {done ? (
                           <CheckCircle2 className="w-5 h-5 text-primary" />
                         ) : current ? (
-                          <div className="w-5 h-5 rounded-full border-2 border-primary bg-primary/10 flex items-center justify-center">
-                            <div className="w-2 h-2 rounded-full bg-primary" />
-                          </div>
+                          <CircleDot className="w-5 h-5 text-primary" />
                         ) : (
-                          <div className="w-5 h-5 rounded-full border-2 border-border bg-background" />
+                          <Circle className="w-5 h-5 text-muted-foreground/40" />
                         )}
                         <span className={[
                           "text-[10px] font-medium text-center leading-tight",
@@ -134,14 +130,7 @@ export function TransactionDetailModal({ open, onOpenChange, transaction, onEdit
             </div>
             <div className="mt-3 pt-3 border-t border-primary/10 flex items-center justify-between">
               <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Payment Status</span>
-              <span className={[
-                "inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold border",
-                transaction.paymentStatus === "paid"
-                  ? "bg-green-50 text-green-700 border-green-200"
-                  : "bg-red-50 text-red-600 border-red-200",
-              ].join(" ")}>
-                {transaction.paymentStatus === "paid" ? "Paid" : "Unpaid"}
-              </span>
+              <PaymentBadge paymentStatus={transaction.paymentStatus} />
             </div>
           </div>
         </div>

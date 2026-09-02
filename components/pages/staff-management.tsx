@@ -16,6 +16,10 @@ import {
   UserPlus,
   Loader2,
   RefreshCw,
+  ScrollText,
+  Shield,
+  Briefcase,
+  Clock,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -38,10 +42,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useStaffAccounts } from "@/hooks/use-staff-accounts";
 import type { CreateStaffAccountInput, StaffAccountSummary } from "@/lib/staff-contracts";
+import { cn } from "@/lib/utils";
 
 function PasswordField({
   id,
@@ -145,7 +157,63 @@ function getDefaultEmail(username: string) {
   return normalized ? `${normalized}@laundrytrack.ph` : "";
 }
 
-export default function StaffManagementPage() {
+export function RoleBadge({ role = "Staff" }: { role?: string }) {
+  const normalized = role.toLowerCase();
+  if (normalized === "admin") {
+    return (
+      <Badge className="border-purple-200 bg-purple-100 text-purple-700 dark:border-purple-800 dark:bg-purple-900/30 dark:text-purple-300 font-medium px-2 py-0.5 text-[11px] border">
+        Admin
+      </Badge>
+    );
+  }
+  if (normalized === "cashier") {
+    return (
+      <Badge className="border-blue-200 bg-blue-100 text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-300 font-medium px-2 py-0.5 text-[11px] border">
+        Cashier
+      </Badge>
+    );
+  }
+  return (
+    <Badge className="border-teal-200 bg-teal-100 text-teal-700 dark:border-teal-800 dark:bg-teal-900/30 dark:text-teal-300 font-medium px-2 py-0.5 text-[11px] border">
+      Staff
+    </Badge>
+  );
+}
+
+export function ShiftStatusBadge({ status }: { status?: string }) {
+  const normalized = (status || "On Shift").toLowerCase();
+  if (normalized.includes("break")) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+        <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+        On Break
+      </span>
+    );
+  }
+  if (normalized.includes("off")) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+        <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />
+        Off Duty
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-green-200 bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300">
+      <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+      On Shift
+    </span>
+  );
+}
+
+export default function StaffManagementPage({
+  initialTab = "staff",
+  onTabChange,
+}: {
+  initialTab?: "staff" | "audit";
+  onTabChange?: (tab: "staff" | "audit") => void;
+}) {
+  const [activeTab, setActiveTab] = useState<"staff" | "audit">(initialTab);
   const { toast } = useToast();
   const {
     staff,
@@ -165,6 +233,8 @@ export default function StaffManagementPage() {
   const [addUsername, setAddUsername] = useState("");
   const [addPhone, setAddPhone] = useState("");
   const [addEmail, setAddEmail] = useState("");
+  const [addRole, setAddRole] = useState<string>("Staff");
+  const [addShiftStatus, setAddShiftStatus] = useState<string>("On Shift");
   const [addPassword, setAddPassword] = useState("");
   const [addConfirmPassword, setAddConfirmPassword] = useState("");
   const [addErrors, setAddErrors] = useState<Record<string, string>>({});
@@ -176,6 +246,8 @@ export default function StaffManagementPage() {
   const [editUsername, setEditUsername] = useState("");
   const [editPhone, setEditPhone] = useState("");
   const [editEmail, setEditEmail] = useState("");
+  const [editRole, setEditRole] = useState<string>("Staff");
+  const [editShiftStatus, setEditShiftStatus] = useState<string>("On Shift");
   const [editActive, setEditActive] = useState(true);
   const [editError, setEditError] = useState<string | null>(null);
   const [editSubmitting, setEditSubmitting] = useState(false);
@@ -190,6 +262,40 @@ export default function StaffManagementPage() {
   const [deactivateTarget, setDeactivateTarget] = useState<StaffAccountSummary | null>(null);
   const [deactivateSubmitting, setDeactivateSubmitting] = useState(false);
 
+  // Maintain local metadata overrides for role and shift status per staff member ID
+  const [staffMeta, setStaffMeta] = useState<Record<string, { role?: string; shiftStatus?: string }>>({});
+
+  const getStaffRole = (staffAccount: StaffAccountSummary): string => {
+    if (staffMeta[staffAccount.id]?.role) {
+      return staffMeta[staffAccount.id].role!;
+    }
+    if (staffAccount.role) {
+      return staffAccount.role;
+    }
+    if (staffAccount.username.toLowerCase().includes("admin") || staffAccount.email.toLowerCase().includes("admin")) {
+      return "Admin";
+    }
+    if (staffAccount.username.toLowerCase().includes("cashier")) {
+      return "Cashier";
+    }
+    return "Staff";
+  };
+
+  const getStaffShiftStatus = (staffAccount: StaffAccountSummary): string => {
+    if (staffMeta[staffAccount.id]?.shiftStatus) {
+      return staffMeta[staffAccount.id].shiftStatus!;
+    }
+    if (staffAccount.shiftStatus) {
+      return staffAccount.shiftStatus;
+    }
+    return staffAccount.isActive ? "On Shift" : "Off Duty";
+  };
+
+  const handleTabSwitch = (tab: "staff" | "audit") => {
+    setActiveTab(tab);
+    onTabChange?.(tab);
+  };
+
   const filteredStaff = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) {
@@ -202,15 +308,19 @@ export default function StaffManagementPage() {
         item.email,
         item.username,
         item.phoneNumber,
+        getStaffRole(item),
+        getStaffShiftStatus(item),
       ].some((value) => value.toLowerCase().includes(query)),
     );
-  }, [search, staff]);
+  }, [search, staff, staffMeta]);
 
   const resetAddForm = () => {
     setAddName("");
     setAddUsername("");
     setAddPhone("");
     setAddEmail("");
+    setAddRole("Staff");
+    setAddShiftStatus("On Shift");
     setAddPassword("");
     setAddConfirmPassword("");
     setAddErrors({});
@@ -266,11 +376,15 @@ export default function StaffManagementPage() {
       };
 
       const staffAccount = await createStaff(payload);
+      setStaffMeta((prev) => ({
+        ...prev,
+        [staffAccount.id]: { role: addRole, shiftStatus: addShiftStatus },
+      }));
       setAddOpen(false);
       resetAddForm();
       toast({
         title: "Staff account created",
-        description: `${staffAccount.fullName} has been added.`,
+        description: `${staffAccount.fullName} has been added as ${addRole}.`,
       });
     } catch (createError) {
       const message = createError instanceof Error ? createError.message : "Unable to create the staff account.";
@@ -286,6 +400,8 @@ export default function StaffManagementPage() {
     setEditUsername(staffAccount.username);
     setEditPhone(staffAccount.phoneNumber);
     setEditEmail(staffAccount.email);
+    setEditRole(getStaffRole(staffAccount));
+    setEditShiftStatus(getStaffShiftStatus(staffAccount));
     setEditActive(staffAccount.isActive);
     setEditError(null);
     setEditOpen(true);
@@ -320,6 +436,10 @@ export default function StaffManagementPage() {
         email: normalizedEmail,
         isActive: editActive,
       });
+      setStaffMeta((prev) => ({
+        ...prev,
+        [editTarget.id]: { role: editRole, shiftStatus: editShiftStatus },
+      }));
       setEditOpen(false);
       setEditTarget(null);
       toast({
@@ -387,6 +507,12 @@ export default function StaffManagementPage() {
         email: deactivateTarget.email,
         isActive: !deactivateTarget.isActive,
       });
+      if (!updated.isActive) {
+        setStaffMeta((prev) => ({
+          ...prev,
+          [deactivateTarget.id]: { ...prev[deactivateTarget.id], shiftStatus: "Off Duty" },
+        }));
+      }
       setDeactivateTarget(null);
       toast({
         title: updated.isActive ? "Staff account reactivated" : "Staff account deactivated",
@@ -403,21 +529,65 @@ export default function StaffManagementPage() {
     }
   };
 
+  if (activeTab === "audit") {
+    const AuditLogsView = require("@/components/pages/audit-logs").AuditLogsView;
+    return <AuditLogsView onTabChange={handleTabSwitch} />;
+  }
+
   return (
     <div className="w-full max-w-5xl space-y-5">
+      {/* Header & Tab Switcher */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">Staff & Audit Logs</h1>
+            <p className="text-xs text-muted-foreground sm:text-sm">Team management and system activity</p>
+          </div>
+        </div>
+
+        {/* Tab Switcher */}
+        <div className="flex items-center gap-6 border-b border-border">
+          <button
+            type="button"
+            onClick={() => handleTabSwitch("staff")}
+            className={cn(
+              "flex items-center gap-2 pb-2.5 text-sm font-medium transition-colors border-b-2",
+              "border-primary text-primary font-semibold"
+            )}
+          >
+            <Users className="h-4 w-4" />
+            Staff Management
+          </button>
+          <button
+            type="button"
+            onClick={() => handleTabSwitch("audit")}
+            className={cn(
+              "flex items-center gap-2 pb-2.5 text-sm font-medium transition-colors border-b-2",
+              "border-transparent text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <ScrollText className="h-4 w-4" />
+            Audit Logs
+          </button>
+        </div>
+      </div>
+
+      {/* Staff Actions & Search Bar */}
       <div className="flex flex-col gap-3">
-        <div>
-          <h2 className="text-base font-semibold text-foreground">Staff Members</h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {staff.length} staff account{staff.length !== 1 ? "s" : ""} · {staff.filter((item) => item.isActive).length} active
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">Staff Members</h2>
+            <p className="text-xs text-muted-foreground">
+              {staff.length} staff account{staff.length !== 1 ? "s" : ""} · {staff.filter((item) => item.isActive).length} active
+            </p>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
-          <div className="relative min-w-0 flex-1 sm:w-52 sm:flex-none">
+          <div className="relative min-w-0 flex-1 sm:w-64 sm:flex-none">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search staff..."
+              placeholder="Search staff, role, status..."
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               className="h-9 w-full pl-8 text-sm"
@@ -429,7 +599,7 @@ export default function StaffManagementPage() {
           </Button>
           <Button
             size="sm"
-            className="flex h-9 shrink-0 items-center gap-1.5 text-xs"
+            className="flex h-9 shrink-0 items-center gap-1.5 text-xs bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
             onClick={() => {
               resetAddForm();
               setAddOpen(true);
@@ -443,7 +613,7 @@ export default function StaffManagementPage() {
       </div>
 
       {!usingSupabase && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-800">
+        <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-800 dark:border-blue-900/40 dark:bg-blue-950/40 dark:text-blue-300">
           Supabase is not configured in this browser session. Staff management is disabled until your project keys are set.
         </div>
       )}
@@ -454,15 +624,17 @@ export default function StaffManagementPage() {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-lg border border-border">
+      {/* Staff Table Container */}
+      <div className="overflow-hidden rounded-lg border border-border bg-card shadow-none">
         <div className="hidden overflow-x-auto md:block">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/40">
-                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Name</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Staff Member</th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground">Username</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground">Phone Number</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground">Date Created</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground">Role</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground">Shift Status</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground">Contact</th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground">Status</th>
                 <th className="px-3 py-3 pr-4 text-left text-xs font-medium text-muted-foreground">Actions</th>
               </tr>
@@ -470,7 +642,7 @@ export default function StaffManagementPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="py-16 text-center">
+                  <td colSpan={7} className="py-16 text-center">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <Loader2 className="h-8 w-8 animate-spin" />
                       <p className="text-sm">Loading staff accounts...</p>
@@ -479,7 +651,7 @@ export default function StaffManagementPage() {
                 </tr>
               ) : filteredStaff.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-16 text-center">
+                  <td colSpan={7} className="py-16 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <Users className="h-8 w-8 text-muted-foreground/20" />
                       <p className="text-sm text-muted-foreground">No staff members found.</p>
@@ -487,77 +659,86 @@ export default function StaffManagementPage() {
                   </td>
                 </tr>
               ) : (
-                filteredStaff.map((staffAccount) => (
-                  <tr key={staffAccount.id} className="border-b border-border transition-colors last:border-0 hover:bg-muted/20">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
-                          {getInitials(staffAccount.fullName)}
+                filteredStaff.map((staffAccount) => {
+                  const role = getStaffRole(staffAccount);
+                  const shiftStatus = getStaffShiftStatus(staffAccount);
+
+                  return (
+                    <tr key={staffAccount.id} className="border-b border-border transition-colors last:border-0 hover:bg-muted/20">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                            {getInitials(staffAccount.fullName)}
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold text-foreground">{staffAccount.fullName}</p>
+                            <p className="text-[11px] text-muted-foreground">{staffAccount.email}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-xs font-semibold text-foreground">{staffAccount.fullName}</p>
-                          <p className="text-[11px] text-muted-foreground">{staffAccount.email}</p>
+                      </td>
+                      <td className="px-3 py-3">
+                        <span className="font-mono text-xs text-foreground">@{staffAccount.username}</span>
+                      </td>
+                      <td className="px-3 py-3">
+                        <RoleBadge role={role} />
+                      </td>
+                      <td className="px-3 py-3">
+                        <ShiftStatusBadge status={shiftStatus} />
+                      </td>
+                      <td className="px-3 py-3">
+                        <span className="text-xs text-muted-foreground">{staffAccount.phoneNumber || "—"}</span>
+                      </td>
+                      <td className="px-3 py-3">
+                        {staffAccount.isActive ? (
+                          <Badge className="border-green-200 bg-green-100 px-1.5 py-0 text-[10px] font-medium text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300">
+                            Active
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="px-1.5 py-0 text-[10px] font-medium text-muted-foreground">
+                            Inactive
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="px-3 py-3 pr-4">
+                        <div className="flex items-center gap-1.5">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex h-7 items-center gap-1 px-2.5 text-[11px]"
+                            onClick={() => openEdit(staffAccount)}
+                          >
+                            <Pencil className="h-3 w-3" />
+                            Edit
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex h-7 items-center gap-1 px-2.5 text-[11px]"
+                            onClick={() => openReset(staffAccount)}
+                          >
+                            <KeyRound className="h-3 w-3" />
+                            Reset PW
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className={`flex h-7 items-center gap-1 px-2.5 text-[11px] ${staffAccount.isActive ? "text-destructive hover:text-destructive" : "text-green-600 hover:text-green-600"}`}
+                            onClick={() => setDeactivateTarget(staffAccount)}
+                          >
+                            {staffAccount.isActive ? <UserMinus className="h-3 w-3" /> : <UserPlus className="h-3 w-3" />}
+                            {staffAccount.isActive ? "Deactivate" : "Reactivate"}
+                          </Button>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-3 py-3">
-                      <span className="text-xs font-mono text-foreground">@{staffAccount.username}</span>
-                    </td>
-                    <td className="px-3 py-3">
-                      <span className="text-xs text-muted-foreground">{staffAccount.phoneNumber || "—"}</span>
-                    </td>
-                    <td className="px-3 py-3">
-                      <span className="text-xs text-muted-foreground">{formatDate(staffAccount.createdAt)}</span>
-                    </td>
-                    <td className="px-3 py-3">
-                      {staffAccount.isActive ? (
-                        <Badge className="border-green-200 bg-green-100 px-1.5 py-0 text-[10px] font-medium text-green-700">
-                          Active
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary" className="px-1.5 py-0 text-[10px] font-medium text-muted-foreground">
-                          Inactive
-                        </Badge>
-                      )}
-                    </td>
-                    <td className="px-3 py-3 pr-4">
-                      <div className="flex items-center gap-1.5">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex h-7 items-center gap-1 px-2.5 text-[11px]"
-                          onClick={() => openEdit(staffAccount)}
-                        >
-                          <Pencil className="h-3 w-3" />
-                          Edit
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex h-7 items-center gap-1 px-2.5 text-[11px]"
-                          onClick={() => openReset(staffAccount)}
-                        >
-                          <KeyRound className="h-3 w-3" />
-                          Reset PW
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className={`flex h-7 items-center gap-1 px-2.5 text-[11px] ${staffAccount.isActive ? "text-destructive hover:text-destructive" : "text-green-600 hover:text-green-600"}`}
-                          onClick={() => setDeactivateTarget(staffAccount)}
-                        >
-                          {staffAccount.isActive ? <UserMinus className="h-3 w-3" /> : <UserPlus className="h-3 w-3" />}
-                          {staffAccount.isActive ? "Deactivate" : "Reactivate"}
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
 
+        {/* Mobile Cards */}
         <div className="divide-y divide-border md:hidden">
           {loading ? (
             <div className="flex flex-col items-center justify-center gap-2 py-16 text-muted-foreground">
@@ -570,17 +751,30 @@ export default function StaffManagementPage() {
               <p className="text-sm text-muted-foreground">No staff members found.</p>
             </div>
           ) : (
-            filteredStaff.map((staffAccount) => (
-              <div key={staffAccount.id} className="space-y-3 p-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
-                    {getInitials(staffAccount.fullName)}
+            filteredStaff.map((staffAccount) => {
+              const role = getStaffRole(staffAccount);
+              const shiftStatus = getStaffShiftStatus(staffAccount);
+
+              return (
+                <div key={staffAccount.id} className="space-y-3 p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                      {getInitials(staffAccount.fullName)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-xs font-semibold text-foreground">{staffAccount.fullName}</p>
+                        <RoleBadge role={role} />
+                        <ShiftStatusBadge status={shiftStatus} />
+                      </div>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground">@{staffAccount.username} · {staffAccount.email}</p>
+                      <p className="text-[11px] text-muted-foreground">Phone: {staffAccount.phoneNumber || "—"} · Created: {formatDate(staffAccount.createdAt)}</p>
+                    </div>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-xs font-semibold text-foreground">{staffAccount.fullName}</p>
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/50 pt-2">
+                    <div>
                       {staffAccount.isActive ? (
-                        <Badge className="border-green-200 bg-green-100 px-1.5 py-0 text-[10px] text-green-700">
+                        <Badge className="border-green-200 bg-green-100 px-1.5 py-0 text-[10px] text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300">
                           Active
                         </Badge>
                       ) : (
@@ -589,35 +783,34 @@ export default function StaffManagementPage() {
                         </Badge>
                       )}
                     </div>
-                    <p className="text-[11px] text-muted-foreground">@{staffAccount.username} · {staffAccount.phoneNumber || "—"}</p>
-                    <p className="text-[11px] text-muted-foreground">Created: {formatDate(staffAccount.createdAt)}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      <Button size="sm" variant="outline" className="flex h-7 items-center gap-1 text-xs px-2" onClick={() => openEdit(staffAccount)}>
+                        <Pencil className="h-3 w-3" />
+                        Edit
+                      </Button>
+                      <Button size="sm" variant="outline" className="flex h-7 items-center gap-1 text-xs px-2" onClick={() => openReset(staffAccount)}>
+                        <KeyRound className="h-3 w-3" />
+                        Reset PW
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className={`flex h-7 items-center gap-1 text-xs px-2 ${staffAccount.isActive ? "text-destructive hover:text-destructive" : "text-green-600 hover:text-green-600"}`}
+                        onClick={() => setDeactivateTarget(staffAccount)}
+                      >
+                        {staffAccount.isActive ? <UserMinus className="h-3 w-3" /> : <UserPlus className="h-3 w-3" />}
+                        {staffAccount.isActive ? "Deactivate" : "Reactivate"}
+                      </Button>
+                    </div>
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button size="sm" variant="outline" className="flex h-8 items-center gap-1 text-xs" onClick={() => openEdit(staffAccount)}>
-                    <Pencil className="h-3 w-3" />
-                    Edit
-                  </Button>
-                  <Button size="sm" variant="outline" className="flex h-8 items-center gap-1 text-xs" onClick={() => openReset(staffAccount)}>
-                    <KeyRound className="h-3 w-3" />
-                    Reset PW
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className={`flex h-8 items-center gap-1 text-xs ${staffAccount.isActive ? "text-destructive hover:text-destructive" : "text-green-600 hover:text-green-600"}`}
-                    onClick={() => setDeactivateTarget(staffAccount)}
-                  >
-                    {staffAccount.isActive ? <UserMinus className="h-3 w-3" /> : <UserPlus className="h-3 w-3" />}
-                    {staffAccount.isActive ? "Deactivate" : "Reactivate"}
-                  </Button>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
 
+      {/* Add Staff Dialog */}
       <Dialog
         open={addOpen}
         onOpenChange={(open) => {
@@ -629,8 +822,8 @@ export default function StaffManagementPage() {
       >
         <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] max-w-md overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-sm">
-              <UserPlus className="h-4 w-4" />
+            <DialogTitle className="flex items-center gap-2 text-sm font-semibold">
+              <UserPlus className="h-4 w-4 text-primary" />
               Add Staff Account
             </DialogTitle>
           </DialogHeader>
@@ -650,6 +843,36 @@ export default function StaffManagementPage() {
               required
             />
             {addErrors.username && <p className="-mt-2 text-xs text-destructive">{addErrors.username}</p>}
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="mb-1.5 block text-xs font-medium">Role</Label>
+                <Select value={addRole} onValueChange={setAddRole}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Admin">Admin (Purple)</SelectItem>
+                    <SelectItem value="Staff">Staff (Teal)</SelectItem>
+                    <SelectItem value="Cashier">Cashier (Blue)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="mb-1.5 block text-xs font-medium">Shift Status</Label>
+                <Select value={addShiftStatus} onValueChange={setAddShiftStatus}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Select shift status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="On Shift">On Shift (Green)</SelectItem>
+                    <SelectItem value="On Break">On Break (Amber)</SelectItem>
+                    <SelectItem value="Off Duty">Off Duty (Gray)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
             <Field id="add-phone" label="Phone Number" value={addPhone} onChange={setAddPhone} placeholder="+63 9XX XXX XXXX" />
 
@@ -693,28 +916,30 @@ export default function StaffManagementPage() {
             />
             {addErrors.confirmPassword && <p className="-mt-2 text-xs text-destructive">{addErrors.confirmPassword}</p>}
 
-            <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3">
-              <div>
-                <p className="text-xs font-medium text-foreground">Role</p>
-                <p className="text-[11px] text-muted-foreground">Cannot be changed to Admin</p>
+            <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-3.5 py-2.5">
+              <div className="flex items-center gap-2">
+                <RoleBadge role={addRole} />
+                <ShiftStatusBadge status={addShiftStatus} />
               </div>
-              <Badge variant="secondary" className="bg-teal-100 text-xs font-medium text-teal-700">
-                Staff
-              </Badge>
+              <span className="text-[11px] text-muted-foreground">Badge Preview</span>
             </div>
 
             {addErrors.form && <p className="text-xs text-destructive">{addErrors.form}</p>}
 
-            <Button className="w-full" onClick={() => void handleAddStaff()} disabled={addSubmitting}>
+            <Button
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+              onClick={() => void handleAddStaff()}
+              disabled={addSubmitting}
+            >
               {addSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
+                  Creating Account...
                 </>
               ) : (
                 <>
                   <UserPlus className="mr-2 h-4 w-4" />
-                  Create Account
+                  Create Staff Account
                 </>
               )}
             </Button>
@@ -722,11 +947,12 @@ export default function StaffManagementPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Edit Staff Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] max-w-md overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-sm">
-              <Pencil className="h-4 w-4" />
+            <DialogTitle className="flex items-center gap-2 text-sm font-semibold">
+              <Pencil className="h-4 w-4 text-primary" />
               Edit Staff Profile
             </DialogTitle>
           </DialogHeader>
@@ -735,6 +961,36 @@ export default function StaffManagementPage() {
             <Field id="edit-username" label="Username" value={editUsername} onChange={setEditUsername} placeholder="Username" required />
             <Field id="edit-email" label="Email Address" value={editEmail} onChange={setEditEmail} placeholder="Email address" type="email" required />
             <Field id="edit-phone" label="Phone Number" value={editPhone} onChange={setEditPhone} placeholder="Phone number" />
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="mb-1.5 block text-xs font-medium">Role</Label>
+                <Select value={editRole} onValueChange={setEditRole}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Admin">Admin (Purple)</SelectItem>
+                    <SelectItem value="Staff">Staff (Teal)</SelectItem>
+                    <SelectItem value="Cashier">Cashier (Blue)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="mb-1.5 block text-xs font-medium">Shift Status</Label>
+                <Select value={editShiftStatus} onValueChange={setEditShiftStatus}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Select shift status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="On Shift">On Shift (Green)</SelectItem>
+                    <SelectItem value="On Break">On Break (Amber)</SelectItem>
+                    <SelectItem value="Off Duty">Off Duty (Gray)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
             <div className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
               <div className="flex items-center gap-2">
@@ -749,11 +1005,15 @@ export default function StaffManagementPage() {
 
             {editError && <p className="text-xs text-destructive">{editError}</p>}
 
-            <Button className="w-full" onClick={() => void handleSaveEdit()} disabled={editSubmitting}>
+            <Button
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+              onClick={() => void handleSaveEdit()}
+              disabled={editSubmitting}
+            >
               {editSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
+                  Saving Changes...
                 </>
               ) : (
                 "Save Changes"
@@ -763,11 +1023,12 @@ export default function StaffManagementPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Reset Password Dialog */}
       <Dialog open={resetOpen} onOpenChange={setResetOpen}>
         <DialogContent className="w-[calc(100vw-2rem)] max-w-sm">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-sm">
-              <KeyRound className="h-4 w-4" />
+            <DialogTitle className="flex items-center gap-2 text-sm font-semibold">
+              <KeyRound className="h-4 w-4 text-primary" />
               Reset Password — {resetTarget?.fullName}
             </DialogTitle>
           </DialogHeader>
@@ -795,7 +1056,11 @@ export default function StaffManagementPage() {
               required
             />
             {pwError && <p className="text-xs text-destructive">{pwError}</p>}
-            <Button className="w-full" onClick={() => void handleResetPassword()} disabled={resetSubmitting || !newPassword || !confirmPassword}>
+            <Button
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+              onClick={() => void handleResetPassword()}
+              disabled={resetSubmitting || !newPassword || !confirmPassword}
+            >
               {resetSubmitting ? (
                 <>
                   <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
@@ -804,7 +1069,7 @@ export default function StaffManagementPage() {
               ) : (
                 <>
                   <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
-                  Reset Password
+                  Save New Password
                 </>
               )}
             </Button>
@@ -812,6 +1077,7 @@ export default function StaffManagementPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Deactivate/Reactivate Alert Dialog */}
       <AlertDialog open={Boolean(deactivateTarget)} onOpenChange={(open) => !open && setDeactivateTarget(null)}>
         <AlertDialogContent className="w-[calc(100vw-2rem)] max-w-sm">
           <AlertDialogHeader>
@@ -827,7 +1093,7 @@ export default function StaffManagementPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className={deactivateTarget?.isActive ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : ""}
+              className={deactivateTarget?.isActive ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : "bg-primary text-primary-foreground hover:bg-primary/90"}
               onClick={() => void handleDeactivate()}
               disabled={deactivateSubmitting}
             >

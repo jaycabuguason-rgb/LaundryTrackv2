@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Search, Eye, EyeOff, Edit, Ban, Printer, ChevronRight, X, QrCode, CalendarIcon,
   Undo2, Redo2, AlertTriangle, Plus, User, Star, Camera, CameraOff,
-  ChevronLeft, Check, RefreshCw, Inbox, RotateCw, Wind, Flag, PackageCheck
+  ChevronLeft, Check, RefreshCw, ExternalLink, Inbox
 } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
@@ -25,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { loyaltyMembers as _seedMembers, statusColors, statusOrder, type Transaction, type PaymentStatus, type LoyaltyMember } from "@/lib/data";
+import { loyaltyMembers as _seedMembers, statusOrder, type Transaction, type PaymentStatus, type LoyaltyMember } from "@/lib/data";
 import { useLoyaltyMembers } from "@/hooks/use-loyalty-members";
 import { formatReadableDateTime } from "@/lib/date-format";
 import {
@@ -46,6 +46,8 @@ import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { PrintReceiptModal } from "@/components/print-receipt-modal";
 import { StatusUpdateSheet, type StatusOption } from "@/components/status-update-sheet";
+import { StatusBadge, PaymentBadge, STATUS_ICONS } from "@/components/status-badge";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // QR Scanner (inline, no package)
@@ -165,11 +167,14 @@ function MemberCard({ member, onClear, stampAfter }: { member: LoyaltyMember; on
     <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 space-y-3">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
-            <Star className="w-4.5 h-4.5 text-primary fill-primary/30" />
+          <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs">
+            {member.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
           </div>
           <div>
-            <p className="font-semibold text-sm text-foreground">{member.name}</p>
+            <div className="flex items-center gap-2">
+              <p className="font-semibold text-sm text-foreground">{member.name}</p>
+              <span className="inline-flex items-center rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 px-2 py-0.5 text-[10px] font-semibold">Loyalty Member</span>
+            </div>
             <p className="text-xs text-muted-foreground">{member.phone}</p>
           </div>
         </div>
@@ -668,15 +673,21 @@ function NewTransactionWizard({
     // Global price label override — per-service showPrice is respected unless global mode forces hide/free
     const globalHidePrice = priceDisplayMode === "free" || priceDisplayMode === "hide";
 
+    const effectiveAddOns = addOnOptions.length > 0 ? addOnOptions : [
+      { id: "def-1", name: "Detergent", rate: "15" },
+      { id: "def-2", name: "Fabric Softener", rate: "15" },
+      { id: "def-3", name: "Bleach", rate: "20" },
+    ];
+
     // Shared add-ons + wash instructions + fee breakdown block
     const renderAddOnsAndFee = () => (
       <>
         {/* Add-ons */}
-        {addOnOptions.length > 0 && (
+        {effectiveAddOns.length > 0 && (
           <div>
             <label className="text-xs font-medium text-foreground block mb-1.5">Add-ons</label>
             <div className="flex flex-wrap gap-2">
-              {addOnOptions.map((ao) => (
+              {effectiveAddOns.map((ao) => (
                 <button
                   key={ao.id}
                   onClick={() => toggleAddOn(ao.name)}
@@ -1148,12 +1159,12 @@ interface TransactionsPageProps {
 }
 
 const MOBILE_STATUS_OPTIONS: StatusOption[] = [
-  { status: "Received", label: "Received", dotClass: "bg-blue-500" },
-  { status: "Washing", label: "Washing", dotClass: "bg-yellow-500" },
-  { status: "Drying", label: "Drying", dotClass: "bg-orange-500" },
-  { status: "Ready", label: "Ready", dotClass: "bg-green-500" },
-  { status: "Claimed", label: "Claimed", dotClass: "bg-gray-500" },
-  { status: "Voided", label: "Voided", dotClass: "bg-red-500" },
+  { status: "Received", label: "Received" },
+  { status: "Washing", label: "Washing" },
+  { status: "Drying", label: "Drying" },
+  { status: "Ready", label: "Ready" },
+  { status: "Claimed", label: "Claimed" },
+  { status: "Voided", label: "Voided" },
 ];
 
 export default function TransactionsPage({
@@ -1603,9 +1614,10 @@ export default function TransactionsPage({
               <div
                 key={txn.id}
                 className={cn(
-                  "space-y-3 px-4 py-3",
+                  "space-y-3 px-4 py-3 border-b border-border transition-colors",
                   isVoided ? "bg-muted/30 opacity-70" : "",
-                  isClaimed ? "text-muted-foreground/70" : ""
+                  isClaimed ? "text-muted-foreground/70" : "",
+                  rowVisualClass(txn)
                 )}
               >
                 <div className="flex items-start justify-between gap-2">
@@ -1621,9 +1633,7 @@ export default function TransactionsPage({
                     <p className="mt-0.5 text-[11px] text-muted-foreground">{txn.arrivalDateTime}</p>
                   </div>
                   <div className="flex flex-col items-end gap-1.5">
-                    <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap", statusColors[txn.status])}>
-                      {txn.status}
-                    </span>
+                    <StatusBadge status={txn.status} />
                     <Button
                       variant="outline"
                       size="sm"
@@ -1652,17 +1662,13 @@ export default function TransactionsPage({
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className={cn(
-                    "inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap",
-                    txn.paymentStatus === "paid"
-                      ? "bg-green-50 text-green-700 border border-green-200"
-                      : "bg-red-50 text-red-600 border border-red-200"
-                  )}>
-                    {txn.paymentStatus === "paid" ? "Paid" : "Unpaid"}
-                  </span>
+                  <PaymentBadge paymentStatus={txn.paymentStatus} />
                   <div className="flex items-center gap-0.5">
                     <Button variant="ghost" size="icon" className="h-8 w-8" title="View" onClick={() => setViewTxn(txn)}>
                       <Eye className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" title="Track Order" onClick={() => window.open(`${origin}${txn.publicTrackingToken ? `/track/${txn.publicTrackingToken}` : `/ticket/${txn.ticketId}`}`, "_blank")}>
+                      <ExternalLink className="w-3.5 h-3.5" />
                     </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8" title="Edit" disabled={isVoided} onClick={() => openEdit(txn)}>
                       <Edit className="w-3.5 h-3.5" />
@@ -1682,9 +1688,21 @@ export default function TransactionsPage({
             );
           })}
           {filtered.length === 0 && (
-            <div className="text-center py-10 text-sm text-muted-foreground">
-              {loading ? "Loading transactions..." : "No transactions found."}
-            </div>
+            <Empty className="py-10">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Inbox />
+                </EmptyMedia>
+                <EmptyTitle className="text-sm">
+                  {loading ? "Loading transactions..." : "No transactions found."}
+                </EmptyTitle>
+                {loading ? null : (
+                  <EmptyDescription>
+                    Try adjusting your filters or search terms.
+                  </EmptyDescription>
+                )}
+              </EmptyHeader>
+            </Empty>
           )}
         </div>
 
@@ -1734,27 +1752,18 @@ export default function TransactionsPage({
                     <td className={cn("px-4 py-3 text-xs text-muted-foreground hidden md:table-cell", isVoided && "line-through", isClaimed && "text-muted-foreground/50")}>{txn.washType}</td>
                     <td className={cn("px-4 py-3 text-xs font-medium", isVoided && "line-through text-foreground", isClaimed ? "text-muted-foreground/60" : "text-foreground")}>₱{txn.fee}</td>
                     <td className="px-4 py-3 hidden sm:table-cell">
-                      <span className={cn(
-                        "inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap",
-                        txn.paymentStatus === "paid"
-                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-                          : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
-                      )}>
-                        {txn.paymentStatus === "paid" ? "Paid" : "Unpaid"}
-                      </span>
+                      <PaymentBadge paymentStatus={txn.paymentStatus} />
                     </td>
                     <td className="px-4 py-3">
-                      <span className={cn(
-                        "inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap",
-                        statusColors[txn.status]
-                      )}>
-                        {txn.status}
-                      </span>
+                      <StatusBadge status={txn.status} />
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-0.5">
                         <Button variant="ghost" size="icon" className="h-8 w-8" title="View" onClick={() => setViewTxn(txn)}>
                           <Eye className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" title="Track Order" onClick={() => window.open(`${origin}${txn.publicTrackingToken ? `/track/${txn.publicTrackingToken}` : `/ticket/${txn.ticketId}`}`, "_blank")}>
+                          <ExternalLink className="w-3.5 h-3.5" />
                         </Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8" title="Edit" disabled={isVoided} onClick={() => openEdit(txn)}>
                           <Edit className="w-3.5 h-3.5" />
@@ -1778,8 +1787,22 @@ export default function TransactionsPage({
               })}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="text-center py-10 text-sm text-muted-foreground">
-                    {loading ? "Loading transactions..." : "No transactions found."}
+                  <td colSpan={9} className="py-10">
+                    <Empty>
+                      <EmptyHeader>
+                        <EmptyMedia variant="icon">
+                          <Inbox />
+                        </EmptyMedia>
+                        <EmptyTitle className="text-sm">
+                          {loading ? "Loading transactions..." : "No transactions found."}
+                        </EmptyTitle>
+                        {loading ? null : (
+                          <EmptyDescription>
+                            Try adjusting your filters or search terms.
+                          </EmptyDescription>
+                        )}
+                      </EmptyHeader>
+                    </Empty>
                   </td>
                 </tr>
               )}
@@ -1817,21 +1840,12 @@ export default function TransactionsPage({
                 {/* Payment Status */}
                 <div className="bg-muted/30 rounded-md p-2.5">
                   <p className="text-[11px] text-muted-foreground mb-1">Payment Status</p>
-                  <span className={cn(
-                    "inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border",
-                    viewTxn.paymentStatus === "paid"
-                      ? "bg-green-50 text-green-700 border-green-200"
-                      : "bg-red-50 text-red-600 border-red-200"
-                  )}>
-                    {viewTxn.paymentStatus === "paid" ? "Paid" : "Unpaid"}
-                  </span>
+                  <PaymentBadge paymentStatus={viewTxn.paymentStatus} />
                 </div>
                 {/* Current Status */}
                 <div className="bg-muted/30 rounded-md p-2.5">
                   <p className="text-[11px] text-muted-foreground mb-1">Current Status</p>
-                  <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium", statusColors[viewTxn.status])}>
-                    {viewTxn.status}
-                  </span>
+                  <StatusBadge status={viewTxn.status} />
                 </div>
                 {/* Wash instructions read-only */}
                 {viewTxn.washInstructions && (
@@ -1924,9 +1938,7 @@ export default function TransactionsPage({
             <div className="flex justify-between items-start pr-4">
               <DialogTitle className="text-lg font-bold">Edit Ticket — {editTxn?.ticketId}</DialogTitle>
               {editTxn && (
-                <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold border shadow-sm mt-0.5", statusColors[editTxn.status])}>
-                  {editTxn.status}
-                </span>
+                <StatusBadge status={editTxn.status} className="border shadow-sm mt-0.5 font-bold" />
               )}
             </div>
             <DialogDescription className="text-sm text-muted-foreground font-medium">
@@ -1991,19 +2003,16 @@ export default function TransactionsPage({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-border/50 shadow-lg p-1.5">
-                    {([
-                      { value: "Received", icon: Inbox },
-                      { value: "Washing", icon: RotateCw },
-                      { value: "Drying", icon: Wind },
-                      { value: "Ready", icon: Flag },
-                      { value: "Claimed", icon: PackageCheck },
-                    ] as const).map(({ value, icon: Icon }) => {
+                    {(
+                      ["Received", "Washing", "Drying", "Ready", "Claimed"] as const
+                    ).map((value) => {
+                      const Icon = STATUS_ICONS[value];
                       const isClaimedBlocked = value === "Claimed" && editPaymentStatus === "unpaid";
                       const isCurrent = value === editStatus;
                       return (
                         <SelectItem key={value} value={value} disabled={isClaimedBlocked} className={cn("cursor-pointer rounded-lg mb-1 last:mb-0", isCurrent ? "bg-muted/60" : "focus:bg-muted/40")}>
                           <div className="flex items-center gap-3 py-1.5 w-full pr-4">
-                            <Icon className={cn("w-4 h-4", isCurrent ? "text-foreground" : "text-muted-foreground")} />
+                            <Icon className={cn("w-4 h-4", isCurrent ? "text-foreground" : "text-muted-foreground")} aria-hidden="true" />
                             <span className={cn("font-medium text-[15px] flex-1 text-left", isCurrent ? "text-foreground" : "text-muted-foreground")}>{value}</span>
                             {isCurrent && (
                               <div className="flex items-center gap-1.5 ml-3">

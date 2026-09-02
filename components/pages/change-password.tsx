@@ -154,7 +154,7 @@ export default function ChangePasswordPage({ adminProfile, onProfileUpdate }: Ch
     <div className="w-full max-w-md space-y-4 md:space-y-6">
 
       {/* ── Update Login Credentials ── */}
-      <Card className="border border-border shadow-none">
+      <Card className="border border-border shadow-sm rounded-xl bg-card">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm">Update Login Credentials</CardTitle>
           <CardDescription className="text-xs">
@@ -232,7 +232,7 @@ export default function ChangePasswordPage({ adminProfile, onProfileUpdate }: Ch
       </Card>
 
       {/* ── Change Password ── */}
-      <Card className="border border-border shadow-none">
+      <Card className="border border-border shadow-sm rounded-xl bg-card">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm">Change Password</CardTitle>
           <CardDescription className="text-xs">

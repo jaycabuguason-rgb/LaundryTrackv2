@@ -256,7 +256,7 @@ export default function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) 
 
   // ── Shared card wrapper ───────────────────────────────────────────────────
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0c249c] px-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#181124] px-4">
       <div
         className="absolute inset-0 opacity-[0.06] pointer-events-none"
         style={{

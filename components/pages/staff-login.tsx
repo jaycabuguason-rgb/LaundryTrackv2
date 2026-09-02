@@ -50,7 +50,7 @@ export default function StaffLoginPage({
   };
 
   return (
-    <div className="relative isolate min-h-screen flex items-center justify-center bg-[#0c249c] px-4">
+    <div className="relative isolate min-h-screen flex items-center justify-center bg-[#181124] px-4">
       {/* Subtle dot pattern */}
       <div
         className="absolute inset-0 opacity-[0.06] pointer-events-none"

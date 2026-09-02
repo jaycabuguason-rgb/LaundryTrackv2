@@ -79,7 +79,7 @@ export default function RegisterPage({ onBack }: RegisterPageProps) {
     setErrors((prev) => ({ ...prev, [field]: undefined }));
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0c249c] px-4 py-8">
+    <div className="min-h-screen flex items-center justify-center bg-[#181124] px-4 py-8">
       {/* Subtle pattern overlay */}
       <div
         className="absolute inset-0 opacity-[0.06] pointer-events-none"

@@ -93,7 +93,6 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
           <div ref={receiptRef} className="receipt font-mono text-xs text-black space-y-0" style={{ fontFamily: "'Courier New', Courier, monospace" }}>
             {/* Header */}
             {profile.logoDataUrl && (
-              // eslint-disable-next-line @next/next/no-img-element
               <div className="center" style={{ marginBottom: 4 }}>
                 <img src={profile.logoDataUrl} alt="Shop logo" width={56} height={56} style={{ display: "block", margin: "0 auto", objectFit: "contain" }} />
               </div>

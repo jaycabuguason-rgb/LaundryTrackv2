@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Plus, Trash2, Edit, Save, Upload, Clock, Download, Loader2, CheckCircle2, Scale, ShoppingBasket, Package, X, Eye, EyeOff, Tag, Undo2, Redo2 } from "lucide-react";
+import { Plus, Trash2, Edit, Save, Upload, Clock, Download, Loader2, CheckCircle2, Scale, ShoppingBasket, Package, X, Eye, EyeOff, Tag, Undo2, Redo2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -1172,7 +1172,7 @@ function BusinessProfileSettings({ onSave }: { onSave?: (profile: BusinessProfil
 
       {isDirty && (
         <p className="text-xs text-amber-600 flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
+          <AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" />
           You have unsaved changes.
         </p>
       )}
@@ -1582,19 +1582,57 @@ interface SettingsPageProps {
   loyaltyEnabled?: boolean;
   onLoyaltyEnabledChange?: (val: boolean) => void;
   onBusinessProfileChange?: (profile: BusinessProfile) => void;
+  onNavigate?: (page: Page) => void;
 }
 
-export default function SettingsPage({ page, loyaltyEnabled = true, onLoyaltyEnabledChange, onBusinessProfileChange }: SettingsPageProps) {
-  switch (page) {
-    case "settings-pricing": return <PricingSettings />;
-    case "settings-business-profile": return <BusinessProfileSettings onSave={onBusinessProfileChange} />;
-    case "settings-loyalty": return (
-      <LoyaltyProgramSettings
-        loyaltyEnabled={loyaltyEnabled}
-        onLoyaltyEnabledChange={onLoyaltyEnabledChange ?? (() => {})}
-      />
-    );
-    case "settings-backup": return <BackupSettings />;
-    default: return null;
-  }
+export default function SettingsPage({ page: initialPage, loyaltyEnabled = true, onLoyaltyEnabledChange, onBusinessProfileChange, onNavigate }: SettingsPageProps) {
+  const [activeTab, setActiveTab] = useState<Page>(initialPage);
+
+  useEffect(() => {
+    setActiveTab(initialPage);
+  }, [initialPage]);
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case "settings-pricing": return <PricingSettings />;
+      case "settings-business-profile": return <BusinessProfileSettings onSave={onBusinessProfileChange} />;
+      case "settings-loyalty": return (
+        <LoyaltyProgramSettings
+          loyaltyEnabled={loyaltyEnabled}
+          onLoyaltyEnabledChange={onLoyaltyEnabledChange ?? (() => {})}
+        />
+      );
+      case "settings-backup": return <BackupSettings />;
+      default: return <PricingSettings />;
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Top Tab Switcher */}
+      <div className="flex border-b border-border -mb-1 overflow-x-auto">
+        {[
+          { id: "settings-pricing" as Page, label: "Pricing" },
+          { id: "settings-business-profile" as Page, label: "Business Profile" },
+          { id: "settings-loyalty" as Page, label: "Loyalty Program" },
+          { id: "settings-backup" as Page, label: "Backup & Restore" },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={cn(
+              "px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap cursor-pointer",
+              activeTab === tab.id
+                ? "border-primary text-primary font-semibold"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {renderContent()}
+    </div>
+  );
 }

@@ -7,7 +7,9 @@ import {
   CloudRain,
   Download,
   FileText,
+  Inbox,
   Lightbulb,
+  PackageCheck,
   PieChart as PieChartIcon,
   TrendingUp,
 } from "lucide-react";
@@ -36,7 +38,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Transaction } from "@/lib/data";
-import { statusColors } from "@/lib/data";
+import { StatusBadge, PaymentBadge } from "@/components/status-badge";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { cn } from "@/lib/utils";
 
 type ExportSection = "transactions" | "analytics" | "customers";
@@ -60,10 +63,11 @@ const exportOptions: Array<{ id: ExportSection; label: string }> = [
   { id: "customers", label: "Customer Summary" },
 ];
 
-const PIE_COLORS = ["hsl(257 58% 49%)", "hsl(214 62% 59%)", "hsl(39 79% 54%)", "hsl(142 42% 46%)", "hsl(266 17% 53%)", "hsl(44 83% 61%)"];
+const PIE_COLORS = ["hsl(257 58% 49%)", "hsl(142 71% 45%)", "hsl(214 62% 59%)", "hsl(39 79% 54%)", "hsl(266 17% 53%)", "hsl(44 83% 61%)"];
 const BUSY_BAR = "hsl(257 58% 49%)";
+const EMERALD_BAR = "hsl(142 71% 45%)";
 const NORMAL_BAR = "hsl(257 58% 49% / 0.35)";
-const MUTED_BAR = "hsl(35 28% 92%)";
+const MUTED_BAR = "hsl(35 28% 88%)";
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const ORDERED_DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const FORECAST_HOURS = Array.from({ length: 16 }, (_, index) => index + 6);
@@ -648,9 +652,7 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
                       <p className="mt-0.5 truncate text-sm font-medium text-foreground">{transaction.customerName}</p>
                       <p className="mt-0.5 text-[11px] text-muted-foreground">{transaction.arrivalDateTime}</p>
                     </div>
-                    <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium", statusColors[transaction.status])}>
-                      {transaction.status}
-                    </span>
+                    <StatusBadge status={transaction.status} className="shrink-0" />
                   </div>
                   <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/30 p-2.5">
                     <div>
@@ -669,9 +671,15 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
                 </div>
               ))}
               {dailyTransactions.length === 0 && (
-                <div className="px-4 py-10 text-center text-sm text-muted-foreground">
-                  No transactions found for this date.
-                </div>
+                <Empty className="px-4 py-10">
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                      <Inbox />
+                    </EmptyMedia>
+                    <EmptyTitle className="text-sm">No transactions found for this date.</EmptyTitle>
+                    <EmptyDescription>Pick a different date or add transactions for this day.</EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
               )}
             </div>
             <div className="hidden overflow-x-auto md:block">
@@ -695,16 +703,22 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
                       <td className="px-4 py-3 text-xs text-muted-foreground">{transaction.weight} kg</td>
                       <td className="px-4 py-3 text-xs font-semibold text-foreground">{formatCurrency(transaction.fee)}</td>
                       <td className="px-4 py-3">
-                        <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium", statusColors[transaction.status])}>
-                          {transaction.status}
-                        </span>
+                        <StatusBadge status={transaction.status} />
                       </td>
                     </tr>
                   ))}
                   {dailyTransactions.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="px-4 py-10 text-center text-sm text-muted-foreground">
-                        No transactions found for this date.
+                      <td colSpan={7} className="px-4 py-10">
+                        <Empty>
+                          <EmptyHeader>
+                            <EmptyMedia variant="icon">
+                              <Inbox />
+                            </EmptyMedia>
+                            <EmptyTitle className="text-sm">No transactions found for this date.</EmptyTitle>
+                            <EmptyDescription>Pick a different date or add transactions for this day.</EmptyDescription>
+                          </EmptyHeader>
+                        </Empty>
                       </td>
                     </tr>
                   )}
@@ -824,8 +838,8 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie data={paymentMixData} dataKey="value" nameKey="name" outerRadius={78}>
-                      <Cell fill="#16a34a" />
-                      <Cell fill="#ef4444" />
+                      <Cell fill="hsl(142 71% 45%)" />
+                      <Cell fill="hsl(0 84% 60%)" />
                     </Pie>
                     <Tooltip formatter={(value: number) => [formatCurrency(value), "Revenue"]} />
                     <Legend />
@@ -1139,20 +1153,20 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
                 </LineChart>
               </ResponsiveContainer>
             </div>
-            <p className={cn("text-sm font-semibold", forecastMetrics.trendPercent >= 0 ? "text-green-600" : "text-red-600")}>
+            <p className={cn("text-sm font-semibold", forecastMetrics.trendPercent >= 0 ? "text-emerald-600" : "text-destructive")}>
               {forecastMetrics.trendPercent >= 0 ? "Up" : "Down"} {Math.abs(forecastMetrics.trendPercent)}% vs last month
             </p>
           </CardContent>
         </Card>
 
-        <Card className="border border-border bg-card shadow-none">
+        <Card className="border border-border shadow-none">
           <CardContent className="flex gap-3 p-4">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
               <Lightbulb className="h-4 w-4" />
             </div>
             <div>
               <p className="text-sm font-semibold text-foreground">Forecast insight</p>
-              <p className="mt-1 text-sm leading-6 text-blue-900">{forecastMetrics.insight}</p>
+              <p className="mt-1 text-sm leading-6 text-foreground">{forecastMetrics.insight}</p>
             </div>
           </CardContent>
         </Card>
@@ -1173,14 +1187,7 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
                       <p className="mt-0.5 truncate text-sm font-medium text-foreground">{transaction.customerName}</p>
                       <p className="mt-0.5 text-[11px] text-muted-foreground">{transaction.phone || "-"}</p>
                     </div>
-                    <span
-                      className={cn(
-                        "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold uppercase",
-                        transaction.paymentStatus === "paid" ? "bg-green-500 text-white" : "bg-red-500 text-white",
-                      )}
-                    >
-                      {transaction.paymentStatus}
-                    </span>
+                    <PaymentBadge paymentStatus={transaction.paymentStatus} className="shrink-0 font-bold uppercase" />
                   </div>
                   <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/30 p-2.5">
                     <div>
@@ -1199,9 +1206,15 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
                 </div>
               ))}
               {unclaimedItems.length === 0 && (
-                <div className="px-4 py-10 text-center text-sm text-muted-foreground">
-                  No ready-for-pickup items at the moment.
-                </div>
+                <Empty className="px-4 py-10">
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                      <PackageCheck />
+                    </EmptyMedia>
+                    <EmptyTitle className="text-sm">No ready-for-pickup items at the moment.</EmptyTitle>
+                    <EmptyDescription>Items marked Ready will appear here for claiming.</EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
               )}
             </div>
             <div className="hidden overflow-x-auto md:block">
@@ -1225,21 +1238,22 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
                       <td className="px-4 py-3 text-xs text-muted-foreground">{transaction.washType}</td>
                       <td className="px-4 py-3 text-xs font-semibold text-foreground">{formatCurrency(transaction.fee)}</td>
                       <td className="px-4 py-3">
-                        <span
-                          className={cn(
-                            "rounded-full px-2 py-0.5 text-[11px] font-bold uppercase",
-                            transaction.paymentStatus === "paid" ? "bg-green-500 text-white" : "bg-red-500 text-white",
-                          )}
-                        >
-                          {transaction.paymentStatus}
-                        </span>
+                        <PaymentBadge paymentStatus={transaction.paymentStatus} className="font-bold uppercase" />
                       </td>
                     </tr>
                   ))}
                   {unclaimedItems.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="px-4 py-10 text-center text-sm text-muted-foreground">
-                        No ready-for-pickup items at the moment.
+                      <td colSpan={7} className="px-4 py-10">
+                        <Empty>
+                          <EmptyHeader>
+                            <EmptyMedia variant="icon">
+                              <PackageCheck />
+                            </EmptyMedia>
+                            <EmptyTitle className="text-sm">No ready-for-pickup items at the moment.</EmptyTitle>
+                            <EmptyDescription>Items marked Ready will appear here for claiming.</EmptyDescription>
+                          </EmptyHeader>
+                        </Empty>
                       </td>
                     </tr>
                   )}

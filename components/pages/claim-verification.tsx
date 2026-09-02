@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PrintReceiptModal } from "@/components/print-receipt-modal";
-import { auditLogs as initialLogs, statusColors, type AuditLog, type Transaction, type PaymentStatus } from "@/lib/data";
+import { auditLogs as initialLogs, type AuditLog, type Transaction, type PaymentStatus } from "@/lib/data";
+import { StatusBadge, PaymentBadge } from "@/components/status-badge";
 import type { UpdateTransactionInput } from "@/lib/transaction-contracts";
 import { cn } from "@/lib/utils";
 
@@ -202,13 +203,13 @@ export default function ClaimVerificationPage({
   const actionBadgeColor = (action: AuditLog["action"]) => {
     switch (action) {
       case "Claimed":
-        return "bg-green-100 text-green-700";
+        return "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20";
       case "Denied":
-        return "bg-red-100 text-red-700";
+        return "bg-destructive/10 text-destructive border border-destructive/20";
       case "Override":
-        return "bg-orange-100 text-orange-700";
+        return "bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20";
       default:
-        return "bg-blue-100 text-blue-700";
+        return "bg-primary/10 text-primary border border-primary/20";
     }
   };
 
@@ -218,20 +219,20 @@ export default function ClaimVerificationPage({
   return (
     <div className="space-y-4 md:space-y-6">
       {successMessage && (
-        <div className="animate-in fade-in slide-in-from-top-2 flex items-start gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-          <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
+        <div className="animate-in fade-in slide-in-from-top-2 flex items-start gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-900 dark:text-emerald-200">
+          <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
           <span>{successMessage}</span>
         </div>
       )}
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
         </div>
       )}
 
       <div className="grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-2">
-        <Card className="border border-border shadow-none">
+        <Card className="border border-border bg-card shadow-sm rounded-xl">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold">QR Code Scanner</CardTitle>
           </CardHeader>
@@ -240,7 +241,7 @@ export default function ClaimVerificationPage({
           </CardContent>
         </Card>
 
-        <Card className="border border-border shadow-none">
+        <Card className="border border-border bg-card shadow-sm rounded-xl">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold">Manual Lookup</CardTitle>
           </CardHeader>
@@ -253,7 +254,7 @@ export default function ClaimVerificationPage({
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   onKeyDown={(event) => event.key === "Enter" && void handleSearch()}
-                  className="h-10 pl-9 text-sm md:h-9"
+                  className="h-10 pl-9 text-sm md:h-9 bg-background"
                 />
               </div>
               <Button size="sm" onClick={() => void handleSearch()} className="min-h-[44px] px-4 md:min-h-0" disabled={loading}>
@@ -266,13 +267,13 @@ export default function ClaimVerificationPage({
             </p>
 
             {notFound && (
-              <div className="rounded-lg border border-red-100 bg-red-50 p-4 text-center text-sm text-red-600">
+              <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-center text-sm text-destructive">
                 No ticket found for &quot;{query}&quot;
               </div>
             )}
 
             {result && (
-              <div className="space-y-3 rounded-lg border border-border p-3 md:p-4">
+              <div className="space-y-3 rounded-xl border border-border bg-muted/20 p-3 md:p-4">
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   {[
                     { label: "Ticket ID", value: result.ticketId },
@@ -280,18 +281,18 @@ export default function ClaimVerificationPage({
                     { label: "Drop-off Date", value: result.dropOffDate },
                     { label: "Wash Type", value: result.washType },
                   ].map((row) => (
-                    <div key={row.label} className="rounded bg-muted/30 p-2.5">
-                      <p className="text-[11px] text-muted-foreground">{row.label}</p>
-                      <p className="mt-0.5 text-xs font-medium text-foreground">{row.value}</p>
+                    <div key={row.label} className="rounded-lg bg-background p-2.5 border border-border/60">
+                      <p className="text-[11px] font-medium text-muted-foreground">{row.label}</p>
+                      <p className="mt-0.5 text-xs font-semibold text-foreground">{row.value}</p>
                     </div>
                   ))}
-                  <div className="rounded bg-muted/30 p-2.5">
-                    <p className="text-[11px] text-muted-foreground">Total Fee</p>
-                    <p className="mt-0.5 text-xs font-medium text-foreground">PHP {result.fee.toLocaleString()}</p>
+                  <div className="rounded-lg bg-background p-2.5 border border-border/60">
+                    <p className="text-[11px] font-medium text-muted-foreground">Total Fee</p>
+                    <p className="mt-0.5 text-xs font-semibold text-foreground">PHP {result.fee.toLocaleString()}</p>
                   </div>
-                  <div className="rounded bg-muted/30 p-2.5">
-                    <p className="text-[11px] text-muted-foreground">ETA</p>
-                    <p className="mt-0.5 text-xs font-medium text-foreground">
+                  <div className="rounded-lg bg-background p-2.5 border border-border/60">
+                    <p className="text-[11px] font-medium text-muted-foreground">ETA</p>
+                    <p className="mt-0.5 text-xs font-semibold text-foreground">
                       {result.eta ?? "Awaiting estimate"}
                     </p>
                   </div>
@@ -299,31 +300,22 @@ export default function ClaimVerificationPage({
 
                 <div className="space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs text-muted-foreground">Status:</span>
-                    <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium", statusColors[result.status])}>
-                      {result.status}
-                    </span>
-                    <span className="ml-2 text-xs text-muted-foreground">Payment:</span>
-                    <span
-                      className={cn(
-                        "rounded-full px-2 py-0.5 text-[11px] font-bold uppercase",
-                        result.paymentStatus === "paid" ? "bg-green-500 text-white" : "bg-red-500 text-white",
-                      )}
-                    >
-                      {result.paymentStatus}
-                    </span>
+                    <span className="text-xs font-medium text-muted-foreground">Status:</span>
+                    <StatusBadge status={result.status} />
+                    <span className="ml-2 text-xs font-medium text-muted-foreground">Payment:</span>
+                    <PaymentBadge paymentStatus={result.paymentStatus} className="font-bold uppercase" />
                   </div>
 
                   {!isAlreadyClaimed && (
-                    <div className="rounded-lg border border-border bg-muted/20 p-2.5">
-                      <p className="mb-1.5 text-[11px] font-semibold text-muted-foreground">Update Payment Status</p>
+                    <div className="rounded-xl border border-border bg-background p-3">
+                      <p className="mb-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Update Payment Status</p>
                       <div className="flex gap-2">
                         <Button
                           size="sm"
                           variant={paymentToggle === "unpaid" ? "default" : "outline"}
                           className={cn(
-                            "h-8 flex-1 text-xs",
-                            paymentToggle === "unpaid" && "bg-red-500 text-white hover:bg-red-600",
+                            "h-8 flex-1 text-xs font-medium transition-colors",
+                            paymentToggle === "unpaid" && "bg-destructive text-destructive-foreground hover:bg-destructive/90",
                           )}
                           onClick={() => setPaymentToggle("unpaid")}
                         >
@@ -333,8 +325,8 @@ export default function ClaimVerificationPage({
                           size="sm"
                           variant={paymentToggle === "paid" ? "default" : "outline"}
                           className={cn(
-                            "h-8 flex-1 text-xs",
-                            paymentToggle === "paid" && "bg-green-500 text-white hover:bg-green-600",
+                            "h-8 flex-1 text-xs font-medium transition-colors",
+                            paymentToggle === "paid" && "bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600",
                           )}
                           onClick={() => setPaymentToggle("paid")}
                         >
@@ -346,21 +338,21 @@ export default function ClaimVerificationPage({
                 </div>
 
                 {isAlreadyClaimed && (
-                  <div className="flex items-start gap-2 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
-                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-600" />
+                  <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-900 dark:text-amber-200">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
                     <div>
                       <p className="font-semibold">Already Claimed</p>
-                      <p className="mt-0.5 text-xs">This ticket has already been claimed.</p>
+                      <p className="mt-0.5 text-xs text-amber-800/90 dark:text-amber-300/90">This ticket has already been claimed.</p>
                     </div>
                   </div>
                 )}
 
                 {isNotReady && (
-                  <div className="flex items-start gap-2 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
-                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-600" />
+                  <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-900 dark:text-amber-200">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
                     <div>
                       <p className="font-semibold">Not Ready for Pickup</p>
-                      <p className="mt-0.5 text-xs">Current status: {result.status}</p>
+                      <p className="mt-0.5 text-xs text-amber-800/90 dark:text-amber-300/90">Current status: {result.status}</p>
                     </div>
                   </div>
                 )}
@@ -372,8 +364,10 @@ export default function ClaimVerificationPage({
                         <Button
                           size="sm"
                           className={cn(
-                            "flex min-h-[44px] flex-1 items-center justify-center gap-1.5 sm:min-h-0 sm:flex-none",
-                            isNotReady ? "bg-orange-600 text-white hover:bg-orange-700" : "bg-green-600 text-white hover:bg-green-700",
+                            "flex min-h-[44px] flex-1 items-center justify-center gap-1.5 font-medium sm:min-h-0 sm:flex-none transition-colors",
+                            isNotReady
+                              ? "bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-700 dark:hover:bg-amber-600"
+                              : "bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600",
                           )}
                           onClick={() => void handleClaim()}
                           disabled={submitting}
@@ -385,7 +379,7 @@ export default function ClaimVerificationPage({
                       <Button
                         size="sm"
                         variant="outline"
-                        className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 border-blue-200 text-blue-600 hover:bg-blue-50 sm:min-h-0 sm:flex-none"
+                        className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 border-border hover:bg-accent hover:text-accent-foreground sm:min-h-0 sm:flex-none"
                         onClick={handleReprintReceipt}
                       >
                         <Printer className="h-3.5 w-3.5" /> Reprint Receipt
@@ -394,7 +388,7 @@ export default function ClaimVerificationPage({
                         <Button
                           size="sm"
                           variant="destructive"
-                          className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 sm:min-h-0 sm:flex-none"
+                          className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 font-medium sm:min-h-0 sm:flex-none"
                           onClick={() => setDenyMode(true)}
                         >
                           <XCircle className="h-3.5 w-3.5" /> Deny
@@ -413,11 +407,11 @@ export default function ClaimVerificationPage({
                       placeholder="Reason for denial (optional)..."
                       value={denyReason}
                       onChange={(event) => setDenyReason(event.target.value)}
-                      className="resize-none text-sm"
+                      className="resize-none text-sm bg-background border-border"
                       rows={2}
                     />
                     <div className="flex gap-2">
-                      <Button size="sm" variant="destructive" className="flex-1 justify-center" onClick={confirmDeny}>
+                      <Button size="sm" variant="destructive" className="flex-1 justify-center font-medium" onClick={confirmDeny}>
                         Confirm Deny
                       </Button>
                       <Button size="sm" variant="outline" className="flex-1 justify-center" onClick={() => setDenyMode(false)}>
@@ -432,46 +426,41 @@ export default function ClaimVerificationPage({
         </Card>
       </div>
 
-      <Card className="border border-border shadow-none">
+      <Card className="border border-border bg-card shadow-sm rounded-xl">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold">Audit Log</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-border md:hidden">
             {logs.map((log) => (
-              <div key={log.id} className="space-y-3 p-4">
+              <div key={log.id} className="space-y-3 p-4 hover:bg-muted/30 transition-colors">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 font-mono text-xs font-semibold text-primary">{log.ticketId}</span>
-                    <p className="mt-0.5 truncate text-sm font-medium text-foreground">{log.customerName || "-"}</p>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground">{log.dateTime}</p>
+                  <div className="min-w-0 space-y-1">
+                    <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 font-mono text-xs font-semibold text-primary">
+                      {log.ticketId}
+                    </span>
+                    <p className="truncate text-sm font-medium text-foreground">{log.customerName || "-"}</p>
+                    <p className="text-[11px] text-muted-foreground">{log.dateTime}</p>
                   </div>
-                  <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium", actionBadgeColor(log.action))}>
+                  <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-medium", actionBadgeColor(log.action))}>
                     {log.action}
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-2 rounded-md bg-muted/30 p-2.5">
+                <div className="grid grid-cols-2 gap-2 rounded-lg bg-muted/30 p-2.5 border border-border/50">
                   <div>
-                    <p className="text-[10px] text-muted-foreground">Payment</p>
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Payment</p>
                     {log.paymentStatus ? (
-                      <span
-                        className={cn(
-                          "mt-0.5 inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase",
-                          log.paymentStatus === "paid" ? "bg-green-500 text-white" : "bg-red-500 text-white",
-                        )}
-                      >
-                        {log.paymentStatus}
-                      </span>
+                      <PaymentBadge paymentStatus={log.paymentStatus} className="mt-0.5 text-[10px] font-bold uppercase" />
                     ) : (
                       <p className="text-xs text-muted-foreground">-</p>
                     )}
                   </div>
                   <div>
-                    <p className="text-[10px] text-muted-foreground">Staff</p>
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Staff</p>
                     <p className="mt-0.5 text-xs font-medium text-foreground">{log.staff}</p>
                   </div>
                   <div className="col-span-2">
-                    <p className="text-[10px] text-muted-foreground">Notes</p>
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Notes</p>
                     <p className="mt-0.5 text-xs text-foreground">{log.notes || "-"}</p>
                   </div>
                 </div>
@@ -491,25 +480,22 @@ export default function ClaimVerificationPage({
               </thead>
               <tbody>
                 {logs.map((log) => (
-                  <tr key={log.id} className="border-b border-border last:border-0 hover:bg-muted/30">
+                  <tr key={log.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
                     <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">{log.dateTime}</td>
-                    <td className="px-4 py-3"><span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 font-mono text-xs font-semibold text-primary">{log.ticketId}</span></td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground">{log.customerName || "-"}</td>
                     <td className="px-4 py-3">
-                      <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium", actionBadgeColor(log.action))}>
+                      <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 font-mono text-xs font-semibold text-primary">
+                        {log.ticketId}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-xs font-medium text-foreground">{log.customerName || "-"}</td>
+                    <td className="px-4 py-3">
+                      <span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium", actionBadgeColor(log.action))}>
                         {log.action}
                       </span>
                     </td>
                     <td className="px-4 py-3">
                       {log.paymentStatus ? (
-                        <span
-                          className={cn(
-                            "rounded-full px-2 py-0.5 text-[11px] font-bold uppercase",
-                            log.paymentStatus === "paid" ? "bg-green-500 text-white" : "bg-red-500 text-white",
-                          )}
-                        >
-                          {log.paymentStatus}
-                        </span>
+                        <PaymentBadge paymentStatus={log.paymentStatus} className="font-bold uppercase" />
                       ) : (
                         <span className="text-xs text-muted-foreground">-</span>
                       )}
