@@ -44,8 +44,7 @@ import { cn } from "@/lib/utils";
 
 type ExportSection = "transactions" | "analytics" | "customers";
 type ForecastRange = "7d" | "30d" | "3m" | "6m" | "custom";
-type RangePreset = "day" | "week" | "month" | "year";
-
+type RangePreset = "day" | "week" | "month" | "year" | "custom";
 type ReportsPageProps = {
   transactions: Transaction[];
   shopName?: string;
@@ -83,7 +82,7 @@ function formatCurrency(value: number) {
   return `₱${value.toLocaleString()}`;
 }
 
-function getHourLabel(transaction: Transaction) {
+function getServiceIcon(service: string) {
   const match = transaction.arrivalDateTime.match(/(\d{2}):(\d{2})/);
   if (!match) return "Unknown";
   const hour = Number(match[1]);
@@ -323,8 +322,10 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
 
   const applyPreset = (preset: RangePreset) => {
     setRangePreset(preset);
-    setExportFromDate(periodRanges[preset].from);
-    setExportToDate(periodRanges[preset].to);
+    if (preset !== "custom") {
+      setExportFromDate(periodRanges[preset].from);
+      setExportToDate(periodRanges[preset].to);
+    }
   };
 
   const summaryDateKey = format(summaryDate, "yyyy-MM-dd");
@@ -650,21 +651,21 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
                     <div className="min-w-0">
                       <p className="font-mono text-xs font-semibold text-primary">{transaction.ticketId}</p>
                       <p className="mt-0.5 truncate text-sm font-medium text-foreground">{transaction.customerName}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">{transaction.arrivalDateTime}</p>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground">{transaction.arrivalDateTime}</p>
                     </div>
                     <StatusBadge status={transaction.status} className="shrink-0" />
                   </div>
                   <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/30 p-2.5">
                     <div>
-                      <p className="text-xs text-muted-foreground">Service</p>
+                      <p className="text-[10px] text-muted-foreground">Service</p>
                       <p className="truncate text-xs font-medium text-foreground">{transaction.washType}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Weight</p>
+                      <p className="text-[10px] text-muted-foreground">Weight</p>
                       <p className="text-xs font-medium text-foreground">{transaction.weight} kg</p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Fee</p>
+                      <p className="text-[10px] text-muted-foreground">Fee</p>
                       <p className="text-xs font-semibold text-foreground">{formatCurrency(transaction.fee)}</p>
                     </div>
                   </div>
@@ -732,7 +733,7 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
       <TabsContent value="analytics" className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground">Period:</span>
-          {(["day", "week", "month", "year"] as const).map((preset) => (
+          {(["day", "week", "month", "year", "custom"] as const).map((preset) => (
             <Button
               key={preset}
               size="sm"
@@ -743,6 +744,58 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
               {preset}
             </Button>
           ))}
+
+          {rangePreset === "custom" && (
+            <div className="flex flex-wrap items-center gap-2 ml-1 sm:ml-2 pl-2 border-l border-border">
+              {/* From Date Picker */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 font-normal">
+                    <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span>From: {format(exportFromDate, "MMM dd, yyyy")}</span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={exportFromDate}
+                    onSelect={(d) => {
+                      if (d) {
+                        setExportFromDate(d);
+                        if (d > exportToDate) setExportToDate(d);
+                      }
+                    }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+
+              <span className="text-xs text-muted-foreground">to</span>
+
+              {/* To Date Picker */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 font-normal">
+                    <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span>To: {format(exportToDate, "MMM dd, yyyy")}</span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={exportToDate}
+                    onSelect={(d) => {
+                      if (d) {
+                        setExportToDate(d);
+                        if (d < exportFromDate) setExportFromDate(d);
+                      }
+                    }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -803,8 +856,8 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
                 Market and Sales Mix
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="h-[220px]">
+            <CardContent className="space-y-4">
+              <div className="h-[200px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie data={serviceMixData} dataKey="value" nameKey="name" outerRadius={80} innerRadius={45}>
@@ -813,10 +866,22 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
                       ))}
                     </Pie>
                     <Tooltip formatter={(value: number) => [formatCurrency(value), "Revenue"]} />
-                    <Legend />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
+
+              {/* Icon Legend for Services */}
+              <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 pt-1">
+                {serviceMixData.map((entry) => (
+                  <div key={entry.name} className="flex items-center gap-1.5 text-xs text-foreground font-medium">
+                    <span className="p-0.5 rounded-md bg-muted/60">
+                      {getServiceIcon(entry.name)}
+                    </span>
+                    <span>{entry.name}</span>
+                  </div>
+                ))}
+              </div>
+
               <div className="rounded-xl border border-border bg-muted/20 p-4">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Top Service</p>
                 <p className="mt-1 text-lg font-bold text-foreground">{serviceRevenue[0]?.service ?? "-"}</p>
@@ -833,8 +898,8 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-semibold">Payment Split</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="h-[220px]">
+            <CardContent className="space-y-4">
+              <div className="h-[200px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie data={paymentMixData} dataKey="value" nameKey="name" outerRadius={78}>
@@ -842,9 +907,22 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
                       <Cell fill="hsl(0 84% 60%)" />
                     </Pie>
                     <Tooltip formatter={(value: number) => [formatCurrency(value), "Revenue"]} />
-                    <Legend />
                   </PieChart>
                 </ResponsiveContainer>
+              </div>
+
+              {/* Icon Legend for Payment Split */}
+              <div className="flex flex-wrap items-center justify-center gap-4 pt-1">
+                {paymentMixData.map((item) => (
+                  <div key={item.name} className="flex items-center gap-1.5 text-xs text-foreground font-medium">
+                    {item.name === "Paid" ? (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    ) : (
+                      <AlertCircle className="w-3.5 h-3.5 text-red-500 dark:text-red-400 shrink-0" />
+                    )}
+                    <span>{item.name}</span>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
@@ -853,8 +931,8 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-semibold">Status Distribution</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="h-[220px]">
+            <CardContent className="space-y-4">
+              <div className="h-[200px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie data={statusMixData} dataKey="value" nameKey="name" outerRadius={78}>
@@ -863,9 +941,18 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
                       ))}
                     </Pie>
                     <Tooltip />
-                    <Legend />
                   </PieChart>
                 </ResponsiveContainer>
+              </div>
+
+              {/* Icon Legend for Status Distribution */}
+              <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 pt-1">
+                {statusMixData.map((entry) => (
+                  <div key={entry.name} className="flex items-center gap-1.5 text-xs text-foreground font-medium">
+                    {getStatusIconComponent(entry.name)}
+                    <span>{entry.name}</span>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
@@ -915,7 +1002,7 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
                     <p className="shrink-0 text-sm font-bold text-foreground">{formatCurrency(row.revenue)}</p>
                   </div>
                   <div className="rounded-md bg-muted/30 p-2.5">
-                    <p className="text-xs text-muted-foreground">Average per order</p>
+                    <p className="text-[10px] text-muted-foreground">Average per order</p>
                     <p className="mt-0.5 text-xs font-medium text-foreground">
                       {formatCurrency(Math.round(row.revenue / Math.max(row.count, 1)))}
                     </p>
@@ -1185,21 +1272,21 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
                     <div className="min-w-0">
                       <p className="font-mono text-xs font-semibold text-primary">{transaction.ticketId}</p>
                       <p className="mt-0.5 truncate text-sm font-medium text-foreground">{transaction.customerName}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">{transaction.phone || "-"}</p>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground">{transaction.phone || "-"}</p>
                     </div>
                     <PaymentBadge paymentStatus={transaction.paymentStatus} className="shrink-0 font-bold uppercase" />
                   </div>
                   <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/30 p-2.5">
                     <div>
-                      <p className="text-xs text-muted-foreground">Arrival</p>
+                      <p className="text-[10px] text-muted-foreground">Arrival</p>
                       <p className="truncate text-xs font-medium text-foreground">{transaction.arrivalDateTime}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Service</p>
+                      <p className="text-[10px] text-muted-foreground">Service</p>
                       <p className="truncate text-xs font-medium text-foreground">{transaction.washType}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Fee</p>
+                      <p className="text-[10px] text-muted-foreground">Fee</p>
                       <p className="text-xs font-semibold text-foreground">{formatCurrency(transaction.fee)}</p>
                     </div>
                   </div>
