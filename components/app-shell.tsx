@@ -47,6 +47,7 @@ const preloadablePages = {
   dashboard: DashboardPage,
   processing: ProcessingPage,
   transactions: TransactionsPage,
+  "new-transaction": TransactionsPage,
   "claim-verification": ClaimVerificationPage,
   reports: ReportsPage,
   "settings-pricing": SettingsPage,

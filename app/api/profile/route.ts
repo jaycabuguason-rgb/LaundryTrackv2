@@ -28,34 +28,39 @@ export async function PUT(request: Request) {
     if (phone !== undefined) updatePayload.phone_number = phone;
 
     if (Object.keys(updatePayload).length > 0) {
-      await supabaseAdmin
-        .from("profiles")
-        .update(updatePayload)
-        .eq("id", actor.id)
-        .catch(() => undefined);
+      try {
+        await supabaseAdmin
+          .from("profiles")
+          .update(updatePayload)
+          .eq("id", actor.id);
+      } catch {}
 
       // 2. Update auth user metadata
-      await supabaseAdmin.auth.admin.updateUserById(actor.id, {
-        user_metadata: {
-          ...(name !== undefined ? { full_name: name, name } : {}),
-          ...(phone !== undefined ? { phone_number: phone, phone } : {}),
-        },
-      }).catch(() => undefined);
+      try {
+        await supabaseAdmin.auth.admin.updateUserById(actor.id, {
+          user_metadata: {
+            ...(name !== undefined ? { full_name: name, name } : {}),
+            ...(phone !== undefined ? { phone_number: phone, phone } : {}),
+          },
+        });
+      } catch {}
     }
 
     // 3. Log audit event
-    await createAuditLog({
-      action: "settings_changed",
-      summary: "Updated user profile details",
-      details: `Updated profile for ${actor.name} (${actor.email}): ${name ? `Name: ${name} ` : ""}${phone ? `Phone: ${phone}` : ""}`,
-      staffProfileId: actor.id,
-      staffName: name ?? actor.name,
-      staffRole: actor.role,
-      ipAddress: getRequestIp(request),
-      metadata: {
-        source: "api/profile",
-      },
-    }).catch(() => undefined);
+    try {
+      await createAuditLog({
+        action: "settings_changed",
+        summary: "Updated user profile details",
+        details: `Updated profile for ${actor.name} (${actor.email}): ${name ? `Name: ${name} ` : ""}${phone ? `Phone: ${phone}` : ""}`,
+        staffProfileId: actor.id,
+        staffName: name ?? actor.name,
+        staffRole: actor.role,
+        ipAddress: getRequestIp(request),
+        metadata: {
+          source: "api/profile",
+        },
+      });
+    } catch {}
 
     return NextResponse.json({
       success: true,

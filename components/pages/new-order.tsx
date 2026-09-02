@@ -1,4 +1,4 @@
-c:\Users\Jay\Pictures\capstone\freshspin\New folder\dashboard.png"use client";
+"use client";
 
 import { useState, useEffect, useMemo } from "react";
 import {

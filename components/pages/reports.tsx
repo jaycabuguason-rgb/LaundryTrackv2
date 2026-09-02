@@ -12,6 +12,9 @@ import {
   PackageCheck,
   PieChart as PieChartIcon,
   TrendingUp,
+  CheckCircle2,
+  AlertCircle,
+  Sparkles,
 } from "lucide-react";
 import { addDays, addMonths, format, subDays } from "date-fns";
 import {
@@ -38,7 +41,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Transaction } from "@/lib/data";
-import { StatusBadge, PaymentBadge } from "@/components/status-badge";
+import { StatusBadge, PaymentBadge, STATUS_ICONS } from "@/components/status-badge";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { cn } from "@/lib/utils";
 
@@ -82,7 +85,7 @@ function formatCurrency(value: number) {
   return `₱${value.toLocaleString()}`;
 }
 
-function getServiceIcon(service: string) {
+function getHourLabel(transaction: Transaction) {
   const match = transaction.arrivalDateTime.match(/(\d{2}):(\d{2})/);
   if (!match) return "Unknown";
   const hour = Number(match[1]);
@@ -91,6 +94,15 @@ function getServiceIcon(service: string) {
   const suffix = hour >= 12 ? "PM" : "AM";
   const normalizedHour = hour % 12 === 0 ? 12 : hour % 12;
   return `${normalizedHour}${suffix}`;
+}
+
+function getServiceIcon(_service: string) {
+  return <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />;
+}
+
+function getStatusIconComponent(status: string) {
+  const Icon = STATUS_ICONS[status as keyof typeof STATUS_ICONS] ?? Inbox;
+  return <Icon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />;
 }
 
 function getDateKey(transaction: Transaction) {

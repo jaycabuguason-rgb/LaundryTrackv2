@@ -1156,6 +1156,8 @@ interface TransactionsPageProps {
   onUpdateTransaction: (ticketId: string, updates: UpdateTransactionInput) => Promise<{ transaction: Transaction; loyaltyResult?: import("@/lib/transaction-contracts").StampAwardResult }>;
   editTicketId?: string;
   onEditComplete?: () => void;
+  initialWizardOpen?: boolean;
+  onWizardClose?: () => void;
 }
 
 const MOBILE_STATUS_OPTIONS: StatusOption[] = [
