@@ -32,7 +32,6 @@ function PageLoadingFallback() {
 
 const DashboardPage = dynamic(() => import("@/components/pages/dashboard"), { loading: PageLoadingFallback });
 const ProcessingPage = dynamic(() => import("@/components/pages/processing"), { loading: PageLoadingFallback });
-const NewOrderPage = dynamic(() => import("@/components/pages/new-order"), { loading: PageLoadingFallback });
 const TransactionsPage = dynamic(() => import("@/components/pages/transactions"), { loading: PageLoadingFallback });
 const ClaimVerificationPage = dynamic(() => import("@/components/pages/claim-verification"), { loading: PageLoadingFallback });
 const ReportsPage = dynamic(() => import("@/components/pages/reports"), { loading: PageLoadingFallback });
@@ -47,7 +46,6 @@ const AuditLogsPage = dynamic(() => import("@/components/pages/audit-logs"), { l
 const preloadablePages = {
   dashboard: DashboardPage,
   processing: ProcessingPage,
-  "new-transaction": NewOrderPage,
   transactions: TransactionsPage,
   "claim-verification": ClaimVerificationPage,
   reports: ReportsPage,
@@ -71,19 +69,6 @@ function preloadPage(page: Page) {
 
 const PRIMARY_PRELOAD_PAGES: Page[] = ["processing", "transactions"];
 
-const URL_PAGE_VALUES = new Set<Page>([
-  "dashboard", "processing", "new-transaction", "transactions", "claim-verification",
-  "reports", "settings-pricing", "settings-service-types", "settings-business-profile",
-  "settings-backup", "settings-loyalty", "settings-data-import", "loyalty", "profile",
-  "change-password", "staff-management", "audit-logs",
-]);
-
-function pageFromUrl(): Page {
-  if (typeof window === "undefined") return "dashboard";
-  const value = new URLSearchParams(window.location.search).get("page");
-  return value && URL_PAGE_VALUES.has(value as Page) ? value as Page : "dashboard";
-}
-
 function scheduleIdleWork(callback: () => void, timeout: number) {
   if (typeof window !== "undefined" && "requestIdleCallback" in window) {
     const idleId = window.requestIdleCallback(callback, { timeout });
@@ -101,7 +86,7 @@ interface AppShellProps {
 }
 
 export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: AppShellProps) {
-  const [activePage, setActivePage] = useState<Page>(pageFromUrl);
+  const [activePage, setActivePage] = useState<Page>("dashboard");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [detailTxn, setDetailTxn] = useState<Transaction | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -202,7 +187,7 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
 
   const renderPage = () => {
     switch (activePage) {
-      case "dashboard": return <DashboardPage transactions={txns} loyaltyEnabled={loyaltyEnabled} onNavigate={handleNavigate} />;
+      case "dashboard": return <DashboardPage transactions={txns} loyaltyEnabled={loyaltyEnabled} role={adminProfile.role} onNavigate={handleNavigate} />;
       case "processing":
         return (
           <ProcessingPage
@@ -213,17 +198,22 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
               return await updateTransaction(ticketId, updates);
             }}
             onViewTransaction={handleTransactionDetail}
-            onEditTransaction={handleEditTransaction}
-            onNavigate={handleNavigate}
             adminName={adminProfile.name}
           />
         );
       case "new-transaction":
         return (
-          <NewOrderPage
-            onCreateTransaction={createTransaction}
-            onNavigate={handleNavigate}
+          <TransactionsPage
+            transactions={txns}
+            loading={transactionsLoading}
+            error={transactionsError}
             loyaltyEnabled={loyaltyEnabled}
+            onCreateTransaction={createTransaction}
+            onUpdateTransaction={updateTransaction}
+            editTicketId={editOpen ? editTxn?.ticketId : undefined}
+            onEditComplete={handleEditComplete}
+            initialWizardOpen={true}
+            onWizardClose={() => handleNavigate("transactions")}
           />
         );
       case "transactions":
@@ -334,17 +324,10 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
     });
   }, []);
 
-  useEffect(() => {
-    const handlePopState = () => setActivePage(pageFromUrl());
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, []);
-
   const handleNavigate = (page: Page) => {
     if (adminProfile.role === "staff" && STAFF_BLOCKED.includes(page)) {
       // Redirect to dashboard and notify
       setActivePage("dashboard");
-      window.history.pushState({}, "", "/?page=dashboard");
       setMobileMenuOpen(false);
       toast({
         title: "Access Denied",
@@ -355,7 +338,6 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
     }
     if (syncStatus !== "online" && OFFLINE_BLOCKED.includes(page)) {
       setActivePage("dashboard");
-      window.history.pushState({}, "", "/?page=dashboard");
       setMobileMenuOpen(false);
       toast({
         title: "Offline Mode",
@@ -366,7 +348,6 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
     }
     preloadPage(page);
     setActivePage(page);
-    window.history.pushState({}, "", `/?page=${page}`);
     setMobileMenuOpen(false);
   };
 
@@ -389,7 +370,7 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
           ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
       >
-        <Sidebar activePage={activePage} onNavigate={handleNavigate} onPreload={preloadPage} loyaltyEnabled={loyaltyEnabled} role={adminProfile.role} processingCount={txns.filter((t) => ["Received","Washing","Ready"].includes(t.status)).length} />
+        <Sidebar activePage={activePage} onNavigate={handleNavigate} onPreload={preloadPage} loyaltyEnabled={loyaltyEnabled} role={adminProfile.role} processingCount={txns.filter((t) => ["Received","Washing","Drying","Ready"].includes(t.status)).length} />
       </div>
 
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">

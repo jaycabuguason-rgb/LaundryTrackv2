@@ -28,26 +28,19 @@ export async function PUT(request: Request) {
     if (phone !== undefined) updatePayload.phone_number = phone;
 
     if (Object.keys(updatePayload).length > 0) {
-      try {
-        await supabaseAdmin
-          .from("profiles")
-          .update(updatePayload)
-          .eq("id", actor.id);
-      } catch {
-        // Table might not exist in some environments; ignore error
-      }
+      await supabaseAdmin
+        .from("profiles")
+        .update(updatePayload)
+        .eq("id", actor.id)
+        .catch(() => undefined);
 
       // 2. Update auth user metadata
-      try {
-        await supabaseAdmin.auth.admin.updateUserById(actor.id, {
-          user_metadata: {
-            ...(name !== undefined ? { full_name: name, name } : {}),
-            ...(phone !== undefined ? { phone_number: phone, phone } : {}),
-          },
-        });
-      } catch {
-        // Ignore metadata update error
-      }
+      await supabaseAdmin.auth.admin.updateUserById(actor.id, {
+        user_metadata: {
+          ...(name !== undefined ? { full_name: name, name } : {}),
+          ...(phone !== undefined ? { phone_number: phone, phone } : {}),
+        },
+      }).catch(() => undefined);
     }
 
     // 3. Log audit event
@@ -76,3 +69,4 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+

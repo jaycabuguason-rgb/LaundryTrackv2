@@ -1,4 +1,4 @@
-"use client";
+c:\Users\Jay\Pictures\capstone\freshspin\New folder\dashboard.png"use client";
 
 import { useState, useEffect, useMemo } from "react";
 import {
@@ -7,6 +7,7 @@ import {
   ChevronRight,
   User,
   Phone,
+  Mail,
   Sparkles,
   Scale,
   Package,
@@ -59,6 +60,7 @@ export default function NewOrderPage({
   // Form State
   const [customerName, setCustomerName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [arrivalDateTime, setArrivalDateTime] = useState(() => {
     const now = new Date();
     const offset = now.getTimezoneOffset() * 60000;
@@ -301,7 +303,7 @@ export default function NewOrderPage({
                   <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
                   <div>
                     <p className="text-xs font-bold">Loyalty Member Recognized: {matchedMember.name}</p>
-                    <p className="text-xs opacity-85">
+                    <p className="text-[11px] opacity-85">
                       {matchedMember.stampCount} stamps · Will automatically receive a pending stamp, confirmed upon claiming.
                     </p>
                   </div>
@@ -335,12 +337,12 @@ export default function NewOrderPage({
                 onFocus={() => setShowSuggestions(true)}
                 className="h-10 text-sm"
               />
-              <p className="text-xs text-muted-foreground">Name is required to continue</p>
+              <p className="text-[11px] text-muted-foreground">Name is required to continue</p>
 
               {/* Suggestions Dropdown */}
               {showSuggestions && suggestions.length > 0 && (
                 <div className="absolute top-full left-0 right-0 z-30 mt-1 rounded-lg border border-border bg-popover p-1 shadow-lg">
-                  <p className="px-2 py-1 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  <p className="px-2 py-1 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                     Existing Loyalty Members
                   </p>
                   {suggestions.map((m) => (
@@ -354,7 +356,7 @@ export default function NewOrderPage({
                         <span className="font-bold text-foreground">{m.name}</span>
                         <span className="text-muted-foreground ml-2">{m.phone}</span>
                       </div>
-                      <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-600 border-amber-500/30">
+                      <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/30">
                         {m.stampCount} stamps
                       </Badge>
                     </button>
@@ -373,6 +375,18 @@ export default function NewOrderPage({
                   const val = e.target.value.replace(/[^0-9+]/g, "");
                   setPhone(val);
                 }}
+                className="h-10 text-sm"
+              />
+            </div>
+
+            {/* Email (Optional) */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Email (for loyalty)</Label>
+              <Input
+                placeholder="Customer email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="h-10 text-sm"
               />
             </div>
@@ -454,7 +468,7 @@ export default function NewOrderPage({
                   By the load
                 </button>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[11px] text-muted-foreground">
                 {billBy === "per-kg" ? "Charging per kilogram of laundry" : "Charging per batch/load size"}
               </p>
             </div>
@@ -464,7 +478,7 @@ export default function NewOrderPage({
               <div className="rounded-xl border border-border/80 p-4 bg-muted/20 space-y-4">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-foreground">By Kilo</span>
-                  <Badge variant="secondary" className="text-xs bg-primary/10 text-primary">
+                  <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary">
                     Billing
                   </Badge>
                 </div>
@@ -500,7 +514,7 @@ export default function NewOrderPage({
                       onChange={(e) => setWeight(e.target.value)}
                       className="h-10 text-sm"
                     />
-                    <p className="text-xs text-muted-foreground">Enter weight greater than 0</p>
+                    <p className="text-[10px] text-muted-foreground">Enter weight greater than 0</p>
                   </div>
                 </div>
 
@@ -513,7 +527,7 @@ export default function NewOrderPage({
               <div className="rounded-xl border border-border/80 p-4 bg-muted/20 space-y-4">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-foreground">By Load</span>
-                  <Badge variant="secondary" className="text-xs bg-primary/10 text-primary">
+                  <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary">
                     Billing
                   </Badge>
                 </div>
