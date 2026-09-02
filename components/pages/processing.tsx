@@ -44,6 +44,8 @@ interface ProcessingPageProps {
   error?: string | null;
   onUpdateTransaction?: (ticketId: string, updates: { status: TransactionStatus }) => Promise<{ transaction: Transaction; loyaltyResult?: import("@/lib/transaction-contracts").StampAwardResult }>;
   onViewTransaction?: (ticketId: string) => void;
+  onEditTransaction?: (ticketId: string) => void;
+  onNavigate?: (page: import("@/components/sidebar").Page) => void;
   adminName?: string;
 }
 
@@ -193,6 +195,8 @@ export default function ProcessingPage({
   error = null,
   onUpdateTransaction,
   onViewTransaction,
+  onEditTransaction: _onEditTransaction,
+  onNavigate: _onNavigate,
   adminName,
 }: ProcessingPageProps) {
   const [expandedStage, setExpandedStage] = useState<ProcessingStageId | null>("Received");
@@ -343,7 +347,7 @@ export default function ProcessingPage({
           <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
             <span
               className={cn(
-                "inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold",
+                "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold",
                 badgeColor,
               )}
             >
@@ -376,29 +380,29 @@ export default function ProcessingPage({
                           {txn.ticketId}
                         </button>
                         <p className="mt-1 truncate text-xs font-medium text-foreground">{txn.customerName}</p>
-                        <p className="mt-0.5 text-[11px] text-muted-foreground">{txn.arrivalDateTime}</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">{txn.arrivalDateTime}</p>
                       </div>
                       <StatusBadge status={txn.status} />
                     </div>
 
                     <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/30 p-2.5">
                       <div>
-                        <p className="text-[10px] text-muted-foreground">Wash</p>
+                        <p className="text-xs text-muted-foreground">Wash</p>
                         <p className="truncate text-xs font-medium text-foreground">{txn.washType}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] text-muted-foreground">Weight</p>
+                        <p className="text-xs text-muted-foreground">Weight</p>
                         <p className="text-xs font-medium text-foreground">{txn.weight > 0 ? `${txn.weight} kg` : "-"}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] text-muted-foreground">In Stage</p>
+                        <p className="text-xs text-muted-foreground">In Stage</p>
                         <p className={cn("text-xs font-medium", getTimeInStageColor(txn.arrivalDateTime))}>{formatTimeInStage(txn.arrivalDateTime)}</p>
                       </div>
                     </div>
 
                     <div className="flex items-center justify-between">
                       {isPriorityReady ? (
-                        <span className="inline-flex items-center rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                        <span className="inline-flex items-center rounded bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
                           Waiting {Math.floor(hoursInStage)}h
                         </span>
                       ) : <span />}
@@ -455,7 +459,7 @@ export default function ProcessingPage({
                           </button>
                           {isPriorityReady && (
                             <span
-                              className="ml-1.5 inline-block rounded bg-amber-100 px-1 py-0.5 text-[10px] font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
+                              className="ml-1.5 inline-block rounded bg-amber-100 px-1 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
                               title={`Waiting for pickup for ${Math.floor(hoursInStage)} hrs`}
                             >
                               Waiting {Math.floor(hoursInStage)}h
@@ -510,7 +514,7 @@ export default function ProcessingPage({
                                       <span className={cn("text-sm flex-1", isCurrent ? "font-semibold text-primary" : "font-medium text-foreground")}>{label}</span>
                                       {isCurrent && (
                                         <div className="flex items-center gap-1 pl-2">
-                                          <span className="text-[10px] font-bold text-primary uppercase tracking-wider">Current</span>
+                                          <span className="text-xs font-bold text-primary uppercase tracking-wider">Current</span>
                                           <Check className="w-3.5 h-3.5 text-primary" />
                                         </div>
                                       )}
@@ -572,7 +576,7 @@ export default function ProcessingPage({
               )}
             </div>
             <div className="flex items-center gap-2 self-end sm:self-auto">
-              <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+              <span className="text-xs text-muted-foreground whitespace-nowrap">
                 Last updated: {formatLastUpdated(lastUpdated)}
               </span>
               <Button
@@ -626,7 +630,7 @@ export default function ProcessingPage({
                       <p className="text-xs font-semibold text-foreground">{label}</p>
                       <span
                         className={cn(
-                          "shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-bold",
+                          "shrink-0 rounded-full border px-2 py-0.5 text-xs font-bold",
                           badgeColor,
                         )}
                       >
@@ -636,7 +640,7 @@ export default function ProcessingPage({
                     <p className="mt-2 text-2xl font-bold text-foreground">
                       {searchLower ? items.length : allItems.length}
                     </p>
-                    <p className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground">
+                    <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
                       <ChevronDown
                         className={cn(
                           "h-3.5 w-3.5 transition-transform",

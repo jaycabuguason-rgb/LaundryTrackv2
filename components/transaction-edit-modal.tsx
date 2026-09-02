@@ -176,7 +176,7 @@ export function TransactionEditModal({ open, onOpenChange, transaction, onSave }
                 { label: "Fee",       value: `₱${transaction.fee}` },
               ].map((row) => (
                 <div key={row.label} className="bg-muted/30 rounded-md p-2.5">
-                  <p className="text-[11px] text-muted-foreground">{row.label}</p>
+                  <p className="text-xs text-muted-foreground">{row.label}</p>
                   <p className="font-medium text-foreground text-xs mt-0.5">{row.value}</p>
                 </div>
               ))}
@@ -198,7 +198,7 @@ export function TransactionEditModal({ open, onOpenChange, transaction, onSave }
                           <span className={cn("shrink-0", text)}>{getStatusIcon(value, "w-3.5 h-3.5")}</span>
                           <span className={cn("font-medium text-xs", text)}>{value}</span>
                           {blocked && (
-                            <span className="ml-1 text-[10px] text-muted-foreground">(payment required)</span>
+                            <span className="ml-1 text-xs text-muted-foreground">(payment required)</span>
                           )}
                         </div>
                       </SelectItem>

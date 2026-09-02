@@ -21,7 +21,7 @@ interface ProfilePageProps {
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-1">{label}</p>
+      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">{label}</p>
       <p className="text-sm text-foreground font-medium">{value}</p>
     </div>
   );
@@ -149,19 +149,19 @@ export default function ProfilePage({ userProfile, shopName, contactNumber, onAv
                 {isStaff ? (
                   <Badge
                     variant="secondary"
-                    className="text-[11px] px-2 py-0.5 bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800"
+                    className="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800"
                   >
                     Staff
                   </Badge>
                 ) : (
                   <Badge
                     variant="secondary"
-                    className="text-[11px] px-2 py-0.5 bg-primary text-primary-foreground"
+                    className="text-xs px-2 py-0.5 bg-primary text-primary-foreground"
                   >
                     Admin
                   </Badge>
                 )}
-                <span className="text-[11px] text-muted-foreground">{shopName || "LaundryTrack"}</span>
+                <span className="text-xs text-muted-foreground">{shopName || "LaundryTrack"}</span>
               </div>
             </div>
 

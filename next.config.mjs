@@ -1,7 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {
-    ignoreBuildErrors: true,
+    // P0-B: surface type errors in build (was ignoreBuildErrors:true)
+    ignoreBuildErrors: false,
   },
   allowedDevOrigins: [
     "172.22.160.1",
@@ -12,7 +13,11 @@ const nextConfig = {
     "*.asse.devtunnels.ms",
   ],
   images: {
-    unoptimized: true,
+    formats: ["image/avif", "image/webp"],
+    remotePatterns: [
+      { protocol: "https", hostname: "**.supabase.co" },
+      { protocol: "https", hostname: "**.supabase.in" },
+    ],
   },
 }
 

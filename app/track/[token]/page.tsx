@@ -53,7 +53,7 @@ function StatusStepper({ status }: { status: string }) {
               </div>
               <span
                 className={cn(
-                  "text-center text-[11px] leading-tight",
+                  "text-center text-xs leading-tight",
                   current
                     ? "font-semibold text-primary"
                     : completed
@@ -289,13 +289,13 @@ export default async function PublicTrackingPage(
                 The shop can scan this code in Claim Verification to open your order quickly and complete the claim.
               </p>
               <div className="mt-4 w-full max-w-md rounded-xl border border-border bg-background px-4 py-3 text-left">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Claim Code
                 </p>
                 <p className="mt-1 break-all font-mono text-sm font-semibold text-foreground">
                   {token}
                 </p>
-                <p className="mt-2 text-[11px] leading-5 text-muted-foreground">
+                <p className="mt-2 text-xs leading-5 text-muted-foreground">
                   If the staff does not scan the QR code, they can paste this claim code into Claim Verification and your transaction will appear automatically.
                 </p>
               </div>

@@ -262,7 +262,7 @@ export default function ClaimVerificationPage({
               </Button>
             </div>
 
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Paste the customer claim code or tracking QR token here and the matching transaction will open automatically.
             </p>
 
@@ -282,16 +282,16 @@ export default function ClaimVerificationPage({
                     { label: "Wash Type", value: result.washType },
                   ].map((row) => (
                     <div key={row.label} className="rounded-lg bg-background p-2.5 border border-border/60">
-                      <p className="text-[11px] font-medium text-muted-foreground">{row.label}</p>
+                      <p className="text-xs font-medium text-muted-foreground">{row.label}</p>
                       <p className="mt-0.5 text-xs font-semibold text-foreground">{row.value}</p>
                     </div>
                   ))}
                   <div className="rounded-lg bg-background p-2.5 border border-border/60">
-                    <p className="text-[11px] font-medium text-muted-foreground">Total Fee</p>
+                    <p className="text-xs font-medium text-muted-foreground">Total Fee</p>
                     <p className="mt-0.5 text-xs font-semibold text-foreground">PHP {result.fee.toLocaleString()}</p>
                   </div>
                   <div className="rounded-lg bg-background p-2.5 border border-border/60">
-                    <p className="text-[11px] font-medium text-muted-foreground">ETA</p>
+                    <p className="text-xs font-medium text-muted-foreground">ETA</p>
                     <p className="mt-0.5 text-xs font-semibold text-foreground">
                       {result.eta ?? "Awaiting estimate"}
                     </p>
@@ -308,7 +308,7 @@ export default function ClaimVerificationPage({
 
                   {!isAlreadyClaimed && (
                     <div className="rounded-xl border border-border bg-background p-3">
-                      <p className="mb-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Update Payment Status</p>
+                      <p className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Update Payment Status</p>
                       <div className="flex gap-2">
                         <Button
                           size="sm"
@@ -440,27 +440,27 @@ export default function ClaimVerificationPage({
                       {log.ticketId}
                     </span>
                     <p className="truncate text-sm font-medium text-foreground">{log.customerName || "-"}</p>
-                    <p className="text-[11px] text-muted-foreground">{log.dateTime}</p>
+                    <p className="text-xs text-muted-foreground">{log.dateTime}</p>
                   </div>
-                  <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-medium", actionBadgeColor(log.action))}>
+                  <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium", actionBadgeColor(log.action))}>
                     {log.action}
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 rounded-lg bg-muted/30 p-2.5 border border-border/50">
                   <div>
-                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Payment</p>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Payment</p>
                     {log.paymentStatus ? (
-                      <PaymentBadge paymentStatus={log.paymentStatus} className="mt-0.5 text-[10px] font-bold uppercase" />
+                      <PaymentBadge paymentStatus={log.paymentStatus} className="mt-0.5 text-xs font-bold uppercase" />
                     ) : (
                       <p className="text-xs text-muted-foreground">-</p>
                     )}
                   </div>
                   <div>
-                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Staff</p>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Staff</p>
                     <p className="mt-0.5 text-xs font-medium text-foreground">{log.staff}</p>
                   </div>
                   <div className="col-span-2">
-                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Notes</p>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Notes</p>
                     <p className="mt-0.5 text-xs text-foreground">{log.notes || "-"}</p>
                   </div>
                 </div>
@@ -489,7 +489,7 @@ export default function ClaimVerificationPage({
                     </td>
                     <td className="px-4 py-3 text-xs font-medium text-foreground">{log.customerName || "-"}</td>
                     <td className="px-4 py-3">
-                      <span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium", actionBadgeColor(log.action))}>
+                      <span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium", actionBadgeColor(log.action))}>
                         {log.action}
                       </span>
                     </td>

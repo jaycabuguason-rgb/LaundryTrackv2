@@ -132,7 +132,7 @@ export default function StaffLoginPage({
             </div>
 
             {/* Staff note */}
-            <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
+            <p className="text-xs text-muted-foreground text-center leading-relaxed">
               Staff accounts are created by the Admin only. Contact your manager if you need access.
             </p>
 
@@ -160,7 +160,7 @@ export default function StaffLoginPage({
           </div>
         </div>
 
-        <p className="text-center text-[11px] text-white/50 mt-5">
+        <p className="text-center text-xs text-white/50 mt-5">
           &copy; {new Date().getFullYear()} LaundryTrack. All rights reserved.
         </p>
       </div>

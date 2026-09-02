@@ -44,8 +44,8 @@
 
 ---
 
-## 3. Remaining Medium/Low Refinements (Optional Polish)
+## 3. Completed Refinements
 
-1. **Loyalty Stamp Visual Progress Bar:** Add optional visual progress bar/meter below stamp count pills in `components/pages/loyalty.tsx`.
-2. **Settings Floating Sticky Save Bar:** Add sticky bottom floating bar wrapper with sync state indicator in `components/pages/settings.tsx`.
-3. **Reports Tab Integration under Records:** Integrate Reports as an optional tab in the Transactions tab switcher.
+1. ✅ **Loyalty Stamp Visual Progress Bar:** Added amber visual cycle progress bar to member cards (mobile & desktop table) in `components/pages/loyalty.tsx`.
+2. ✅ **Settings Floating Sticky Save Bar:** Floating save bar with online/offline live sync status indicator added to Pricing and Business Profile settings in `components/pages/settings.tsx`.
+3. ✅ **Reports Tab Integration under Records:** Integrated `[Reports]` as a tab inside `Transactions` page (`Transactions` | `Claimed` | `Reports`).

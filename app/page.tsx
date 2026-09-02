@@ -253,7 +253,7 @@ export default function Home() {
             </div>
           </div>
 
-          <p className="text-center text-[11px] text-white/50 mt-5">
+          <p className="text-center text-xs text-white/50 mt-5">
             &copy; {new Date().getFullYear()} LaundryTrack. All rights reserved.
           </p>
         </div>

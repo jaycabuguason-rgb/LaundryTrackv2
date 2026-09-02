@@ -101,22 +101,22 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
               <div className="center bold text-sm mb-0.5">{profile.shopName}</div>
             )}
             {profile.tagline && (
-              <div className="center text-[10px] text-gray-500 mb-0.5">{profile.tagline}</div>
+              <div className="center text-xs text-gray-500 mb-0.5">{profile.tagline}</div>
             )}
             {profile.address && (
-              <div className="center text-[10px] text-gray-500 mb-0.5">{profile.address}</div>
+              <div className="center text-xs text-gray-500 mb-0.5">{profile.address}</div>
             )}
             {profile.contactNumber && (
-              <div className="center text-[10px] text-gray-500 mb-0.5">{profile.contactNumber}</div>
+              <div className="center text-xs text-gray-500 mb-0.5">{profile.contactNumber}</div>
             )}
             {profile.email && (
-              <div className="center text-[10px] text-gray-500 mb-1">{profile.email}</div>
+              <div className="center text-xs text-gray-500 mb-1">{profile.email}</div>
             )}
             <div className="divider" style={{ borderTop: "1px dashed #000", margin: "6px 0" }} />
 
             {/* Ticket ID */}
             <div className="center bold" style={{ fontSize: 20, margin: "6px 0" }}>{transaction.ticketId}</div>
-            <div className="center text-[10px] text-gray-500 mb-1">{transaction.arrivalDateTime}</div>
+            <div className="center text-xs text-gray-500 mb-1">{transaction.arrivalDateTime}</div>
             <div className="divider" style={{ borderTop: "1px dashed #000", margin: "6px 0" }} />
 
             {/* Customer Info */}

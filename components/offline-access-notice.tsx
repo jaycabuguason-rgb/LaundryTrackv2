@@ -69,10 +69,10 @@ export default function OfflineAccessNotice({
 
           <div className="mt-3 space-y-2">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-orange-800">Available now</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-orange-800">Available now</p>
               <div className="mt-1.5 flex flex-wrap gap-1.5">
                 {availableFeatures.map((feature) => (
-                  <span key={feature} className="rounded-full border border-orange-200 bg-white/70 px-2 py-1 text-[11px] font-medium text-orange-950">
+                  <span key={feature} className="rounded-full border border-orange-200 bg-white/70 px-2 py-1 text-xs font-medium text-orange-950">
                     {feature}
                   </span>
                 ))}
@@ -80,10 +80,10 @@ export default function OfflineAccessNotice({
             </div>
 
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-orange-800">Needs internet</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-orange-800">Needs internet</p>
               <div className="mt-1.5 flex flex-wrap gap-1.5">
                 {unavailableFeatures.map((feature) => (
-                  <span key={feature} className="rounded-full bg-orange-100 px-2 py-1 text-[11px] font-medium text-orange-900">
+                  <span key={feature} className="rounded-full bg-orange-100 px-2 py-1 text-xs font-medium text-orange-900">
                     {feature}
                   </span>
                 ))}

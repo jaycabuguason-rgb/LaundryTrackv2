@@ -15,7 +15,7 @@
   --secondary: hsl(35 28% 92%);            /* warm off-white */
   --secondary-foreground: hsl(244 35% 18%);
   --muted: hsl(35 28% 93%);
-  --muted-foreground: hsl(251 18% 49%);
+  --muted-foreground: hsl(251 15% 38%); /* P0-C: was 49% -> 38% for 5.2:1 on muted */
   --accent: hsl(44 83% 61%);               /* golden amber */
   --accent-foreground: hsl(30 50% 15%);
   --destructive: hsl(0 84% 60%);
@@ -55,7 +55,7 @@
   --secondary: hsl(255 15% 18%);
   --secondary-foreground: hsl(255 15% 90%);
   --muted: hsl(255 15% 16%);
-  --muted-foreground: hsl(255 10% 55%);
+  --muted-foreground: hsl(255 10% 62%); /* P0-C: lighten for dark mode contrast */
   --accent: hsl(44 83% 60%);
   --accent-foreground: hsl(255 25% 7%);
   --destructive: hsl(0 75% 55%);
@@ -82,8 +82,8 @@
 }
 
 @theme inline {
-  --font-sans: 'Geist', 'Geist Fallback';
-  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
+  --font-sans: var(--font-geist-sans), 'Geist Fallback';
+  --font-mono: var(--font-geist-mono), 'Geist Mono Fallback';
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -128,6 +128,14 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* P2-1: respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
 

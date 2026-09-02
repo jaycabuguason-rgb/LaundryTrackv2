@@ -60,7 +60,7 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
     accessToken = refreshed?.access_token ?? null;
   }
   if (!accessToken) {
-    return {};
+    throw new Error("Session expired. Please sign in again.");
   }
 
   return {
@@ -79,6 +79,9 @@ export function useTransactions() {
   const [lastSyncError, setLastSyncError] = useState<string | null>(null);
   const queueSyncInFlightRef = useRef(false);
   const hydratedRef = useRef(false);
+  // P0-E: stable refs to avoid realtime channel re-subscribe on refresh identity change (caching)
+  const refreshRef = useRef<(() => Promise<void>) | null>(null);
+  const processQueueRef = useRef<(() => Promise<void>) | null>(null);
 
   const persistTransactions = useCallback(async (next: Transaction[]) => {
     setTransactions(next);
@@ -124,7 +127,16 @@ export function useTransactions() {
     setLoading(true);
     try {
       const queue = await readOfflineQueue();
-      const headers = await getAuthHeaders();
+      let headers: Record<string, string>;
+      try {
+        headers = await getAuthHeaders();
+      } catch (authError) {
+        const msg = authError instanceof Error ? authError.message : "Session expired. Please sign in again.";
+        setError(msg);
+        setLastSyncError(msg);
+        setSyncStatus("error");
+        return;
+      }
       const response = await fetch("/api/transactions", {
         cache: "no-store",
         headers,
@@ -184,9 +196,6 @@ export function useTransactions() {
       for (const item of queue) {
         try {
           const headers = await getAuthHeaders();
-          if (!headers.Authorization) {
-            throw new Error("Your session expired. Please sign in again, then tap Retry Sync.");
-          }
 
           if (item.type === "create" && item.createInput) {
             const response = await fetch("/api/transactions", {
@@ -229,20 +238,24 @@ export function useTransactions() {
       } else {
         setSyncStatus("online");
         setLastSyncError(null);
-        await refresh();
+        await refreshRef.current?.();
       }
     } finally {
       queueSyncInFlightRef.current = false;
     }
-  }, [refresh]);
+  }, []);
+
+  // keep refs in sync for caching (avoid re-subscribe)
+  useEffect(() => { refreshRef.current = refresh; }, [refresh]);
+  useEffect(() => { processQueueRef.current = processQueue; }, [processQueue]);
 
   useEffect(() => subscribeNetworkStatus((online) => {
     setSyncStatus(online ? "online" : "offline");
     if (online) {
-      void processQueue();
-      void refresh();
+      void processQueueRef.current?.();
+      void refreshRef.current?.();
     }
-  }), [processQueue, refresh]);
+  }), []);
 
   useEffect(() => {
     if (!isOnline()) {
@@ -251,10 +264,10 @@ export function useTransactions() {
 
     void (async () => {
       if ((await readOfflineQueue()).length > 0) {
-        await processQueue();
+        await processQueueRef.current?.();
       }
     })();
-  }, [processQueue]);
+  }, []);
 
   useEffect(() => {
     const supabase = getSupabaseBrowserClient();
@@ -272,7 +285,7 @@ export function useTransactions() {
           table: "transactions",
         },
         () => {
-          void refresh();
+          void refreshRef.current?.();
         },
       )
       .subscribe();
@@ -280,7 +293,7 @@ export function useTransactions() {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [refresh]);
+  }, []);
 
   const createTransaction = useCallback(async (input: CreateTransactionInput) => {
     if (!isOnline()) {
@@ -328,13 +341,16 @@ export function useTransactions() {
       await enqueueOfflineMutation({ type: "update", ticketId, updateInput: updates });
       setPendingChangesCount((await readOfflineQueue()).length);
       setSyncStatus("offline");
-      updateTransactions((current) =>
-        current.map((transaction) =>
+      // P0-E: use functional update to avoid stale closure over `transactions`
+      let optimistic: Transaction | null = null;
+      updateTransactions((current) => {
+        const found = current.find((t) => t.ticketId === ticketId);
+        optimistic = found ? ({ ...found, ...updates } as Transaction) : ({ ticketId, ...updates } as unknown as Transaction);
+        return current.map((transaction) =>
           transaction.ticketId === ticketId ? { ...transaction, ...updates } : transaction,
-        ),
-      );
-      const updated = transactions.find((transaction) => transaction.ticketId === ticketId);
-      return { transaction: { ...(updated ?? {}), ...updates } as Transaction };
+        );
+      });
+      return { transaction: (optimistic ?? ({ ticketId, ...updates } as Transaction)) };
     }
 
     const headers = await getAuthHeaders();
@@ -354,7 +370,7 @@ export function useTransactions() {
       ),
     );
     return { transaction: data.transaction, loyaltyResult: data.loyaltyResult };
-  }, [transactions, updateTransactions]);
+  }, [updateTransactions]);
 
   const resolveScannedValue = useCallback(async (value: string) => {
     const response = await fetch("/api/qr/resolve", {

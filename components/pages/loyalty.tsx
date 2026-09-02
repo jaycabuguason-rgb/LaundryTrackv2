@@ -234,7 +234,7 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
               </div>
               {selected.preferences && (
                 <div className="text-left bg-muted/40 rounded-lg p-3 border border-border mt-2">
-                  <p className="text-[11px] font-medium text-muted-foreground">Preferences</p>
+                  <p className="text-xs font-medium text-muted-foreground">Preferences</p>
                   <p className="text-xs text-foreground mt-0.5">{selected.preferences}</p>
                 </div>
               )}
@@ -273,7 +273,7 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
                       <div key={i} className="flex items-center justify-between gap-3 px-4 py-3">
                         <div className="min-w-0">
                           <p className="text-xs font-medium text-foreground">{s.date}</p>
-                          <p className="mt-0.5 font-mono text-[11px] text-primary">
+                          <p className="mt-0.5 font-mono text-xs text-primary">
                             {s.ticket}
                             {s.notes && <span className="ml-1 text-muted-foreground font-sans truncate">({s.notes})</span>}
                           </p>
@@ -391,9 +391,9 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
                     <div key={i} className="flex items-center justify-between gap-3 px-3 py-2.5">
                       <div className="min-w-0">
                         <p className="text-xs font-medium text-foreground">{v.date}</p>
-                        <p className="mt-0.5 font-mono text-[11px] text-primary">{v.ticket}</p>
+                        <p className="mt-0.5 font-mono text-xs text-primary">{v.ticket}</p>
                       </div>
-                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800 border border-amber-200">+{v.stamps}</span>
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800 border border-amber-200">+{v.stamps}</span>
                     </div>
                   ))}
                 </div>
@@ -516,15 +516,15 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
 
                 <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/30 p-3">
                   <div>
-                    <p className="text-[11px] text-muted-foreground">Stamps</p>
-                    <span className="mt-1 inline-flex items-center rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 px-2 py-0.5 text-[11px] font-semibold">{m.stampCount} stamps · {progress}/{washesPerReward}</span>
+                    <p className="text-xs text-muted-foreground">Stamps</p>
+                    <span className="mt-1 inline-flex items-center rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 px-2 py-0.5 text-xs font-semibold">{m.stampCount} stamps · {progress}/{washesPerReward}</span>
                   </div>
                   <div>
-                    <p className="text-[11px] text-muted-foreground">Rewards</p>
+                    <p className="text-xs text-muted-foreground">Rewards</p>
                     <p className="mt-1 text-sm font-semibold text-foreground">{m.rewardsRedeemed}</p>
                   </div>
                   <div>
-                    <p className="text-[11px] text-muted-foreground">Joined</p>
+                    <p className="text-xs text-muted-foreground">Joined</p>
                     <p className="mt-1 truncate text-xs text-foreground">{m.dateJoined}</p>
                   </div>
                 </div>
@@ -563,13 +563,13 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
                 <tr key={m.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[11px] font-bold shrink-0">{getInitials(m.name)}</div>
+                      <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold shrink-0">{getInitials(m.name)}</div>
                       <span className="text-xs font-semibold text-foreground">{m.name}</span>
                     </div>
                   </td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">{m.phone}</td>
                   <td className="px-4 py-3">
-                    <span className="inline-flex items-center rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 px-2 py-0.5 text-[11px] font-semibold">{m.stampCount} · {m.stampCount % washesPerReward}/{washesPerReward}</span>
+                    <span className="inline-flex items-center rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 px-2 py-0.5 text-xs font-semibold">{m.stampCount} · {m.stampCount % washesPerReward}/{washesPerReward}</span>
                   </td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">{m.rewardsRedeemed}</td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">{m.dateJoined}</td>
@@ -578,10 +578,10 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
                       <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleSelectMember(m)}>
                         View
                       </Button>
-                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setEditModal(m)}>
+                      <Button size="sm" variant="ghost" className="h-10 w-10 min-h-[44px] min-w-[44px] p-0" onClick={() => setEditModal(m)}>
                         <Edit className="w-3 h-3" />
                       </Button>
-                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-600 hover:text-red-700" onClick={() => setDeleteModal(m)}>
+                      <Button size="sm" variant="ghost" className="h-10 w-10 min-h-[44px] min-w-[44px] p-0 text-red-600 hover:text-red-700" onClick={() => setDeleteModal(m)}>
                         <Trash2 className="w-3 h-3" />
                       </Button>
                     </div>

@@ -371,7 +371,7 @@ function PricingSettings() {
                   <p className={["text-xs font-semibold leading-tight", pricingMode === value ? "text-primary" : "text-foreground"].join(" ")}>
                     {label}
                   </p>
-                  <p className="text-[10px] text-muted-foreground leading-tight">{sub}</p>
+                  <p className="text-xs text-muted-foreground leading-tight">{sub}</p>
                 </button>
               ))}
             </div>
@@ -445,9 +445,9 @@ function PricingSettings() {
                 <table className="w-full text-sm min-w-[450px]">
                   <thead>
                     <tr className="bg-muted/40 border-b border-border">
-                      <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wider font-semibold text-muted-foreground whitespace-nowrap">Load Size</th>
-                      <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wider font-semibold text-muted-foreground whitespace-nowrap">Weight Range</th>
-                      <th className="text-left px-3 py-2.5 text-[11px] uppercase tracking-wider font-semibold text-muted-foreground whitespace-nowrap">Price</th>
+                      <th className="text-left px-3 py-2.5 text-xs uppercase tracking-wider font-semibold text-muted-foreground whitespace-nowrap">Load Size</th>
+                      <th className="text-left px-3 py-2.5 text-xs uppercase tracking-wider font-semibold text-muted-foreground whitespace-nowrap">Weight Range</th>
+                      <th className="text-left px-3 py-2.5 text-xs uppercase tracking-wider font-semibold text-muted-foreground whitespace-nowrap">Price</th>
                       <th className="w-10" />
                     </tr>
                   </thead>
@@ -484,9 +484,9 @@ function PricingSettings() {
                                 className="w-12 sm:w-14 h-8 text-xs px-1.5 text-center"
                                 placeholder="0"
                               />
-                              <span className="text-[11px] sm:text-xs text-muted-foreground font-medium">kg —</span>
+                              <span className="text-xs sm:text-xs text-muted-foreground font-medium">kg —</span>
                               {parsed.open ? (
-                                <span className="text-[11px] sm:text-xs font-medium text-foreground px-1">above</span>
+                                <span className="text-xs sm:text-xs font-medium text-foreground px-1">above</span>
                               ) : (
                                 <>
                                   <Input
@@ -505,14 +505,14 @@ function PricingSettings() {
                                     className="w-12 sm:w-14 h-8 text-xs px-1.5 text-center"
                                     placeholder="0"
                                   />
-                                  <span className="text-[11px] sm:text-xs text-muted-foreground font-medium">kg</span>
+                                  <span className="text-xs sm:text-xs text-muted-foreground font-medium">kg</span>
                                 </>
                               )}
                               <button
                                 type="button"
                                 onClick={() => updateTier(tier.id, { from: parsed.from, to: parsed.to, open: !parsed.open })}
                                 className={cn(
-                                  "text-[10px] px-1.5 py-0.5 h-6 rounded border transition-colors cursor-pointer ml-1 shrink-0",
+                                  "text-xs px-1.5 py-0.5 h-6 rounded border transition-colors cursor-pointer ml-1 shrink-0",
                                   parsed.open
                                     ? "bg-primary/10 border-primary/30 text-primary"
                                     : "bg-muted border-border text-muted-foreground hover:border-primary/40"
@@ -526,7 +526,7 @@ function PricingSettings() {
                           {/* Price */}
                           <td className="px-3 py-2.5 align-middle">
                             <div className="flex items-center gap-1">
-                              <span className="text-[11px] sm:text-xs text-muted-foreground font-medium">₱</span>
+                              <span className="text-xs sm:text-xs text-muted-foreground font-medium">₱</span>
                               <Input
                                 type="number"
                                 min="0"
@@ -548,7 +548,7 @@ function PricingSettings() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
+                              className="h-10 w-10 min-h-[44px] min-w-[44px] text-muted-foreground hover:text-destructive shrink-0"
                               onClick={() => setDeleteTierId(tier.id)}
                             >
                               <Trash2 className="w-4 h-4" />
@@ -567,11 +567,11 @@ function PricingSettings() {
                   <p className="text-xs font-medium text-foreground">New Custom Tier</p>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="col-span-2">
-                      <Label className="text-[10px] text-muted-foreground mb-1 block">Tier Name</Label>
+                      <Label className="text-xs text-muted-foreground mb-1 block">Tier Name</Label>
                       <Input placeholder="e.g. Extra Large" value={newTierName} onChange={(e) => setNewTierName(e.target.value)} className="h-8 text-xs" />
                     </div>
                     <div>
-                      <Label className="text-[10px] text-muted-foreground mb-1 block">From (kg)</Label>
+                      <Label className="text-xs text-muted-foreground mb-1 block">From (kg)</Label>
                       <div className="flex items-center gap-1">
                         <Input type="number" min="0" placeholder="0" value={newTierFrom} onChange={(e) => {
                         const value = e.target.value.replace(/[^0-9.]/g, '');
@@ -585,7 +585,7 @@ function PricingSettings() {
                       </div>
                     </div>
                     <div>
-                      <Label className="text-[10px] text-muted-foreground mb-1 block">To (kg)</Label>
+                      <Label className="text-xs text-muted-foreground mb-1 block">To (kg)</Label>
                       <div className="flex items-center gap-1">
                         {newTierOpen ? (
                           <span className="text-xs font-medium text-foreground px-2 h-8 flex items-center">above</span>
@@ -604,7 +604,7 @@ function PricingSettings() {
                           type="button"
                           onClick={() => setNewTierOpen((v) => !v)}
                           className={cn(
-                            "text-[10px] px-1.5 py-0.5 rounded border transition-colors cursor-pointer shrink-0",
+                            "text-xs px-1.5 py-0.5 rounded border transition-colors cursor-pointer shrink-0",
                             newTierOpen
                               ? "bg-primary/10 border-primary/30 text-primary"
                               : "bg-muted border-border text-muted-foreground hover:border-primary/40"
@@ -614,7 +614,7 @@ function PricingSettings() {
                       </div>
                     </div>
                     <div className="col-span-2">
-                      <Label className="text-[10px] text-muted-foreground mb-1 block">Price (₱)</Label>
+                      <Label className="text-xs text-muted-foreground mb-1 block">Price (₱)</Label>
                       <Input type="number" placeholder="e.g. 300" value={newTierPrice} onChange={(e) => {
                         const value = e.target.value.replace(/[^0-9.]/g, '');
                         setNewTierPrice(value);
@@ -675,7 +675,7 @@ function PricingSettings() {
                 {s.active && (s.showPrice ?? true) && (
                   <span className="text-xs font-semibold text-primary bg-primary/10 rounded-full px-2 py-0.5">₱{s.price}</span>
                 )}
-                <span className="text-[10px] font-medium text-muted-foreground bg-muted rounded-full px-2 py-0.5 border border-border">
+                <span className="text-xs font-medium text-muted-foreground bg-muted rounded-full px-2 py-0.5 border border-border">
                   {PRICING_TYPE_LABELS[s.pricingType] ?? s.pricingType}
                 </span>
               </div>
@@ -683,15 +683,15 @@ function PricingSettings() {
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="flex items-center gap-1.5">
                   <Switch checked={s.active} onCheckedChange={(v) => updateServices(services.map((x) => x.id === s.id ? { ...x, active: v, showPrice: v ? (x.showPrice ?? true) : false } : x))} className="scale-90" />
-                  <span className="text-[11px] text-muted-foreground font-medium">Show</span>
+                  <span className="text-xs text-muted-foreground font-medium">Show</span>
                 </div>
                 <div className={cn("flex items-center gap-1.5 transition-opacity duration-150", !s.active && "opacity-40 pointer-events-none cursor-not-allowed")} title={!s.active ? "Enable Show first" : undefined}>
                   <Switch checked={(s.showPrice ?? true) && s.active} onCheckedChange={(v) => updateServices(services.map((x) => x.id === s.id ? { ...x, showPrice: v } : x))} disabled={!s.active} className="scale-90" />
-                  <span className="text-[11px] text-muted-foreground font-medium">Price</span>
+                  <span className="text-xs text-muted-foreground font-medium">Price</span>
                 </div>
                 <div className="flex-1" />
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openSvcEdit(s)}><Edit className="w-3.5 h-3.5" /></Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => updateServices(services.filter((x) => x.id !== s.id))}><Trash2 className="w-3.5 h-3.5" /></Button>
+                <Button variant="ghost" size="icon" className="h-10 w-10 min-h-[44px] min-w-[44px]" onClick={() => openSvcEdit(s)}><Edit className="w-3.5 h-3.5" /></Button>
+                <Button variant="ghost" size="icon" className="h-10 w-10 min-h-[44px] min-w-[44px] text-destructive hover:text-destructive" onClick={() => updateServices(services.filter((x) => x.id !== s.id))}><Trash2 className="w-3.5 h-3.5" /></Button>
               </div>
             </div>
           ))}
@@ -705,15 +705,15 @@ function PricingSettings() {
             <p className="text-xs font-semibold text-muted-foreground">Add New Service Type</p>
             <div className="grid grid-cols-2 gap-2">
               <div className="col-span-2">
-                <Label className="text-[10px] text-muted-foreground mb-1 block">Service Name <span className="text-destructive">*</span></Label>
+                <Label className="text-xs text-muted-foreground mb-1 block">Service Name <span className="text-destructive">*</span></Label>
                 <Input placeholder="e.g. Heavy Duty Wash" value={svcNewName} onChange={(e) => setSvcNewName(e.target.value)} className="h-8 text-sm" />
               </div>
               <div className="col-span-2">
-                <Label className="text-[10px] text-muted-foreground mb-1 block">Description</Label>
+                <Label className="text-xs text-muted-foreground mb-1 block">Description</Label>
                 <Input placeholder="e.g. For heavily soiled items" value={svcNewDesc} onChange={(e) => setSvcNewDesc(e.target.value)} className="h-8 text-sm" />
               </div>
               <div>
-                <Label className="text-[10px] text-muted-foreground mb-1 block">Price (₱) <span className="text-destructive">*</span></Label>
+                <Label className="text-xs text-muted-foreground mb-1 block">Price (₱) <span className="text-destructive">*</span></Label>
                 <Input type="number" min="0" placeholder="e.g. 60" value={svcNewPrice} onChange={(e) => {
                   const value = e.target.value.replace(/[^0-9.]/g, '');
                   setSvcNewPrice(value);
@@ -724,7 +724,7 @@ function PricingSettings() {
                 }} className="h-8 text-sm" />
               </div>
               <div>
-                <Label className="text-[10px] text-muted-foreground mb-1 block">Pricing Type</Label>
+                <Label className="text-xs text-muted-foreground mb-1 block">Pricing Type</Label>
                 <Select value={svcNewPricingType} onValueChange={(v) => setSvcNewPricingType(v as PricingType)}>
                   <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -839,7 +839,7 @@ function PricingSettings() {
               <div key={a.id} className="flex items-center gap-2 bg-muted/30 rounded-md px-3 py-2">
                 <span className="flex-1 text-sm text-foreground">{a.name}</span>
                 <span className="text-sm text-muted-foreground">&#x20B1;{a.rate}</span>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => {
+                <Button variant="ghost" size="icon" className="h-10 w-10 min-h-[44px] min-w-[44px] text-destructive hover:text-destructive" onClick={() => {
                   const next = addOns.filter((x) => x.id !== a.id);
                   setAddOns(next);
                   persistAddOns(next);
@@ -925,10 +925,10 @@ function PricingSettings() {
                         <p className={["text-sm font-semibold leading-tight", active ? "text-primary" : "text-foreground"].join(" ")}>
                           {label}
                         </p>
-                        <p className="text-[11px] text-muted-foreground leading-snug">{description}</p>
+                        <p className="text-xs text-muted-foreground leading-snug">{description}</p>
                       </div>
                       {active && (
-                        <span className="mt-auto text-[10px] font-semibold uppercase tracking-wider text-primary">Active</span>
+                        <span className="mt-auto text-xs font-semibold uppercase tracking-wider text-primary">Active</span>
                       )}
                     </button>
                   );
@@ -1153,7 +1153,7 @@ function BusinessProfileSettings({ onSave }: { onSave?: (profile: BusinessProfil
                 className="w-full border-2 border-dashed border-border rounded-lg p-6 flex flex-col items-center gap-2 hover:border-primary/40 hover:bg-muted/20 transition-colors cursor-pointer">
                 <Upload className="w-6 h-6 text-muted-foreground" />
                 <p className="text-xs text-muted-foreground">Click to upload or drag & drop</p>
-                <p className="text-[11px] text-muted-foreground/60">PNG, JPG up to 2MB</p>
+                <p className="text-xs text-muted-foreground/60">PNG, JPG up to 2MB</p>
               </button>
             )}
           </div>
@@ -1400,7 +1400,7 @@ function BackupSettings() {
           <div className="border-2 border-dashed border-border rounded-lg p-6 flex flex-col items-center gap-2">
             <Upload className="w-6 h-6 text-muted-foreground" />
             <p className="text-xs text-muted-foreground">Click to upload backup file</p>
-            <p className="text-[11px] text-muted-foreground/60">.json files accepted</p>
+            <p className="text-xs text-muted-foreground/60">.json files accepted</p>
           </div>
           <Button size="sm" variant="destructive" className="mt-3 flex items-center gap-1.5">
             Restore Database
@@ -1561,7 +1561,7 @@ function LoyaltyProgramSettings({ loyaltyEnabled, onLoyaltyEnabledChange }: Loya
                 className="flex-1 min-w-40 h-9 text-sm"
               />
             </div>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Example: Every 10 washes = Free wash
             </p>
           </div>

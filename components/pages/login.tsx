@@ -75,7 +75,7 @@ export default function LoginPage({
               <button
                 type="button"
                 onClick={onBack}
-                className="text-[11px] text-muted-foreground hover:text-foreground transition-colors absolute left-8 cursor-pointer"
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors absolute left-8 cursor-pointer"
                 aria-label="Back to role selection"
               >
                 &larr; Back
@@ -170,13 +170,13 @@ export default function LoginPage({
               )}
             </Button>
 
-            <div className="rounded-lg border border-border bg-muted/30 px-3 py-2.5 text-[11px] text-muted-foreground">
+            <div className="rounded-lg border border-border bg-muted/30 px-3 py-2.5 text-xs text-muted-foreground">
               Admin access is managed in Supabase. Use the admin email and password created for your project.
             </div>
           </div>
         </div>
 
-        <p className="text-center text-[11px] text-white/50 mt-5">
+        <p className="text-center text-xs text-white/50 mt-5">
           &copy; {new Date().getFullYear()} LaundryTrack. All rights reserved.
         </p>
       </div>

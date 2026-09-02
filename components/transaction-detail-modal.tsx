@@ -43,34 +43,34 @@ export function TransactionDetailModal({ open, onOpenChange, transaction, onEdit
           {/* Customer & Drop-off */}
           <div className="grid grid-cols-2 gap-x-6 gap-y-3">
             <div>
-              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Customer</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Customer</p>
               <p className="text-sm font-semibold text-foreground">{transaction.customerName}</p>
             </div>
             <div>
-              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Phone</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Phone</p>
               <p className="text-sm text-foreground">{transaction.phone || "—"}</p>
             </div>
             <div>
-              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Drop-off Date &amp; Time</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Drop-off Date &amp; Time</p>
               <p className="text-sm text-foreground">{transaction.arrivalDateTime}</p>
             </div>
             <div>
-              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Wash Type</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Wash Type</p>
               <p className="text-sm text-foreground">{transaction.washType}</p>
             </div>
             <div>
-              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Weight</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Weight</p>
               <p className="text-sm text-foreground">{transaction.weight > 0 ? `${transaction.weight} kg` : "Per load"}</p>
             </div>
             <div>
-              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Add-ons</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Add-ons</p>
               <p className="text-sm text-foreground">
                 {transaction.addOns.length > 0 ? transaction.addOns.join(", ") : "None"}
               </p>
             </div>
             {transaction.washInstructions && (
               <div className="col-span-2">
-                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Instructions</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Instructions</p>
                 <p className="text-sm text-foreground">{transaction.washInstructions}</p>
               </div>
             )}
@@ -78,7 +78,7 @@ export function TransactionDetailModal({ open, onOpenChange, transaction, onEdit
 
           {/* Status timeline */}
           <div>
-            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">Status Timeline</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Status Timeline</p>
             {isVoided ? (
               <div className="flex items-center gap-2 text-destructive text-sm font-medium">
                 <Circle className="w-4 h-4" />
@@ -101,7 +101,7 @@ export function TransactionDetailModal({ open, onOpenChange, transaction, onEdit
                           <Circle className="w-5 h-5 text-muted-foreground/40" />
                         )}
                         <span className={[
-                          "text-[10px] font-medium text-center leading-tight",
+                          "text-xs font-medium text-center leading-tight",
                           done || current ? "text-foreground" : "text-muted-foreground",
                           current ? "font-semibold" : "",
                         ].join(" ")}>
@@ -123,13 +123,13 @@ export function TransactionDetailModal({ open, onOpenChange, transaction, onEdit
 
           {/* Fee breakdown */}
           <div className="bg-primary/5 border border-primary/20 rounded-lg px-4 py-3">
-            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Fee</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Fee</p>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Total</span>
               <span className="text-xl font-bold text-primary">₱{transaction.fee.toLocaleString()}</span>
             </div>
             <div className="mt-3 pt-3 border-t border-primary/10 flex items-center justify-between">
-              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Payment Status</span>
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Payment Status</span>
               <PaymentBadge paymentStatus={transaction.paymentStatus} />
             </div>
           </div>

@@ -10,8 +10,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\next.config.mjs": {
-    "mtime": 1779652981.0,
-    "ast_hash": "dcfd78d1b7ef2e7efa0db2ae8ca974a6",
+    "mtime": 1788336783.3275995,
+    "ast_hash": "d1cb147c1438759dbd65d83d92438d4e",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\package.json": {
@@ -135,8 +135,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\app\\layout.tsx": {
-    "mtime": 1779652981.0,
-    "ast_hash": "ced587e6c488c7aba6a102d9ad21e641",
+    "mtime": 1788337190.9581063,
+    "ast_hash": "0a37d90362fc142e3d45b954592f94ab",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\app\\manifest.ts": {
@@ -145,8 +145,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\app\\page.tsx": {
-    "mtime": 1779652981.0,
-    "ast_hash": "8542a253c2f672f4f5face20f2590ab7",
+    "mtime": 1788342456.7802262,
+    "ast_hash": "aa7e0f05bc24f218587c6a7a69e5db78",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\app\\robots.ts": {
@@ -175,13 +175,13 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\app\\api\\loyalty\\[id]\\stamps\\route.ts": {
-    "mtime": 1787562236.960516,
-    "ast_hash": "6e4a8ddfe0ef7e6f54742e0f9ff791cd",
+    "mtime": 1788331808.8636913,
+    "ast_hash": "6ec35df2e1d677f66388b3450b4733f2",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\app\\api\\profile\\avatar\\route.ts": {
-    "mtime": 1779652981.0,
-    "ast_hash": "c555f7d24967d2093628972062572c6a",
+    "mtime": 1788328636.8426301,
+    "ast_hash": "fc469874588cdc84f0968c432cea546c",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\app\\api\\qr\\resolve\\route.ts": {
@@ -240,23 +240,23 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\app\\track\\[token]\\page.tsx": {
-    "mtime": 1788318422.0979402,
-    "ast_hash": "a9ba3644be91753156de14612d97d36b",
+    "mtime": 1788342456.7862234,
+    "ast_hash": "81567f109cdb164b7189b81725c7855f",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\app-shell.tsx": {
-    "mtime": 1788313527.8344808,
-    "ast_hash": "d937e1690968ece51a59a6c8dc53da53",
+    "mtime": 1788333657.628345,
+    "ast_hash": "6dfe32dd94b6293a0946e7281c6795cf",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\mobile-bottom-nav.tsx": {
-    "mtime": 1787562236.9641383,
-    "ast_hash": "7c88f2f51109b2b7e2d7a8781439a1a9",
+    "mtime": 1788334890.3287253,
+    "ast_hash": "6ec0c9ed5a83856b4b68245786b441dc",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\offline-access-notice.tsx": {
-    "mtime": 1779652981.0,
-    "ast_hash": "f045889ef80f632f1a5300d67785b472",
+    "mtime": 1788342456.7872238,
+    "ast_hash": "320b3530090812aa74703f7ad74c4be9",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\peak-hours-chart.tsx": {
@@ -265,13 +265,13 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\print-receipt-modal.tsx": {
-    "mtime": 1788316683.981275,
-    "ast_hash": "e83119fccb18cb0eb6a36626046ff486",
+    "mtime": 1788342456.788224,
+    "ast_hash": "546f6bcfcd02e9552a18322d6c1a8c16",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pwa-init.tsx": {
-    "mtime": 1779652981.0,
-    "ast_hash": "d942274ba5d6b16ae15b81f39ed8499b",
+    "mtime": 1788342456.7892253,
+    "ast_hash": "1eddb85ec1eecfe236ee0144bfd28a03",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\qr-scanner.tsx": {
@@ -285,8 +285,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\sidebar.tsx": {
-    "mtime": 1779652981.0,
-    "ast_hash": "7ea787e7a459ec083e23da2177aaf680",
+    "mtime": 1788342456.7912247,
+    "ast_hash": "d7d0f64136ede7557498e0477f9a5940",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\status-update-sheet.tsx": {
@@ -305,88 +305,88 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\topnav.tsx": {
-    "mtime": 1788295517.0075698,
-    "ast_hash": "96e07ce1777c20eff4f3796ca4d312c8",
+    "mtime": 1788342832.1126683,
+    "ast_hash": "e6a8e3d41c257830f63247934795ffa7",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\transaction-detail-modal.tsx": {
-    "mtime": 1788316653.750122,
-    "ast_hash": "ba3260c72c2e5b5831fcc027e5eba441",
+    "mtime": 1788342456.794225,
+    "ast_hash": "366397dda98c6c3c47d023aeeba29db5",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\transaction-edit-modal.tsx": {
-    "mtime": 1788294536.562119,
-    "ast_hash": "e2ecc45c2965e19640e0a604d232310b",
+    "mtime": 1788342456.7952268,
+    "ast_hash": "4d59705e1c1f0b024bf633e9dec10d4b",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pages\\audit-logs.tsx": {
-    "mtime": 1788313105.5143013,
-    "ast_hash": "ed0053c9871bea04d4c4df14334a820a",
+    "mtime": 1788342456.7972264,
+    "ast_hash": "a638e1bcbf3f5cfd2e6854989b1e90c6",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pages\\claim-verification.tsx": {
-    "mtime": 1788299136.7485836,
-    "ast_hash": "f3f0ca2dcf2002f8aff7f2073e4f857b",
+    "mtime": 1788342456.799228,
+    "ast_hash": "f36338f4e993ff6442414b59a54d0fb5",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pages\\dashboard.tsx": {
-    "mtime": 1788294759.86331,
-    "ast_hash": "3528195ae20a3261c3e67f9bd8809f84",
+    "mtime": 1788342456.8002276,
+    "ast_hash": "915205b78f1ea2f36027d30484402548",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pages\\data-import.tsx": {
-    "mtime": 1788314859.4192922,
-    "ast_hash": "50b39a5a79d1643222b332c84db6ffdc",
+    "mtime": 1788342456.8022265,
+    "ast_hash": "d3817e4895c35fcd70e691d13a85b84f",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pages\\login.tsx": {
-    "mtime": 1788313836.4966278,
-    "ast_hash": "0d9783ff09e4980908b62f72114b2054",
+    "mtime": 1788336924.917313,
+    "ast_hash": "cb9465f94cb858d8ffaebb986d7fcb9f",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pages\\loyalty.tsx": {
-    "mtime": 1788299355.8250928,
-    "ast_hash": "1bd64dbb76239bc83058b7ec6f24938b",
+    "mtime": 1788342515.4585807,
+    "ast_hash": "22d67ff9a8048376a0f4c6a666c00107",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pages\\processing.tsx": {
-    "mtime": 1788318393.470608,
-    "ast_hash": "6b3451738bd8d5b3bd3d555ae3d77617",
+    "mtime": 1788342747.054546,
+    "ast_hash": "ff4265691d6db381dce807bf3fccdbdd",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pages\\profile.tsx": {
-    "mtime": 1788314808.8448732,
-    "ast_hash": "62afb414a6a998e63feefe900ee2751f",
+    "mtime": 1788342456.8072283,
+    "ast_hash": "9d25368787586259c83f9c514d813d78",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pages\\register.tsx": {
-    "mtime": 1788313855.5520456,
-    "ast_hash": "7e0a01dc4fb2378ccb8ead83201c708b",
+    "mtime": 1788336924.950304,
+    "ast_hash": "4b966765d8242ecb50db094a87fb1691",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pages\\reports.tsx": {
-    "mtime": 1788317069.5639207,
-    "ast_hash": "e7e2199a0acc836ddaa4dec0152081ce",
+    "mtime": 1788342456.8092275,
+    "ast_hash": "212ccf5e1328a034c97bd01c1bff0416",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pages\\settings.tsx": {
-    "mtime": 1788313673.758444,
-    "ast_hash": "749b3bae826972f93ef47b5361e588c0",
+    "mtime": 1788342515.456921,
+    "ast_hash": "d1417c7fccc46a0c2b11c3ec115445d4",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pages\\staff-login.tsx": {
-    "mtime": 1788313846.0551677,
-    "ast_hash": "c82d43616a18f4da928eed2d482b1635",
+    "mtime": 1788336924.983292,
+    "ast_hash": "8e84c8d3208d794c57172cf93483d275",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pages\\staff-management.tsx": {
-    "mtime": 1788313131.6330976,
-    "ast_hash": "5e8c83e004e76d660aa95ababfa25d03",
+    "mtime": 1788342515.4645846,
+    "ast_hash": "82eaac4ec554fca03984fb10b6948d48",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pages\\transactions.tsx": {
-    "mtime": 1788316888.3621085,
-    "ast_hash": "ba5c4e0e63bb4924ed16cf7b7264ab50",
+    "mtime": 1788342515.4635847,
+    "ast_hash": "820a91eb5316c4b2c56a78746323069b",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\ui\\accordion.tsx": {
@@ -440,8 +440,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\ui\\card.tsx": {
-    "mtime": 1779652981.0,
-    "ast_hash": "6f194e053b597062d44b57b450728b2c",
+    "mtime": 1788341945.8126335,
+    "ast_hash": "485cef8167a454d34ebd3b6e02ae8e33",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\ui\\carousel.tsx": {
@@ -700,8 +700,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\hooks\\use-transactions.ts": {
-    "mtime": 1787562236.9718719,
-    "ast_hash": "c7387b075995521aec7a081a8c96c18d",
+    "mtime": 1788337144.125342,
+    "ast_hash": "56f37fa7071619f1983a4ac1c84de4d8",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\hooks\\usePeakHours.ts": {
@@ -730,8 +730,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\data.ts": {
-    "mtime": 1788273426.4287722,
-    "ast_hash": "d8e01e5072473f2f7d059104ae411f23",
+    "mtime": 1788327230.0921795,
+    "ast_hash": "6161c9dd107d3e70d6dbe10885baa9e0",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\date-format.ts": {
@@ -765,8 +765,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\settings-store.ts": {
-    "mtime": 1779652981.0,
-    "ast_hash": "557a09c4eabea440d9358390999f2765",
+    "mtime": 1788337059.4997854,
+    "ast_hash": "e111a310d9d26945e1d6000a20020e6f",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\staff-contracts.ts": {
@@ -800,8 +800,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\server\\loyalty-repository.ts": {
-    "mtime": 1787562236.9757855,
-    "ast_hash": "2dd1fa9d0e6e3360452cc23cfef1baea",
+    "mtime": 1788331808.2730498,
+    "ast_hash": "5d8296af6701d15aa95eb60a6cdce820",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\server\\request-auth.ts": {
@@ -1405,13 +1405,13 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\status-badge.tsx": {
-    "mtime": 1788316653.1791103,
-    "ast_hash": "57850ab32f1058ceb7d2550c20a6fef7",
+    "mtime": 1788342456.7922256,
+    "ast_hash": "ec725b0bbf011ecd82a09b88c62a2ff3",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\QA_REDESIGN_AUDIT.md": {
-    "mtime": 1788318467.5181708,
-    "ast_hash": "87d3036be5ea30d20320807af2b78062",
+    "mtime": 1788320320.2808847,
+    "ast_hash": "8809318e5792d7d2d453c7d40951a1e9",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\redesign-plans\\phase-1-foundation.md": {
@@ -1472,6 +1472,16 @@
   "E:\\sample project\\LaundryTrackv2-pr-11\\eslint.config.mjs": {
     "mtime": 1788316581.3034415,
     "ast_hash": "919701d8c1e0bc04a7901d9b4a73f3d6",
+    "semantic_hash": ""
+  },
+  "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pages\\new-order.tsx": {
+    "mtime": 1788336924.9273007,
+    "ast_hash": "0cf02e758bde08f5d00e1d2cda9cb8cc",
+    "semantic_hash": ""
+  },
+  "E:\\sample project\\LaundryTrackv2-pr-11\\app\\api\\profile\\route.ts": {
+    "mtime": 1788328552.8796177,
+    "ast_hash": "6716b6362d7b4ecb18e9bf994f746316",
     "semantic_hash": ""
   }
 }

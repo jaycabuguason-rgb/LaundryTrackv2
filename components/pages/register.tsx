@@ -138,7 +138,7 @@ export default function RegisterPage({ onBack }: RegisterPageProps) {
                   autoComplete="name"
                 />
                 {errors.fullName && (
-                  <p className="text-[11px] text-destructive">{errors.fullName}</p>
+                  <p className="text-xs text-destructive">{errors.fullName}</p>
                 )}
               </div>
 
@@ -158,7 +158,7 @@ export default function RegisterPage({ onBack }: RegisterPageProps) {
                   autoComplete="email"
                 />
                 {errors.email && (
-                  <p className="text-[11px] text-destructive">{errors.email}</p>
+                  <p className="text-xs text-destructive">{errors.email}</p>
                 )}
               </div>
 
@@ -178,7 +178,7 @@ export default function RegisterPage({ onBack }: RegisterPageProps) {
                   autoComplete="username"
                 />
                 {errors.username && (
-                  <p className="text-[11px] text-destructive">{errors.username}</p>
+                  <p className="text-xs text-destructive">{errors.username}</p>
                 )}
               </div>
 
@@ -208,7 +208,7 @@ export default function RegisterPage({ onBack }: RegisterPageProps) {
                   </button>
                 </div>
                 {errors.password && (
-                  <p className="text-[11px] text-destructive">{errors.password}</p>
+                  <p className="text-xs text-destructive">{errors.password}</p>
                 )}
               </div>
 
@@ -238,7 +238,7 @@ export default function RegisterPage({ onBack }: RegisterPageProps) {
                   </button>
                 </div>
                 {errors.confirmPassword && (
-                  <p className="text-[11px] text-destructive">{errors.confirmPassword}</p>
+                  <p className="text-xs text-destructive">{errors.confirmPassword}</p>
                 )}
               </div>
 
@@ -262,7 +262,7 @@ export default function RegisterPage({ onBack }: RegisterPageProps) {
           )}
         </div>
 
-        <p className="text-center text-[11px] text-white/50 mt-5">
+        <p className="text-center text-xs text-white/50 mt-5">
           &copy; {new Date().getFullYear()} LaundryTrack. All rights reserved.
         </p>
       </div>

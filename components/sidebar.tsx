@@ -29,6 +29,7 @@ export type Page =
   | "dashboard"
   | "processing"
   | "transactions"
+  | "new-transaction"
   | "claim-verification"
   | "reports"
   | "settings-pricing"
@@ -142,7 +143,7 @@ export default function Sidebar({ activePage, onNavigate, onPreload, loyaltyEnab
                   <Icon className="w-5 h-5 shrink-0" />
                   {effectiveCollapsed ? (
                     item.id === "processing" && processingCount > 0 ? (
-                      <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
+                      <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
                         {processingCount > 99 ? "99+" : processingCount}
                       </span>
                     ) : null
@@ -150,12 +151,12 @@ export default function Sidebar({ activePage, onNavigate, onPreload, loyaltyEnab
                     <span className="flex-1 flex items-center gap-2 truncate">
                       <span className="truncate">{item.label}</span>
                       {item.id === "processing" && processingCount > 0 && (
-                        <span className="shrink-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+                        <span className="shrink-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-xs font-bold text-primary-foreground">
                           {processingCount > 99 ? "99+" : processingCount}
                         </span>
                       )}
                       {item.id === "loyalty" && !loyaltyEnabled && (
-                        <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-muted/40 text-sidebar-foreground/50 border border-sidebar-border/40">
+                        <span className="shrink-0 px-1.5 py-0.5 rounded text-xs font-semibold bg-muted/40 text-sidebar-foreground/50 border border-sidebar-border/40">
                           Disabled
                         </span>
                       )}

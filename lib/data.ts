@@ -277,4 +277,4 @@ export const statusColors: Record<TransactionStatus, string> = {
   Voided:     "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
 };
 
-export const statusOrder: TransactionStatus[] = ["Received", "Washing", "Drying", "Ready", "Claimed"];
+export const statusOrder: TransactionStatus[] = ["Received", "Washing", "Ready", "Claimed"];

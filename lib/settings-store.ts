@@ -1,5 +1,7 @@
 "use client";
 
+import { z } from "zod";
+
 import { DEFAULT_BUSINESS_PROFILE, type BusinessProfile } from "@/lib/business-profile";
 
 // ─── Shared types ────────────────────────────────────────────────────────────
@@ -99,6 +101,39 @@ export const DEFAULT_PRICING_CONFIG: PricingConfig = {
   priceDisplayMode: "show",
 };
 
+// ─── Validation schemas (P0-F: prevent corrupt localStorage from crashing app) ──
+
+const ServiceTypeSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1),
+  description: z.string(),
+  price: z.string(),
+  pricingType: z.enum(["per-kg", "per-load", "per-piece"]),
+  active: z.boolean(),
+  showPrice: z.boolean(),
+});
+
+const AddOnSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1),
+  rate: z.string(),
+});
+
+const LoadTierSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1),
+  range: z.string(),
+  price: z.string(),
+});
+
+const PricingConfigSchema = z.object({
+  pricePerKg: z.string(),
+  minWeight: z.string(),
+  pricingMode: z.enum(["per-kg", "per-load", "both"]),
+  loadTiers: z.array(LoadTierSchema),
+  priceDisplayMode: z.enum(["show", "free", "hide"]),
+});
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function load<T>(key: string, fallback: T): T {
@@ -106,8 +141,27 @@ function load<T>(key: string, fallback: T): T {
   try {
     const raw = localStorage.getItem(key);
     if (raw) return JSON.parse(raw) as T;
-  } catch { /* ignore */ }
+  } catch {
+    try { localStorage.removeItem(key); } catch { /* ignore */ }
+  }
   return fallback;
+}
+
+function loadWithSchema<T>(key: string, fallback: T, schema: z.ZodType<T>): T {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw);
+    const result = schema.safeParse(parsed);
+    if (result.success) return result.data;
+    // corrupt shape -> clear to prevent infinite retry
+    try { localStorage.removeItem(key); } catch { /* ignore */ }
+    return fallback;
+  } catch {
+    try { localStorage.removeItem(key); } catch { /* ignore */ }
+    return fallback;
+  }
 }
 
 function persist<T>(key: string, value: T): void {
@@ -117,7 +171,7 @@ function persist<T>(key: string, value: T): void {
 // ─── Public read helpers (non-hook, for use inside wizard on mount) ──────────
 
 export function loadServiceTypes(): ServiceType[] {
-  return load(LS_SERVICE_TYPES, DEFAULT_SERVICE_TYPES);
+  return loadWithSchema(LS_SERVICE_TYPES, DEFAULT_SERVICE_TYPES, z.array(ServiceTypeSchema));
 }
 
 export function persistServiceTypes(list: ServiceType[]): void {
@@ -125,7 +179,7 @@ export function persistServiceTypes(list: ServiceType[]): void {
 }
 
 export function loadAddOns(): AddOn[] {
-  return load(LS_ADDONS, DEFAULT_ADDONS);
+  return loadWithSchema(LS_ADDONS, DEFAULT_ADDONS, z.array(AddOnSchema));
 }
 
 export function persistAddOns(list: AddOn[]): void {
@@ -133,7 +187,7 @@ export function persistAddOns(list: AddOn[]): void {
 }
 
 export function loadPricingConfig(): PricingConfig {
-  return load(LS_PRICING_CONFIG, DEFAULT_PRICING_CONFIG);
+  return loadWithSchema(LS_PRICING_CONFIG, DEFAULT_PRICING_CONFIG, PricingConfigSchema);
 }
 
 export function persistPricingConfig(cfg: PricingConfig): void {

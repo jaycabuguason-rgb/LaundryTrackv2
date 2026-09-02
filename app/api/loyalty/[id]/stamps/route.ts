@@ -12,11 +12,10 @@ export async function POST(
     const raw = await request.json();
     const stamps = Number(raw?.stamps);
     const reason = raw?.reason ? String(raw.reason).trim() : "Manual entry";
-    if (!Number.isInteger(stamps) || stamps < 1 || stamps > 100) {
-      return NextResponse.json({ error: "Invalid stamps value." }, { status: 400 });
+    if (!Number.isInteger(stamps) || stamps < -100 || stamps > 100 || stamps === 0) {
     }
-    await addStampsToMember(id, stamps, reason);
-    return NextResponse.json({ success: true });
+    const member = await addStampsToMember(id, stamps, reason);
+    return NextResponse.json({ success: true, member });
   } catch (error) {
     const authStatus = getAuthErrorStatus(error);
     if (authStatus) {

@@ -161,20 +161,20 @@ export function RoleBadge({ role = "Staff" }: { role?: string }) {
   const normalized = role.toLowerCase();
   if (normalized === "admin") {
     return (
-      <Badge className="border-purple-200 bg-purple-100 text-purple-700 dark:border-purple-800 dark:bg-purple-900/30 dark:text-purple-300 font-medium px-2 py-0.5 text-[11px] border">
+      <Badge className="border-purple-200 bg-purple-100 text-purple-700 dark:border-purple-800 dark:bg-purple-900/30 dark:text-purple-300 font-medium px-2 py-0.5 text-xs border">
         Admin
       </Badge>
     );
   }
   if (normalized === "cashier") {
     return (
-      <Badge className="border-blue-200 bg-blue-100 text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-300 font-medium px-2 py-0.5 text-[11px] border">
+      <Badge className="border-blue-200 bg-blue-100 text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-300 font-medium px-2 py-0.5 text-xs border">
         Cashier
       </Badge>
     );
   }
   return (
-    <Badge className="border-teal-200 bg-teal-100 text-teal-700 dark:border-teal-800 dark:bg-teal-900/30 dark:text-teal-300 font-medium px-2 py-0.5 text-[11px] border">
+    <Badge className="border-teal-200 bg-teal-100 text-teal-700 dark:border-teal-800 dark:bg-teal-900/30 dark:text-teal-300 font-medium px-2 py-0.5 text-xs border">
       Staff
     </Badge>
   );
@@ -184,7 +184,7 @@ export function ShiftStatusBadge({ status }: { status?: string }) {
   const normalized = (status || "On Shift").toLowerCase();
   if (normalized.includes("break")) {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
         <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
         On Break
       </span>
@@ -192,14 +192,14 @@ export function ShiftStatusBadge({ status }: { status?: string }) {
   }
   if (normalized.includes("off")) {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
         <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />
         Off Duty
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-green-200 bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300">
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-green-200 bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300">
       <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
       On Shift
     </span>
@@ -644,7 +644,7 @@ export default function StaffManagementPage({
                 <tr>
                   <td colSpan={7} className="py-16 text-center">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                      <Loader2 className="h-8 w-8 animate-spin" />
+                      <Loader2 className="h-10 w-10 min-h-[44px] min-w-[44px] animate-spin" />
                       <p className="text-sm">Loading staff accounts...</p>
                     </div>
                   </td>
@@ -653,7 +653,7 @@ export default function StaffManagementPage({
                 <tr>
                   <td colSpan={7} className="py-16 text-center">
                     <div className="flex flex-col items-center gap-2">
-                      <Users className="h-8 w-8 text-muted-foreground/20" />
+                      <Users className="h-10 w-10 min-h-[44px] min-w-[44px] text-muted-foreground/20" />
                       <p className="text-sm text-muted-foreground">No staff members found.</p>
                     </div>
                   </td>
@@ -672,7 +672,7 @@ export default function StaffManagementPage({
                           </div>
                           <div>
                             <p className="text-xs font-semibold text-foreground">{staffAccount.fullName}</p>
-                            <p className="text-[11px] text-muted-foreground">{staffAccount.email}</p>
+                            <p className="text-xs text-muted-foreground">{staffAccount.email}</p>
                           </div>
                         </div>
                       </td>
@@ -690,11 +690,11 @@ export default function StaffManagementPage({
                       </td>
                       <td className="px-3 py-3">
                         {staffAccount.isActive ? (
-                          <Badge className="border-green-200 bg-green-100 px-1.5 py-0 text-[10px] font-medium text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300">
+                          <Badge className="border-green-200 bg-green-100 px-1.5 py-0 text-xs font-medium text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300">
                             Active
                           </Badge>
                         ) : (
-                          <Badge variant="secondary" className="px-1.5 py-0 text-[10px] font-medium text-muted-foreground">
+                          <Badge variant="secondary" className="px-1.5 py-0 text-xs font-medium text-muted-foreground">
                             Inactive
                           </Badge>
                         )}
@@ -704,7 +704,7 @@ export default function StaffManagementPage({
                           <Button
                             size="sm"
                             variant="outline"
-                            className="flex h-7 items-center gap-1 px-2.5 text-[11px]"
+                            className="flex h-10 min-h-[44px] items-center gap-1 px-2.5 text-xs"
                             onClick={() => openEdit(staffAccount)}
                           >
                             <Pencil className="h-3 w-3" />
@@ -713,7 +713,7 @@ export default function StaffManagementPage({
                           <Button
                             size="sm"
                             variant="outline"
-                            className="flex h-7 items-center gap-1 px-2.5 text-[11px]"
+                            className="flex h-10 min-h-[44px] items-center gap-1 px-2.5 text-xs"
                             onClick={() => openReset(staffAccount)}
                           >
                             <KeyRound className="h-3 w-3" />
@@ -722,7 +722,7 @@ export default function StaffManagementPage({
                           <Button
                             size="sm"
                             variant="outline"
-                            className={`flex h-7 items-center gap-1 px-2.5 text-[11px] ${staffAccount.isActive ? "text-destructive hover:text-destructive" : "text-green-600 hover:text-green-600"}`}
+                            className={`flex h-10 min-h-[44px] items-center gap-1 px-2.5 text-xs ${staffAccount.isActive ? "text-destructive hover:text-destructive" : "text-green-600 hover:text-green-600"}`}
                             onClick={() => setDeactivateTarget(staffAccount)}
                           >
                             {staffAccount.isActive ? <UserMinus className="h-3 w-3" /> : <UserPlus className="h-3 w-3" />}
@@ -742,12 +742,12 @@ export default function StaffManagementPage({
         <div className="divide-y divide-border md:hidden">
           {loading ? (
             <div className="flex flex-col items-center justify-center gap-2 py-16 text-muted-foreground">
-              <Loader2 className="h-8 w-8 animate-spin" />
+              <Loader2 className="h-10 w-10 min-h-[44px] min-w-[44px] animate-spin" />
               <p className="text-sm">Loading staff accounts...</p>
             </div>
           ) : filteredStaff.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-2 py-16">
-              <Users className="h-8 w-8 text-muted-foreground/20" />
+              <Users className="h-10 w-10 min-h-[44px] min-w-[44px] text-muted-foreground/20" />
               <p className="text-sm text-muted-foreground">No staff members found.</p>
             </div>
           ) : (
@@ -767,35 +767,35 @@ export default function StaffManagementPage({
                         <RoleBadge role={role} />
                         <ShiftStatusBadge status={shiftStatus} />
                       </div>
-                      <p className="mt-0.5 text-[11px] text-muted-foreground">@{staffAccount.username} · {staffAccount.email}</p>
-                      <p className="text-[11px] text-muted-foreground">Phone: {staffAccount.phoneNumber || "—"} · Created: {formatDate(staffAccount.createdAt)}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">@{staffAccount.username} · {staffAccount.email}</p>
+                      <p className="text-xs text-muted-foreground">Phone: {staffAccount.phoneNumber || "—"} · Created: {formatDate(staffAccount.createdAt)}</p>
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/50 pt-2">
                     <div>
                       {staffAccount.isActive ? (
-                        <Badge className="border-green-200 bg-green-100 px-1.5 py-0 text-[10px] text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300">
+                        <Badge className="border-green-200 bg-green-100 px-1.5 py-0 text-xs text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-300">
                           Active
                         </Badge>
                       ) : (
-                        <Badge variant="secondary" className="px-1.5 py-0 text-[10px] text-muted-foreground">
+                        <Badge variant="secondary" className="px-1.5 py-0 text-xs text-muted-foreground">
                           Inactive
                         </Badge>
                       )}
                     </div>
                     <div className="flex flex-wrap gap-1.5">
-                      <Button size="sm" variant="outline" className="flex h-7 items-center gap-1 text-xs px-2" onClick={() => openEdit(staffAccount)}>
+                      <Button size="sm" variant="outline" className="flex h-10 min-h-[44px] items-center gap-1 text-xs px-2" onClick={() => openEdit(staffAccount)}>
                         <Pencil className="h-3 w-3" />
                         Edit
                       </Button>
-                      <Button size="sm" variant="outline" className="flex h-7 items-center gap-1 text-xs px-2" onClick={() => openReset(staffAccount)}>
+                      <Button size="sm" variant="outline" className="flex h-10 min-h-[44px] items-center gap-1 text-xs px-2" onClick={() => openReset(staffAccount)}>
                         <KeyRound className="h-3 w-3" />
                         Reset PW
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
-                        className={`flex h-7 items-center gap-1 text-xs px-2 ${staffAccount.isActive ? "text-destructive hover:text-destructive" : "text-green-600 hover:text-green-600"}`}
+                        className={`flex h-10 min-h-[44px] items-center gap-1 text-xs px-2 ${staffAccount.isActive ? "text-destructive hover:text-destructive" : "text-green-600 hover:text-green-600"}`}
                         onClick={() => setDeactivateTarget(staffAccount)}
                       >
                         {staffAccount.isActive ? <UserMinus className="h-3 w-3" /> : <UserPlus className="h-3 w-3" />}
@@ -921,7 +921,7 @@ export default function StaffManagementPage({
                 <RoleBadge role={addRole} />
                 <ShiftStatusBadge status={addShiftStatus} />
               </div>
-              <span className="text-[11px] text-muted-foreground">Badge Preview</span>
+              <span className="text-xs text-muted-foreground">Badge Preview</span>
             </div>
 
             {addErrors.form && <p className="text-xs text-destructive">{addErrors.form}</p>}
@@ -997,7 +997,7 @@ export default function StaffManagementPage({
                 {editActive ? <UserCheck className="h-4 w-4 text-green-600" /> : <UserX className="h-4 w-4 text-muted-foreground" />}
                 <div>
                   <p className="text-xs font-medium text-foreground">Account Status</p>
-                  <p className="text-[11px] text-muted-foreground">{editActive ? "Active — can log in" : "Inactive — login blocked"}</p>
+                  <p className="text-xs text-muted-foreground">{editActive ? "Active — can log in" : "Inactive — login blocked"}</p>
                 </div>
               </div>
               <Switch checked={editActive} onCheckedChange={setEditActive} aria-label="Toggle staff active status" />

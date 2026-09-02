@@ -650,21 +650,21 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
                     <div className="min-w-0">
                       <p className="font-mono text-xs font-semibold text-primary">{transaction.ticketId}</p>
                       <p className="mt-0.5 truncate text-sm font-medium text-foreground">{transaction.customerName}</p>
-                      <p className="mt-0.5 text-[11px] text-muted-foreground">{transaction.arrivalDateTime}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{transaction.arrivalDateTime}</p>
                     </div>
                     <StatusBadge status={transaction.status} className="shrink-0" />
                   </div>
                   <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/30 p-2.5">
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Service</p>
+                      <p className="text-xs text-muted-foreground">Service</p>
                       <p className="truncate text-xs font-medium text-foreground">{transaction.washType}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Weight</p>
+                      <p className="text-xs text-muted-foreground">Weight</p>
                       <p className="text-xs font-medium text-foreground">{transaction.weight} kg</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Fee</p>
+                      <p className="text-xs text-muted-foreground">Fee</p>
                       <p className="text-xs font-semibold text-foreground">{formatCurrency(transaction.fee)}</p>
                     </div>
                   </div>
@@ -915,7 +915,7 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
                     <p className="shrink-0 text-sm font-bold text-foreground">{formatCurrency(row.revenue)}</p>
                   </div>
                   <div className="rounded-md bg-muted/30 p-2.5">
-                    <p className="text-[10px] text-muted-foreground">Average per order</p>
+                    <p className="text-xs text-muted-foreground">Average per order</p>
                     <p className="mt-0.5 text-xs font-medium text-foreground">
                       {formatCurrency(Math.round(row.revenue / Math.max(row.count, 1)))}
                     </p>
@@ -1185,21 +1185,21 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
                     <div className="min-w-0">
                       <p className="font-mono text-xs font-semibold text-primary">{transaction.ticketId}</p>
                       <p className="mt-0.5 truncate text-sm font-medium text-foreground">{transaction.customerName}</p>
-                      <p className="mt-0.5 text-[11px] text-muted-foreground">{transaction.phone || "-"}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{transaction.phone || "-"}</p>
                     </div>
                     <PaymentBadge paymentStatus={transaction.paymentStatus} className="shrink-0 font-bold uppercase" />
                   </div>
                   <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/30 p-2.5">
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Arrival</p>
+                      <p className="text-xs text-muted-foreground">Arrival</p>
                       <p className="truncate text-xs font-medium text-foreground">{transaction.arrivalDateTime}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Service</p>
+                      <p className="text-xs text-muted-foreground">Service</p>
                       <p className="truncate text-xs font-medium text-foreground">{transaction.washType}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Fee</p>
+                      <p className="text-xs text-muted-foreground">Fee</p>
                       <p className="text-xs font-semibold text-foreground">{formatCurrency(transaction.fee)}</p>
                     </div>
                   </div>

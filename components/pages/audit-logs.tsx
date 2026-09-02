@@ -160,7 +160,7 @@ function AuditRow({ entry }: { entry: AuditLogEntry }) {
             <span className="text-xs font-semibold text-foreground">{entry.staffName}</span>
             <Badge
               variant="secondary"
-              className={`px-1.5 py-0 text-[10px] font-medium border ${
+              className={`px-1.5 py-0 text-xs font-medium border ${
                 entry.staffRole === "Admin"
                   ? "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800"
                   : entry.staffRole === "Staff"
@@ -173,7 +173,7 @@ function AuditRow({ entry }: { entry: AuditLogEntry }) {
 
             <Badge
               variant="outline"
-              className={cn("px-1.5 py-0 text-[10px] font-medium border", colorClass)}
+              className={cn("px-1.5 py-0 text-xs font-medium border", colorClass)}
             >
               {ACTION_LABELS[entry.action] ?? entry.action}
             </Badge>
@@ -181,7 +181,7 @@ function AuditRow({ entry }: { entry: AuditLogEntry }) {
             <span className="text-xs text-muted-foreground truncate max-w-md">{entry.summary}</span>
           </div>
 
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
             <span>{formatTimestamp(entry.timestamp)}</span>
             <span className="text-muted-foreground/60">({timeAgo(entry.timestamp)})</span>
             {entry.ticketId && (
@@ -201,7 +201,7 @@ function AuditRow({ entry }: { entry: AuditLogEntry }) {
       {expanded && (
         <div className="px-4 pb-3.5 pl-[52px] md:px-5 md:pl-[60px]">
           <div className="rounded-md border border-border bg-muted/40 p-3 font-mono text-xs leading-relaxed text-foreground">
-            <div className="mb-2 grid grid-cols-1 gap-1 sm:grid-cols-2 text-[11px] font-sans text-muted-foreground">
+            <div className="mb-2 grid grid-cols-1 gap-1 sm:grid-cols-2 text-xs font-sans text-muted-foreground">
               <div><span className="font-semibold text-foreground">Event ID:</span> <span className="font-mono">{entry.id}</span></div>
               <div><span className="font-semibold text-foreground">Timestamp:</span> <span className="font-mono">{new Date(entry.timestamp).toISOString()}</span></div>
               <div><span className="font-semibold text-foreground">Staff Member:</span> {entry.staffName} ({entry.staffRole})</div>
@@ -211,7 +211,7 @@ function AuditRow({ entry }: { entry: AuditLogEntry }) {
               {entry.paymentStatus && <div><span className="font-semibold text-foreground">Payment Status:</span> {entry.paymentStatus}</div>}
             </div>
             <div className="border-t border-border/50 pt-2">
-              <p className="mb-1 text-[11px] font-semibold font-sans text-muted-foreground">Event Details:</p>
+              <p className="mb-1 text-xs font-semibold font-sans text-muted-foreground">Event Details:</p>
               <p className="whitespace-pre-wrap font-mono text-xs text-foreground">{entry.details}</p>
             </div>
           </div>
@@ -439,7 +439,7 @@ export function AuditLogsView({ onTabChange }: { onTabChange?: (tab: "staff" | "
             <ScrollText className="h-3.5 w-3.5 text-muted-foreground" />
             Log Entries
           </p>
-          <span className="text-[11px] text-muted-foreground">
+          <span className="text-xs text-muted-foreground">
             {filteredLogs.length} result{filteredLogs.length !== 1 ? "s" : ""}
           </span>
         </div>
@@ -476,7 +476,7 @@ export function AuditLogsView({ onTabChange }: { onTabChange?: (tab: "staff" | "
         )}
       </Card>
 
-      <p className="text-center text-[11px] text-muted-foreground">
+      <p className="text-center text-xs text-muted-foreground">
         Audit logs are read-only and update live when new events are written to Supabase.
       </p>
     </div>

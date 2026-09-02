@@ -239,7 +239,7 @@ export default function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) 
       <div className="flex items-center justify-center gap-1.5 mb-5">
         {([1, 2, 3] as const).map((n, i) => (
           <div key={n} className="flex items-center gap-1.5">
-            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors
+            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold transition-colors
               ${n < current ? "bg-primary text-primary-foreground" :
                 n === current ? "bg-primary text-primary-foreground" :
                 "border border-muted-foreground/30 text-muted-foreground"}`}>
@@ -346,7 +346,7 @@ export default function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) 
                 Continue &rarr;
               </Button>
 
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Auto-continuing in {continueCountdown}s...
               </p>
 
@@ -373,7 +373,7 @@ export default function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) 
               <p className="text-xs font-semibold text-foreground text-center mb-1">{maskEmail(email)}</p>
 
               {/* Expiry countdown */}
-              <p className={`text-[11px] text-center mb-5 font-medium ${codeCountdown <= 60 ? "text-destructive" : "text-muted-foreground"}`}>
+              <p className={`text-xs text-center mb-5 font-medium ${codeCountdown <= 60 ? "text-destructive" : "text-muted-foreground"}`}>
                 Code expires in {formatTime(codeCountdown)}
               </p>
 
@@ -504,7 +504,7 @@ export default function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) 
                         ))}
                       </div>
                       {strengthLabel && (
-                        <p className={`text-[11px] font-medium mb-1.5 ${strengthScore === 1 ? "text-red-500" : strengthScore === 2 ? "text-yellow-500" : "text-green-600"}`}>
+                        <p className={`text-xs font-medium mb-1.5 ${strengthScore === 1 ? "text-red-500" : strengthScore === 2 ? "text-yellow-500" : "text-green-600"}`}>
                           {strengthLabel}
                         </p>
                       )}
@@ -514,7 +514,7 @@ export default function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) 
                           { met: /[0-9]/.test(newPassword), text: "Contains a number" },
                           { met: /[A-Z]/.test(newPassword), text: "Contains uppercase letter" },
                         ].map(({ met, text }) => (
-                          <li key={text} className={`text-[11px] flex items-center gap-1 ${met ? "text-green-600" : "text-muted-foreground"}`}>
+                          <li key={text} className={`text-xs flex items-center gap-1 ${met ? "text-green-600" : "text-muted-foreground"}`}>
                             <span>{met ? "✓" : "○"}</span> {text}
                           </li>
                         ))}
@@ -581,7 +581,7 @@ export default function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) 
                 &rarr; Go to Login
               </Button>
 
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Redirecting in {redirectCountdown}s...
               </p>
             </div>
@@ -589,7 +589,7 @@ export default function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) 
 
         </div>
 
-        <p className="text-center text-[11px] text-white/50 mt-5">
+        <p className="text-center text-xs text-white/50 mt-5">
           &copy; {new Date().getFullYear()} LaundryTrack. All rights reserved.
         </p>
       </div>

@@ -178,7 +178,7 @@ export default function PwaInit() {
         </button>
       </div>
       {showHelp && (
-        <p className="text-[11px] text-muted-foreground mt-2">
+        <p className="text-xs text-muted-foreground mt-2">
           Chrome/Edge: open browser menu then choose Install app or Add to Home screen. iPhone/iPad: Share then Add to Home Screen.
         </p>
       )}

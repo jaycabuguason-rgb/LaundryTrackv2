@@ -126,7 +126,7 @@ function StepIndicator({ current }: { current: StepId }) {
                 {done ? <CheckCircle2 className="w-4 h-4" /> : step.id}
               </div>
               <span className={cn(
-                "text-[10px] font-medium hidden sm:block",
+                "text-xs font-medium hidden sm:block",
                 active ? "text-primary" : done ? "text-foreground" : "text-muted-foreground"
               )}>
                 {step.label}
@@ -598,7 +598,7 @@ export default function DataImportPage({ onViewTransactions }: DataImportProps) 
                       <span className="text-sm font-medium text-foreground">{field.label}</span>
                       {field.required
                         ? <span className="ml-1.5 text-destructive font-bold text-xs">*</span>
-                        : <span className="ml-1.5 text-[11px] text-muted-foreground">(optional)</span>
+                        : <span className="ml-1.5 text-xs text-muted-foreground">(optional)</span>
                       }
                     </div>
                     <Select
@@ -636,7 +636,7 @@ export default function DataImportPage({ onViewTransactions }: DataImportProps) 
                         <span className="text-sm font-medium text-foreground">{field.label}</span>
                         {field.required
                           ? <span className="ml-1.5 text-destructive font-bold text-xs">*</span>
-                          : <span className="ml-1.5 text-[11px] text-muted-foreground">(optional)</span>
+                          : <span className="ml-1.5 text-xs text-muted-foreground">(optional)</span>
                         }
                       </td>
                       <td className="px-4 py-3">
@@ -705,13 +705,13 @@ export default function DataImportPage({ onViewTransactions }: DataImportProps) 
                     >
                       <div className="flex items-center justify-between gap-3">
                         <p className="font-mono text-xs font-semibold text-primary">Row {rowNum}</p>
-                        {hasErr && <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">Error</span>}
-                        {!hasErr && hasWarn && <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-[10px] font-semibold text-yellow-700">Warning</span>}
+                        {hasErr && <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">Error</span>}
+                        {!hasErr && hasWarn && <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-semibold text-yellow-700">Warning</span>}
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         {REQUIRED_FIELDS.filter((f) => mapping[f.key]).map((f) => (
                           <div key={f.key} className="min-w-0 rounded-md bg-muted/30 p-2.5">
-                            <p className="text-[10px] text-muted-foreground">{f.label}</p>
+                            <p className="text-xs text-muted-foreground">{f.label}</p>
                             <p className="mt-0.5 truncate text-xs font-medium text-foreground">
                               {row[mapping[f.key]] || <span className="italic text-muted-foreground">empty</span>}
                             </p>
@@ -949,11 +949,11 @@ export default function DataImportPage({ onViewTransactions }: DataImportProps) 
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-foreground">{entry.fileName}</p>
-                      <p className="mt-0.5 text-[11px] text-muted-foreground">{format(entry.timestamp, "MMM d, yyyy h:mm a")}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{format(entry.timestamp, "MMM d, yyyy h:mm a")}</p>
                     </div>
                     <Badge
                       className={cn(
-                        "shrink-0 border-0 text-[10px] font-semibold",
+                        "shrink-0 border-0 text-xs font-semibold",
                         entry.status === "Success" && "bg-green-100 text-green-700",
                         entry.status === "Partial" && "bg-yellow-100 text-yellow-700",
                         entry.status === "Failed" && "bg-red-100 text-red-700",
@@ -964,11 +964,11 @@ export default function DataImportPage({ onViewTransactions }: DataImportProps) 
                   </div>
                   <div className="grid grid-cols-2 gap-2 rounded-md bg-muted/30 p-2.5">
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Data Type</p>
+                      <p className="text-xs text-muted-foreground">Data Type</p>
                       <p className="mt-0.5 text-xs font-medium capitalize text-foreground">{entry.dataType}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Records</p>
+                      <p className="text-xs text-muted-foreground">Records</p>
                       <p className="mt-0.5 text-xs font-semibold text-foreground">{entry.recordsImported.toLocaleString()}</p>
                     </div>
                   </div>
@@ -1011,7 +1011,7 @@ export default function DataImportPage({ onViewTransactions }: DataImportProps) 
                       <td className="px-4 py-3">
                         <Badge
                           className={cn(
-                            "text-[10px] font-semibold border-0",
+                            "text-xs font-semibold border-0",
                             entry.status === "Success" && "bg-green-100 text-green-700",
                             entry.status === "Partial" && "bg-yellow-100 text-yellow-700",
                             entry.status === "Failed"  && "bg-red-100 text-red-700",
@@ -1032,7 +1032,7 @@ export default function DataImportPage({ onViewTransactions }: DataImportProps) 
                           Undo Import
                         </Button>
                         {!withinUndo && (
-                          <span className="ml-2 text-[11px] text-muted-foreground">Expired</span>
+                          <span className="ml-2 text-xs text-muted-foreground">Expired</span>
                         )}
                       </td>
                     </tr>

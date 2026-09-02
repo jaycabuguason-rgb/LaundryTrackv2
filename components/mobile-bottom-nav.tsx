@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutDashboard, ListTodo, Receipt, QrCode, User } from "lucide-react";
+import { LayoutDashboard, ListTodo, Receipt, User, Plus } from "lucide-react";
 import { type Page } from "@/components/sidebar";
 import { cn } from "@/lib/utils";
 
@@ -13,8 +13,8 @@ interface MobileBottomNavProps {
 const ITEMS: Array<{ page: Page; label: string; icon: typeof LayoutDashboard }> = [
   { page: "dashboard", label: "Home", icon: LayoutDashboard },
   { page: "processing", label: "Process", icon: ListTodo },
-  { page: "transactions", label: "Transactions", icon: Receipt },
-  { page: "claim-verification", label: "Claim", icon: QrCode },
+  { page: "new-transaction", label: "New order", icon: Plus },
+  { page: "transactions", label: "Records", icon: Receipt },
   { page: "profile", label: "Profile", icon: User },
 ];
 
@@ -32,8 +32,9 @@ export default function MobileBottomNav({ activePage, onNavigate, onPreload }: M
               onPointerEnter={() => onPreload?.(page)}
               onFocus={() => onPreload?.(page)}
               onClick={() => onNavigate(page)}
+              aria-current={active ? "page" : undefined}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 py-2 text-[11px]",
+                "flex min-h-14 flex-col items-center justify-center gap-1 py-2 text-xs outline-none focus-visible:bg-primary/10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
                 active ? "text-primary font-semibold" : "text-muted-foreground",
               )}
             >

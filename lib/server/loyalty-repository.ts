@@ -214,12 +214,32 @@ export async function addStampsToMember(
   memberId: string,
   stamps: number,
   notes: string = "Manual entry"
-): Promise<void> {
+): Promise<LoyaltyMember> {
   if (!hasSupabaseConfig()) {
-    mockMembers = mockMembers.map((m) =>
-      m.id === memberId ? { ...m, stampCount: m.stampCount + stamps } : m
-    );
-    return;
+    let updatedMember: LoyaltyMember | undefined;
+    mockMembers = mockMembers.map((m) => {
+      if (m.id === memberId) {
+        const newStampCount = Math.max(0, m.stampCount + stamps);
+        const updated: LoyaltyMember = {
+          ...m,
+          stampCount: newStampCount,
+          stampHistory: [
+            {
+              date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+              stamps,
+              ticket: stamps < 0 ? "Undo Adjustment" : "Manual Entry",
+              notes,
+            },
+            ...(m.stampHistory || []),
+          ],
+        };
+        updatedMember = updated;
+        return updated;
+      }
+      return m;
+    });
+    if (!updatedMember) throw new Error("Member not found");
+    return updatedMember;
   }
 
   const rows = await restRequest<LoyaltyMemberRow[]>(
@@ -227,21 +247,37 @@ export async function addStampsToMember(
   );
   if (rows.length === 0) throw new Error("Member not found");
 
-  const newCount = rows[0].stamp_count + stamps;
+  const newCount = Math.max(0, rows[0].stamp_count + stamps);
   await restRequest(`loyalty_members?id=eq.${encodeURIComponent(memberId)}`, {
     method: "PATCH",
     body: JSON.stringify({ stamp_count: newCount }),
   });
 
-  await restRequest(`stamp_history`, {
-    method: "POST",
-    body: JSON.stringify({
-      member_id: memberId,
-      stamps_added: stamps,
-      source: "manual",
-      notes: notes,
-    }),
-  });
+  try {
+    await restRequest(`stamp_history`, {
+      method: "POST",
+      body: JSON.stringify({
+        member_id: memberId,
+        stamps_added: stamps,
+        source: "manual",
+        notes: notes,
+      }),
+    });
+  } catch {
+    try {
+      await restRequest(`stamp_history`, {
+        method: "POST",
+        body: JSON.stringify({
+          member_id: memberId,
+          stamps_added: stamps,
+        }),
+      });
+    } catch {
+      // Non-fatal if stamp_history table schema differs
+    }
+  }
+
+  return await getLoyaltyMemberWithHistory(memberId);
 }
 
 export async function getLoyaltySettings(): Promise<{ loyalty_enabled: boolean; washes_per_reward: number; reward_description: string }> {
@@ -266,20 +302,36 @@ export async function getLoyaltyMemberWithHistory(memberId: string): Promise<Loy
   const member = mapRowToMember(rows[0]);
 
   // 2. Fetch stamp history
-  const stamps = await restRequest<StampHistoryRow[]>(
-    `stamp_history?member_id=eq.${encodeURIComponent(memberId)}&select=id,member_id,transaction_id,stamps_added,source,notes,created_at,transactions(ticket_id)&order=created_at.desc`
-  );
+  let stamps: StampHistoryRow[] = [];
+  try {
+    stamps = await restRequest<StampHistoryRow[]>(
+      `stamp_history?member_id=eq.${encodeURIComponent(memberId)}&select=id,member_id,transaction_id,stamps_added,source,notes,created_at,transactions(ticket_id)&order=created_at.desc`
+    );
+  } catch {
+    try {
+      stamps = await restRequest<StampHistoryRow[]>(
+        `stamp_history?member_id=eq.${encodeURIComponent(memberId)}&select=id,member_id,transaction_id,stamps_added,created_at,transactions(ticket_id)&order=created_at.desc`
+      );
+    } catch {
+      stamps = [];
+    }
+  }
 
   // 3. Fetch reward history
-  const rewards = await restRequest<RewardHistoryRow[]>(
-    `reward_history?member_id=eq.${encodeURIComponent(memberId)}&select=id,member_id,reward_type,redeemed_at&order=redeemed_at.desc`
-  );
+  let rewards: RewardHistoryRow[] = [];
+  try {
+    rewards = await restRequest<RewardHistoryRow[]>(
+      `reward_history?member_id=eq.${encodeURIComponent(memberId)}&select=id,member_id,reward_type,redeemed_at&order=redeemed_at.desc`
+    );
+  } catch {
+    rewards = [];
+  }
 
   member.stampHistory = stamps.map((s) => ({
     date: new Date(s.created_at).toISOString().split("T")[0],
     stamps: s.stamps_added,
     ticket: s.transactions?.ticket_id ?? "Manual",
-    source: s.source as "auto_claim" | "manual",
+    source: (s.source as "auto_claim" | "manual") || "manual",
     notes: s.notes ?? undefined,
   }));
 

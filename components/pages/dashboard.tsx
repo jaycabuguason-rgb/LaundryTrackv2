@@ -169,7 +169,7 @@ export default function DashboardPage({
                         <StatusBadge status={txn.status} />
                       </div>
                       <div className="flex items-center justify-between">
-                        <p className="text-[11px] text-muted-foreground">{txn.dropOffDate}</p>
+                        <p className="text-xs text-muted-foreground">{txn.dropOffDate}</p>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -264,7 +264,7 @@ export default function DashboardPage({
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="text-xs font-medium text-muted-foreground">Loyalty Members</p>
                         {!loyaltyEnabled && (
-                          <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                          <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-xs font-semibold text-muted-foreground">
                             Disabled
                           </span>
                         )}

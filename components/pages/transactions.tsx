@@ -146,7 +146,7 @@ function StampCard({ count, highlight }: { count: number; highlight?: boolean })
                 : "bg-primary border-primary text-primary-foreground"
               : "bg-muted border-border text-muted-foreground"
           )}>
-            {filled ? <Star className="w-3.5 h-3.5 fill-current" /> : <span className="text-[9px]">{i + 1}</span>}
+            {filled ? <Star className="w-3.5 h-3.5 fill-current" /> : <span className="text-xs">{i + 1}</span>}
           </div>
         );
       })}
@@ -173,7 +173,7 @@ function MemberCard({ member, onClear, stampAfter }: { member: LoyaltyMember; on
           <div>
             <div className="flex items-center gap-2">
               <p className="font-semibold text-sm text-foreground">{member.name}</p>
-              <span className="inline-flex items-center rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 px-2 py-0.5 text-[10px] font-semibold">Loyalty Member</span>
+              <span className="inline-flex items-center rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 px-2 py-0.5 text-xs font-semibold">Loyalty Member</span>
             </div>
             <p className="text-xs text-muted-foreground">{member.phone}</p>
           </div>
@@ -186,15 +186,15 @@ function MemberCard({ member, onClear, stampAfter }: { member: LoyaltyMember; on
       </div>
       <div className="grid grid-cols-2 gap-1.5 text-xs">
         <div className="bg-background/70 rounded-md p-2">
-          <p className="text-muted-foreground text-[10px]">Member ID</p>
+          <p className="text-muted-foreground text-xs">Member ID</p>
           <p className="font-mono font-medium text-foreground">{member.id}</p>
         </div>
         <div className="bg-background/70 rounded-md p-2">
-          <p className="text-muted-foreground text-[10px]">Member Since</p>
+          <p className="text-muted-foreground text-xs">Member Since</p>
           <p className="font-medium text-foreground">{member.dateJoined}</p>
         </div>
         <div className="bg-background/70 rounded-md p-2 col-span-2">
-          <p className="text-muted-foreground text-[10px] mb-1.5">
+          <p className="text-muted-foreground text-xs mb-1.5">
             Stamps — {stampAfter ? newStamp : currentStamp} of {STAMP_MILESTONE}
             {completedCycles > 0 && <span className="ml-1 text-primary">({completedCycles} reward{completedCycles > 1 ? "s" : ""} completed)</span>}
           </p>
@@ -507,7 +507,7 @@ function NewTransactionWizard({
               </div>
               <div>
                 <p className={cn("text-sm font-semibold", form.customerType === type ? "text-primary" : "text-foreground")}>{label}</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">{sub}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>
               </div>
               {form.customerType === type && (
                 <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
@@ -846,7 +846,7 @@ function NewTransactionWizard({
                       >
                         <span>{svc.name}</span>
                         {showThisPrice && (
-                          <span className={cn("text-[11px] font-normal", form.washType === svc.name ? "text-primary/70" : "text-muted-foreground")}>
+                          <span className={cn("text-xs font-normal", form.washType === svc.name ? "text-primary/70" : "text-muted-foreground")}>
                             ₱{svc.price}{unitLabel}
                           </span>
                         )}
@@ -918,7 +918,7 @@ function NewTransactionWizard({
                         {tier.name}
                       </p>
                       {tier.range && (
-                        <p className="text-[11px] text-muted-foreground mt-0.5">{tier.range}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{tier.range}</p>
                       )}
                       {!globalHidePrice && (
                         <p className={cn("text-base font-bold mt-1", selectedTierId === tier.id ? "text-primary" : "text-foreground")}>
@@ -999,7 +999,7 @@ function NewTransactionWizard({
               { label: "Add-ons", value: form.addOns.length ? form.addOns.join(", ") : "None" },
             ].map((row) => (
               <div key={row.label} className="bg-background/60 rounded-md p-2.5">
-                <p className="text-[10px] text-muted-foreground">{row.label}</p>
+                <p className="text-xs text-muted-foreground">{row.label}</p>
                 <p className="text-xs font-medium text-foreground mt-0.5 truncate">{row.value}</p>
               </div>
             ))}
@@ -1032,7 +1032,7 @@ function NewTransactionWizard({
                 </button>
               ))}
             </div>
-            <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed">
+            <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
               {form.paymentStatus === "unpaid"
                 ? "Payment will be recorded as pending. Customer receipt will show balance due."
                 : "Payment confirmed. Receipt will show as fully paid."}
@@ -1079,14 +1079,14 @@ function NewTransactionWizard({
               <div key={t} className="flex items-center flex-1 last:flex-none">
                 <div className="flex flex-col items-center gap-1">
                   <div className={cn(
-                    "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold border-2 transition-all",
+                    "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all",
                     done ? "bg-primary border-primary text-primary-foreground"
                       : active ? "bg-primary border-primary text-primary-foreground"
                         : "bg-muted border-border text-muted-foreground"
                   )}>
                     {done ? <Check className="w-3 h-3" /> : i}
                   </div>
-                  <span className={cn("text-[9px] text-center w-16 leading-tight hidden sm:block",
+                  <span className={cn("text-xs text-center w-16 leading-tight hidden sm:block",
                     active ? "text-primary font-semibold" : "text-muted-foreground")}>{t}</span>
                 </div>
                 {idx < stepTitles.length - 1 && (
@@ -1630,14 +1630,14 @@ export default function TransactionsPage({
                       {txn.ticketId}
                     </button>
                     <p className={cn("truncate text-xs font-medium text-foreground", isVoided && "line-through")}>{txn.customerName}</p>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground">{txn.arrivalDateTime}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{txn.arrivalDateTime}</p>
                   </div>
                   <div className="flex flex-col items-end gap-1.5">
                     <StatusBadge status={txn.status} />
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-7 px-2.5 text-[11px]"
+                      className="h-7 px-2.5 text-xs"
                       disabled={isVoided || mobileStatusBusyTicket === txn.ticketId}
                       onClick={() => setMobileStatusTxn(txn)}
                     >
@@ -1648,15 +1648,15 @@ export default function TransactionsPage({
 
                 <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/30 p-2.5">
                   <div>
-                    <p className="text-[10px] text-muted-foreground">Weight</p>
+                    <p className="text-xs text-muted-foreground">Weight</p>
                     <p className="text-xs font-medium text-foreground">{txn.weight} kg</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-muted-foreground">Type</p>
+                    <p className="text-xs text-muted-foreground">Type</p>
                     <p className="truncate text-xs font-medium text-foreground">{txn.washType}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-muted-foreground">Fee</p>
+                    <p className="text-xs text-muted-foreground">Fee</p>
                     <p className="text-xs font-medium text-foreground">₱{txn.fee}</p>
                   </div>
                 </div>
@@ -1675,7 +1675,7 @@ export default function TransactionsPage({
                     </Button>
                     <Button
                       variant="ghost" size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      className="h-10 w-10 min-h-[44px] min-w-[44px] text-destructive hover:text-destructive"
                       title="Void"
                       disabled={isVoided}
                       onClick={() => { setVoidTxn(txn); setVoidReason(""); }}
@@ -1770,14 +1770,14 @@ export default function TransactionsPage({
                         </Button>
                         <Button
                           variant="ghost" size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          className="h-10 w-10 min-h-[44px] min-w-[44px] text-destructive hover:text-destructive"
                           title="Void"
                           disabled={isVoided}
                           onClick={() => { setVoidTxn(txn); setVoidReason(""); }}
                         >
                           <Ban className="w-3.5 h-3.5" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 hidden sm:flex" title="Print Receipt" onClick={() => { setPrintTxn(txn); setPrintPostCreate(false); }}>
+                        <Button variant="ghost" size="icon" className="h-10 w-10 min-h-[44px] min-w-[44px] hidden sm:flex" title="Print Receipt" onClick={() => { setPrintTxn(txn); setPrintPostCreate(false); }}>
                           <Printer className="w-3.5 h-3.5" />
                         </Button>
                       </div>
@@ -1833,24 +1833,24 @@ export default function TransactionsPage({
                   { label: "ETA", value: viewTxn.eta ? formatReadableDateTime(viewTxn.eta) : "Awaiting estimate", span: false },
                 ].map((row) => (
                   <div key={row.label} className={cn("bg-muted/30 rounded-md p-2.5", row.span && "col-span-2")}>
-                    <p className="text-[11px] text-muted-foreground">{row.label}</p>
+                    <p className="text-xs text-muted-foreground">{row.label}</p>
                     <p className="font-medium text-foreground text-xs mt-0.5">{row.value}</p>
                   </div>
                 ))}
                 {/* Payment Status */}
                 <div className="bg-muted/30 rounded-md p-2.5">
-                  <p className="text-[11px] text-muted-foreground mb-1">Payment Status</p>
+                  <p className="text-xs text-muted-foreground mb-1">Payment Status</p>
                   <PaymentBadge paymentStatus={viewTxn.paymentStatus} />
                 </div>
                 {/* Current Status */}
                 <div className="bg-muted/30 rounded-md p-2.5">
-                  <p className="text-[11px] text-muted-foreground mb-1">Current Status</p>
+                  <p className="text-xs text-muted-foreground mb-1">Current Status</p>
                   <StatusBadge status={viewTxn.status} />
                 </div>
                 {/* Wash instructions read-only */}
                 {viewTxn.washInstructions && (
                   <div className="col-span-2 bg-muted/30 rounded-md p-2.5">
-                    <p className="text-[11px] text-muted-foreground">Wash Instructions</p>
+                    <p className="text-xs text-muted-foreground">Wash Instructions</p>
                     <p className="font-medium text-foreground text-xs mt-0.5">{viewTxn.washInstructions}</p>
                   </div>
                 )}
@@ -1869,12 +1869,12 @@ export default function TransactionsPage({
                       <div key={step} className="flex items-center flex-1 last:flex-none">
                         <div className="flex flex-col items-center">
                           <div className={cn(
-                            "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold border-2",
+                            "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border-2",
                             isCompleted || isCurrent ? "bg-primary border-primary text-primary-foreground" : "bg-background border-border text-muted-foreground"
                           )}>
                             {isCompleted ? "✓" : idx + 1}
                           </div>
-                          <span className={cn("text-[9px] mt-1 text-center w-10 md:w-12 leading-tight", isCurrent ? "text-primary font-semibold" : "text-muted-foreground")}>
+                          <span className={cn("text-xs mt-1 text-center w-10 md:w-12 leading-tight", isCurrent ? "text-primary font-semibold" : "text-muted-foreground")}>
                             {step}
                           </span>
                         </div>
@@ -1894,7 +1894,7 @@ export default function TransactionsPage({
                   height={100}
                   crossOrigin="anonymous"
                 />
-                <p className="text-[10px] text-muted-foreground font-mono">{viewTxn.ticketId}</p>
+                <p className="text-xs text-muted-foreground font-mono">{viewTxn.ticketId}</p>
               </div>
 
               {/* View modal actions */}
@@ -1956,7 +1956,7 @@ export default function TransactionsPage({
                   { label: "Fee", value: `₱${editTxn.fee}` },
                 ].map((row) => (
                   <div key={row.label} className="bg-muted/40 rounded-xl p-3 border border-border/40 flex flex-col justify-center">
-                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">{row.label}</p>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">{row.label}</p>
                     <p className="font-bold text-foreground text-[13px]">{row.value}</p>
                   </div>
                 ))}
@@ -1975,13 +1975,13 @@ export default function TransactionsPage({
                       <div key={step} className="flex items-center flex-1 last:flex-none">
                         <div className="flex flex-col items-center">
                           <div className={cn(
-                            "w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold border-2 transition-all duration-300 shadow-sm",
+                            "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all duration-300 shadow-sm",
                             isCompleted ? "bg-primary border-primary text-primary-foreground" :
                               isCurrent ? "bg-background border-primary text-primary ring-2 ring-primary/20 ring-offset-1 ring-offset-background" : "bg-muted/50 border-border text-muted-foreground"
                           )}>
                             {isCompleted ? <Check className="w-3.5 h-3.5" /> : idx + 1}
                           </div>
-                          <span className={cn("text-[9px] mt-2 text-center w-11 md:w-12 leading-tight transition-colors duration-300 uppercase tracking-wide", isCurrent ? "text-primary font-bold" : "text-muted-foreground font-semibold")}>
+                          <span className={cn("text-xs mt-2 text-center w-11 md:w-12 leading-tight transition-colors duration-300 uppercase tracking-wide", isCurrent ? "text-primary font-bold" : "text-muted-foreground font-semibold")}>
                             {step}
                           </span>
                         </div>
@@ -2016,12 +2016,12 @@ export default function TransactionsPage({
                             <span className={cn("font-medium text-[15px] flex-1 text-left", isCurrent ? "text-foreground" : "text-muted-foreground")}>{value}</span>
                             {isCurrent && (
                               <div className="flex items-center gap-1.5 ml-3">
-                                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Current</span>
+                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Current</span>
                                 <Check className="w-3.5 h-3.5 text-muted-foreground" />
                               </div>
                             )}
                             {isClaimedBlocked && !isCurrent && (
-                              <span className="ml-2 text-[10px] text-muted-foreground font-medium uppercase tracking-wider">(Payment Required)</span>
+                              <span className="ml-2 text-xs text-muted-foreground font-medium uppercase tracking-wider">(Payment Required)</span>
                             )}
                           </div>
                         </SelectItem>
@@ -2130,7 +2130,7 @@ export default function TransactionsPage({
                 className="h-9 text-sm"
               />
               {voidReason.trim() === "" && (
-                <p className="text-[11px] text-muted-foreground mt-1">A reason is required to void this ticket.</p>
+                <p className="text-xs text-muted-foreground mt-1">A reason is required to void this ticket.</p>
               )}
             </div>
             <div className="flex gap-2">

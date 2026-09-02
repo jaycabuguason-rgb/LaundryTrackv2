@@ -272,7 +272,7 @@ export default function ChangePasswordPage({ adminProfile, onProfileUpdate }: Ch
               </div>
               {strength.label && (
                 <p className={cn(
-                  "text-[11px] font-medium",
+                  "text-xs font-medium",
                   strength.level === 1 && "text-red-500",
                   strength.level === 2 && "text-yellow-600",
                   strength.level === 3 && "text-green-600",
@@ -285,7 +285,7 @@ export default function ChangePasswordPage({ adminProfile, onProfileUpdate }: Ch
 
           {/* Requirements checklist */}
           <div className="space-y-1.5 p-3 bg-muted/30 rounded-md border border-border">
-            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Requirements</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Requirements</p>
             {requirements.map((req) => {
               const passed = req.test(newPw);
               return (
