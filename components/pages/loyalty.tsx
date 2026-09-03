@@ -1,62 +1,126 @@
 "use client";
 
-import { useState } from "react";
-import { Search, ChevronLeft, Star, X, AlertTriangle, Plus, Edit, Trash2 } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import {
+  Search,
+  ChevronLeft,
+  Star,
+  Plus,
+  Edit,
+  Trash2,
+  Phone,
+  RotateCcw,
+  Scale,
+  Gift,
+  Award,
+  Check,
+  Percent,
+  Sparkles,
+  CheckCircle2,
+  LayoutGrid,
+  Table as TableIcon,
+  Flame,
+  Undo2,
+  Redo2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useLoyaltyMembers } from "@/hooks/use-loyalty-members";
 import { type LoyaltyMember } from "@/lib/data";
 import { toast } from "@/hooks/use-toast";
 import { getBrowserAccessToken, refreshBrowserSession } from "@/lib/supabase/browser-session";
+import {
+  loadLoyaltySettings,
+  persistLoyaltySettings,
+  type LoyaltySettings,
+} from "@/lib/settings-store";
 
 function getInitials(name: string) {
-  return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 }
 
-function StampDots({ count, max = 10 }: { count: number; max?: number }) {
-  const pct = Math.min(100, (count / max) * 100);
+function StampDots({ count, max = 7 }: { count: number; max?: number }) {
+  const effectiveCount = Math.min(count, max);
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap gap-1.5 max-w-xs">
-        {Array.from({ length: max }).map((_, i) => (
+    <div className="flex flex-wrap gap-2">
+      {Array.from({ length: max }).map((_, i) => {
+        const filled = i < effectiveCount;
+        return (
           <div
             key={i}
-            className={`w-6 h-6 rounded-full border flex items-center justify-center text-xs font-semibold transition-all ${
-              i < count
-                ? "bg-primary border-primary text-primary-foreground shadow-sm"
-                : "bg-muted/50 border-border text-muted-foreground"
+            className={`w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold transition-all ${
+              filled
+                ? "bg-primary border-primary text-primary-foreground shadow-xs scale-105"
+                : "bg-muted/40 border-dashed border-border text-muted-foreground"
             }`}
           >
-            {i < count ? <Star className="w-3 h-3 fill-current" /> : i + 1}
+            {filled ? <Star className="w-4 h-4 fill-current" /> : i + 1}
           </div>
-        ))}
-      </div>
-      <div className="h-2 w-full max-w-xs rounded-full bg-muted overflow-hidden">
-        <div className="h-full bg-primary rounded-full transition-all duration-300" style={{ width: `${pct}%` }} />
-      </div>
+        );
+      })}
     </div>
   );
 }
 
-export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?: boolean }) {
+interface LoyaltyPageProps {
+  loyaltyEnabled?: boolean;
+}
+
+export default function LoyaltyPage({ loyaltyEnabled = true }: LoyaltyPageProps) {
   const { members, loading, refetch } = useLoyaltyMembers();
+  const [activeTab, setActiveTab] = useState<"members" | "rewards">("members");
+  const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<LoyaltyMember | null>(null);
-  const [rewardCycleModal, setRewardCycleModal] = useState<{ date: string; reward: string } | null>(null);
+
+  // Loyalty Program Config state
+  const [loyaltyConfig, setLoyaltyConfig] = useState<LoyaltySettings>(() => loadLoyaltySettings());
+  const [savingConfig, setSavingConfig] = useState(false);
+
+  // Modals state
   const [addModal, setAddModal] = useState(false);
   const [editModal, setEditModal] = useState<LoyaltyMember | null>(null);
   const [deleteModal, setDeleteModal] = useState<LoyaltyMember | null>(null);
   const [stampModal, setStampModal] = useState<LoyaltyMember | null>(null);
+  const [rewardCycleModal, setRewardCycleModal] = useState<{ date: string; reward: string } | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // Loyalty config - in real app this would come from settings
-  const washesPerReward = 10;
-  const rewardName = "Free wash";
+  // Simulated reward redemption state
+  const [redeemedRewards, setRedeemedRewards] = useState<
+    Array<{ id: string; name: string; memberName: string; date: string }>
+  >([]);
+
+  // Undo / Redo Stamp stack
+  const [undoStack, setUndoStack] = useState<Array<{ memberId: string; stamps: number }>>([]);
+  const [redoStack, setRedoStack] = useState<Array<{ memberId: string; stamps: number }>>([]);
+
+  useEffect(() => {
+    const cfg = loadLoyaltySettings();
+    setLoyaltyConfig(cfg);
+  }, []);
+
+  const washesPerReward = parseInt(loyaltyConfig.washesPerReward) || 7;
+  const rewardName = loyaltyConfig.rewardDescription || "Free wash";
 
   async function getAuthHeaders(extra: Record<string, string> = {}) {
     let accessToken = await getBrowserAccessToken();
@@ -69,51 +133,56 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
     if (accessToken) {
       headers.Authorization = `Bearer ${accessToken}`;
     }
-
     return headers;
   }
 
-  const filtered = members.filter(
-    (m) =>
-      m.name.toLowerCase().includes(search.toLowerCase()) ||
-      (m.phone && m.phone.includes(search))
-  );
+  // Filtered members list
+  const filteredMembers = useMemo(() => {
+    return members.filter((m) => {
+      const q = search.toLowerCase().trim();
+      if (!q) return true;
+      return (
+        m.name.toLowerCase().includes(q) ||
+        (m.phone && m.phone.toLowerCase().includes(q)) ||
+        (m.preferences && m.preferences.toLowerCase().includes(q))
+      );
+    });
+  }, [members, search]);
 
-  async function handleSelectMember(m: LoyaltyMember) {
-    setSelected(m);
-    try {
-      const res = await fetch(`/api/loyalty/${m.id}`, {
-        headers: await getAuthHeaders(),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.member) setSelected(data.member);
-      }
-    } catch (e) {
-      console.error("Failed to load member history", e);
-    }
-  }
+  // Overall statistics
+  const totalMembers = members.length;
+  const totalStampsIssued = useMemo(
+    () => members.reduce((acc, m) => acc + (m.stampCount || 0), 0),
+    [members]
+  );
+  const totalRewardsRedeemed = useMemo(
+    () => members.reduce((acc, m) => acc + (m.rewardsRedeemed || 0), 0) + redeemedRewards.length,
+    [members, redeemedRewards]
+  );
 
   async function handleAddMember(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSaving(true);
     const form = e.currentTarget;
     const data = new FormData(form);
+    const name = (data.get("name") as string)?.trim();
+    const phone = (data.get("phone") as string)?.trim();
+    const preferences = (data.get("preferences") as string)?.trim();
+
     try {
       const res = await fetch("/api/loyalty", {
         method: "POST",
         headers: await getAuthHeaders({ "Content-Type": "application/json" }),
-        body: JSON.stringify({
-          name: data.get("name"),
-          phone: data.get("phone"),
-          preferences: data.get("preferences"),
-        }),
+        body: JSON.stringify({ name, phone, preferences }),
       });
-      if (!res.ok) throw new Error("Failed to add member");
-      toast({ title: "Member added successfully" });
+      if (!res.ok) throw new Error("Failed to create member");
+      const json = await res.json();
+      toast({ title: "Loyalty member added successfully" });
       setAddModal(false);
-      form.reset();
       refetch();
+      if (json.member) {
+        setSelected(json.member);
+      }
     } catch {
       toast({ title: "Failed to add member", variant: "destructive" });
     } finally {
@@ -127,20 +196,23 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
     setSaving(true);
     const form = e.currentTarget;
     const data = new FormData(form);
+    const name = (data.get("name") as string)?.trim();
+    const phone = (data.get("phone") as string)?.trim();
+    const preferences = (data.get("preferences") as string)?.trim();
+
     try {
       const res = await fetch(`/api/loyalty/${editModal.id}`, {
         method: "PATCH",
         headers: await getAuthHeaders({ "Content-Type": "application/json" }),
-        body: JSON.stringify({
-          name: data.get("name"),
-          phone: data.get("phone"),
-          preferences: data.get("preferences"),
-        }),
+        body: JSON.stringify({ name, phone, preferences }),
       });
       if (!res.ok) throw new Error("Failed to update member");
       toast({ title: "Member updated successfully" });
       setEditModal(null);
       refetch();
+      if (selected && selected.id === editModal.id) {
+        setSelected({ ...selected, name, phone, preferences });
+      }
     } catch {
       toast({ title: "Failed to update member", variant: "destructive" });
     } finally {
@@ -159,9 +231,148 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
       if (!res.ok) throw new Error("Failed to delete member");
       toast({ title: "Member deleted successfully" });
       setDeleteModal(null);
+      if (selected && selected.id === deleteModal.id) {
+        setSelected(null);
+      }
       refetch();
     } catch {
       toast({ title: "Failed to delete member", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDirectAddStamp(member: LoyaltyMember, stamps: number = 1) {
+    if (saving) return;
+    setSaving(true);
+    const targetMemberId = member.id;
+    try {
+      const headers = await getAuthHeaders({ "Content-Type": "application/json" });
+      const res = await fetch(`/api/loyalty/${targetMemberId}/stamps`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ stamps, reason: "Manual stamp add" }),
+      });
+      if (!res.ok) {
+        const errJson = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(errJson.error || `Server returned error (${res.status})`);
+      }
+      const json = await res.json();
+      toast({ title: `+${stamps} stamp added to ${member.name}!` });
+      setUndoStack((prev) => [...prev, { memberId: targetMemberId, stamps }]);
+      setRedoStack([]);
+      refetch();
+
+      if (json.member) {
+        setSelected(json.member);
+      } else {
+        const memberRes = await fetch(`/api/loyalty/${targetMemberId}`, {
+          headers,
+        });
+        if (memberRes.ok) {
+          const memberData = await memberRes.json();
+          if (memberData.member) {
+            setSelected(memberData.member);
+          }
+        }
+      }
+    } catch (err: unknown) {
+      console.error("Direct add stamp error:", err);
+      toast({
+        title: "Failed to add stamp",
+        description: err instanceof Error ? err.message : "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleUndoStamp() {
+    if (undoStack.length === 0 || saving || !selected) return;
+    const lastAction = undoStack[undoStack.length - 1];
+    if (lastAction.memberId !== selected.id) return;
+
+    setSaving(true);
+    try {
+      const headers = await getAuthHeaders({ "Content-Type": "application/json" });
+      const res = await fetch(`/api/loyalty/${selected.id}/stamps`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ stamps: -lastAction.stamps, reason: "Undo stamp" }),
+      });
+      if (!res.ok) {
+        const errJson = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(errJson.error || "Failed to undo stamp");
+      }
+      const json = await res.json();
+      toast({ title: `Undid +${lastAction.stamps} stamp for ${selected.name}` });
+      setUndoStack((prev) => prev.slice(0, -1));
+      setRedoStack((prev) => [...prev, lastAction]);
+      refetch();
+
+      if (json.member) {
+        setSelected(json.member);
+      } else {
+        const memberRes = await fetch(`/api/loyalty/${selected.id}`, { headers });
+        if (memberRes.ok) {
+          const memberData = await memberRes.json();
+          if (memberData.member) {
+            setSelected(memberData.member);
+          }
+        }
+      }
+    } catch (err: unknown) {
+      toast({
+        title: "Failed to undo stamp",
+        description: err instanceof Error ? err.message : "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleRedoStamp() {
+    if (redoStack.length === 0 || saving || !selected) return;
+    const nextAction = redoStack[redoStack.length - 1];
+    if (nextAction.memberId !== selected.id) return;
+
+    setSaving(true);
+    try {
+      const headers = await getAuthHeaders({ "Content-Type": "application/json" });
+      const res = await fetch(`/api/loyalty/${selected.id}/stamps`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ stamps: nextAction.stamps, reason: "Redo stamp" }),
+      });
+      if (!res.ok) {
+        const errJson = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(errJson.error || "Failed to redo stamp");
+      }
+      const json = await res.json();
+      toast({ title: `Redid +${nextAction.stamps} stamp for ${selected.name}` });
+      setRedoStack((prev) => prev.slice(0, -1));
+      setUndoStack((prev) => [...prev, nextAction]);
+      refetch();
+
+      if (json.member) {
+        setSelected(json.member);
+      } else {
+        const memberRes = await fetch(`/api/loyalty/${selected.id}`, { headers });
+        if (memberRes.ok) {
+          const memberData = await memberRes.json();
+          if (memberData.member) {
+            setSelected(memberData.member);
+          }
+        }
+      }
+    } catch (err: unknown) {
+      toast({
+        title: "Failed to redo stamp",
+        description: err instanceof Error ? err.message : "An unexpected error occurred.",
+        variant: "destructive",
+      });
     } finally {
       setSaving(false);
     }
@@ -173,18 +384,35 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
     setSaving(true);
     const form = e.currentTarget;
     const data = new FormData(form);
-    const stamps = parseInt(data.get("stamps") as string);
-    const reason = data.get("reason") as string;
+    const stamps = parseInt(data.get("stamps") as string) || 1;
+    const reason = (data.get("reason") as string) || "Manual entry";
+    const targetMemberId = stampModal.id;
+
     try {
-      const res = await fetch(`/api/loyalty/${stampModal.id}/stamps`, {
+      const res = await fetch(`/api/loyalty/${targetMemberId}/stamps`, {
         method: "POST",
         headers: await getAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ stamps, reason }),
       });
       if (!res.ok) throw new Error("Failed to add stamps");
+      const json = await res.json();
       toast({ title: "Stamps added successfully" });
       setStampModal(null);
       refetch();
+
+      if (json.member) {
+        setSelected(json.member);
+      } else {
+        const memberRes = await fetch(`/api/loyalty/${targetMemberId}`, {
+          headers: await getAuthHeaders(),
+        });
+        if (memberRes.ok) {
+          const memberData = await memberRes.json();
+          if (memberData.member) {
+            setSelected(memberData.member);
+          }
+        }
+      }
     } catch {
       toast({ title: "Failed to add stamps", variant: "destructive" });
     } finally {
@@ -192,416 +420,611 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
     }
   }
 
+  async function handleSaveLoyaltyConfig(updated: Partial<LoyaltySettings>) {
+    const next = { ...loyaltyConfig, ...updated };
+    setLoyaltyConfig(next);
+    persistLoyaltySettings(next);
+    toast({ title: "Loyalty settings saved" });
+  }
+
+  function handleRedeemReward(rewardTitle: string, memberName: string = "Walk-in Member") {
+    const item = {
+      id: Math.random().toString(),
+      name: rewardTitle,
+      memberName,
+      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+    };
+    setRedeemedRewards((prev) => [item, ...prev]);
+    toast({ title: `Redeemed: ${rewardTitle} for ${memberName}!` });
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // MEMBER DRILLDOWN VIEW (Step 2)
+  // ─────────────────────────────────────────────────────────────────────────────
   if (selected) {
+    const currentCycleStamps = selected.stampCount % washesPerReward;
+    const stampsUntilReward = washesPerReward - currentCycleStamps;
+    const progressPct = Math.min(100, (currentCycleStamps / washesPerReward) * 100);
+    const canUndo = undoStack.some((a) => a.memberId === selected.id);
+    const canRedo = redoStack.some((a) => a.memberId === selected.id);
+
     return (
       <div className="space-y-5">
+        {/* Header navigation */}
         <div className="flex items-center justify-between">
-          <button
-            onClick={() => setSelected(null)}
-            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ChevronLeft className="w-4 h-4" /> Back to Members
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Profile Card */}
-          <Card className="border border-border shadow-none">
-            <CardContent className="p-5 text-center space-y-3">
-              <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground font-bold flex items-center justify-center text-xl mx-auto shadow-sm">
-                {getInitials(selected.name)}
-              </div>
-              <div>
-                <h2 className="font-semibold text-base text-foreground">{selected.name}</h2>
-                <p className="text-xs text-muted-foreground">{selected.phone || "No phone provided"}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Joined: {selected.dateJoined}</p>
-              </div>
-              <div className="pt-3 border-t border-border space-y-1">
-                <p className="text-xs font-medium text-muted-foreground">Total Stamps</p>
-                <p className="text-3xl font-extrabold text-foreground">{selected.stampCount}</p>
-                <div className="pt-0.5">
-                  <span className="inline-flex items-center rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 px-2 py-0.5 text-xs font-semibold">
-                    {selected.stampCount % washesPerReward}/{washesPerReward} in cycle
-                  </span>
-                </div>
-              </div>
-              <Button size="sm" onClick={() => setStampModal(selected)} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                <Plus className="w-4 h-4 mr-1.5" /> Add Stamps
-              </Button>
-              <div className="pt-2 border-t border-border">
-                <p className="text-xs font-medium text-muted-foreground">Rewards Redeemed</p>
-                <p className="text-xl font-bold text-primary">{selected.rewardsRedeemed}</p>
-              </div>
-              {selected.preferences && (
-                <div className="text-left bg-muted/40 rounded-lg p-3 border border-border mt-2">
-                  <p className="text-xs font-medium text-muted-foreground">Preferences</p>
-                  <p className="text-xs text-foreground mt-0.5">{selected.preferences}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* History */}
-          <div className="md:col-span-2 space-y-4">
-            <Card className="border border-border shadow-none">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Current Cycle Progress</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="px-4 py-3">
-                  {(() => {
-                    const currentCycleStamps = selected.stampCount % washesPerReward;
-                    const stampsUntilReward = washesPerReward - currentCycleStamps;
-                    return (
-                      <>
-                        <StampDots count={currentCycleStamps} max={washesPerReward} />
-                        <p className="text-xs text-muted-foreground mt-2">
-                          {stampsUntilReward} {stampsUntilReward === 1 ? "wash" : "washes"} until next {rewardName}
-                        </p>
-                      </>
-                    );
-                  })()}
-                </div>
-                <div className="divide-y divide-border md:hidden">
-                  {(() => {
-                    const currentCycleStamps = selected.stampCount % washesPerReward;
-                    const currentCycleHistory = selected.stampHistory.slice(-currentCycleStamps);
-                    if (currentCycleHistory.length === 0) {
-                      return <div className="py-6 text-center text-xs text-muted-foreground">No stamps in current cycle</div>;
-                    }
-                    return currentCycleHistory.map((s, i) => (
-                      <div key={i} className="flex items-center justify-between gap-3 px-4 py-3">
-                        <div className="min-w-0">
-                          <p className="text-xs font-medium text-foreground">{s.date}</p>
-                          <p className="mt-0.5 font-mono text-xs text-primary">
-                            {s.ticket}
-                            {s.notes && <span className="ml-1 text-muted-foreground font-sans truncate">({s.notes})</span>}
-                          </p>
-                        </div>
-                        <span className="rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 px-2 py-0.5 text-xs font-semibold">+{s.stamps}</span>
-                      </div>
-                    ));
-                  })()}
-                </div>
-                <table className="hidden w-full text-sm md:table">
-                  <thead>
-                    <tr className="border-y border-border bg-muted/40">
-                      {["Date", "Ticket", "Stamps"].map((h) => (
-                        <th key={h} className="text-left text-xs font-medium text-muted-foreground px-4 py-2.5">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(() => {
-                      // Only show stamps from current cycle (after last reward)
-                      const currentCycleStamps = selected.stampCount % washesPerReward;
-                      const currentCycleHistory = selected.stampHistory.slice(-currentCycleStamps);
-                      
-                      if (currentCycleHistory.length === 0) {
-                        return <tr><td colSpan={3} className="text-center py-6 text-xs text-muted-foreground">No stamps in current cycle</td></tr>;
-                      }
-                      
-                      return currentCycleHistory.map((s, i) => (
-                        <tr key={i} className="border-b border-border last:border-0">
-                          <td className="px-4 py-2.5 text-xs text-muted-foreground">{s.date}</td>
-                          <td className="px-4 py-2.5 text-xs font-mono text-primary">
-                            {s.ticket}
-                            {s.notes && <span className="ml-1 text-muted-foreground font-sans truncate">({s.notes})</span>}
-                          </td>
-                          <td className="px-4 py-2.5 text-xs font-medium">
-                            <span className="inline-flex items-center rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 px-2 py-0.5 text-xs font-semibold">+{s.stamps}</span>
-                          </td>
-                        </tr>
-                      ));
-                    })()}
-                  </tbody>
-                </table>
-              </CardContent>
-            </Card>
-
-            <Card className="border border-border shadow-none">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Reward History</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="divide-y divide-border md:hidden">
-                  {selected.rewardHistory.length === 0 ? (
-                    <div className="py-6 text-center text-xs text-muted-foreground">No rewards redeemed yet</div>
-                  ) : (
-                    selected.rewardHistory.map((r, i) => (
-                      <button
-                        key={i}
-                        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/20"
-                        onClick={() => setRewardCycleModal(r)}
-                      >
-                        <span className="text-xs font-medium text-foreground">{r.date}</span>
-                        <span className="truncate text-xs font-semibold text-green-700">{r.reward}</span>
-                      </button>
-                    ))
-                  )}
-                </div>
-                <table className="hidden w-full text-sm md:table">
-                  <thead>
-                    <tr className="border-y border-border bg-muted/40">
-                      {["Date", "Reward"].map((h) => (
-                        <th key={h} className="text-left text-xs font-medium text-muted-foreground px-4 py-2">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {selected.rewardHistory.length === 0 ? (
-                      <tr><td colSpan={2} className="text-center py-6 text-xs text-muted-foreground">No rewards redeemed yet</td></tr>
-                    ) : (
-                      selected.rewardHistory.map((r, i) => (
-                        <tr 
-                          key={i} 
-                          className="border-b border-border last:border-0 hover:bg-muted/20 cursor-pointer transition-colors"
-                          onClick={() => setRewardCycleModal(r)}
-                        >
-                          <td className="px-4 py-2.5 text-xs text-muted-foreground">{r.date}</td>
-                          <td className="px-4 py-2.5 text-xs font-medium text-green-700">{r.reward}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </CardContent>
-            </Card>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight text-foreground">Members & Rewards</h1>
+            <p className="text-xs text-muted-foreground mt-0.5">Manage loyalty members and track rewards</p>
           </div>
         </div>
 
-        {/* Reward Cycle Modal */}
-        <Dialog open={!!rewardCycleModal} onOpenChange={(open) => !open && setRewardCycleModal(null)}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-base">
-                Reward Cycle — {rewardCycleModal?.date}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 pt-2">
-              {/* Cycle visits */}
-              <div>
-                <p className="text-xs font-semibold text-muted-foreground mb-2">Visits in this cycle:</p>
-                <div className="divide-y divide-border overflow-hidden rounded-lg border border-border md:hidden">
-                  {Array.from({ length: washesPerReward }, (_, i) => ({
-                    date: `2026-0${(i % 3) + 1}-${10 + i}`,
-                    ticket: `TKT-00${70 + i}`,
-                    stamps: 1,
-                  })).map((v, i) => (
-                    <div key={i} className="flex items-center justify-between gap-3 px-3 py-2.5">
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium text-foreground">{v.date}</p>
-                        <p className="mt-0.5 font-mono text-xs text-primary">{v.ticket}</p>
-                      </div>
-                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800 border border-amber-200">+{v.stamps}</span>
-                    </div>
-                  ))}
+        {/* Tabs */}
+        <div className="flex border-b border-border mb-3 gap-1">
+          <button
+            onClick={() => setSelected(null)}
+            className="px-4 py-2.5 text-sm font-semibold border-b-2 border-primary text-primary transition-colors cursor-pointer"
+          >
+            Members
+          </button>
+          <button
+            onClick={() => {
+              setSelected(null);
+              setActiveTab("rewards");
+            }}
+            className="px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          >
+            Rewards
+          </button>
+        </div>
+
+        {/* Back Button */}
+        <div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSelected(null)}
+            className="gap-1.5 text-xs h-8 px-3 rounded-lg"
+          >
+            <ChevronLeft className="w-3.5 h-3.5" /> Back
+          </Button>
+        </div>
+
+        {/* Member Profile Overview Card */}
+        <Card className="border border-border shadow-xs bg-card">
+          <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground font-bold flex items-center justify-center text-base shrink-0 shadow-xs">
+                {getInitials(selected.name)}
+              </div>
+              <div className="space-y-1">
+                <h2 className="font-bold text-base text-foreground leading-tight">{selected.name}</h2>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Phone className="w-3.5 h-3.5 shrink-0" />
+                  <span>{selected.phone || "No phone provided"}</span>
                 </div>
-                <table className="hidden w-full text-sm border border-border rounded-lg overflow-hidden md:table">
+                <div className="flex items-center gap-2 pt-1">
+                  <span className="inline-flex items-center rounded-full bg-primary/10 text-primary border border-primary/20 px-2.5 py-0.5 text-xs font-semibold">
+                    {currentCycleStamps}/{washesPerReward} stamps
+                  </span>
+                  <span className="inline-flex items-center rounded-full bg-muted text-muted-foreground px-2.5 py-0.5 text-xs font-semibold">
+                    {selected.rewardsRedeemed} rewards
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={saving || !canUndo}
+                onClick={handleUndoStamp}
+                className="gap-1.5 text-xs h-9 px-3 rounded-lg cursor-pointer"
+                title="Undo last stamp added"
+              >
+                <Undo2 className="w-3.5 h-3.5" /> Undo
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={saving || !canRedo}
+                onClick={handleRedoStamp}
+                className="gap-1.5 text-xs h-9 px-3 rounded-lg cursor-pointer"
+                title="Redo undone stamp"
+              >
+                <Redo2 className="w-3.5 h-3.5" /> Redo
+              </Button>
+              <Button
+                size="sm"
+                disabled={saving}
+                onClick={() => handleDirectAddStamp(selected, 1)}
+                className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg h-9 px-4 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" /> Add Stamp
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Current Cycle Progress Card */}
+        <Card className="border border-border shadow-xs bg-card">
+          <CardHeader className="pb-3 border-b border-border/60">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Flame className="w-4 h-4 text-amber-500" /> Current Reward Progress
+                </CardTitle>
+                <CardDescription className="text-xs mt-0.5">
+                  Earn {stampsUntilReward} more stamp{stampsUntilReward !== 1 ? "s" : ""} to unlock a <span className="font-semibold text-foreground">{rewardName}</span>!
+                </CardDescription>
+              </div>
+              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50">
+                {currentCycleStamps} / {washesPerReward}
+              </span>
+            </div>
+          </CardHeader>
+          <CardContent className="p-4 sm:p-5 space-y-4">
+            <StampDots count={currentCycleStamps} max={washesPerReward} />
+            <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+              <div
+                className="bg-primary h-full transition-all duration-300 rounded-full"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Visits in Current Cycle Table */}
+        <Card className="border border-border shadow-xs bg-card overflow-hidden">
+          <CardHeader className="pb-3 border-b border-border/60">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-primary" /> Cycle Activity
+            </CardTitle>
+            <CardDescription className="text-xs mt-0.5">
+              Recent visits recorded towards the next free reward
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold">
+                    <th className="px-4 py-2.5">Date</th>
+                    <th className="px-4 py-2.5">Ticket / Source</th>
+                    <th className="px-4 py-2.5">Stamps</th>
+                    <th className="px-4 py-2.5">Notes</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/60">
+                  {selected.stampHistory && selected.stampHistory.length > 0 ? (
+                    selected.stampHistory.slice(0, washesPerReward).map((h, i) => (
+                      <tr key={i} className="hover:bg-muted/30 transition-colors">
+                        <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">{h.date}</td>
+                        <td className="px-4 py-2.5 font-mono text-primary font-medium">{h.ticket}</td>
+                        <td className="px-4 py-2.5 font-semibold text-emerald-600 dark:text-emerald-400">+{h.stamps}</td>
+                        <td className="px-4 py-2.5 text-muted-foreground">{h.notes || "—"}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4} className="text-center py-6 text-muted-foreground">
+                        No stamps recorded in this cycle yet.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Reward Redemption History */}
+        {selected.rewardHistory && selected.rewardHistory.length > 0 && (
+          <Card className="border border-border shadow-xs bg-card overflow-hidden">
+            <CardHeader className="pb-3 border-b border-border/60">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <Award className="w-4 h-4 text-primary" /> Redeemed Rewards History
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
                   <thead>
-                    <tr className="bg-muted/40 border-b border-border">
-                      <th className="text-left text-xs font-medium text-muted-foreground px-3 py-2">Date</th>
-                      <th className="text-left text-xs font-medium text-muted-foreground px-3 py-2">Ticket</th>
-                      <th className="text-left text-xs font-medium text-muted-foreground px-3 py-2">Stamps</th>
+                    <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold">
+                      <th className="px-4 py-2.5">Date Redeemed</th>
+                      <th className="px-4 py-2.5">Reward Unlocked</th>
+                      <th className="px-4 py-2.5 text-right">Action</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {(() => {
-                      // Mock data - in real app, this would be stored per reward cycle
-                      // For demo, show placeholder visits that would have led to this reward
-                      const mockCycleVisits = Array.from({ length: washesPerReward }, (_, i) => ({
-                        date: `2026-0${(i % 3) + 1}-${10 + i}`,
-                        ticket: `TKT-00${70 + i}`,
-                        stamps: 1,
-                      }));
-                      
-                      return mockCycleVisits.map((v, i) => (
-                        <tr key={i} className="border-b border-border last:border-0">
-                          <td className="px-3 py-2 text-xs text-muted-foreground">{v.date}</td>
-                          <td className="px-3 py-2 text-xs font-mono text-primary">{v.ticket}</td>
-                          <td className="px-3 py-2 text-xs font-medium">+{v.stamps}</td>
-                        </tr>
-                      ));
-                    })()}
+                  <tbody className="divide-y divide-border/60">
+                    {selected.rewardHistory.map((r, i) => (
+                      <tr key={i} className="hover:bg-muted/30 transition-colors">
+                        <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">{r.date}</td>
+                        <td className="px-4 py-2.5 font-semibold text-foreground">{r.reward}</td>
+                        <td className="px-4 py-2.5 text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs text-primary hover:text-primary hover:bg-primary/10"
+                            onClick={() => setRewardCycleModal(r)}
+                          >
+                            View Cycle
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
-
-              {/* Summary */}
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3 space-y-1">
-                <p className="text-xs text-green-700">
-                  <span className="font-semibold">Total stamps in cycle:</span> {washesPerReward}
-                </p>
-                <p className="text-xs text-green-700">
-                  <span className="font-semibold">Reward received:</span> {rewardCycleModal?.reward}
-                </p>
-              </div>
-
-              <Button 
-                variant="outline" 
-                className="w-full" 
-                onClick={() => setRewardCycleModal(null)}
-              >
-                Close
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </CardContent>
+          </Card>
+        )}
       </div>
     );
   }
 
+  // ─────────────────────────────────────────────────────────────────────────────
+  // MAIN MEMBERS & REWARDS VIEW (Step 1)
+  // ─────────────────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-4">
-      {/* Disabled Banner */}
-      {!loyaltyEnabled && (
-        <div className="flex items-start gap-3 bg-yellow-50 border border-yellow-300 text-yellow-900 rounded-lg px-4 py-3">
-          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-yellow-600" />
-          <div className="space-y-0.5">
-            <p className="text-sm font-semibold">Loyalty Program is currently disabled.</p>
-            <p className="text-xs text-yellow-800">
-              New transactions will not earn stamps. Go to Settings &rarr; Loyalty Program to re-enable.
-            </p>
-          </div>
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">Members & Rewards</h1>
+          <p className="text-xs text-muted-foreground sm:text-sm mt-0.5">Manage customer loyalty points, rewards, and program rules</p>
         </div>
-      )}
-
-      {/* Search */}
-      <div className="flex gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by name or phone..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-9 text-sm"
-          />
-        </div>
-        <Button size="sm" onClick={() => setAddModal(true)} className="bg-primary text-primary-foreground hover:bg-primary/90">
-          <Plus className="w-4 h-4 mr-1" /> Add Member
-        </Button>
+        {activeTab === "members" && (
+          <Button
+            size="sm"
+            onClick={() => setAddModal(true)}
+            className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs cursor-pointer"
+          >
+            <Plus className="w-4 h-4" /> Add Member
+          </Button>
+        )}
       </div>
 
-      {/* Summary */}
-      <div className="flex flex-wrap gap-4">
-        <Card className="border border-border shadow-none w-full max-w-xs">
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-foreground">{loading ? "..." : members.length}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Total Members</p>
+      {/* Tabs */}
+      <div className="flex border-b border-border gap-1">
+        <button
+          onClick={() => setActiveTab("members")}
+          className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors cursor-pointer ${
+            activeTab === "members"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Members
+        </button>
+        <button
+          onClick={() => setActiveTab("rewards")}
+          className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors cursor-pointer ${
+            activeTab === "rewards"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Rewards & Rules
+        </button>
+      </div>
+
+      {/* Top 3 Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        <Card className="border border-border shadow-xs bg-card">
+          <CardContent className="p-4 flex items-center gap-3.5">
+            <div className="h-10 w-10 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 flex items-center justify-center shrink-0">
+              <Award className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground font-medium">Total Members</p>
+              <h3 className="text-xl font-bold text-foreground">{totalMembers}</h3>
+            </div>
           </CardContent>
         </Card>
 
+        <Card className="border border-border shadow-xs bg-card">
+          <CardContent className="p-4 flex items-center gap-3.5">
+            <div className="h-10 w-10 rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <Star className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground font-medium">Stamps Issued</p>
+              <h3 className="text-xl font-bold text-foreground">{totalStampsIssued}</h3>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border border-border shadow-xs bg-card">
+          <CardContent className="p-4 flex items-center gap-3.5">
+            <div className="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <Gift className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground font-medium">Rewards Claimed</p>
+              <h3 className="text-xl font-bold text-foreground">{totalRewardsRedeemed}</h3>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Members Table */}
-      <Card className="border border-border shadow-none">
-        <CardContent className="p-0">
-          <div className="divide-y divide-border md:hidden">
-            {filtered.map((m) => {
-              const progress = m.stampCount % washesPerReward;
-              return (
-              <div key={m.id} className="space-y-3 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold shrink-0">{getInitials(m.name)}</div>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-foreground">{m.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">{m.phone || "-"}</p>
-                    </div>
-                  </div>
-                  <Button size="sm" variant="outline" className="h-7 text-xs shrink-0" onClick={() => handleSelectMember(m)}>
-                    View
-                  </Button>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/30 p-3">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Stamps</p>
-                    <span className="mt-1 inline-flex items-center rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 px-2 py-0.5 text-xs font-semibold">{m.stampCount} stamps · {progress}/{washesPerReward}</span>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Rewards</p>
-                    <p className="mt-1 text-sm font-semibold text-foreground">{m.rewardsRedeemed}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Joined</p>
-                    <p className="mt-1 truncate text-xs text-foreground">{m.dateJoined}</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" className="h-8 flex-1 text-xs" onClick={() => setEditModal(m)}>
-                    <Edit className="mr-1 h-3 w-3" />
-                    Edit
-                  </Button>
-                  <Button size="sm" variant="outline" className="h-8 flex-1 text-xs text-red-600 hover:text-red-700" onClick={() => setDeleteModal(m)}>
-                    <Trash2 className="mr-1 h-3 w-3" />
-                    Delete
-                  </Button>
-                </div>
-              </div>
-              );
-            })}
-            {loading && (
-              <div className="py-10 text-center text-sm text-muted-foreground">Loading...</div>
-            )}
-            {!loading && filtered.length === 0 && (
-              <div className="py-10 text-center text-sm text-muted-foreground">No members found.</div>
-            )}
+      {activeTab === "members" ? (
+        <div className="space-y-4">
+          {/* Filter Bar */}
+          <div className="bg-card border border-border rounded-xl p-3 md:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+            <div className="relative w-full sm:max-w-xs">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search member name or phone..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9 h-9 text-xs w-full"
+              />
+            </div>
+            <div className="flex items-center gap-1 border border-border rounded-lg p-0.5 bg-muted/30 shrink-0">
+              <Button
+                variant={viewMode === "cards" ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("cards")}
+                className="h-8 px-2.5 text-xs gap-1.5"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" /> Cards
+              </Button>
+              <Button
+                variant={viewMode === "table" ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("table")}
+                className="h-8 px-2.5 text-xs gap-1.5"
+              >
+                <TableIcon className="w-3.5 h-3.5" /> Table
+              </Button>
+            </div>
           </div>
 
-          <table className="hidden w-full text-sm md:table">
-            <thead>
-              <tr className="border-b border-border bg-muted/40">
-                {["Name", "Phone", "Stamps", "Rewards Redeemed", "Date Joined", ""].map((h) => (
-                  <th key={h} className="text-left text-xs font-medium text-muted-foreground px-4 py-3">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((m) => (
-                <tr key={m.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold shrink-0">{getInitials(m.name)}</div>
-                      <span className="text-xs font-semibold text-foreground">{m.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">{m.phone}</td>
-                  <td className="px-4 py-3">
-                    <span className="inline-flex items-center rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 px-2 py-0.5 text-xs font-semibold">{m.stampCount} · {m.stampCount % washesPerReward}/{washesPerReward}</span>
-                  </td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">{m.rewardsRedeemed}</td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">{m.dateJoined}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-1">
-                      <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleSelectMember(m)}>
-                        View
-                      </Button>
-                      <Button size="sm" variant="ghost" className="h-10 w-10 min-h-[44px] min-w-[44px] p-0" onClick={() => setEditModal(m)}>
-                        <Edit className="w-3 h-3" />
-                      </Button>
-                      <Button size="sm" variant="ghost" className="h-10 w-10 min-h-[44px] min-w-[44px] p-0 text-red-600 hover:text-red-700" onClick={() => setDeleteModal(m)}>
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {loading && (
-                <tr>
-                  <td colSpan={6} className="text-center py-10 text-sm text-muted-foreground">Loading...</td>
-                </tr>
+          {/* Members Grid or Table */}
+          {loading ? (
+            <div className="py-16 text-center text-xs text-muted-foreground">Loading members...</div>
+          ) : filteredMembers.length === 0 ? (
+            <Card className="p-12 text-center border-dashed">
+              <Award className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+              <p className="text-sm font-semibold text-foreground">No loyalty members found</p>
+              <p className="text-xs text-muted-foreground mt-1">Add your first member to begin tracking stamps!</p>
+            </Card>
+          ) : viewMode === "cards" ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              {filteredMembers.map((member) => {
+                const currentStamps = member.stampCount % washesPerReward;
+                const pct = Math.min(100, (currentStamps / washesPerReward) * 100);
+
+                return (
+                  <Card
+                    key={member.id}
+                    className="border border-border/80 hover:border-primary/50 transition-all bg-card shadow-xs group"
+                  >
+                    <CardContent className="p-4 space-y-3.5">
+                      <div className="flex items-start justify-between gap-3">
+                        <div
+                          className="flex items-center gap-3 min-w-0 cursor-pointer"
+                          onClick={() => setSelected(member)}
+                        >
+                          <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground font-bold flex items-center justify-center text-sm shrink-0 shadow-xs">
+                            {getInitials(member.name)}
+                          </div>
+                          <div className="min-w-0">
+                            <h3 className="font-bold text-sm text-foreground truncate group-hover:text-primary transition-colors">
+                              {member.name}
+                            </h3>
+                            <p className="text-xs text-muted-foreground truncate">{member.phone || "No phone"}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-foreground cursor-pointer"
+                            onClick={() => setEditModal(member)}
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-destructive cursor-pointer"
+                            onClick={() => setDeleteModal(member)}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Progress Bar & Details */}
+                      <div className="space-y-1.5 cursor-pointer" onClick={() => setSelected(member)}>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-semibold text-primary">{currentStamps}/{washesPerReward} Stamps</span>
+                          <span className="text-muted-foreground text-[11px]">{member.rewardsRedeemed} Rewards</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+                          <div
+                            className="bg-primary h-full transition-all duration-300 rounded-full"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-2 pt-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setSelected(member)}
+                          className="flex-1 text-xs h-8 cursor-pointer"
+                        >
+                          View Details
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => handleDirectAddStamp(member, 1)}
+                          disabled={saving}
+                          className="h-8 text-xs bg-primary text-primary-foreground hover:bg-primary/90 px-3 cursor-pointer"
+                        >
+                          + Add Stamp
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <Card className="overflow-hidden border border-border shadow-xs bg-card">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold">
+                      <th className="px-4 py-3">Member Name</th>
+                      <th className="px-4 py-3">Phone</th>
+                      <th className="px-4 py-3">Current Cycle</th>
+                      <th className="px-4 py-3">Total Stamps</th>
+                      <th className="px-4 py-3">Rewards</th>
+                      <th className="px-4 py-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/60">
+                    {filteredMembers.map((member) => (
+                      <tr key={member.id} className="hover:bg-muted/30 transition-colors">
+                        <td className="px-4 py-3 font-semibold text-foreground cursor-pointer" onClick={() => setSelected(member)}>
+                          {member.name}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">{member.phone || "—"}</td>
+                        <td className="px-4 py-3 font-medium text-primary">
+                          {member.stampCount % washesPerReward}/{washesPerReward}
+                        </td>
+                        <td className="px-4 py-3 text-foreground">{member.stampCount}</td>
+                        <td className="px-4 py-3 text-foreground">{member.rewardsRedeemed}</td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs px-2.5"
+                              onClick={() => setSelected(member)}
+                            >
+                              View
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="h-7 text-xs bg-primary text-primary-foreground px-2.5"
+                              onClick={() => handleDirectAddStamp(member, 1)}
+                              disabled={saving}
+                            >
+                              + Stamp
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          )}
+        </div>
+      ) : (
+        /* Rewards & Rules Tab */
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* Rules Configuration */}
+          <Card className="border border-border shadow-xs bg-card">
+            <CardHeader className="pb-3 border-b border-border/60">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-primary" /> Loyalty Program Configuration
+              </CardTitle>
+              <CardDescription className="text-xs mt-0.5">
+                Configure how customers earn stamps and unlock rewards
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-5 space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="washesPerReward" className="text-xs">Stamps Required for Reward</Label>
+                <Input
+                  id="washesPerReward"
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={loyaltyConfig.washesPerReward}
+                  onChange={(e) => setLoyaltyConfig({ ...loyaltyConfig, washesPerReward: e.target.value })}
+                  className="h-9 text-xs"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="rewardDescription" className="text-xs">Reward Description</Label>
+                <Input
+                  id="rewardDescription"
+                  type="text"
+                  value={loyaltyConfig.rewardDescription}
+                  onChange={(e) => setLoyaltyConfig({ ...loyaltyConfig, rewardDescription: e.target.value })}
+                  className="h-9 text-xs"
+                />
+              </div>
+
+              <Button
+                size="sm"
+                onClick={() => handleSaveLoyaltyConfig(loyaltyConfig)}
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 text-xs h-9 cursor-pointer"
+              >
+                Save Configuration
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Reward Catalog Preview */}
+          <Card className="border border-border shadow-xs bg-card">
+            <CardHeader className="pb-3 border-b border-border/60">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <Gift className="w-4 h-4 text-primary" /> Active Reward Perks
+              </CardTitle>
+              <CardDescription className="text-xs mt-0.5">
+                Perks automatically rewarded upon cycle completion
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-5 space-y-3">
+              <div className="border border-border rounded-xl p-3.5 bg-muted/20 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                    <Gift className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-xs text-foreground">{loyaltyConfig.rewardDescription || "Free Wash"}</h4>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">Unlocked after {washesPerReward} verified stamps</p>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleRedeemReward(loyaltyConfig.rewardDescription || "Free Wash")}
+                  className="text-xs h-8"
+                >
+                  Simulate Redeem
+                </Button>
+              </div>
+
+              {redeemedRewards.length > 0 && (
+                <div className="pt-2">
+                  <p className="text-xs font-semibold text-foreground mb-2">Recent Redemptions</p>
+                  <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                    {redeemedRewards.map((r) => (
+                      <div key={r.id} className="text-[11px] flex items-center justify-between border-b border-border/50 pb-1.5 text-muted-foreground">
+                        <span>{r.name} ({r.memberName})</span>
+                        <span className="font-mono">{r.date}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
-              {!loading && filtered.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="text-center py-10 text-sm text-muted-foreground">No members found.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Add Member Modal */}
       <Dialog open={addModal} onOpenChange={setAddModal}>
@@ -675,26 +1098,18 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: { loyaltyEnabled?
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Add Stamps Modal */}
-      <Dialog open={!!stampModal} onOpenChange={(open) => !open && setStampModal(null)}>
-        <DialogContent className="max-w-sm">
+      {/* Reward Cycle Dialog */}
+      <Dialog open={!!rewardCycleModal} onOpenChange={(open) => !open && setRewardCycleModal(null)}>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Add Stamps</DialogTitle>
+            <DialogTitle>Reward Cycle Details</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleAddStamps} className="space-y-4">
-            <div>
-              <Label htmlFor="stamps">Number of Stamps *</Label>
-              <Input id="stamps" name="stamps" type="number" min="1" defaultValue="1" required className="mt-1" />
-            </div>
-            <div>
-              <Label htmlFor="reason">Reason (Optional)</Label>
-              <Input id="reason" name="reason" type="text" placeholder="e.g. Promo, Apology, etc." className="mt-1" />
-            </div>
-            <div className="flex gap-2">
-              <Button type="button" variant="outline" className="flex-1" onClick={() => setStampModal(null)}>Cancel</Button>
-              <Button type="submit" className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90" disabled={saving}>{saving ? "Adding..." : "Add Stamps"}</Button>
-            </div>
-          </form>
+          <div className="space-y-3 pt-2 text-xs">
+            <p><span className="font-semibold text-foreground">Date:</span> {rewardCycleModal?.date}</p>
+            <p><span className="font-semibold text-foreground">Reward:</span> {rewardCycleModal?.reward}</p>
+            <p className="text-muted-foreground">This reward was successfully earned after achieving {washesPerReward} qualifying stamps.</p>
+            <Button variant="outline" className="w-full mt-2" onClick={() => setRewardCycleModal(null)}>Close</Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

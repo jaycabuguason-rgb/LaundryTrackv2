@@ -117,7 +117,8 @@ export default function DashboardPage({
           {cards.map((card) => {
             const Icon = card.icon;
             return (
-              <Card key={card.label} className="border border-border shadow-none">
+              <Card key={card.label} className="border border-border shadow-none relative group">
+                <span className="absolute top-3 right-3 text-muted-foreground/50 group-hover:text-primary/60 transition-colors text-lg font-light leading-none select-none">+</span>
                 <CardContent className="p-4 md:p-5">
                   <div className="flex items-start justify-between">
                     <div className="min-w-0 flex-1">
@@ -131,13 +132,6 @@ export default function DashboardPage({
                         <p className="mt-1 text-xl font-bold text-foreground md:text-2xl">{card.value}</p>
                       )}
                       <p className="mt-1 text-xs text-muted-foreground">{card.change}</p>
-                    </div>
-                    <div className={`ml-3 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg md:h-10 md:w-10 ${card.bg} dark:bg-opacity-20`}>
-                      {Icon ? (
-                        <Icon className={`h-4 w-4 md:h-5 md:w-5 ${card.color}`} />
-                      ) : (
-                        <span className={`text-base font-bold md:text-lg ${card.color}`}>₱</span>
-                      )}
                     </div>
                   </div>
                 </CardContent>

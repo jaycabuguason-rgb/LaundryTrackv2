@@ -3,19 +3,12 @@
 import { useMemo, useState } from "react";
 import {
   Search,
-  Filter,
   ChevronDown,
   ChevronRight,
   Download,
   ScrollText,
-  ShieldCheck,
-  Receipt,
-  QrCode,
-  Star,
-  Settings2,
-  UserCog,
-  LogIn,
-  FileBarChart2,
+  AlertTriangle,
+  Cog,
   Loader2,
   RefreshCw,
   Users,
@@ -23,7 +16,6 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -36,254 +28,256 @@ import type { AuditActionType, AuditLogEntry } from "@/lib/audit-log-contracts";
 import { useAuditLogs } from "@/hooks/use-audit-logs";
 import { cn } from "@/lib/utils";
 
-const ACTION_TYPES: AuditActionType[] = [
-  "all",
-  "transaction_created",
-  "transaction_updated",
-  "status_changed",
-  "claim_verified",
-  "loyalty_stamp",
-  "reward_redeemed",
-  "settings_changed",
-  "staff_created",
-  "staff_updated",
-  "staff_deactivated",
-  "staff_reactivated",
-  "staff_password_reset",
-  "login",
-  "logout",
-  "report_exported",
-  "other",
-];
+// ─────────────────────────────────────────────────────────────────────────────
+// Category mapping and badges
+// ─────────────────────────────────────────────────────────────────────────────
+type LogCategory = "all" | "transaction" | "auth" | "settings" | "security";
+type LogSeverity = "all" | "info" | "warning" | "error";
 
-const ACTION_LABELS: Record<AuditActionType, string> = {
-  all: "All Actions",
-  transaction_created: "Transaction Created",
-  transaction_updated: "Transaction Updated",
-  status_changed: "Status Changed",
-  claim_verified: "Claim Verified",
-  loyalty_stamp: "Loyalty Stamp Added",
-  reward_redeemed: "Reward Redeemed",
-  settings_changed: "Settings Changed",
-  staff_created: "Staff Account Created",
-  staff_updated: "Staff Account Updated",
-  staff_deactivated: "Staff Account Deactivated",
-  staff_reactivated: "Staff Account Reactivated",
-  staff_password_reset: "Staff Password Reset",
-  login: "Login",
-  logout: "Logout",
-  report_exported: "Report Exported",
-  other: "Other",
-};
-
-const ACTION_ICONS: Record<AuditActionType, React.ElementType> = {
-  all: ScrollText,
-  transaction_created: Receipt,
-  transaction_updated: Receipt,
-  status_changed: Receipt,
-  claim_verified: QrCode,
-  loyalty_stamp: Star,
-  reward_redeemed: Star,
-  settings_changed: Settings2,
-  staff_created: UserCog,
-  staff_updated: UserCog,
-  staff_deactivated: UserCog,
-  staff_reactivated: UserCog,
-  staff_password_reset: UserCog,
-  login: LogIn,
-  logout: LogIn,
-  report_exported: FileBarChart2,
-  other: ShieldCheck,
-};
-
-const ACTION_COLORS: Record<AuditActionType, string> = {
-  all: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
-  transaction_created: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
-  transaction_updated: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
-  status_changed: "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800",
-  claim_verified: "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800",
-  loyalty_stamp: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800",
-  reward_redeemed: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800",
-  settings_changed: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
-  staff_created: "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800",
-  staff_updated: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
-  staff_deactivated: "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800",
-  staff_reactivated: "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800",
-  staff_password_reset: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800",
-  login: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
-  logout: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
-  report_exported: "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800",
-  other: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
-};
-
-function formatTimestamp(iso: string) {
-  const value = new Date(iso);
-  return value.toLocaleString("en-PH", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  });
+function getLogCategory(action: AuditActionType): "transaction" | "auth" | "settings" | "security" {
+  if (action === "login" || action === "logout") return "auth";
+  if (
+    action.startsWith("staff_") ||
+    action === "settings_changed" ||
+    action === "report_exported"
+  ) {
+    return "settings";
+  }
+  if (action === "claim_verified" || action === "other") return "security";
+  return "transaction";
 }
 
-function timeAgo(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime();
-  const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes} min ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} hr${hours !== 1 ? "s" : ""} ago`;
-  const days = Math.floor(hours / 24);
-  return `${days} day${days !== 1 ? "s" : ""} ago`;
+function getLogSeverity(entry: AuditLogEntry): "info" | "warning" | "error" {
+  if (entry.action === "staff_deactivated") return "warning";
+  if (entry.action === "transaction_updated" && entry.details?.toLowerCase().includes("void")) return "warning";
+  if (entry.details?.toLowerCase().includes("failed") || entry.details?.toLowerCase().includes("error")) return "error";
+  return "info";
 }
 
-function AuditRow({ entry }: { entry: AuditLogEntry }) {
-  const [expanded, setExpanded] = useState(false);
-  const Icon = ACTION_ICONS[entry.action] ?? ShieldCheck;
-  const colorClass = ACTION_COLORS[entry.action] ?? ACTION_COLORS.other;
+export function CategoryBadge({ category }: { category: "transaction" | "auth" | "settings" | "security" }) {
+  const configs: Record<typeof category, { label: string; className: string }> = {
+    transaction: {
+      label: "TRANSACTION",
+      className: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-900/60",
+    },
+    auth: {
+      label: "AUTH",
+      className: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-900/60",
+    },
+    settings: {
+      label: "SETTINGS",
+      className: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/50 dark:text-purple-300 dark:border-purple-900/60",
+    },
+    security: {
+      label: "SECURITY",
+      className: "bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-900/60",
+    },
+  };
+
+  const config = configs[category] || configs.transaction;
 
   return (
-    <div className="border-b border-border last:border-0 transition-colors">
-      <button
-        type="button"
-        className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/30 md:px-5"
-        onClick={() => setExpanded((current) => !current)}
-      >
-        <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${colorClass}`}>
-          <Icon className="h-3.5 w-3.5" />
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="text-xs font-semibold text-foreground">{entry.staffName}</span>
-            <Badge
-              variant="secondary"
-              className={`px-1.5 py-0 text-xs font-medium border ${
-                entry.staffRole === "Admin"
-                  ? "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800"
-                  : entry.staffRole === "Staff"
-                    ? "bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-800"
-                    : "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
-              }`}
-            >
-              {entry.staffRole}
-            </Badge>
-
-            <Badge
-              variant="outline"
-              className={cn("px-1.5 py-0 text-xs font-medium border", colorClass)}
-            >
-              {ACTION_LABELS[entry.action] ?? entry.action}
-            </Badge>
-
-            <span className="text-xs text-muted-foreground truncate max-w-md">{entry.summary}</span>
-          </div>
-
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-            <span>{formatTimestamp(entry.timestamp)}</span>
-            <span className="text-muted-foreground/60">({timeAgo(entry.timestamp)})</span>
-            {entry.ticketId && (
-              <span className="font-mono text-muted-foreground/70">Ticket: #{entry.ticketId}</span>
-            )}
-            {entry.ipAddress && (
-              <span className="hidden font-mono text-muted-foreground/70 md:inline">IP: {entry.ipAddress}</span>
-            )}
-          </div>
-        </div>
-
-        <div className="mt-1 shrink-0 text-muted-foreground/50">
-          {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-        </div>
-      </button>
-
-      {expanded && (
-        <div className="px-4 pb-3.5 pl-[52px] md:px-5 md:pl-[60px]">
-          <div className="rounded-md border border-border bg-muted/40 p-3 font-mono text-xs leading-relaxed text-foreground">
-            <div className="mb-2 grid grid-cols-1 gap-1 sm:grid-cols-2 text-xs font-sans text-muted-foreground">
-              <div><span className="font-semibold text-foreground">Event ID:</span> <span className="font-mono">{entry.id}</span></div>
-              <div><span className="font-semibold text-foreground">Timestamp:</span> <span className="font-mono">{new Date(entry.timestamp).toISOString()}</span></div>
-              <div><span className="font-semibold text-foreground">Staff Member:</span> {entry.staffName} ({entry.staffRole})</div>
-              {entry.ipAddress && <div><span className="font-semibold text-foreground">IP Address:</span> <span className="font-mono">{entry.ipAddress}</span></div>}
-              {entry.ticketId && <div><span className="font-semibold text-foreground">Ticket ID:</span> <span className="font-mono">#{entry.ticketId}</span></div>}
-              {entry.customerName && <div><span className="font-semibold text-foreground">Customer:</span> {entry.customerName}</div>}
-              {entry.paymentStatus && <div><span className="font-semibold text-foreground">Payment Status:</span> {entry.paymentStatus}</div>}
-            </div>
-            <div className="border-t border-border/50 pt-2">
-              <p className="mb-1 text-xs font-semibold font-sans text-muted-foreground">Event Details:</p>
-              <p className="whitespace-pre-wrap font-mono text-xs text-foreground">{entry.details}</p>
-            </div>
-          </div>
-        </div>
+    <span
+      className={cn(
+        "inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-semibold tracking-wider uppercase",
+        config.className
       )}
-    </div>
+    >
+      {config.label}
+    </span>
   );
 }
 
-export function AuditLogsView({ onTabChange }: { onTabChange?: (tab: "staff" | "audit") => void }) {
-  const { auditLogs, loading, error, refresh, staffOptions, usingSupabase } = useAuditLogs();
+export function SeverityBadge({ severity }: { severity: "info" | "warning" | "error" }) {
+  if (severity === "warning") {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 dark:text-amber-400">
+        <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+        warning
+      </span>
+    );
+  }
+  if (severity === "error") {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 dark:text-red-400">
+        <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+        error
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+      info
+    </span>
+  );
+}
+
+function formatTableTimestamp(iso: string) {
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return iso;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Audit Row Component (Table row + expandable metadata)
+// ─────────────────────────────────────────────────────────────────────────────
+function AuditTableRow({ entry }: { entry: AuditLogEntry }) {
+  const [expanded, setExpanded] = useState(false);
+  const category = getLogCategory(entry.action);
+  const severity = getLogSeverity(entry);
+
+  return (
+    <>
+      <tr
+        onClick={() => setExpanded(!expanded)}
+        className="group border-b border-border/80 hover:bg-muted/40 cursor-pointer transition-colors text-sm"
+      >
+        {/* Timestamp */}
+        <td className="px-4 py-3.5 whitespace-nowrap text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5">
+            {expanded ? (
+              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            ) : (
+              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            )}
+            <span>{formatTableTimestamp(entry.timestamp)}</span>
+          </div>
+        </td>
+
+        {/* Actor */}
+        <td className="px-4 py-3.5 whitespace-nowrap">
+          <span className="font-semibold text-xs text-foreground">{entry.staffName || "System"}</span>
+          {entry.staffRole && (
+            <span className="ml-1.5 text-[11px] text-muted-foreground">({entry.staffRole})</span>
+          )}
+        </td>
+
+        {/* Category */}
+        <td className="px-4 py-3.5 whitespace-nowrap">
+          <CategoryBadge category={category} />
+        </td>
+
+        {/* Action */}
+        <td className="px-4 py-3.5 font-medium text-xs text-foreground whitespace-nowrap">
+          {entry.summary || entry.action}
+        </td>
+
+        {/* Details */}
+        <td className="px-4 py-3.5 text-xs text-muted-foreground max-w-xs truncate">
+          {entry.details || "—"}
+        </td>
+
+        {/* Severity */}
+        <td className="px-4 py-3.5 whitespace-nowrap text-right">
+          <SeverityBadge severity={severity} />
+        </td>
+      </tr>
+
+      {expanded && (
+        <tr className="bg-muted/20 border-b border-border/80">
+          <td colSpan={6} className="px-6 py-3.5 text-xs text-muted-foreground space-y-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-background rounded-lg border border-border p-3">
+              <div>
+                <p className="font-semibold text-foreground">Log ID</p>
+                <p className="font-mono text-[11px] truncate">{entry.id}</p>
+              </div>
+              <div>
+                <p className="font-semibold text-foreground">Ticket ID</p>
+                <p className="font-mono text-[11px]">{entry.ticketId || "N/A"}</p>
+              </div>
+              <div>
+                <p className="font-semibold text-foreground">IP Address</p>
+                <p className="font-mono text-[11px]">{entry.ipAddress || "Internal"}</p>
+              </div>
+              <div>
+                <p className="font-semibold text-foreground">Action Type</p>
+                <p className="font-mono text-[11px]">{entry.action}</p>
+              </div>
+            </div>
+            {entry.details && (
+              <p className="text-foreground leading-relaxed">
+                <span className="font-semibold">Full Details: </span>
+                {entry.details}
+              </p>
+            )}
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main Audit Logs View
+// ─────────────────────────────────────────────────────────────────────────────
+function AuditLogsView({ onTabChange }: { onTabChange?: (tab: "staff" | "audit") => void }) {
+  const { auditLogs, loading, error, refresh, usingSupabase } = useAuditLogs();
+
   const [search, setSearch] = useState("");
-  const [actionFilter, setActionFilter] = useState<AuditActionType>("all");
-  const [staffFilter, setStaffFilter] = useState("All Staff");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<LogCategory>("all");
+  const [severityFilter, setSeverityFilter] = useState<LogSeverity>("all");
+
+  // Stat metrics
+  const totalEntries = auditLogs.length;
+  const warningEvents = useMemo(
+    () => auditLogs.filter((entry) => getLogSeverity(entry) === "warning" || getLogSeverity(entry) === "error").length,
+    [auditLogs]
+  );
+  const systemActions = useMemo(
+    () => auditLogs.filter((entry) => getLogCategory(entry.action) === "settings" || getLogCategory(entry.action) === "security").length,
+    [auditLogs]
+  );
 
   const filteredLogs = useMemo(() => {
     return auditLogs.filter((entry) => {
-      const query = search.trim().toLowerCase();
-      if (query) {
-        const matchesSearch =
-          entry.staffName.toLowerCase().includes(query)
-          || entry.summary.toLowerCase().includes(query)
-          || entry.details.toLowerCase().includes(query)
-          || entry.id.toLowerCase().includes(query)
-          || entry.ticketId?.toLowerCase().includes(query);
+      const category = getLogCategory(entry.action);
+      const severity = getLogSeverity(entry);
 
-        if (!matchesSearch) {
+      if (categoryFilter !== "all" && category !== categoryFilter) return false;
+      if (severityFilter !== "all" && severity !== severityFilter) return false;
+
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        const matchesStaff = entry.staffName?.toLowerCase().includes(q);
+        const matchesTicket = entry.ticketId?.toLowerCase().includes(q);
+        const matchesAction = entry.action?.toLowerCase().includes(q);
+        const matchesSummary = entry.summary?.toLowerCase().includes(q);
+        const matchesDetails = entry.details?.toLowerCase().includes(q);
+        if (!matchesStaff && !matchesTicket && !matchesAction && !matchesSummary && !matchesDetails) {
           return false;
         }
-      }
-
-      if (actionFilter !== "all" && entry.action !== actionFilter) {
-        return false;
-      }
-
-      if (staffFilter !== "All Staff") {
-        if (staffFilter === "Admin") {
-          if (entry.staffRole !== "Admin") {
-            return false;
-          }
-        } else if (entry.staffName !== staffFilter) {
-          return false;
-        }
-      }
-
-      const dateKey = entry.timestamp.slice(0, 10);
-      if (dateFrom && dateKey < dateFrom) {
-        return false;
-      }
-      if (dateTo && dateKey > dateTo) {
-        return false;
       }
 
       return true;
     });
-  }, [actionFilter, auditLogs, dateFrom, dateTo, search, staffFilter]);
+  }, [auditLogs, categoryFilter, severityFilter, search]);
 
   const exportCsv = () => {
     const rows = [
-      ["ID", "Timestamp", "Staff", "Role", "Action", "Summary", "Details", "Ticket ID", "IP Address"],
+      ["ID", "Timestamp", "Staff", "Role", "Category", "Action", "Summary", "Details", "Ticket ID", "IP Address", "Severity"],
       ...filteredLogs.map((entry) => [
         entry.id,
         entry.timestamp,
         entry.staffName,
         entry.staffRole,
-        ACTION_LABELS[entry.action] ?? entry.action,
+        getLogCategory(entry.action),
+        entry.action,
         entry.summary,
         entry.details,
         entry.ticketId ?? "",
         entry.ipAddress ?? "",
+        getLogSeverity(entry),
       ]),
     ];
 
@@ -295,20 +289,18 @@ export function AuditLogsView({ onTabChange }: { onTabChange?: (tab: "staff" | "
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "audit-logs.csv";
+    link.download = `audit-logs-${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   };
 
   return (
-    <div className="w-full max-w-5xl space-y-5">
-      {/* Header & Tab Switcher */}
+    <div className="w-full space-y-5">
+      {/* Header & Tabs */}
       <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">Staff & Audit Logs</h1>
-            <p className="text-xs text-muted-foreground sm:text-sm">Team management and system activity</p>
-          </div>
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">Staff & Audit Logs</h1>
+          <p className="text-xs text-muted-foreground sm:text-sm mt-0.5">Team management and system activity</p>
         </div>
 
         {/* Tab Switcher */}
@@ -316,10 +308,7 @@ export function AuditLogsView({ onTabChange }: { onTabChange?: (tab: "staff" | "
           <button
             type="button"
             onClick={() => onTabChange?.("staff")}
-            className={cn(
-              "flex items-center gap-2 pb-2.5 text-sm font-medium transition-colors border-b-2",
-              "border-transparent text-muted-foreground hover:text-foreground"
-            )}
+            className="flex items-center gap-2 pb-2.5 text-sm font-medium transition-colors border-b-2 border-transparent text-muted-foreground hover:text-foreground cursor-pointer"
           >
             <Users className="h-4 w-4" />
             Staff Management
@@ -327,10 +316,7 @@ export function AuditLogsView({ onTabChange }: { onTabChange?: (tab: "staff" | "
           <button
             type="button"
             onClick={() => onTabChange?.("audit")}
-            className={cn(
-              "flex items-center gap-2 pb-2.5 text-sm font-medium transition-colors border-b-2",
-              "border-primary text-primary font-semibold"
-            )}
+            className="flex items-center gap-2 pb-2.5 text-sm font-semibold transition-colors border-b-2 border-primary text-primary cursor-pointer"
           >
             <ScrollText className="h-4 w-4" />
             Audit Logs
@@ -340,7 +326,7 @@ export function AuditLogsView({ onTabChange }: { onTabChange?: (tab: "staff" | "
 
       {!usingSupabase && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-800 dark:border-blue-900/40 dark:bg-blue-950/40 dark:text-blue-300">
-          Supabase is not configured in this browser session, so Audit Logs is showing demo data.
+          Supabase is not configured, showing demo data.
         </div>
       )}
 
@@ -350,73 +336,91 @@ export function AuditLogsView({ onTabChange }: { onTabChange?: (tab: "staff" | "
         </div>
       )}
 
-      {/* Filter Bar */}
-      <Card className="border border-border shadow-none">
-        <CardContent className="p-4">
+      {/* Top 3 Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        {/* Total Entries */}
+        <Card className="border border-border shadow-xs bg-card">
+          <CardContent className="p-4 flex items-center gap-3.5">
+            <div className="h-10 w-10 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 flex items-center justify-center shrink-0">
+              <ScrollText className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground font-medium">Total Entries</p>
+              <h3 className="text-xl font-bold text-foreground">{totalEntries}</h3>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Warning Events */}
+        <Card className="border border-border shadow-xs bg-card">
+          <CardContent className="p-4 flex items-center gap-3.5">
+            <div className="h-10 w-10 rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <AlertTriangle className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground font-medium">Warning Events</p>
+              <h3 className="text-xl font-bold text-foreground">{warningEvents}</h3>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* System Actions */}
+        <Card className="border border-border shadow-xs bg-card">
+          <CardContent className="p-4 flex items-center gap-3.5">
+            <div className="h-10 w-10 rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-950/50 dark:text-purple-400 flex items-center justify-center shrink-0">
+              <Cog className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground font-medium">System Actions</p>
+              <h3 className="text-xl font-bold text-foreground">{systemActions}</h3>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filter Row */}
+      <Card className="border border-border shadow-xs bg-card">
+        <CardContent className="p-3 sm:p-4">
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative min-w-[200px] flex-1">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search by staff name, ticket ID, action..."
+                placeholder="Search audit logs..."
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                className="h-9 pl-8 text-sm"
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-9 pl-9 text-sm"
               />
             </div>
 
-            <Select value={actionFilter} onValueChange={(value) => setActionFilter(value as AuditActionType)}>
-              <SelectTrigger className="h-9 min-w-[170px] text-sm">
-                <Filter className="mr-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <SelectValue placeholder="All Actions" />
+            <Select value={categoryFilter} onValueChange={(val) => setCategoryFilter(val as LogCategory)}>
+              <SelectTrigger className="h-9 w-full sm:w-40 text-sm">
+                <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
-                {ACTION_TYPES.map((action) => (
-                  <SelectItem key={action} value={action} className="text-sm">
-                    {ACTION_LABELS[action]}
-                  </SelectItem>
-                ))}
+                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="transaction">Transaction</SelectItem>
+                <SelectItem value="auth">Auth</SelectItem>
+                <SelectItem value="settings">Settings</SelectItem>
+                <SelectItem value="security">Security</SelectItem>
               </SelectContent>
             </Select>
 
-            <Select value={staffFilter} onValueChange={setStaffFilter}>
-              <SelectTrigger className="h-9 min-w-[140px] text-sm">
-                <SelectValue placeholder="All Staff" />
+            <Select value={severityFilter} onValueChange={(val) => setSeverityFilter(val as LogSeverity)}>
+              <SelectTrigger className="h-9 w-full sm:w-36 text-sm">
+                <SelectValue placeholder="All Severities" />
               </SelectTrigger>
               <SelectContent>
-                {staffOptions.map((staffOption) => (
-                  <SelectItem key={staffOption} value={staffOption} className="text-sm">
-                    {staffOption}
-                  </SelectItem>
-                ))}
+                <SelectItem value="all">All Severities</SelectItem>
+                <SelectItem value="info">Info</SelectItem>
+                <SelectItem value="warning">Warning</SelectItem>
+                <SelectItem value="error">Error</SelectItem>
               </SelectContent>
             </Select>
-
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-muted-foreground hidden sm:inline">From:</span>
-              <input
-                type="date"
-                value={dateFrom}
-                onChange={(event) => setDateFrom(event.target.value)}
-                className="h-9 rounded-md border border-input bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                aria-label="From date"
-              />
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-muted-foreground hidden sm:inline">To:</span>
-              <input
-                type="date"
-                value={dateTo}
-                onChange={(event) => setDateTo(event.target.value)}
-                className="h-9 rounded-md border border-input bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                aria-label="To date"
-              />
-            </div>
 
             <Button
               variant="outline"
               size="sm"
-              className="flex h-9 shrink-0 items-center gap-1.5 text-xs"
+              className="h-9 gap-1.5 text-xs shrink-0 cursor-pointer"
               onClick={() => void refresh()}
               disabled={loading}
             >
@@ -424,7 +428,12 @@ export function AuditLogsView({ onTabChange }: { onTabChange?: (tab: "staff" | "
               Refresh
             </Button>
 
-            <Button variant="outline" size="sm" className="flex h-9 shrink-0 items-center gap-1.5 text-xs" onClick={exportCsv}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 gap-1.5 text-xs shrink-0 cursor-pointer"
+              onClick={exportCsv}
+            >
               <Download className="h-3.5 w-3.5" />
               Export CSV
             </Button>
@@ -432,52 +441,44 @@ export function AuditLogsView({ onTabChange }: { onTabChange?: (tab: "staff" | "
         </CardContent>
       </Card>
 
-      {/* Log Entries Card */}
-      <Card className="overflow-hidden border border-border shadow-none">
-        <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-3 md:px-5">
-          <p className="flex items-center gap-2 text-xs font-semibold text-foreground">
-            <ScrollText className="h-3.5 w-3.5 text-muted-foreground" />
-            Log Entries
-          </p>
-          <span className="text-xs text-muted-foreground">
-            {filteredLogs.length} result{filteredLogs.length !== 1 ? "s" : ""}
-          </span>
+      {/* Log Entries Clean Table */}
+      <Card className="overflow-hidden border border-border shadow-xs bg-card">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-border bg-muted/30">
+                <th className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Timestamp</th>
+                <th className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actor</th>
+                <th className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Category</th>
+                <th className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Action</th>
+                <th className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Details</th>
+                <th className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right">Severity</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/60">
+              {loading && auditLogs.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-12 text-center text-xs text-muted-foreground">
+                    <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-muted-foreground/40" />
+                    Loading audit logs...
+                  </td>
+                </tr>
+              ) : filteredLogs.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-12 text-center text-xs text-muted-foreground">
+                    No log entries match your filters.
+                  </td>
+                </tr>
+              ) : (
+                filteredLogs.map((entry) => <AuditTableRow key={entry.id} entry={entry} />)
+              )}
+            </tbody>
+          </table>
         </div>
-
-        {loading && auditLogs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <Loader2 className="mb-3 h-10 w-10 animate-spin text-muted-foreground/30" />
-            <p className="text-sm text-muted-foreground">Loading audit logs...</p>
-          </div>
-        ) : filteredLogs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <ScrollText className="mb-3 h-10 w-10 text-muted-foreground/20" />
-            <p className="text-sm text-muted-foreground">No log entries match your filters.</p>
-            <button
-              type="button"
-              className="mt-2 cursor-pointer text-xs text-primary hover:underline"
-              onClick={() => {
-                setSearch("");
-                setActionFilter("all");
-                setStaffFilter("All Staff");
-                setDateFrom("");
-                setDateTo("");
-              }}
-            >
-              Clear filters
-            </button>
-          </div>
-        ) : (
-          <div>
-            {filteredLogs.map((entry) => (
-              <AuditRow key={entry.id} entry={entry} />
-            ))}
-          </div>
-        )}
       </Card>
 
       <p className="text-center text-xs text-muted-foreground">
-        Audit logs are read-only and update live when new events are written to Supabase.
+        Audit logs are read-only and record system and user actions for compliance and traceability.
       </p>
     </div>
   );
@@ -487,15 +488,9 @@ export default function AuditLogsPage({ initialTab = "audit" }: { initialTab?: "
   const [activeTab, setActiveTab] = useState<"staff" | "audit">(initialTab);
 
   if (activeTab === "staff") {
-    // Return dynamically rendered staff management view if toggled to staff tab
-    return <StaffTabRedirect onTabChange={setActiveTab} />;
+    const StaffManagementPage = require("@/components/pages/staff-management").default;
+    return <StaffManagementPage initialTab="staff" onTabChange={setActiveTab} />;
   }
 
   return <AuditLogsView onTabChange={setActiveTab} />;
-}
-
-function StaffTabRedirect({ onTabChange }: { onTabChange: (tab: "staff" | "audit") => void }) {
-  // Lazily require or render Staff view
-  const StaffManagementPage = require("@/components/pages/staff-management").default;
-  return <StaffManagementPage initialTab="staff" onTabChange={onTabChange} />;
 }

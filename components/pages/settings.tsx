@@ -337,7 +337,7 @@ function PricingSettings() {
 
   return (
     <>
-    <div className="space-y-5 w-full max-w-xl">
+    <div className="space-y-5 w-full max-w-2xl">
 
       {/* ── Base Pricing ─────────────────────────────────────────────────── */}
       <Card className="border border-border shadow-none">
@@ -441,13 +441,13 @@ function PricingSettings() {
                   <Redo2 className="w-3 h-3" /> Redo
                 </Button>
               </div>
-              <div className="rounded-lg border border-border overflow-x-auto">
-                <table className="w-full text-sm min-w-[450px]">
+              <div className="rounded-lg border border-border overflow-hidden">
+                <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-muted/40 border-b border-border">
-                      <th className="text-left px-3 py-2.5 text-xs uppercase tracking-wider font-semibold text-muted-foreground whitespace-nowrap">Load Size</th>
-                      <th className="text-left px-3 py-2.5 text-xs uppercase tracking-wider font-semibold text-muted-foreground whitespace-nowrap">Weight Range</th>
-                      <th className="text-left px-3 py-2.5 text-xs uppercase tracking-wider font-semibold text-muted-foreground whitespace-nowrap">Price</th>
+                      <th className="text-left px-3 py-2.5 text-xs uppercase tracking-wider font-semibold text-muted-foreground w-[30%]">Load Size</th>
+                      <th className="text-left px-3 py-2.5 text-xs uppercase tracking-wider font-semibold text-muted-foreground w-[45%]">Weight Range</th>
+                      <th className="text-left px-3 py-2.5 text-xs uppercase tracking-wider font-semibold text-muted-foreground w-[20%]">Price</th>
                       <th className="w-10" />
                     </tr>
                   </thead>
@@ -461,13 +461,13 @@ function PricingSettings() {
                             <Input
                               value={tier.name}
                               onChange={(e) => updateTier(tier.id, { name: e.target.value })}
-                              className="h-8 text-xs w-20 sm:w-28 px-2"
+                              className="h-8 text-xs w-full px-2"
                               placeholder="Name"
                             />
                           </td>
                           {/* Weight Range — two number inputs */}
-                          <td className="px-3 py-2.5 align-middle whitespace-nowrap">
-                            <div className="flex items-center gap-1.5 flex-nowrap">
+                          <td className="px-3 py-2.5 align-middle">
+                            <div className="flex items-center gap-1.5 flex-wrap">
                               <Input
                                 type="number"
                                 min="0"
@@ -481,12 +481,12 @@ function PricingSettings() {
                                     e.preventDefault();
                                   }
                                 }}
-                                className="w-12 sm:w-14 h-8 text-xs px-1.5 text-center"
+                                className="w-14 h-8 text-xs px-1.5 text-center"
                                 placeholder="0"
                               />
-                              <span className="text-xs sm:text-xs text-muted-foreground font-medium">kg —</span>
+                              <span className="text-xs text-muted-foreground font-medium">kg —</span>
                               {parsed.open ? (
-                                <span className="text-xs sm:text-xs font-medium text-foreground px-1">above</span>
+                                <span className="text-xs font-medium text-foreground px-1">above</span>
                               ) : (
                                 <>
                                   <Input
@@ -502,17 +502,17 @@ function PricingSettings() {
                                         e.preventDefault();
                                       }
                                     }}
-                                    className="w-12 sm:w-14 h-8 text-xs px-1.5 text-center"
+                                    className="w-14 h-8 text-xs px-1.5 text-center"
                                     placeholder="0"
                                   />
-                                  <span className="text-xs sm:text-xs text-muted-foreground font-medium">kg</span>
+                                  <span className="text-xs text-muted-foreground font-medium">kg</span>
                                 </>
                               )}
                               <button
                                 type="button"
                                 onClick={() => updateTier(tier.id, { from: parsed.from, to: parsed.to, open: !parsed.open })}
                                 className={cn(
-                                  "text-xs px-1.5 py-0.5 h-6 rounded border transition-colors cursor-pointer ml-1 shrink-0",
+                                  "text-xs px-1.5 py-0.5 h-6 rounded border transition-colors cursor-pointer shrink-0",
                                   parsed.open
                                     ? "bg-primary/10 border-primary/30 text-primary"
                                     : "bg-muted border-border text-muted-foreground hover:border-primary/40"
@@ -526,7 +526,7 @@ function PricingSettings() {
                           {/* Price */}
                           <td className="px-3 py-2.5 align-middle">
                             <div className="flex items-center gap-1">
-                              <span className="text-xs sm:text-xs text-muted-foreground font-medium">₱</span>
+                              <span className="text-xs text-muted-foreground font-medium">₱</span>
                               <Input
                                 type="number"
                                 min="0"
@@ -540,7 +540,7 @@ function PricingSettings() {
                                     e.preventDefault();
                                   }
                                 }}
-                                className="w-16 sm:w-20 h-8 text-xs sm:text-sm px-2"
+                                className="w-full h-8 text-xs px-2"
                               />
                             </div>
                           </td>
@@ -548,7 +548,7 @@ function PricingSettings() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-10 w-10 min-h-[44px] min-w-[44px] text-muted-foreground hover:text-destructive shrink-0"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
                               onClick={() => setDeleteTierId(tier.id)}
                             >
                               <Trash2 className="w-4 h-4" />
@@ -644,7 +644,7 @@ function PricingSettings() {
 
           {/* Both mode note */}
           {pricingMode === "both" && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2.5 text-xs text-blue-800">
+            <div className="rounded-lg border border-border bg-muted/40 px-3 py-2.5 text-xs text-muted-foreground">
               Staff will select the pricing type when creating a new transaction.
             </div>
           )}
@@ -664,7 +664,7 @@ function PricingSettings() {
         </CardHeader>
         <CardContent className={cn("space-y-3", !svcEnabled && "opacity-40 pointer-events-none")}>
           {/* Helper text */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2.5 text-xs text-blue-800 leading-relaxed">
+          <div className="rounded-lg border border-border bg-muted/40 px-3 py-2.5 text-xs text-muted-foreground leading-relaxed">
             Service types define wash categories (Regular, Delicate, Express). If using Per Kilogram only, you can leave these disabled.
           </div>
           <div className="space-y-2">
@@ -1100,7 +1100,7 @@ function BusinessProfileSettings({ onSave }: { onSave?: (profile: BusinessProfil
   };
 
   return (
-    <div className="space-y-4 w-full max-w-lg">
+    <div className="space-y-4 w-full max-w-2xl">
       <Card className="border border-border shadow-none">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm">Business Profile</CardTitle>
@@ -1500,14 +1500,8 @@ function LoyaltyProgramSettings({ loyaltyEnabled, onLoyaltyEnabledChange }: Loya
   };
 
   return (
-    <div className="space-y-4 w-full max-w-lg">
-      {saved && (
-        <div className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-800 rounded-lg px-4 py-3 text-sm animate-in fade-in slide-in-from-top-2">
-          <CheckCircle2 className="w-4 h-4 shrink-0 text-green-600" />
-          Changes saved successfully!
-        </div>
-      )}
-
+    <>
+    <div className="space-y-4 w-full max-w-2xl">
       {/* Master toggle */}
       <Card className="border border-border shadow-none">
         <CardContent className="p-4">
@@ -1568,10 +1562,31 @@ function LoyaltyProgramSettings({ loyaltyEnabled, onLoyaltyEnabledChange }: Loya
         </CardContent>
       </Card>
 
-      <Button size="sm" onClick={handleSave} className="flex items-center gap-1.5">
+      {/* bottom spacer so content isn't hidden behind floating button */}
+      <div className="h-24" />
+    </div>
+
+    {/* ── Floating Save Bar ─────────────────────────────────────────────── */}
+    <div className="fixed bottom-[76px] right-4 z-50 flex items-center gap-2 lg:bottom-6 lg:right-6">
+      <div className="hidden sm:flex items-center gap-2 rounded-xl border border-border/80 bg-card/95 backdrop-blur-sm px-3 py-1.5 text-xs text-muted-foreground shadow-md">
+        <span className={cn("w-2 h-2 rounded-full", isOnline() ? "bg-green-500" : "bg-amber-500")} />
+        <span>{isOnline() ? "Online — syncs live" : "Offline — saved locally"}</span>
+      </div>
+      {saved && (
+        <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-3 py-1.5 text-xs text-green-700 font-semibold shadow-md animate-in fade-in slide-in-from-bottom-2">
+          <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+          <span>Saved!</span>
+        </div>
+      )}
+      <Button
+        size="sm"
+        onClick={handleSave}
+        className="flex items-center gap-1.5 shadow-lg shadow-primary/30 h-9 px-4 rounded-xl cursor-pointer"
+      >
         <Save className="w-3.5 h-3.5" /> Save Changes
       </Button>
     </div>
+    </>
   );
 }
 

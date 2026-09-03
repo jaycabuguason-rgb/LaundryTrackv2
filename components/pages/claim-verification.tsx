@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PrintReceiptModal } from "@/components/print-receipt-modal";
 import { auditLogs as initialLogs, type AuditLog, type Transaction, type PaymentStatus } from "@/lib/data";
 import { StatusBadge, PaymentBadge } from "@/components/status-badge";
+import { CategoryBadge, SeverityBadge } from "@/components/pages/audit-logs";
 import type { UpdateTransactionInput } from "@/lib/transaction-contracts";
 import { cn } from "@/lib/utils";
 
@@ -468,40 +469,36 @@ export default function ClaimVerificationPage({
             ))}
           </div>
           <div className="hidden overflow-x-auto md:block">
-            <table className="w-full min-w-[700px] text-sm">
+            <table className="w-full min-w-[700px] text-sm text-left">
               <thead>
-                <tr className="border-y border-border bg-muted/40">
-                  {["Date / Time", "Ticket ID", "Customer", "Action", "Payment Status", "Staff", "Notes"].map((header) => (
-                    <th key={header} className="whitespace-nowrap px-4 py-2.5 text-left text-xs font-medium text-muted-foreground">
-                      {header}
-                    </th>
-                  ))}
+                <tr className="border-y border-border bg-muted/30">
+                  <th className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Timestamp</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actor</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Category</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Action</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Details</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right">Severity</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-border/60">
                 {logs.map((log) => (
-                  <tr key={log.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                    <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">{log.dateTime}</td>
-                    <td className="px-4 py-3">
-                      <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 font-mono text-xs font-semibold text-primary">
-                        {log.ticketId}
-                      </span>
+                  <tr key={log.id} className="border-b border-border/80 hover:bg-muted/40 transition-colors">
+                    <td className="whitespace-nowrap px-4 py-3.5 text-xs text-muted-foreground">{log.dateTime}</td>
+                    <td className="px-4 py-3.5 whitespace-nowrap">
+                      <span className="font-semibold text-xs text-foreground">{log.staff}</span>
                     </td>
-                    <td className="px-4 py-3 text-xs font-medium text-foreground">{log.customerName || "-"}</td>
-                    <td className="px-4 py-3">
-                      <span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium", actionBadgeColor(log.action))}>
-                        {log.action}
-                      </span>
+                    <td className="px-4 py-3.5 whitespace-nowrap">
+                      <CategoryBadge category={log.action.toLowerCase().includes("denied") ? "security" : "transaction"} />
                     </td>
-                    <td className="px-4 py-3">
-                      {log.paymentStatus ? (
-                        <PaymentBadge paymentStatus={log.paymentStatus} className="font-bold uppercase" />
-                      ) : (
-                        <span className="text-xs text-muted-foreground">-</span>
-                      )}
+                    <td className="px-4 py-3.5 font-medium text-xs text-foreground whitespace-nowrap">
+                      {log.action} (#{log.ticketId})
                     </td>
-                    <td className="px-4 py-3 text-xs text-foreground">{log.staff}</td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground">{log.notes || "-"}</td>
+                    <td className="px-4 py-3.5 text-xs text-muted-foreground max-w-xs truncate">
+                      {log.notes || (log.customerName ? `Customer: ${log.customerName}` : "—")}
+                    </td>
+                    <td className="px-4 py-3.5 whitespace-nowrap text-right">
+                      <SeverityBadge severity={log.action.toLowerCase().includes("denied") ? "warning" : "info"} />
+                    </td>
                   </tr>
                 ))}
               </tbody>

@@ -151,7 +151,7 @@ export default function PwaInit() {
           : "Install this app for faster access and better offline use."}
       </p>
       <div className="mt-3 flex items-center gap-2">
-        {!iosHelp && deferredPrompt && (
+        {!iosHelp && deferredPrompt ? (
           <button
             type="button"
             onClick={() => void triggerInstall()}
@@ -159,14 +159,13 @@ export default function PwaInit() {
           >
             Install App
           </button>
-        )}
-        {(!deferredPrompt || iosHelp) && (
+        ) : (
           <button
             type="button"
             onClick={() => setShowHelp((value) => !value)}
             className="rounded-md bg-primary text-primary-foreground px-3 py-1.5 text-xs font-semibold"
           >
-            How to Install
+            Install App
           </button>
         )}
         <button

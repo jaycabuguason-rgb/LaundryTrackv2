@@ -1,16 +1,22 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import {
   Search, Eye, EyeOff, Edit, Ban, Printer, ChevronRight, X, QrCode, CalendarIcon,
   Undo2, Redo2, AlertTriangle, Plus, User, Star, Camera, CameraOff,
-  ChevronLeft, Check, RefreshCw, ExternalLink, Inbox
+  ChevronLeft, Check, RefreshCw, ExternalLink, Inbox, MoreHorizontal
 } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -1177,15 +1183,29 @@ export default function TransactionsPage({
   onCreateTransaction,
   onUpdateTransaction,
   editTicketId,
-  onEditComplete,
+onEditComplete,
 }: TransactionsPageProps) {
 
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [filterService, setFilterService] = useState("all");
   const [filterPayment, setFilterPayment] = useState("all");
   const [filterDate, setFilterDate] = useState<Date | undefined>(undefined);
   const [sortBy, setSortBy] = useState<"smart" | "newest" | "oldest" | "unpaid-first" | "ready-first" | "status-az">("smart");
   const [activeTab, setActiveTab] = useState<"transactions" | "claimed">("transactions");
+
+  const serviceOptions = useMemo(() => Array.from(new Set(txns.map((t) => t.washType).filter(Boolean))), [txns]);
+
+  function formatDateDisplay(dateStr?: string) {
+    if (!dateStr) return "—";
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return format(d, "MMM d");
+    } catch {
+      return dateStr;
+    }
+  }
 
   // New Transaction wizard
   const [showWizard, setShowWizard] = useState(false);
@@ -1274,9 +1294,9 @@ export default function TransactionsPage({
     setBusy(true);
     try {
       const res = await onUpdateTransaction(editTxn.ticketId, {
+        washInstructions: editInstructions,
         status: editStatus,
         paymentStatus: editPaymentStatus,
-        washInstructions: editInstructions,
       });
       showToast(`Ticket #${editTxn.ticketId} updated successfully`);
       if (res.loyaltyResult?.stamped && res.loyaltyResult.rewarded) {
@@ -1340,7 +1360,10 @@ export default function TransactionsPage({
     }
     setMobileStatusBusyTicket(mobileStatusTxn.ticketId);
     try {
-      const res = await onUpdateTransaction(mobileStatusTxn.ticketId, { status });
+      const res = await onUpdateTransaction(mobileStatusTxn.ticketId, {
+        status,
+        paymentStatus: mobileStatusTxn.paymentStatus,
+      });
       showToast(`Ticket #${mobileStatusTxn.ticketId} moved to ${status}`);
       if (res.loyaltyResult?.stamped && res.loyaltyResult.rewarded) {
         showToast(`Reward Unlocked! 🎉 Customer earned a free wash! They now have ${res.loyaltyResult.newStampCount} stamps.`);
@@ -1360,7 +1383,7 @@ export default function TransactionsPage({
   useEffect(() => {
     if (editTicketId && editTicketId !== handledEditTicketRef.current) {
       handledEditTicketRef.current = editTicketId;
-      const txn = txns.find(t => t.ticketId === editTicketId);
+      const txn = txns.find((t) => t.ticketId === editTicketId);
       if (txn) openEdit(txn);
     }
     if (!editTicketId) {
@@ -1401,13 +1424,9 @@ export default function TransactionsPage({
   const smartPriority = (t: Transaction): number => {
     if (t.status === "Voided") return 90;
     if (t.status === "Claimed") return 80;
-    // Unpaid + Active (not Ready) — Priority 1
     if (t.paymentStatus === "unpaid" && activeStatuses.has(t.status)) return 1;
-    // Unpaid + Ready — Priority 2
     if (t.paymentStatus === "unpaid" && t.status === "Ready") return 2;
-    // Paid + Ready — Priority 3
     if (t.paymentStatus === "paid" && t.status === "Ready") return 3;
-    // Paid + Active — Priority 4
     if (t.paymentStatus === "paid" && activeStatuses.has(t.status)) return 4;
     return 50;
   };
@@ -1418,7 +1437,9 @@ export default function TransactionsPage({
     if (t.paymentStatus === "unpaid" && t.status === "Ready")
       return "border-l-[3px] border-l-red-500 bg-red-50/40";
     if (t.paymentStatus === "unpaid" && activeStatuses.has(t.status))
-      return "border-l-[3px] border-l-orange-400 bg-orange-50/30";
+      return "border-l-[3px] border-l-amber-500 bg-amber-50/30";
+    if (t.paymentStatus === "paid" && t.status === "Ready")
+      return "border-l-[3px] border-l-emerald-500 bg-emerald-50/30";
     return "";
   };
 
@@ -1430,9 +1451,10 @@ export default function TransactionsPage({
         t.customerName.toLowerCase().includes(search.toLowerCase()) ||
         t.ticketId.toLowerCase().includes(search.toLowerCase());
       const matchStatus = filterStatus === "all" || t.status === filterStatus;
+      const matchService = filterService === "all" || t.washType === filterService;
       const matchPayment = filterPayment === "all" || t.paymentStatus === filterPayment;
       const matchDate = !filterDate || t.dropOffDate === format(filterDate, "yyyy-MM-dd");
-      return matchTab && matchSearch && matchStatus && matchPayment && matchDate;
+      return matchTab && matchSearch && matchStatus && matchService && matchPayment && matchDate;
     });
 
     const sorted = [...base];
@@ -1441,7 +1463,6 @@ export default function TransactionsPage({
         sorted.sort((a, b) => {
           const diff = smartPriority(a) - smartPriority(b);
           if (diff !== 0) return diff;
-          // Tiebreak: newer arrival first
           return b.arrivalDateTime.localeCompare(a.arrivalDateTime);
         });
         break;
@@ -1470,6 +1491,9 @@ export default function TransactionsPage({
     return sorted;
   })();
 
+  const totalFilteredOrders = filtered.length;
+  const totalFilteredRevenue = filtered.reduce((acc, t) => acc + (t.status === "Voided" ? 0 : t.fee), 0);
+  const totalFilteredWeight = filtered.reduce((acc, t) => acc + (t.status === "Voided" ? 0 : (t.weight || 0)), 0);
 
   const canUndo = false;
   const canRedo = false;
@@ -1489,7 +1513,7 @@ export default function TransactionsPage({
         <button
           onClick={() => setActiveTab("transactions")}
           className={cn(
-            "px-4 py-2.5 text-sm font-medium border-b-2 transition-colors",
+            "px-4 py-2.5 text-sm font-medium border-b-2 transition-colors cursor-pointer",
             activeTab === "transactions" ? "border-primary text-primary font-semibold" : "border-transparent text-muted-foreground hover:text-foreground"
           )}
         >
@@ -1498,7 +1522,7 @@ export default function TransactionsPage({
         <button
           onClick={() => setActiveTab("claimed")}
           className={cn(
-            "px-4 py-2.5 text-sm font-medium border-b-2 transition-colors",
+            "px-4 py-2.5 text-sm font-medium border-b-2 transition-colors cursor-pointer",
             activeTab === "claimed" ? "border-primary text-primary font-semibold" : "border-transparent text-muted-foreground hover:text-foreground"
           )}
         >
@@ -1506,109 +1530,127 @@ export default function TransactionsPage({
         </button>
       </div>
 
-      {/* Filter bar */}
-      <div className="bg-card border border-border rounded-lg p-3 md:p-4 flex flex-col sm:flex-row flex-wrap gap-3">
-        {/* New Transaction button */}
-        <Button size="sm" className="h-10 md:h-9 gap-1.5 shrink-0" onClick={() => setShowWizard(true)} disabled={busy || loading}>
-          <Plus className="w-4 h-4" /> New Transaction
-        </Button>
+      <div className="space-y-4">
+        {/* Filter bar */}
+        <div className="bg-card border border-border rounded-xl p-3 md:p-4 flex flex-col sm:flex-row flex-wrap gap-3 shadow-xs">
+          {/* New Transaction button */}
+          <Button size="sm" className="h-10 md:h-9 gap-1.5 shrink-0 cursor-pointer" onClick={() => setShowWizard(true)} disabled={busy || loading}>
+            <Plus className="w-4 h-4" /> New Transaction
+          </Button>
 
-        <div className="relative flex-1 min-w-0 sm:min-w-48">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by name or ticket ID..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-10 md:h-9 text-sm w-full"
-          />
-        </div>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-full sm:w-40 h-10 md:h-9 text-sm">
-            <SelectValue placeholder="All Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            {statusOrder.map((s) => (
-              <SelectItem key={s} value={s}>{s}</SelectItem>
-            ))}
-            <SelectItem value="Voided">Voided</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={filterPayment} onValueChange={setFilterPayment}>
-          <SelectTrigger className="w-full sm:w-40 h-10 md:h-9 text-sm">
-            <SelectValue placeholder="All Payments" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Payments</SelectItem>
-            <SelectItem value="paid">Paid</SelectItem>
-            <SelectItem value="unpaid">Unpaid</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
-          <SelectTrigger className="w-full sm:w-48 h-10 md:h-9 text-sm">
-            <SelectValue placeholder="Sort by" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="smart">Default (Smart Priority)</SelectItem>
-            <SelectItem value="newest">Newest First</SelectItem>
-            <SelectItem value="oldest">Oldest First</SelectItem>
-            <SelectItem value="unpaid-first">Unpaid First</SelectItem>
-            <SelectItem value="ready-first">Ready First</SelectItem>
-            <SelectItem value="status-az">Status (A-Z)</SelectItem>
-          </SelectContent>
-        </Select>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="w-full sm:w-44 h-10 md:h-9 text-sm justify-start gap-2 font-normal">
-              <CalendarIcon className="w-4 h-4 text-muted-foreground shrink-0" />
-              {filterDate ? format(filterDate, "MMM d, yyyy") : "All dates"}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={filterDate}
-              onSelect={(d) => setFilterDate(d ?? undefined)}
-              initialFocus
+          <div className="relative flex-1 min-w-0 sm:min-w-48">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by name or ticket ID..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 h-10 md:h-9 text-sm w-full"
             />
-            {filterDate && (
-              <div className="p-2 border-t border-border">
-                <Button variant="ghost" size="sm" className="w-full text-xs h-7" onClick={() => setFilterDate(undefined)}>
-                  Clear date filter
-                </Button>
-              </div>
-            )}
-          </PopoverContent>
-        </Popover>
+          </div>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-full sm:w-40 h-10 md:h-9 text-sm">
+              <SelectValue placeholder="All Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              {statusOrder.map((s) => (
+                <SelectItem key={s} value={s}>{s}</SelectItem>
+              ))}
+              <SelectItem value="Voided">Voided</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filterService} onValueChange={setFilterService}>
+            <SelectTrigger className="w-full sm:w-40 h-10 md:h-9 text-sm">
+              <SelectValue placeholder="All Services" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Services</SelectItem>
+              {serviceOptions.map((srv: string) => (
+                <SelectItem key={srv} value={srv}>{srv}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={filterPayment} onValueChange={setFilterPayment}>
+            <SelectTrigger className="w-full sm:w-40 h-10 md:h-9 text-sm">
+              <SelectValue placeholder="All Payments" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Payments</SelectItem>
+              <SelectItem value="paid">Paid</SelectItem>
+              <SelectItem value="unpaid">Unpaid</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
+            <SelectTrigger className="w-full sm:w-48 h-10 md:h-9 text-sm">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="smart">Default (Smart Priority)</SelectItem>
+              <SelectItem value="newest">Newest First</SelectItem>
+              <SelectItem value="oldest">Oldest First</SelectItem>
+              <SelectItem value="unpaid-first">Unpaid First</SelectItem>
+              <SelectItem value="ready-first">Ready First</SelectItem>
+              <SelectItem value="status-az">Status (A-Z)</SelectItem>
+            </SelectContent>
+          </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="w-full sm:w-44 h-10 md:h-9 text-sm justify-start gap-2 font-normal">
+                <CalendarIcon className="w-4 h-4 text-muted-foreground shrink-0" />
+                {filterDate ? format(filterDate, "MMM d, yyyy") : "All dates"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={filterDate}
+                onSelect={(d) => setFilterDate(d ?? undefined)}
+                initialFocus
+              />
+              {filterDate && (
+                <div className="p-2 border-t border-border">
+                  <Button variant="ghost" size="sm" className="w-full text-xs h-7" onClick={() => setFilterDate(undefined)}>
+                    Clear date filter
+                  </Button>
+                </div>
+              )}
+            </PopoverContent>
+          </Popover>
 
-        {/* Undo / Redo */}
-        <div className="flex gap-1.5 sm:ml-auto">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-10 md:h-9 px-3 gap-1.5 text-xs"
-            disabled={!canUndo}
-            onClick={undo}
-            title="Undo last action"
-          >
-            <Undo2 className="w-3.5 h-3.5" /> Undo
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-10 md:h-9 px-3 gap-1.5 text-xs"
-            disabled={!canRedo}
-            onClick={redo}
-            title="Redo last undone action"
-          >
-            <Redo2 className="w-3.5 h-3.5" /> Redo
-          </Button>
+          {/* Undo / Redo */}
+          <div className="flex gap-1.5 sm:ml-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-10 md:h-9 px-3 gap-1.5 text-xs"
+              disabled={!canUndo}
+              onClick={undo}
+              title="Undo last action"
+            >
+              <Undo2 className="w-3.5 h-3.5" /> Undo
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-10 md:h-9 px-3 gap-1.5 text-xs"
+              disabled={!canRedo}
+              onClick={redo}
+              title="Redo last undone action"
+            >
+              <Redo2 className="w-3.5 h-3.5" /> Redo
+            </Button>
+          </div>
         </div>
-      </div>
 
-      {/* Table */}
-      <div className="bg-card border border-border rounded-lg overflow-hidden">
-        <div className="divide-y divide-border md:hidden">
+        {/* Summary subheader line */}
+        <div className="flex items-center justify-between text-xs text-muted-foreground font-medium px-0.5">
+          <p>
+            {totalFilteredOrders} {totalFilteredOrders === 1 ? "order" : "orders"} — ₱{totalFilteredRevenue.toLocaleString()} total — {totalFilteredWeight.toFixed(1)} kg
+          </p>
+        </div>
+
+        {/* Clean Transaction Card Rows matching Concept */}
+        <div className="space-y-2.5">
           {filtered.map((txn) => {
             const isVoided = txn.status === "Voided";
             const isClaimed = txn.status === "Claimed";
@@ -1616,200 +1658,134 @@ export default function TransactionsPage({
               <div
                 key={txn.id}
                 className={cn(
-                  "space-y-3 px-4 py-3 border-b border-border transition-colors",
-                  isVoided ? "bg-muted/30 opacity-70" : "",
-                  isClaimed ? "text-muted-foreground/70" : "",
+                  "group relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 rounded-xl md:rounded-2xl border border-border/80 bg-card px-4 py-3 md:px-5 md:py-3.5 transition-all duration-150 hover:border-primary/40 hover:shadow-xs",
+                  isVoided && "opacity-60 bg-muted/20",
+                  isClaimed && "bg-muted/10",
                   rowVisualClass(txn)
                 )}
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <button
-                      onClick={() => setViewTxn(txn)}
-                      className={cn("inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 font-mono text-xs font-semibold text-primary hover:underline cursor-pointer text-left", isVoided && "line-through")}
-                      title="View ticket details"
-                    >
-                      {txn.ticketId}
-                    </button>
-                    <p className={cn("truncate text-xs font-medium text-foreground", isVoided && "line-through")}>{txn.customerName}</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">{txn.arrivalDateTime}</p>
-                  </div>
-                  <div className="flex flex-col items-end gap-1.5">
-                    <StatusBadge status={txn.status} />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 px-2.5 text-xs"
-                      disabled={isVoided || mobileStatusBusyTicket === txn.ticketId}
-                      onClick={() => setMobileStatusTxn(txn)}
-                    >
-                      {mobileStatusBusyTicket === txn.ticketId ? "Updating..." : "Update Status"}
-                    </Button>
+                {/* Left Section: Ticket ID Pill & Customer/Service info */}
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                  {/* Ticket ID Pill */}
+                  <button
+                    type="button"
+                    onClick={() => setViewTxn(txn)}
+                    className={cn(
+                      "shrink-0 rounded-full px-3 py-1 font-mono text-xs font-semibold tracking-wider transition-colors cursor-pointer",
+                      isVoided
+                        ? "bg-muted text-muted-foreground line-through"
+                        : "bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/60"
+                    )}
+                    title="View ticket details"
+                  >
+                    #{txn.ticketId}
+                  </button>
+
+                  {/* Customer Name & Wash Details */}
+                  <div className="min-w-0 flex-1">
+                    <p className={cn("truncate text-sm font-semibold text-foreground", isVoided && "line-through text-muted-foreground")}>
+                      {txn.customerName}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground mt-0.5">
+                      {txn.washType}{txn.weight ? ` · ${txn.weight} kg` : ""}
+                      {txn.addOns && txn.addOns.length > 0 ? ` · ${txn.addOns.join(", ")}` : ""}
+                    </p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/30 p-2.5">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Weight</p>
-                    <p className="text-xs font-medium text-foreground">{txn.weight} kg</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Type</p>
-                    <p className="truncate text-xs font-medium text-foreground">{txn.washType}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Fee</p>
-                    <p className="text-xs font-medium text-foreground">₱{txn.fee}</p>
-                  </div>
-                </div>
+                {/* Right Section: Badges, Actions, Price & Date */}
+                <div className="flex items-center flex-wrap sm:flex-nowrap justify-between sm:justify-end gap-2.5 sm:gap-4 shrink-0">
+                  {/* Status Badge */}
+                  <StatusBadge status={txn.status} />
 
-                <div className="flex items-center justify-between">
+                  {/* Payment Badge */}
                   <PaymentBadge paymentStatus={txn.paymentStatus} />
+
+                  {/* Action Links */}
                   <div className="flex items-center gap-0.5">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" title="View" onClick={() => setViewTxn(txn)}>
-                      <Eye className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" title="Track Order" onClick={() => window.open(`${origin}${txn.publicTrackingToken ? `/track/${txn.publicTrackingToken}` : `/ticket/${txn.ticketId}`}`, "_blank")}>
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" title="Edit" disabled={isVoided} onClick={() => openEdit(txn)}>
-                      <Edit className="w-3.5 h-3.5" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setViewTxn(txn)}
+                      className="h-7 px-2 text-xs text-foreground font-medium hover:text-primary hover:bg-primary/10 cursor-pointer"
+                    >
+                      View
                     </Button>
                     <Button
-                      variant="ghost" size="icon"
-                      className="h-10 w-10 min-h-[44px] min-w-[44px] text-destructive hover:text-destructive"
-                      title="Void"
-                      disabled={isVoided}
-                      onClick={() => { setVoidTxn(txn); setVoidReason(""); }}
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => { setPrintTxn(txn); setPrintPostCreate(false); }}
+                      className="h-7 px-2 text-xs text-foreground font-medium hover:text-primary hover:bg-primary/10 cursor-pointer"
                     >
-                      <Ban className="w-3.5 h-3.5" />
+                      Print
                     </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => window.open(`${origin}${txn.publicTrackingToken ? `/track/${txn.publicTrackingToken}` : `/ticket/${txn.ticketId}`}`, "_blank")}
+                      className="h-7 px-2 text-xs text-foreground font-medium hover:text-primary hover:bg-primary/10 cursor-pointer"
+                    >
+                      Track
+                    </Button>
+
+                    {/* Quick Dropdown Actions */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground cursor-pointer">
+                          <MoreHorizontal className="w-3.5 h-3.5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem disabled={isVoided} onClick={() => openEdit(txn)}>
+                          <Edit className="w-3.5 h-3.5 mr-2" /> Edit Order
+                        </DropdownMenuItem>
+                        <DropdownMenuItem disabled={isVoided} onClick={() => setMobileStatusTxn(txn)}>
+                          <RefreshCw className="w-3.5 h-3.5 mr-2" /> Change Status
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          disabled={isVoided}
+                          onClick={() => { setVoidTxn(txn); setVoidReason(""); }}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Ban className="w-3.5 h-3.5 mr-2" /> Void Order
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+
+                  {/* Price & Date Column */}
+                  <div className="text-right min-w-[72px] pl-2 sm:pl-3 border-l border-border/50">
+                    <p className={cn("text-sm font-bold text-foreground", isVoided && "line-through text-muted-foreground")}>
+                      ₱{txn.fee.toLocaleString()}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground whitespace-nowrap mt-0.5">
+                      {formatDateDisplay(txn.arrivalDateTime || txn.dropOffDate)}
+                    </p>
                   </div>
                 </div>
               </div>
             );
           })}
-          {filtered.length === 0 && (
-            <Empty className="py-10">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <Inbox />
-                </EmptyMedia>
-                <EmptyTitle className="text-sm">
-                  {loading ? "Loading transactions..." : "No transactions found."}
-                </EmptyTitle>
-                {loading ? null : (
-                  <EmptyDescription>
-                    Try adjusting your filters or search terms.
-                  </EmptyDescription>
-                )}
-              </EmptyHeader>
-            </Empty>
-          )}
-        </div>
 
-        <div className="hidden overflow-x-auto md:block">
-          <table className="w-full text-sm min-w-[640px]">
-            <thead>
-              <tr className="border-b border-border bg-muted/40">
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 whitespace-nowrap">Ticket ID</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 whitespace-nowrap">Customer Name</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 whitespace-nowrap hidden md:table-cell">Arrival Date & Time</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 whitespace-nowrap hidden sm:table-cell">Weight</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 whitespace-nowrap hidden md:table-cell">Wash Type</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 whitespace-nowrap">Fee</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 whitespace-nowrap hidden sm:table-cell">Payment</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 whitespace-nowrap">Status</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 whitespace-nowrap">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((txn) => {
-                const isVoided = txn.status === "Voided";
-                const isClaimed = txn.status === "Claimed";
-                const visualCls = rowVisualClass(txn);
-                return (
-                  <tr
-                    key={txn.id}
-                    className={cn(
-                      "border-b border-border last:border-0 transition-colors",
-                      isVoided ? "bg-muted/30 opacity-50" : "",
-                      isClaimed ? "text-muted-foreground/60" : "",
-                      !isVoided && !isClaimed ? "hover:bg-muted/30" : "",
-                      visualCls
-                    )}
-                  >
-                    <td className="px-4 py-3">
-                      <button
-                        onClick={() => setViewTxn(txn)}
-                        className={cn("inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 font-mono text-xs font-semibold text-primary hover:underline cursor-pointer", isVoided && "line-through", isClaimed && "text-muted-foreground/60")}
-                        title="View ticket details"
-                      >
-                        {txn.ticketId}
-                      </button>
-                    </td>
-                    <td className={cn("px-4 py-3 text-xs font-medium", isVoided && "line-through text-foreground", isClaimed ? "text-muted-foreground/60" : "text-foreground")}>{txn.customerName}</td>
-                    <td className={cn("px-4 py-3 text-xs text-muted-foreground whitespace-nowrap hidden md:table-cell", isVoided && "line-through", isClaimed && "text-muted-foreground/50")}>{txn.arrivalDateTime}</td>
-                    <td className={cn("px-4 py-3 text-xs text-muted-foreground hidden sm:table-cell", isVoided && "line-through", isClaimed && "text-muted-foreground/50")}>{txn.weight} kg</td>
-                    <td className={cn("px-4 py-3 text-xs text-muted-foreground hidden md:table-cell", isVoided && "line-through", isClaimed && "text-muted-foreground/50")}>{txn.washType}</td>
-                    <td className={cn("px-4 py-3 text-xs font-medium", isVoided && "line-through text-foreground", isClaimed ? "text-muted-foreground/60" : "text-foreground")}>₱{txn.fee}</td>
-                    <td className="px-4 py-3 hidden sm:table-cell">
-                      <PaymentBadge paymentStatus={txn.paymentStatus} />
-                    </td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={txn.status} />
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-0.5">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" title="View" onClick={() => setViewTxn(txn)}>
-                          <Eye className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" title="Track Order" onClick={() => window.open(`${origin}${txn.publicTrackingToken ? `/track/${txn.publicTrackingToken}` : `/ticket/${txn.ticketId}`}`, "_blank")}>
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" title="Edit" disabled={isVoided} onClick={() => openEdit(txn)}>
-                          <Edit className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost" size="icon"
-                          className="h-10 w-10 min-h-[44px] min-w-[44px] text-destructive hover:text-destructive"
-                          title="Void"
-                          disabled={isVoided}
-                          onClick={() => { setVoidTxn(txn); setVoidReason(""); }}
-                        >
-                          <Ban className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-10 w-10 min-h-[44px] min-w-[44px] hidden sm:flex" title="Print Receipt" onClick={() => { setPrintTxn(txn); setPrintPostCreate(false); }}>
-                          <Printer className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={9} className="py-10">
-                    <Empty>
-                      <EmptyHeader>
-                        <EmptyMedia variant="icon">
-                          <Inbox />
-                        </EmptyMedia>
-                        <EmptyTitle className="text-sm">
-                          {loading ? "Loading transactions..." : "No transactions found."}
-                        </EmptyTitle>
-                        {loading ? null : (
-                          <EmptyDescription>
-                            Try adjusting your filters or search terms.
-                          </EmptyDescription>
-                        )}
-                      </EmptyHeader>
-                    </Empty>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+          {filtered.length === 0 && (
+            <div className="bg-card border border-border rounded-xl p-10">
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <Inbox />
+                  </EmptyMedia>
+                  <EmptyTitle className="text-sm">
+                    {loading ? "Loading transactions..." : "No transactions found."}
+                  </EmptyTitle>
+                  {loading ? null : (
+                    <EmptyDescription>
+                      Try adjusting your filters or search terms.
+                    </EmptyDescription>
+                  )}
+                </EmptyHeader>
+              </Empty>
+            </div>
+          )}
         </div>
       </div>
 
