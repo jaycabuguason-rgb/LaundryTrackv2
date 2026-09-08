@@ -1,33 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
-  ShoppingBag,
-  AlertCircle,
-  Loader2,
-  Users,
-  Eye,
-  BarChart3,
   ArrowRight,
+  Plus,
+  Receipt,
+  Droplet,
+  CheckCircle2,
 } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   transactions as initialTransactions,
-  loyaltyMembers,
+  loyaltyMembers as initialLoyaltyMembers,
   type Transaction,
 } from "@/lib/data";
-import { StatusBadge } from "@/components/status-badge";
 import { TransactionDetailModal } from "@/components/transaction-detail-modal";
 import type { Page } from "@/components/sidebar";
-import dynamic from "next/dynamic";
-import { usePeakHours } from "@/hooks/usePeakHours";
-
-const PeakHoursChart = dynamic(
-  () => import("@/components/peak-hours-chart"),
-  { ssr: false, loading: () => <div className="h-40 w-full animate-pulse bg-muted rounded-md" /> }
-);
+import { useLoyaltyMembers } from "@/hooks/use-loyalty-members";
+import { loadBusinessProfile, loadLoyaltySettings } from "@/lib/settings-store";
+import { cn } from "@/lib/utils";
+import { StatusBadge } from "@/components/status-badge";
 
 interface DashboardPageProps {
   transactions?: Transaction[];
@@ -36,72 +30,18 @@ interface DashboardPageProps {
   onNavigate?: (page: Page) => void;
 }
 
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("en-PH", {
-    style: "currency",
-    currency: "PHP",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
 export default function DashboardPage({
   transactions = initialTransactions,
   loyaltyEnabled = true,
   role = "admin",
   onNavigate,
 }: DashboardPageProps) {
-  const isStaff = role === "staff";
-  const today = transactions[0]?.dropOffDate ?? initialTransactions[0]?.dropOffDate ?? "";
-  const todayTransactions = transactions.filter((transaction) => transaction.dropOffDate === today);
-  const totalRevenue = todayTransactions.reduce((sum, transaction) => sum + transaction.fee, 0);
-  const readyForPickup = transactions.filter((transaction) => transaction.status === "Ready").length;
-  const activeOrders = transactions.filter(
-    (transaction) =>
-      transaction.status === "Received" ||
-      transaction.status === "Washing" ||
-      transaction.status === "Drying",
-  ).length;
+  const { members: liveMembers } = useLoyaltyMembers();
+  const businessProfile = useMemo(() => loadBusinessProfile(), []);
+  const loyaltyConfig = useMemo(() => loadLoyaltySettings(), []);
+  const isLoyaltyOn = typeof loyaltyEnabled === "boolean" ? loyaltyEnabled : loyaltyConfig.enabled;
 
-  // Peak hours data from hook
-  const { data: peakHoursData, loading: peakHoursLoading } = usePeakHours(transactions);
-
-  const adminCards = [
-    {
-      label: "Total Transactions Today",
-      value: todayTransactions.length,
-      icon: ShoppingBag,
-      color: "text-primary",
-      bg: "bg-primary/10",
-      change: "+3 from yesterday",
-    },
-    {
-      label: "Total Revenue Today",
-      value: formatCurrency(totalRevenue),
-      icon: null,
-      color: "text-chart-4",
-      bg: "bg-chart-4/10",
-      change: "+12% vs yesterday",
-    },
-    {
-      label: "Ready for Pickup",
-      value: readyForPickup,
-      icon: AlertCircle,
-      color: "text-chart-3",
-      bg: "bg-chart-3/10",
-      change: "Waiting to be claimed",
-    },
-    {
-      label: "Active Orders",
-      value: activeOrders,
-      icon: Loader2,
-      color: "text-primary",
-      bg: "bg-primary/10",
-      change: "In progress",
-    },
-  ];
-
-  const cards = isStaff ? adminCards.filter((card) => card.label !== "Total Revenue Today") : adminCards;
-
+  // Modal State
   const [selectedTxn, setSelectedTxn] = useState<Transaction | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
@@ -110,207 +50,333 @@ export default function DashboardPage({
     setDetailOpen(true);
   };
 
+  // Counts & Metrics
+  const totalOrders = transactions.length;
+  const receivedCount = transactions.filter((t) => t.status === "Received").length;
+  const washingCount = transactions.filter((t) => t.status === "Washing" || t.status === "Drying").length;
+  const readyCount = transactions.filter((t) => t.status === "Ready").length;
+
+  const paidRevenue = transactions
+    .filter((t) => t.paymentStatus === "paid" && t.status !== "Voided")
+    .reduce((sum, t) => sum + t.fee, 0);
+
+  const totalMembers = liveMembers.length > 0 ? liveMembers.length : initialLoyaltyMembers.length;
+
+  // Donut chart calculations
+  const chartTotal = Math.max(1, receivedCount + washingCount + readyCount);
+  const receivedPct = (receivedCount / chartTotal) * 100;
+  const washingPct = (washingCount / chartTotal) * 100;
+  const readyPct = (readyCount / chartTotal) * 100;
+
+  // SVG Donut circumference (radius = 38, circumference ≈ 238.76)
+  const radius = 38;
+  const circumference = 2 * Math.PI * radius;
+  const strokeReceived = (receivedPct / 100) * circumference;
+  const strokeWashing = (washingPct / 100) * circumference;
+  const strokeReady = (readyPct / 100) * circumference;
+
+  const offsetReceived = 0;
+  const offsetWashing = -strokeReceived;
+  const offsetReady = -(strokeReceived + strokeWashing);
+
   return (
-    <>
-      <div className="space-y-4 md:space-y-6">
-        <div className={`grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 ${isStaff ? "lg:grid-cols-3" : "lg:grid-cols-4"}`}>
-          {cards.map((card) => {
-            const Icon = card.icon;
-            return (
-              <Card key={card.label} className="border border-border shadow-none relative group">
-                <span className="absolute top-3 right-3 text-muted-foreground/50 group-hover:text-primary/60 transition-colors text-lg font-light leading-none select-none">+</span>
-                <CardContent className="p-4 md:p-5">
-                  <div className="flex items-start justify-between">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-medium leading-tight text-muted-foreground">{card.label}</p>
-                      {card.label === "Total Revenue Today" ? (
-                        <p className="mt-1 text-xl md:text-2xl text-foreground">
-                          <span className="font-normal">₱</span>
-                          <span className="font-bold">{String(card.value).replace(/[₱,]/g, '')}</span>
-                        </p>
-                      ) : (
-                        <p className="mt-1 text-xl font-bold text-foreground md:text-2xl">{card.value}</p>
-                      )}
-                      <p className="mt-1 text-xs text-muted-foreground">{card.change}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+    <div className="space-y-5 max-w-7xl mx-auto pb-10">
+      {/* Header */}
+      <div>
+        <p className="text-xs font-semibold text-primary">{businessProfile.shopName || "Sunshine Laundry Shop"}</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground mt-0.5">Dashboard</h1>
+        {onNavigate && (
+          <Button onClick={() => onNavigate("new-transaction")} className="mt-3 w-full gap-2 sm:w-auto cursor-pointer">
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            New order
+          </Button>
+        )}
+        <p className="text-xs text-muted-foreground mt-1.5">Today at a glance — your laundry, clearly managed.</p>
+      </div>
+
+      {/* ─────────────────────────────────────────────────────────────────────── */}
+      {/* TOP STAT CARDS */}
+      {/* ─────────────────────────────────────────────────────────────────────── */}
+      <div className={cn(
+        "grid grid-cols-1 sm:grid-cols-2 gap-3.5",
+        isLoyaltyOn ? "lg:grid-cols-5" : "lg:grid-cols-4"
+      )}>
+        {/* 1. Today's Orders */}
+        <Card
+          onClick={() => onNavigate?.("processing")}
+          className="border border-border shadow-xs hover:border-primary/40 transition-all bg-card cursor-pointer group relative"
+        >
+          <span className="absolute top-3 right-3 text-muted-foreground/50 group-hover:text-primary/70 transition-colors text-lg font-light leading-none select-none">+</span>
+          <CardContent className="p-4">
+            <div className="space-y-0.5 min-w-0">
+              <p className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                Today&apos;s Orders
+              </p>
+              <p className="text-2xl font-bold text-foreground">{totalOrders}</p>
+              <p className="text-xs text-muted-foreground">orders this cycle</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 2. In Progress */}
+        <Card
+          onClick={() => onNavigate?.("processing")}
+          className="border border-border shadow-xs hover:border-primary/40 transition-all bg-card cursor-pointer group relative"
+        >
+          <span className="absolute top-3 right-3 text-muted-foreground/50 group-hover:text-primary/70 transition-colors text-lg font-light leading-none select-none">+</span>
+          <CardContent className="p-4">
+            <div className="space-y-0.5 min-w-0">
+              <p className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                In Progress
+              </p>
+              <p className="text-2xl font-bold text-foreground">{washingCount}</p>
+              <p className="text-xs text-muted-foreground">currently washing</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 3. Ready for Pickup */}
+        <Card
+          onClick={() => onNavigate?.("claim-verification")}
+          className="border border-border shadow-xs hover:border-primary/40 transition-all bg-card cursor-pointer group relative"
+        >
+          <span className="absolute top-3 right-3 text-muted-foreground/50 group-hover:text-primary/70 transition-colors text-lg font-light leading-none select-none">+</span>
+          <CardContent className="p-4">
+            <div className="space-y-0.5 min-w-0">
+              <p className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                Ready for Pickup
+              </p>
+              <p className="text-2xl font-bold text-foreground">{readyCount}</p>
+              <p className="text-xs text-muted-foreground">waiting for customers</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 4. Revenue */}
+        <Card
+          onClick={() => onNavigate?.("transactions")}
+          className="border border-border shadow-xs hover:border-primary/40 transition-all bg-card cursor-pointer group relative"
+        >
+          <span className="absolute top-3 right-3 text-muted-foreground/50 group-hover:text-primary/70 transition-colors text-lg font-light leading-none select-none">+</span>
+          <CardContent className="p-4">
+            <div className="space-y-0.5 min-w-0">
+              <p className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                Revenue
+              </p>
+              <p className="text-2xl font-bold text-foreground font-mono">₱{paidRevenue.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">paid transactions</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 5. Loyalty Members — Only rendered when loyalty is enabled */}
+        {isLoyaltyOn && (
+          <Card
+            onClick={() => onNavigate?.("loyalty")}
+            className="border border-border shadow-xs hover:border-primary/40 transition-all bg-card cursor-pointer group relative"
+          >
+            <span className="absolute top-3 right-3 text-muted-foreground/50 group-hover:text-primary/70 transition-colors text-lg font-light leading-none select-none">+</span>
+            <CardContent className="p-4">
+              <div className="space-y-0.5 min-w-0">
+                <p className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                  Loyalty Members
+                </p>
+                <p className="text-2xl font-bold text-foreground">{totalMembers}</p>
+                <p className="text-xs text-muted-foreground">registered members</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+
+      {/* ─────────────────────────────────────────────────────────────────────── */}
+      {/* MAIN TWO COLUMNS: Recent Orders (2 cols) & Orders by Stage (1 col) */}
+      {/* ─────────────────────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Left Column: Recent Orders Table */}
+        <div className="lg:col-span-2">
+          <Card className="border border-border shadow-none h-full flex flex-col">
+            <CardHeader className="p-4 sm:p-5 flex flex-row items-center justify-between pb-3">
+              <CardTitle className="text-sm font-semibold text-foreground">Recent Orders</CardTitle>
+              {onNavigate && (
+                <button
+                  type="button"
+                  onClick={() => onNavigate("processing")}
+                  className="text-xs font-medium text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  View board <ArrowRight className="w-3 h-3" />
+                </button>
+              )}
+            </CardHeader>
+            <CardContent className="p-0 flex-1 overflow-x-auto">
+              <table className="w-full text-xs min-w-[500px]">
+                <thead>
+                  <tr className="border-y border-border bg-muted/30 text-muted-foreground uppercase tracking-wider font-semibold">
+                    <th className="text-left px-4 py-3">Ticket</th>
+                    <th className="text-left px-3 py-3">Customer</th>
+                    <th className="text-left px-3 py-3">Service</th>
+                    <th className="text-left px-3 py-3">Status</th>
+                    <th className="text-right px-4 py-3">Total</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {transactions.slice(0, 6).map((txn) => (
+                    <tr
+                      key={txn.id}
+                      onClick={() => openDetail(txn)}
+                      className="hover:bg-muted/20 transition-colors cursor-pointer group"
+                    >
+                      <td className="px-4 py-3 font-medium text-primary group-hover:underline">
+                        #{txn.ticketId}
+                      </td>
+                      <td className="px-3 py-3 font-medium text-foreground">
+                        {txn.customerName}
+                      </td>
+                      <td className="px-3 py-3 text-muted-foreground">
+                        {txn.washType || "Regular"}
+                      </td>
+                      <td className="px-3 py-3">
+                        <StatusBadge status={txn.status} />
+                      </td>
+                      <td className="px-4 py-3 text-right font-medium text-foreground">
+                        ₱{txn.fee.toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                  {transactions.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-muted-foreground">
+                        No orders recorded yet today.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
         </div>
 
-        <div className={`grid grid-cols-1 gap-4 ${!isStaff ? "lg:grid-cols-3" : ""}`}>
-          <div className={!isStaff ? "lg:col-span-2" : ""}>
-            <Card className="border border-border shadow-none">
-              <CardHeader className="px-4 pb-3 pt-4 md:px-5 md:pt-5">
-                <CardTitle className="text-sm font-semibold text-foreground">Recent Transactions</CardTitle>
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
-                <div className="divide-y divide-border md:hidden">
-                  {transactions.slice(0, 6).map((txn) => (
-                    <div key={txn.id} className="space-y-2 px-4 py-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <button
-                            onClick={() => openDetail(txn)}
-                            className="cursor-pointer text-xs font-semibold text-primary hover:underline"
-                          >
-                            {txn.ticketId}
-                          </button>
-                          <p className="truncate text-xs text-foreground">{txn.customerName}</p>
-                        </div>
-                        <StatusBadge status={txn.status} />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs text-muted-foreground">{txn.dropOffDate}</p>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label={`View details for ticket ${txn.ticketId}`}
-                          className="h-8 w-8"
-                          onClick={() => openDetail(txn)}
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+        {/* Right Column: Orders by Stage Donut Chart */}
+        <div>
+          <Card className="border border-border shadow-none h-full flex flex-col justify-between p-4 sm:p-5">
+            <div>
+              <CardTitle className="text-sm font-semibold text-foreground">Orders by Stage</CardTitle>
+              <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                Where today&apos;s laundry sits right now
+              </CardDescription>
 
-                <div className="hidden overflow-x-auto md:block">
-                  <table className="w-full min-w-[400px] text-sm">
-                    <thead>
-                      <tr className="border-y border-border bg-muted/40">
-                        <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground md:px-5">Ticket ID</th>
-                        <th className="px-3 py-2.5 text-left text-xs font-medium text-muted-foreground">Customer</th>
-                        <th className="hidden px-3 py-2.5 text-left text-xs font-medium text-muted-foreground md:table-cell">Drop-off</th>
-                        <th className="hidden px-3 py-2.5 text-left text-xs font-medium text-muted-foreground md:table-cell">Type</th>
-                        <th className="px-3 py-2.5 text-left text-xs font-medium text-muted-foreground">Status</th>
-                        <th className="px-3 py-2.5 pr-4 text-left text-xs font-medium text-muted-foreground md:pr-5">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {transactions.slice(0, 6).map((txn) => (
-                        <tr key={txn.id} className="border-b border-border last:border-0 transition-colors hover:bg-muted/30">
-                          <td className="px-4 py-3 md:px-5">
-                            <button
-                              onClick={() => openDetail(txn)}
-                              className="cursor-pointer text-xs font-medium text-primary hover:underline"
-                            >
-                              {txn.ticketId}
-                            </button>
-                          </td>
-                          <td className="px-3 py-3 text-xs font-medium text-foreground">{txn.customerName}</td>
-                          <td className="hidden px-3 py-3 text-xs text-muted-foreground md:table-cell">{txn.dropOffDate}</td>
-                          <td className="hidden px-3 py-3 text-xs text-muted-foreground md:table-cell">{txn.washType}</td>
-                          <td className="px-3 py-3">
-                            <StatusBadge status={txn.status} />
-                          </td>
-                          <td className="px-3 py-3 pr-4 md:pr-5">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              aria-label={`View details for ticket ${txn.ticketId}`}
-                              className="h-8 w-8 min-h-[44px] min-w-[44px] md:h-7 md:min-h-0 md:min-w-0 md:w-7"
-                              onClick={() => openDetail(txn)}
-                            >
-                              <Eye className="h-3.5 w-3.5" />
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {!isStaff && (
-            <div className="space-y-4">
-              <Card className="border border-border shadow-none">
-                <CardHeader className="px-4 pb-2 pt-4 md:px-5 md:pt-5">
-                  <CardTitle className="text-sm font-semibold text-foreground">Peak Hours Today</CardTitle>
-                </CardHeader>
-                <CardContent className="px-2 pb-4 md:px-3">
-                  {peakHoursLoading ? (
-                    <div className="flex h-40 items-center justify-center">
-                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                    </div>
-                  ) : peakHoursData.length === 0 || peakHoursData.every(d => d.count === 0) ? (
-                    <div className="flex h-40 items-center justify-center">
-                      <p className="text-xs text-muted-foreground">No transactions yet today</p>
-                    </div>
-                  ) : (
-                    <PeakHoursChart data={peakHoursData} />
+              {/* Donut graphic */}
+              <div className="relative my-6 flex items-center justify-center">
+                <svg className="w-36 h-36 -rotate-90" viewBox="0 0 100 100">
+                  {/* Background Track */}
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r={radius}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="10"
+                    className="text-muted/30"
+                  />
+                  {/* Received Segment (Purple) */}
+                  {receivedCount > 0 && (
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r={radius}
+                      fill="none"
+                      stroke="#8b5cf6"
+                      strokeWidth="10"
+                      strokeDasharray={`${strokeReceived} ${circumference}`}
+                      strokeDashoffset={offsetReceived}
+                      strokeLinecap="round"
+                    />
                   )}
-                </CardContent>
-              </Card>
+                  {/* Washing Segment (Blue) */}
+                  {washingCount > 0 && (
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r={radius}
+                      fill="none"
+                      stroke="#3b82f6"
+                      strokeWidth="10"
+                      strokeDasharray={`${strokeWashing} ${circumference}`}
+                      strokeDashoffset={offsetWashing}
+                      strokeLinecap="round"
+                    />
+                  )}
+                  {/* Ready Segment (Green) */}
+                  {readyCount > 0 && (
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r={radius}
+                      fill="none"
+                      stroke="#22c55e"
+                      strokeWidth="10"
+                      strokeDasharray={`${strokeReady} ${circumference}`}
+                      strokeDashoffset={offsetReady}
+                      strokeLinecap="round"
+                    />
+                  )}
+                </svg>
 
-              <Card className="border border-border shadow-none">
-                <CardContent className="p-4 md:p-5">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10">
-                      <Users className="h-5 w-5 text-accent-foreground" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-xs font-medium text-muted-foreground">Loyalty Members</p>
-                        {!loyaltyEnabled && (
-                          <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-xs font-semibold text-muted-foreground">
-                            Disabled
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-2xl font-bold text-foreground">{loyaltyMembers.length}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {loyaltyEnabled ? "Active enrolled members" : "Program currently off"}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {onNavigate && (
-                <Card className="border border-border shadow-none">
-                  <CardHeader className="px-4 pb-2 pt-4">
-                    <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Quick Links</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-1.5 px-3 pb-3">
-                    <button
-                      onClick={() => onNavigate("reports")}
-                      className="group flex w-full items-center justify-between rounded-md px-3 py-2.5 text-xs font-medium text-foreground transition-colors hover:bg-muted/50"
-                    >
-                      <div className="flex items-center gap-2">
-                        <BarChart3 className="h-3.5 w-3.5 text-muted-foreground" />
-                        Reports &amp; Analytics
-                      </div>
-                      <ArrowRight className="h-3 w-3 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-                    </button>
-                    <button
-                      onClick={() => onNavigate("staff-management")}
-                      className="group flex w-full items-center justify-between rounded-md px-3 py-2.5 text-xs font-medium text-foreground transition-colors hover:bg-muted/50"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Users className="h-3.5 w-3.5 text-muted-foreground" />
-                        Staff Management
-                      </div>
-                      <ArrowRight className="h-3 w-3 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-                    </button>
-                  </CardContent>
-                </Card>
-              )}
+                {/* Center text */}
+                <div className="absolute flex flex-col items-center justify-center text-center">
+                  <span className="text-2xl font-bold tracking-tight text-foreground">{totalOrders}</span>
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    Total Orders
+                  </span>
+                </div>
+              </div>
             </div>
-          )}
+
+            {/* Stage Summary Mini-Boxes */}
+            <div className="grid grid-cols-3 gap-2 pt-2">
+              {/* Received */}
+              <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 p-2.5 text-center flex flex-col items-center justify-center">
+                <div className="w-6 h-6 rounded-md bg-purple-500/10 text-purple-500 flex items-center justify-center mb-1">
+                  <Receipt className="w-3.5 h-3.5" />
+                </div>
+                <span className="text-sm font-bold text-foreground">{receivedCount}</span>
+                <span className="text-[10px] text-muted-foreground font-medium">Received</span>
+              </div>
+
+              {/* Washing */}
+              <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-2.5 text-center flex flex-col items-center justify-center">
+                <div className="w-6 h-6 rounded-md bg-blue-500/10 text-blue-500 flex items-center justify-center mb-1">
+                  <Droplet className="w-3.5 h-3.5" />
+                </div>
+                <span className="text-sm font-bold text-foreground">{washingCount}</span>
+                <span className="text-[10px] text-muted-foreground font-medium">Washing</span>
+              </div>
+
+              {/* Ready */}
+              <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-2.5 text-center flex flex-col items-center justify-center">
+                <div className="w-6 h-6 rounded-md bg-green-500/10 text-green-500 flex items-center justify-center mb-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                </div>
+                <span className="text-sm font-bold text-foreground">{readyCount}</span>
+                <span className="text-[10px] text-muted-foreground font-medium">Ready</span>
+              </div>
+            </div>
+          </Card>
         </div>
       </div>
 
-      <TransactionDetailModal
-        open={detailOpen}
-        onOpenChange={setDetailOpen}
-        transaction={selectedTxn}
-      />
-    </>
+      {/* Transaction Detail Modal */}
+      {selectedTxn && (
+        <TransactionDetailModal
+          transaction={selectedTxn}
+          open={detailOpen}
+          onOpenChange={(open) => {
+            setDetailOpen(open);
+            if (!open) setSelectedTxn(null);
+          }}
+        />
+      )}
+    </div>
   );
 }
