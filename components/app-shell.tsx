@@ -207,9 +207,6 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
         return (
           <NewOrderPage
             onCreateTransaction={createTransaction}
-            onOrderCreated={() => {
-              handleNavigate("transactions");
-            }}
             onNavigate={handleNavigate}
             loyaltyEnabled={loyaltyEnabled}
           />

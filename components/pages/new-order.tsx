@@ -199,10 +199,9 @@ export default function NewOrderPage({
 
       toast({
         title: "Order Created Successfully!",
-        description: `Ticket ${newTxn.ticketId} for ${newTxn.customerName} has been received.`,
+        description: `Ticket #${newTxn.ticketId} for ${newTxn.customerName} has been received.`,
       });
 
-      onOrderCreated?.(newTxn);
       setCreatedTxn(newTxn);
     } catch (err) {
       toast({
@@ -743,7 +742,11 @@ export default function NewOrderPage({
         open={!!createdTxn}
         onOpenChange={(open) => {
           if (!open) {
+            const finishedTxn = createdTxn;
             setCreatedTxn(null);
+            if (finishedTxn) {
+              onOrderCreated?.(finishedTxn);
+            }
             onNavigate?.("transactions");
           }
         }}

@@ -78,13 +78,13 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[calc(100vw-1rem)] sm:w-auto max-w-sm max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-base">
-            {postCreate ? "Transaction Created!" : "Print Receipt"}
+          <DialogTitle className="text-base font-bold">
+            {postCreate ? "Order Created Successfully!" : "Print Receipt"}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-xs">
             {postCreate
-              ? "Transaction recorded successfully. Would you like to print the receipt?"
-              : `Receipt for ${transaction.ticketId} — ${transaction.customerName}`}
+              ? "The order has been recorded. You can print the customer receipt now or exit."
+              : `Receipt for #${transaction.ticketId} — ${transaction.customerName}`}
           </DialogDescription>
         </DialogHeader>
 
@@ -202,12 +202,12 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
           </div>
         </div>
 
-        <div className="flex gap-2 pt-1">
-          <Button className="flex-1 gap-1.5" onClick={handlePrint}>
+        <div className="flex gap-2 pt-2">
+          <Button className="flex-1 gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer" onClick={handlePrint}>
             <Printer className="w-4 h-4" /> Print Receipt
           </Button>
-          <Button variant="outline" className="flex-1 gap-1.5" onClick={() => onOpenChange(false)}>
-            <X className="w-3.5 h-3.5" /> {postCreate ? "Skip" : "Close"}
+          <Button variant="outline" className="flex-1 gap-1.5 cursor-pointer" onClick={() => onOpenChange(false)}>
+            <X className="w-3.5 h-3.5" /> {postCreate ? "Exit / Done" : "Close"}
           </Button>
         </div>
       </DialogContent>
