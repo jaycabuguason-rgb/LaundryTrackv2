@@ -7,7 +7,6 @@ import {
   ChevronRight,
   User,
   Phone,
-  Mail,
   Sparkles,
   Scale,
   Package,
@@ -60,7 +59,6 @@ export default function NewOrderPage({
   // Form State
   const [customerName, setCustomerName] = useState("");
   const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
   const [arrivalDateTime, setArrivalDateTime] = useState(() => {
     const now = new Date();
     const offset = now.getTimezoneOffset() * 60000;
@@ -375,18 +373,6 @@ export default function NewOrderPage({
                   const val = e.target.value.replace(/[^0-9+]/g, "");
                   setPhone(val);
                 }}
-                className="h-10 text-sm"
-              />
-            </div>
-
-            {/* Email (Optional) */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Email (for loyalty)</Label>
-              <Input
-                placeholder="Customer email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 className="h-10 text-sm"
               />
             </div>

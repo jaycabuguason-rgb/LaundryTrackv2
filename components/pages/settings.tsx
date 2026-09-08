@@ -1,7 +1,12 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Plus, Trash2, Edit, Save, Upload, Clock, Download, Loader2, CheckCircle2, Scale, ShoppingBasket, Package, X, Eye, EyeOff, Tag, Undo2, Redo2, AlertTriangle } from "lucide-react";
+import {
+  Plus, Trash2, Edit, Save, Upload, Clock, Download, Loader2, CheckCircle2,
+  Scale, ShoppingBasket, Package, X, Eye, EyeOff, Tag, Undo2, Redo2, AlertTriangle,
+  Coins, Building2, Gift, Database
+} from "lucide-react";
+import DataImportPage from "@/components/pages/data-import";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -1597,15 +1602,36 @@ interface SettingsPageProps {
   loyaltyEnabled?: boolean;
   onLoyaltyEnabledChange?: (val: boolean) => void;
   onBusinessProfileChange?: (profile: BusinessProfile) => void;
+  role?: "admin" | "staff";
   onNavigate?: (page: Page) => void;
 }
 
-export default function SettingsPage({ page: initialPage, loyaltyEnabled = true, onLoyaltyEnabledChange, onBusinessProfileChange, onNavigate }: SettingsPageProps) {
+const SETTINGS_TABS: Array<{ id: Page; label: string; icon: typeof Coins; adminOnly?: boolean }> = [
+  { id: "settings-pricing", label: "Pricing", icon: Coins },
+  { id: "settings-business-profile", label: "Business Profile", icon: Building2 },
+  { id: "settings-loyalty", label: "Loyalty Program", icon: Gift },
+  { id: "settings-backup", label: "Backup & Restore", icon: Database, adminOnly: true },
+  { id: "settings-data-import", label: "Data Import", icon: Upload, adminOnly: true },
+];
+
+export default function SettingsPage({
+  page: initialPage,
+  loyaltyEnabled = true,
+  onLoyaltyEnabledChange,
+  onBusinessProfileChange,
+  onNavigate,
+  role = "admin",
+}: SettingsPageProps) {
   const [activeTab, setActiveTab] = useState<Page>(initialPage);
 
   useEffect(() => {
     setActiveTab(initialPage);
   }, [initialPage]);
+
+  const handleTabClick = (pageId: Page) => {
+    setActiveTab(pageId);
+    onNavigate?.(pageId);
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -1618,36 +1644,50 @@ export default function SettingsPage({ page: initialPage, loyaltyEnabled = true,
         />
       );
       case "settings-backup": return <BackupSettings />;
+      case "settings-data-import": return <DataImportPage onViewTransactions={() => onNavigate?.("transactions")} />;
       default: return <PricingSettings />;
     }
   };
 
+  const visibleTabs = SETTINGS_TABS.filter((tab) => !tab.adminOnly || role !== "staff");
+
   return (
-    <div className="space-y-4">
-      {/* Top Tab Switcher */}
-      <div className="flex border-b border-border -mb-1 overflow-x-auto">
-        {[
-          { id: "settings-pricing" as Page, label: "Pricing" },
-          { id: "settings-business-profile" as Page, label: "Business Profile" },
-          { id: "settings-loyalty" as Page, label: "Loyalty Program" },
-          { id: "settings-backup" as Page, label: "Backup & Restore" },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={cn(
-              "px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap cursor-pointer",
-              activeTab === tab.id
-                ? "border-primary text-primary font-semibold"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="space-y-1">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">Settings</h1>
+        <p className="text-xs sm:text-sm text-muted-foreground">
+          Configure shop preferences, pricing structures, customer loyalty, and data backups
+        </p>
       </div>
 
-      {renderContent()}
+      {/* Modern Tabs with Icons */}
+      <div className="flex items-center gap-1 sm:gap-2 border-b border-border overflow-x-auto scrollbar-none pb-0">
+        {visibleTabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => handleTabClick(tab.id)}
+              className={cn(
+                "flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-medium border-b-2 transition-all cursor-pointer whitespace-nowrap -mb-[1px]",
+                isActive
+                  ? "border-primary text-primary font-semibold"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+              )}
+            >
+              <Icon className={cn("w-4 h-4 shrink-0", isActive ? "text-primary" : "text-muted-foreground")} />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div>
+        {renderContent()}
+      </div>
     </div>
   );
 }

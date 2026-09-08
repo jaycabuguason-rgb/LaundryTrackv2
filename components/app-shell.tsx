@@ -242,13 +242,12 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
       case "settings-pricing":
       case "settings-service-types":
       case "settings-backup":
-        return <SettingsPage page={activePage} onNavigate={handleNavigate} />;
-      case "settings-business-profile":
-        return <SettingsPage page={activePage} onBusinessProfileChange={setBusinessProfile} onNavigate={handleNavigate} />;
-      case "settings-loyalty":
-        return <SettingsPage page={activePage} loyaltyEnabled={loyaltyEnabled} onLoyaltyEnabledChange={setLoyaltyEnabled} onNavigate={handleNavigate} />;
       case "settings-data-import":
-        return <DataImportPage onViewTransactions={() => handleNavigate("transactions")} />;
+        return <SettingsPage page={activePage} onNavigate={handleNavigate} role={adminProfile.role} />;
+      case "settings-business-profile":
+        return <SettingsPage page={activePage} onBusinessProfileChange={setBusinessProfile} onNavigate={handleNavigate} role={adminProfile.role} />;
+      case "settings-loyalty":
+        return <SettingsPage page={activePage} loyaltyEnabled={loyaltyEnabled} onLoyaltyEnabledChange={setLoyaltyEnabled} onNavigate={handleNavigate} role={adminProfile.role} />;
       case "staff-management":
       case "audit-logs":
         return <AuditLogsPage initialTab="staff" />;

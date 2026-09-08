@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -83,6 +83,12 @@ export default function Sidebar({ activePage, onNavigate, onPreload, loyaltyEnab
   // On desktop: user can collapse to icon-only. On tablet (md): starts collapsed.
   const [collapsed, setCollapsed] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(activePage.startsWith("settings"));
+
+  useEffect(() => {
+    if (activePage.startsWith("settings")) {
+      setSettingsOpen(true);
+    }
+  }, [activePage]);
 
   const isSettingsActive = activePage.startsWith("settings");
   const isStaff = role === "staff";
