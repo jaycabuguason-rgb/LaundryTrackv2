@@ -82,16 +82,21 @@ export default function DashboardPage({
   return (
     <div className="space-y-5 max-w-7xl mx-auto pb-10">
       {/* Header */}
-      <div>
-        <p className="text-xs font-semibold text-primary">{businessProfile.shopName || "Sunshine Laundry Shop"}</p>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground mt-0.5">Dashboard</h1>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold text-primary">{businessProfile.shopName || "Sunshine Laundry Shop"}</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground mt-0.5">Dashboard</h1>
+          <p className="text-xs text-muted-foreground mt-1">Today at a glance — your laundry, clearly managed.</p>
+        </div>
         {onNavigate && (
-          <Button onClick={() => onNavigate("new-transaction")} className="mt-3 w-full gap-2 sm:w-auto cursor-pointer">
+          <Button
+            onClick={() => onNavigate("new-transaction")}
+            className="gap-2 shrink-0 self-start sm:self-auto shadow-xs cursor-pointer"
+          >
             <Plus className="h-4 w-4" aria-hidden="true" />
             New order
           </Button>
         )}
-        <p className="text-xs text-muted-foreground mt-1.5">Today at a glance — your laundry, clearly managed.</p>
       </div>
 
       {/* ─────────────────────────────────────────────────────────────────────── */}
