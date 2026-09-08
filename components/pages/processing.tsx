@@ -71,7 +71,7 @@ const STAGES: ProcessingStageConfig[] = [
   },
   {
     id: "Washed",
-    label: "Washed",
+    label: "Washing",
     statuses: ["Washing", "Drying"],
     badgeColor: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300",
     accent: "border-blue-300 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800",
@@ -85,17 +85,14 @@ const STAGES: ProcessingStageConfig[] = [
   },
 ];
 
-/** All statuses shown in the dropdown, in order */
+/** 3 active processing statuses shown in the dropdown */
 const ALL_STATUS_OPTIONS: {
   status: TransactionStatus;
   label: string;
 }[] = [
-  { status: "Received",   label: "Received" },
-  { status: "Washing",    label: "Washed / In Progress" },
-  { status: "Drying",     label: "Drying" },
-  { status: "Ready",      label: "Ready" },
-  { status: "Claimed",    label: "Claimed" },
-  { status: "Voided",     label: "Voided" },
+  { status: "Received", label: "Received" },
+  { status: "Washing",  label: "Washing" },
+  { status: "Ready",    label: "Ready" },
 ];
 
 /** Statuses that require a confirmation dialog before applying */
@@ -495,7 +492,7 @@ export default function ProcessingPage({
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="min-w-[200px] rounded-2xl border-border/60 bg-card p-1.5 shadow-xl">
                               {ALL_STATUS_OPTIONS.map(({ status, label }) => {
-                                const isCurrent = txn.status === status;
+                                const isCurrent = txn.status === status || (status === "Washing" && txn.status === "Drying");
                                 const StatusIcon = STATUS_ICONS[status];
                                 return (
                                   <DropdownMenuItem
@@ -764,7 +761,7 @@ export default function ProcessingPage({
         open={!!sheetTxn}
         onOpenChange={(open) => !open && setSheetTxn(null)}
         ticketId={sheetTxn?.ticketId}
-        currentStatus={sheetTxn?.status ?? "Received"}
+        currentStatus={sheetTxn?.status === "Drying" ? "Washing" : (sheetTxn?.status ?? "Received")}
         options={ALL_STATUS_OPTIONS}
         disabled={Boolean(sheetTxn && updatingTicket === sheetTxn.ticketId)}
         onSelectStatus={async (status) => {

@@ -484,7 +484,7 @@ function AuditLogsView({ onTabChange }: { onTabChange?: (tab: "staff" | "audit")
   );
 }
 
-export default function AuditLogsPage({ initialTab = "audit" }: { initialTab?: "staff" | "audit" }) {
+export default function AuditLogsPage({ initialTab = "staff" }: { initialTab?: "staff" | "audit" }) {
   const [activeTab, setActiveTab] = useState<"staff" | "audit">(initialTab);
 
   if (activeTab === "staff") {

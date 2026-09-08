@@ -251,8 +251,9 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
         return <SettingsPage page={activePage} loyaltyEnabled={loyaltyEnabled} onLoyaltyEnabledChange={setLoyaltyEnabled} onNavigate={handleNavigate} />;
       case "settings-data-import":
         return <DataImportPage onViewTransactions={() => handleNavigate("transactions")} />;
-      case "staff-management": return <StaffManagementPage />;
-      case "audit-logs": return <AuditLogsPage />;
+      case "staff-management":
+      case "audit-logs":
+        return <AuditLogsPage initialTab="staff" />;
       case "loyalty": return <LoyaltyPage loyaltyEnabled={loyaltyEnabled} />;
       case "profile": return <ProfilePage userProfile={adminProfile} shopName={businessProfile.shopName} contactNumber={businessProfile.contactNumber} onAvatarUpdate={(url: string) => onProfileUpdate({ avatarUrl: url })} />;
       case "change-password": return <ChangePasswordPage adminProfile={adminProfile} onProfileUpdate={onProfileUpdate} />;

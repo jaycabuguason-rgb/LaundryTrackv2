@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import {
   Search, Eye, EyeOff, Edit, Ban, Printer, ChevronRight, X, QrCode, CalendarIcon,
-  Undo2, Redo2, AlertTriangle, Plus, User, Star, Camera, CameraOff,
+  AlertTriangle, Plus, User, Star, Camera, CameraOff,
   ChevronLeft, Check, RefreshCw, ExternalLink, Inbox, MoreHorizontal
 } from "lucide-react";
 import { format } from "date-fns";
@@ -1240,11 +1240,6 @@ onEditComplete,
     return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(`${origin}${path}`)}`;
   };
 
-  // ── History helpers ─────────────────────────────────────────────────────────────
-  const commit = (..._args: unknown[]) => undefined;
-  const undo = () => undefined;
-  const redo = () => undefined;
-
   // ── Actions ──────────────────────────────────────────────────────────────────
   const confirmVoid = async () => {
     if (!voidTxn || !voidReason.trim()) return;
@@ -1495,11 +1490,29 @@ onEditComplete,
   const totalFilteredRevenue = filtered.reduce((acc, t) => acc + (t.status === "Voided" ? 0 : t.fee), 0);
   const totalFilteredWeight = filtered.reduce((acc, t) => acc + (t.status === "Voided" ? 0 : (t.weight || 0)), 0);
 
-  const canUndo = false;
-  const canRedo = false;
+  const activeOrdersCount = useMemo(() => txns.filter((t) => t.status !== "Claimed").length, [txns]);
+  const claimedOrdersCount = useMemo(() => txns.filter((t) => t.status === "Claimed").length, [txns]);
+
+  const hasActiveFilters = Boolean(
+    search.trim() ||
+    filterStatus !== "all" ||
+    filterService !== "all" ||
+    filterPayment !== "all" ||
+    filterDate !== undefined ||
+    sortBy !== "smart"
+  );
+
+  const clearAllFilters = () => {
+    setSearch("");
+    setFilterStatus("all");
+    setFilterService("all");
+    setFilterPayment("all");
+    setFilterDate(undefined);
+    setSortBy("smart");
+  };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Toast */}
       {toast && <Toast message={toast} onDone={() => setToast(null)} />}
       {error && (
@@ -1508,145 +1521,222 @@ onEditComplete,
         </div>
       )}
 
-      {/* Tab bar — Transactions vs Claimed */}
-      <div className="flex border-b border-border -mb-4">
-        <button
-          onClick={() => setActiveTab("transactions")}
-          className={cn(
-            "px-4 py-2.5 text-sm font-medium border-b-2 transition-colors cursor-pointer",
-            activeTab === "transactions" ? "border-primary text-primary font-semibold" : "border-transparent text-muted-foreground hover:text-foreground"
-          )}
+      {/* Page Header with Title, Description, and Primary CTA */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">Transactions</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+            Monitor laundry orders, track stage progress, and manage customer payments
+          </p>
+        </div>
+        <Button
+          size="default"
+          className="gap-2 shrink-0 shadow-xs cursor-pointer self-start sm:self-auto"
+          onClick={() => setShowWizard(true)}
+          disabled={busy || loading}
         >
-          Transactions
-        </button>
-        <button
-          onClick={() => setActiveTab("claimed")}
-          className={cn(
-            "px-4 py-2.5 text-sm font-medium border-b-2 transition-colors cursor-pointer",
-            activeTab === "claimed" ? "border-primary text-primary font-semibold" : "border-transparent text-muted-foreground hover:text-foreground"
-          )}
-        >
-          Claimed
-        </button>
+          <Plus className="w-4 h-4" /> New Transaction
+        </Button>
+      </div>
+
+      {/* Tabs — Active Orders vs Claimed */}
+      <div className="flex items-center justify-between border-b border-border">
+        <div className="flex gap-1 sm:gap-2">
+          <button
+            onClick={() => setActiveTab("transactions")}
+            className={cn(
+              "flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-medium border-b-2 transition-all cursor-pointer -mb-[1px]",
+              activeTab === "transactions"
+                ? "border-primary text-primary font-semibold"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <span>Active Orders</span>
+            <span
+              className={cn(
+                "rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums",
+                activeTab === "transactions"
+                  ? "bg-primary/10 text-primary"
+                  : "bg-muted text-muted-foreground"
+              )}
+            >
+              {activeOrdersCount}
+            </span>
+          </button>
+          <button
+            onClick={() => setActiveTab("claimed")}
+            className={cn(
+              "flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-medium border-b-2 transition-all cursor-pointer -mb-[1px]",
+              activeTab === "claimed"
+                ? "border-primary text-primary font-semibold"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <span>Claimed</span>
+            <span
+              className={cn(
+                "rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums",
+                activeTab === "claimed"
+                  ? "bg-primary/10 text-primary"
+                  : "bg-muted text-muted-foreground"
+              )}
+            >
+              {claimedOrdersCount}
+            </span>
+          </button>
+        </div>
       </div>
 
       <div className="space-y-4">
         {/* Filter bar */}
-        <div className="bg-card border border-border rounded-xl p-3 md:p-4 flex flex-col sm:flex-row flex-wrap gap-3 shadow-xs">
-          {/* New Transaction button */}
-          <Button size="sm" className="h-10 md:h-9 gap-1.5 shrink-0 cursor-pointer" onClick={() => setShowWizard(true)} disabled={busy || loading}>
-            <Plus className="w-4 h-4" /> New Transaction
-          </Button>
-
-          <div className="relative flex-1 min-w-0 sm:min-w-48">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by name or ticket ID..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-10 md:h-9 text-sm w-full"
-            />
-          </div>
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-full sm:w-40 h-10 md:h-9 text-sm">
-              <SelectValue placeholder="All Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              {statusOrder.map((s) => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
-              ))}
-              <SelectItem value="Voided">Voided</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={filterService} onValueChange={setFilterService}>
-            <SelectTrigger className="w-full sm:w-40 h-10 md:h-9 text-sm">
-              <SelectValue placeholder="All Services" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Services</SelectItem>
-              {serviceOptions.map((srv: string) => (
-                <SelectItem key={srv} value={srv}>{srv}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={filterPayment} onValueChange={setFilterPayment}>
-            <SelectTrigger className="w-full sm:w-40 h-10 md:h-9 text-sm">
-              <SelectValue placeholder="All Payments" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Payments</SelectItem>
-              <SelectItem value="paid">Paid</SelectItem>
-              <SelectItem value="unpaid">Unpaid</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
-            <SelectTrigger className="w-full sm:w-48 h-10 md:h-9 text-sm">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="smart">Default (Smart Priority)</SelectItem>
-              <SelectItem value="newest">Newest First</SelectItem>
-              <SelectItem value="oldest">Oldest First</SelectItem>
-              <SelectItem value="unpaid-first">Unpaid First</SelectItem>
-              <SelectItem value="ready-first">Ready First</SelectItem>
-              <SelectItem value="status-az">Status (A-Z)</SelectItem>
-            </SelectContent>
-          </Select>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="w-full sm:w-44 h-10 md:h-9 text-sm justify-start gap-2 font-normal">
-                <CalendarIcon className="w-4 h-4 text-muted-foreground shrink-0" />
-                {filterDate ? format(filterDate, "MMM d, yyyy") : "All dates"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={filterDate}
-                onSelect={(d) => setFilterDate(d ?? undefined)}
-                initialFocus
+        <div className="bg-card border border-border rounded-xl p-3 sm:p-4 shadow-xs space-y-3">
+          <div className="flex flex-col lg:flex-row gap-3">
+            {/* Search Input with inline clear */}
+            <div className="relative flex-1 min-w-0">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+              <Input
+                placeholder="Search by customer name or ticket ID..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9 pr-8 h-10 md:h-9 text-sm w-full"
               />
-              {filterDate && (
-                <div className="p-2 border-t border-border">
-                  <Button variant="ghost" size="sm" className="w-full text-xs h-7" onClick={() => setFilterDate(undefined)}>
-                    Clear date filter
-                  </Button>
-                </div>
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-0.5"
+                  aria-label="Clear search"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
               )}
-            </PopoverContent>
-          </Popover>
+            </div>
 
-          {/* Undo / Redo */}
-          <div className="flex gap-1.5 sm:ml-auto">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-10 md:h-9 px-3 gap-1.5 text-xs"
-              disabled={!canUndo}
-              onClick={undo}
-              title="Undo last action"
-            >
-              <Undo2 className="w-3.5 h-3.5" /> Undo
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-10 md:h-9 px-3 gap-1.5 text-xs"
-              disabled={!canRedo}
-              onClick={redo}
-              title="Redo last undone action"
-            >
-              <Redo2 className="w-3.5 h-3.5" /> Redo
-            </Button>
+            {/* Filter Dropdowns */}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+              {activeTab === "transactions" && (
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="w-full sm:w-[130px] h-10 md:h-9 text-sm">
+                    <SelectValue placeholder="All Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    {statusOrder.map((s) => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                    <SelectItem value="Voided">Voided</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+
+              <Select value={filterService} onValueChange={setFilterService}>
+                <SelectTrigger className="w-full sm:w-[135px] h-10 md:h-9 text-sm">
+                  <SelectValue placeholder="All Services" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Services</SelectItem>
+                  {serviceOptions.map((srv: string) => (
+                    <SelectItem key={srv} value={srv}>{srv}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={filterPayment} onValueChange={setFilterPayment}>
+                <SelectTrigger className="w-full sm:w-[130px] h-10 md:h-9 text-sm">
+                  <SelectValue placeholder="All Payments" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Payments</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                  <SelectItem value="unpaid">Unpaid</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full sm:w-[140px] h-10 md:h-9 text-sm justify-start gap-2 font-normal",
+                      filterDate && "border-primary text-primary font-medium"
+                    )}
+                  >
+                    <CalendarIcon className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <span className="truncate">{filterDate ? format(filterDate, "MMM d, yyyy") : "All dates"}</span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={filterDate}
+                    onSelect={(d) => setFilterDate(d ?? undefined)}
+                    initialFocus
+                  />
+                  {filterDate && (
+                    <div className="p-2 border-t border-border">
+                      <Button variant="ghost" size="sm" className="w-full text-xs h-7 cursor-pointer" onClick={() => setFilterDate(undefined)}>
+                        Clear date filter
+                      </Button>
+                    </div>
+                  )}
+                </PopoverContent>
+              </Popover>
+
+              <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
+                <SelectTrigger className="w-full sm:w-[180px] h-10 md:h-9 text-sm">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="smart">Default (Smart Priority)</SelectItem>
+                  <SelectItem value="newest">Newest First</SelectItem>
+                  <SelectItem value="oldest">Oldest First</SelectItem>
+                  <SelectItem value="unpaid-first">Unpaid First</SelectItem>
+                  <SelectItem value="ready-first">Ready First</SelectItem>
+                  <SelectItem value="status-az">Status (A-Z)</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearAllFilters}
+                  className="h-10 md:h-9 text-xs text-muted-foreground hover:text-foreground gap-1.5 px-2.5 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" /> Clear filters
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Summary subheader line */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground font-medium px-0.5">
-          <p>
-            {totalFilteredOrders} {totalFilteredOrders === 1 ? "order" : "orders"} — ₱{totalFilteredRevenue.toLocaleString()} total — {totalFilteredWeight.toFixed(1)} kg
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 px-0.5 text-xs text-muted-foreground font-medium">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <span className="inline-flex items-center gap-1">
+              <span className="font-semibold text-foreground">{totalFilteredOrders}</span>
+              <span>{totalFilteredOrders === 1 ? "order" : "orders"}</span>
+            </span>
+            <span className="text-border">•</span>
+            <span className="inline-flex items-center gap-1">
+              <span className="font-semibold text-foreground">₱{totalFilteredRevenue.toLocaleString()}</span>
+              <span>total</span>
+            </span>
+            <span className="text-border">•</span>
+            <span className="inline-flex items-center gap-1">
+              <span className="font-semibold text-foreground">{totalFilteredWeight.toFixed(1)} kg</span>
+              <span>total weight</span>
+            </span>
+          </div>
+
+          {hasActiveFilters && (
+            <button
+              onClick={clearAllFilters}
+              className="text-xs text-primary hover:underline self-start sm:self-auto cursor-pointer"
+            >
+              Reset all filters
+            </button>
+          )}
         </div>
 
         {/* Clean Transaction Card Rows matching Concept */}
@@ -1778,8 +1868,18 @@ onEditComplete,
                     {loading ? "Loading transactions..." : "No transactions found."}
                   </EmptyTitle>
                   {loading ? null : (
-                    <EmptyDescription>
-                      Try adjusting your filters or search terms.
+                    <EmptyDescription className="flex flex-col items-center gap-2">
+                      <span>Try adjusting your filters or search terms.</span>
+                      {hasActiveFilters && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={clearAllFilters}
+                          className="mt-1 h-8 text-xs cursor-pointer"
+                        >
+                          Clear all filters
+                        </Button>
+                      )}
                     </EmptyDescription>
                   )}
                 </EmptyHeader>

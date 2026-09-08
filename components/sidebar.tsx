@@ -65,8 +65,7 @@ const allNavItems = [
   { id: "transactions" as Page, label: "Transactions", icon: Receipt },
   { id: "claim-verification" as Page, label: "Claim Verification", icon: QrCode },
   { id: "reports" as Page, label: "Reports", icon: BarChart3 },
-  { id: "staff-management" as Page, label: "Staff Management", icon: Users },
-  { id: "audit-logs" as Page, label: "Audit Logs", icon: ScrollText },
+  { id: "audit-logs" as Page, label: "Staff & Audit Logs", icon: Users },
   { id: "loyalty" as Page, label: "Loyalty Members", icon: Star },
 ];
 
@@ -124,7 +123,7 @@ export default function Sidebar({ activePage, onNavigate, onPreload, loyaltyEnab
         <ul className="space-y-1 px-2">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const active = activePage === item.id;
+            const active = activePage === item.id || (item.id === "audit-logs" && activePage === "staff-management");
             return (
               <li key={item.id}>
                 <button
