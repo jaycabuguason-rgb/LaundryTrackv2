@@ -32,6 +32,7 @@ function PageLoadingFallback() {
 
 const DashboardPage = dynamic(() => import("@/components/pages/dashboard"), { loading: PageLoadingFallback });
 const ProcessingPage = dynamic(() => import("@/components/pages/processing"), { loading: PageLoadingFallback });
+const NewOrderPage = dynamic(() => import("@/components/pages/new-order"), { loading: PageLoadingFallback });
 const TransactionsPage = dynamic(() => import("@/components/pages/transactions"), { loading: PageLoadingFallback });
 const ClaimVerificationPage = dynamic(() => import("@/components/pages/claim-verification"), { loading: PageLoadingFallback });
 const ReportsPage = dynamic(() => import("@/components/pages/reports"), { loading: PageLoadingFallback });
@@ -46,8 +47,8 @@ const AuditLogsPage = dynamic(() => import("@/components/pages/audit-logs"), { l
 const preloadablePages = {
   dashboard: DashboardPage,
   processing: ProcessingPage,
+  "new-transaction": NewOrderPage,
   transactions: TransactionsPage,
-  "new-transaction": TransactionsPage,
   "claim-verification": ClaimVerificationPage,
   reports: ReportsPage,
   "settings-pricing": SettingsPage,
@@ -204,17 +205,13 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
         );
       case "new-transaction":
         return (
-          <TransactionsPage
-            transactions={txns}
-            loading={transactionsLoading}
-            error={transactionsError}
-            loyaltyEnabled={loyaltyEnabled}
+          <NewOrderPage
             onCreateTransaction={createTransaction}
-            onUpdateTransaction={updateTransaction}
-            editTicketId={editOpen ? editTxn?.ticketId : undefined}
-            onEditComplete={handleEditComplete}
-            initialWizardOpen={true}
-            onWizardClose={() => handleNavigate("transactions")}
+            onOrderCreated={() => {
+              handleNavigate("transactions");
+            }}
+            onNavigate={handleNavigate}
+            loyaltyEnabled={loyaltyEnabled}
           />
         );
       case "transactions":
@@ -228,6 +225,7 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
             onUpdateTransaction={updateTransaction}
             editTicketId={editOpen ? editTxn?.ticketId : undefined}
             onEditComplete={handleEditComplete}
+            onNavigate={handleNavigate}
           />
         );
       case "claim-verification":

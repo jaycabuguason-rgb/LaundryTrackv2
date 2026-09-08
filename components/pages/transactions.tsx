@@ -1164,6 +1164,7 @@ interface TransactionsPageProps {
   onEditComplete?: () => void;
   initialWizardOpen?: boolean;
   onWizardClose?: () => void;
+  onNavigate?: (page: any) => void;
 }
 
 const MOBILE_STATUS_OPTIONS: StatusOption[] = [
@@ -1183,7 +1184,8 @@ export default function TransactionsPage({
   onCreateTransaction,
   onUpdateTransaction,
   editTicketId,
-onEditComplete,
+  onEditComplete,
+  onNavigate,
 }: TransactionsPageProps) {
 
   const [search, setSearch] = useState("");
@@ -1532,7 +1534,7 @@ onEditComplete,
         <Button
           size="default"
           className="gap-2 shrink-0 shadow-xs cursor-pointer self-start sm:self-auto"
-          onClick={() => setShowWizard(true)}
+          onClick={() => (onNavigate ? onNavigate("new-transaction") : setShowWizard(true))}
           disabled={busy || loading}
         >
           <Plus className="w-4 h-4" /> New Transaction

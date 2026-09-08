@@ -22,14 +22,15 @@ import {
   Gift,
   Users,
   ScrollText,
+  PlusCircle,
 } from "lucide-react";
 import type { UserRole } from "@/lib/auth";
 
 export type Page =
   | "dashboard"
   | "processing"
-  | "transactions"
   | "new-transaction"
+  | "transactions"
   | "claim-verification"
   | "reports"
   | "settings-pricing"
@@ -62,6 +63,7 @@ const ADMIN_ONLY_SETTINGS: Page[] = ["settings-backup", "settings-data-import"];
 const allNavItems = [
   { id: "dashboard" as Page, label: "Dashboard", icon: LayoutDashboard },
   { id: "processing" as Page, label: "Processing", icon: ListTodo },
+  { id: "new-transaction" as Page, label: "New Order", icon: PlusCircle },
   { id: "transactions" as Page, label: "Transactions", icon: Receipt },
   { id: "claim-verification" as Page, label: "Claim Verification", icon: QrCode },
   { id: "reports" as Page, label: "Reports", icon: BarChart3 },
