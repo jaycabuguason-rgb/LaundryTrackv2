@@ -1007,7 +1007,8 @@ function BusinessProfileSettings({ onSave }: { onSave?: (profile: BusinessProfil
 
   useEffect(() => {
     let ignore = false;
-    void fetch("/api/settings/business-profile", { cache: "no-store" })
+    void buildAuthHeaders()
+      .then((headers) => fetch("/api/settings/business-profile", { cache: "no-store", headers }))
       .then(async (res) => {
         const data = await res.json().catch(() => ({}));
         if (!res.ok || !data.profile || ignore) return;
@@ -1437,9 +1438,8 @@ function LoyaltyProgramSettings({ loyaltyEnabled, onLoyaltyEnabledChange }: Loya
   useEffect(() => {
     let ignore = false;
 
-    void fetch("/api/settings/pricing", {
-      cache: "no-store",
-    })
+    void buildAuthHeaders()
+      .then((headers) => fetch("/api/settings/pricing", { cache: "no-store", headers }))
       .then(async (response) => {
         const data = await response.json().catch(() => ({}));
         if (!response.ok || ignore) return;
