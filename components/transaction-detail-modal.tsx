@@ -13,10 +13,11 @@ interface TransactionDetailModalProps {
   onEditStatus?: (ticketId: string) => void;
 }
 
-const STATUS_STEPS: TransactionStatus[] = ["Received", "Washing", "Drying", "Ready", "Claimed"];
+const STATUS_STEPS: TransactionStatus[] = ["Received", "Washing", "Ready", "Claimed"];
 
 function getStepIndex(status: TransactionStatus): number {
   if (status === "Voided") return -1;
+  if (status === "Drying") return 1;
   return STATUS_STEPS.indexOf(status);
 }
 

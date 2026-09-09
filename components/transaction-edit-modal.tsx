@@ -30,8 +30,10 @@ interface TransactionEditModalProps {
 
 const STATUS_OPTIONS: { value: TransactionStatus; dot: string; text: string }[] = [
   { value: "Received", dot: "bg-purple-500", text: "text-purple-700 dark:text-purple-300" },
-  { value: "Washing",  dot: "bg-blue-500", text: "text-blue-700 dark:text-blue-300" },
-  { value: "Ready",   dot: "bg-green-500", text: "text-green-700 dark:text-green-300" },
+  { value: "Washing",  dot: "bg-blue-500",   text: "text-blue-700 dark:text-blue-300" },
+  { value: "Ready",    dot: "bg-green-500",  text: "text-green-700 dark:text-green-300" },
+  { value: "Claimed",  dot: "bg-emerald-600", text: "text-emerald-700 dark:text-emerald-300" },
+  { value: "Voided",   dot: "bg-red-500",    text: "text-red-700 dark:text-red-300" },
 ];
 
 export function TransactionEditModal({ open, onOpenChange, transaction, onSave }: TransactionEditModalProps) {
@@ -183,21 +185,27 @@ export function TransactionEditModal({ open, onOpenChange, transaction, onSave }
             <div>
               <label className="text-xs font-medium text-foreground mb-1.5 block">Current Status</label>
               <Select
-                value={status === "Drying" ? "Washing" : status === "Claimed" ? "Ready" : status}
+                value={status === "Drying" ? "Washing" : status}
                 onValueChange={(v) => setStatus(v as TransactionStatus)}
               >
                 <SelectTrigger className="h-9 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {STATUS_OPTIONS.map(({ value, text }) => (
-                    <SelectItem key={value} value={value}>
-                      <div className="flex items-center gap-2">
-                        <span className={cn("shrink-0", text)}>{getStatusIcon(value, "w-3.5 h-3.5")}</span>
-                        <span className={cn("font-medium text-xs", text)}>{value}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
+                  {STATUS_OPTIONS.map(({ value, text }) => {
+                    const blocked = value === "Claimed" && paymentStatus === "unpaid";
+                    return (
+                      <SelectItem key={value} value={value} disabled={blocked}>
+                        <div className="flex items-center gap-2">
+                          <span className={cn("shrink-0", text)}>{getStatusIcon(value, "w-3.5 h-3.5")}</span>
+                          <span className={cn("font-medium text-xs", text)}>{value}</span>
+                          {blocked && (
+                            <span className="ml-1 text-xs text-muted-foreground">(payment required)</span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>

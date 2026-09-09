@@ -1170,7 +1170,6 @@ interface TransactionsPageProps {
 const MOBILE_STATUS_OPTIONS: StatusOption[] = [
   { status: "Received", label: "Received" },
   { status: "Washing", label: "Washing" },
-  { status: "Drying", label: "Drying" },
   { status: "Ready", label: "Ready" },
   { status: "Claimed", label: "Claimed" },
   { status: "Voided", label: "Voided" },
@@ -1416,7 +1415,7 @@ export default function TransactionsPage({
   };
 
   // ── Smart priority scoring ───────────────────────────────────────────────
-  const activeStatuses = new Set(["Received", "Washing", "Drying"]);
+  const activeStatuses = new Set(["Received", "Washing"]);
 
   const smartPriority = (t: Transaction): number => {
     if (t.status === "Voided") return 90;
@@ -2084,7 +2083,7 @@ export default function TransactionsPage({
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-border/50 shadow-lg p-1.5">
                     {(
-                      ["Received", "Washing", "Drying", "Ready", "Claimed"] as const
+                      ["Received", "Washing", "Ready", "Claimed", "Voided"] as const
                     ).map((value) => {
                       const Icon = STATUS_ICONS[value];
                       const isClaimedBlocked = value === "Claimed" && editPaymentStatus === "unpaid";
