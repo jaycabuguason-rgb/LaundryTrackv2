@@ -2,6 +2,8 @@ import "server-only";
 
 import { loyaltyMembers as seedMembers, type LoyaltyMember } from "@/lib/data";
 import { getPublicSupabaseConfig } from "@/lib/supabase/config";
+import { listTransactions, getBusinessProfile } from "@/lib/server/laundry-repository";
+import type { PublicLoyaltyMemberRecord, PublicShopProfile } from "@/lib/transaction-contracts";
 
 export type StampAwardResult =
   | { stamped: false; reason: string }
@@ -418,5 +420,146 @@ export async function awardClaimStamp(
     washesPerReward: settings.washes_per_reward,
     rewardsAvailable: newRewardsAvailable,
     rewardDescription: settings.reward_description
+  };
+}
+
+function cleanPhone(num: string | null | undefined): string {
+  return (num || "").replace(/\D/g, "");
+}
+
+export async function getPublicLoyaltyMemberRecord(
+  memberIdentifier: string
+): Promise<PublicLoyaltyMemberRecord | null> {
+  const cleanId = memberIdentifier.trim();
+  if (!cleanId) return null;
+
+  // Extract ID if passed as MEM-0001 or URL
+  const memMatch = cleanId.match(/MEM-([0-9]+)/i);
+  const normalizedId = memMatch ? String(Number.parseInt(memMatch[1], 10)) : cleanId;
+
+  // 1. Fetch member with history
+  let member: LoyaltyMember | null = null;
+  if (!hasSupabaseConfig()) {
+    member =
+      mockMembers.find(
+        (m) =>
+          m.id === normalizedId ||
+          m.id === cleanId ||
+          (cleanPhone(m.phone) && cleanPhone(m.phone) === cleanPhone(cleanId)) ||
+          m.name.toLowerCase() === cleanId.toLowerCase()
+      ) || null;
+  } else {
+    try {
+      const rows = await restRequest<LoyaltyMemberRow[]>(
+        `loyalty_members?or=(id.eq.${encodeURIComponent(normalizedId)},id.eq.${encodeURIComponent(cleanId)},phone_number.eq.${encodeURIComponent(cleanId)},full_name.ilike.${encodeURIComponent(cleanId)})&limit=1`
+      );
+      if (rows && rows.length > 0) {
+        member = await getLoyaltyMemberWithHistory(rows[0].id);
+      }
+    } catch {
+      member =
+        mockMembers.find(
+          (m) =>
+            m.id === normalizedId ||
+            m.id === cleanId ||
+            (cleanPhone(m.phone) && cleanPhone(m.phone) === cleanPhone(cleanId)) ||
+            m.name.toLowerCase() === cleanId.toLowerCase()
+        ) || null;
+    }
+  }
+
+  if (!member) return null;
+
+  const [allTxns, profile, settings] = await Promise.all([
+    listTransactions(),
+    getBusinessProfile(),
+    getLoyaltySettings(),
+  ]);
+
+  const memberPhoneClean = cleanPhone(member.phone);
+  const memberNameLower = member.name.trim().toLowerCase();
+
+  // Find matching laundry orders from transactions
+  const memberTxns = allTxns.filter((t) => {
+    const tPhoneClean = cleanPhone(t.phone);
+    if (memberPhoneClean && tPhoneClean && memberPhoneClean === tPhoneClean) return true;
+    if (t.customerName && t.customerName.trim().toLowerCase() === memberNameLower) return true;
+    return false;
+  });
+
+  const washesPerReward = settings.washes_per_reward || 7;
+  const currentCycleStamps = member.stampCount % washesPerReward;
+  const stampsUntilReward = washesPerReward - currentCycleStamps;
+  const progressPct = Math.min(100, Math.round((currentCycleStamps / washesPerReward) * 100));
+
+  const totalKgWashed = Number(
+    memberTxns.reduce((acc, t) => acc + (Number(t.weight) || 0), 0).toFixed(1)
+  );
+  const totalVisits = Math.max(memberTxns.length, member.stampCount);
+
+  const laundryRecords: PublicLoyaltyMemberRecord["laundryRecords"] = memberTxns.map((t) => ({
+    ticketId: t.ticketId,
+    date: t.arrivalDateTime || t.dropOffDate || "",
+    washType: t.washType || "Regular",
+    weight: Number(t.weight) || 0,
+    fee: Number(t.fee) || 0,
+    status: t.status,
+    rewardUsed: t.fee === 0 || (t.washInstructions || "").toLowerCase().includes("reward"),
+  }));
+
+  // Merge any tickets in stampHistory that weren't in memberTxns
+  const existingTickets = new Set(laundryRecords.map((r) => r.ticketId));
+  if (member.stampHistory && member.stampHistory.length > 0) {
+    for (const sh of member.stampHistory) {
+      if (sh.ticket && sh.ticket !== "Manual" && !existingTickets.has(sh.ticket)) {
+        existingTickets.add(sh.ticket);
+        laundryRecords.push({
+          ticketId: sh.ticket,
+          date: sh.date,
+          washType: "Regular",
+          weight: 0,
+          fee: 0,
+          status: "Claimed",
+          rewardUsed: false,
+        });
+      }
+    }
+  }
+
+  // Sort laundry records by date descending
+  laundryRecords.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  const shopProfile: PublicShopProfile = {
+    shopName: profile.shopName,
+    tagline: profile.tagline,
+    logoDataUrl: profile.logoDataUrl,
+    address: profile.address,
+    contactNumber: profile.contactNumber,
+    email: profile.email,
+    receiptFooter: profile.receiptFooter,
+    pickupInstructions: profile.pickupInstructions,
+  };
+
+  return {
+    id: member.id,
+    name: member.name,
+    phone: member.phone,
+    dateJoined: member.dateJoined,
+    stampCount: member.stampCount,
+    currentCycleStamps,
+    washesPerReward,
+    stampsUntilReward,
+    progressPct,
+    rewardsAvailable: Math.max(
+      0,
+      Math.floor(member.stampCount / washesPerReward) - (member.rewardsRedeemed || 0)
+    ),
+    rewardsRedeemed: member.rewardsRedeemed || 0,
+    rewardDescription: settings.reward_description || "Free wash",
+    totalVisits,
+    totalKgWashed,
+    laundryRecords,
+    rewardHistory: member.rewardHistory || [],
+    shopProfile,
   };
 }

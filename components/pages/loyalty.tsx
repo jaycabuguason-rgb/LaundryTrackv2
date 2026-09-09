@@ -22,6 +22,10 @@ import {
   Flame,
   Undo2,
   Redo2,
+  QrCode,
+  Copy,
+  ExternalLink,
+  Package,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,7 +45,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useLoyaltyMembers } from "@/hooks/use-loyalty-members";
-import { type LoyaltyMember } from "@/lib/data";
+import { type LoyaltyMember, type Transaction, transactions as seedTransactions } from "@/lib/data";
 import { toast } from "@/hooks/use-toast";
 import { getBrowserAccessToken, refreshBrowserSession } from "@/lib/supabase/browser-session";
 import {
@@ -84,9 +88,10 @@ function StampDots({ count, max = 7 }: { count: number; max?: number }) {
 
 interface LoyaltyPageProps {
   loyaltyEnabled?: boolean;
+  transactions?: Transaction[];
 }
 
-export default function LoyaltyPage({ loyaltyEnabled = true }: LoyaltyPageProps) {
+export default function LoyaltyPage({ loyaltyEnabled = true, transactions }: LoyaltyPageProps) {
   const { members, loading, refetch } = useLoyaltyMembers();
   const [activeTab, setActiveTab] = useState<"members" | "rewards">("members");
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
@@ -103,6 +108,8 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: LoyaltyPageProps)
   const [deleteModal, setDeleteModal] = useState<LoyaltyMember | null>(null);
   const [stampModal, setStampModal] = useState<LoyaltyMember | null>(null);
   const [rewardCycleModal, setRewardCycleModal] = useState<{ date: string; reward: string } | null>(null);
+  const [qrModal, setQrModal] = useState<LoyaltyMember | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Simulated reward redemption state
@@ -448,6 +455,20 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: LoyaltyPageProps)
     const canUndo = undoStack.some((a) => a.memberId === selected.id);
     const canRedo = redoStack.some((a) => a.memberId === selected.id);
 
+    // Matching laundry transactions for this member
+    const memberPhoneClean = (selected.phone || "").replace(/\D/g, "");
+    const memberNameLower = selected.name.trim().toLowerCase();
+    const effectiveTxns = transactions && transactions.length > 0 ? transactions : seedTransactions;
+    const matchingTxns = effectiveTxns.filter((t) => {
+      const tPhoneClean = (t.phone || "").replace(/\D/g, "");
+      if (memberPhoneClean && tPhoneClean && memberPhoneClean === tPhoneClean) return true;
+      if (t.customerName && t.customerName.trim().toLowerCase() === memberNameLower) return true;
+      return false;
+    });
+
+    const totalKg = matchingTxns.reduce((acc, t) => acc + (t.weight || 0), 0).toFixed(1);
+    const totalVisits = Math.max(matchingTxns.length, selected.stampCount);
+
     return (
       <div className="space-y-5">
         {/* Header navigation */}
@@ -502,18 +523,30 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: LoyaltyPageProps)
                   <Phone className="w-3.5 h-3.5 shrink-0" />
                   <span>{selected.phone || "No phone provided"}</span>
                 </div>
-                <div className="flex items-center gap-2 pt-1">
+                <div className="flex flex-wrap items-center gap-2 pt-1">
                   <span className="inline-flex items-center rounded-full bg-primary/10 text-primary border border-primary/20 px-2.5 py-0.5 text-xs font-semibold">
                     {currentCycleStamps}/{washesPerReward} stamps
                   </span>
                   <span className="inline-flex items-center rounded-full bg-muted text-muted-foreground px-2.5 py-0.5 text-xs font-semibold">
                     {selected.rewardsRedeemed} rewards
                   </span>
+                  <span className="inline-flex items-center rounded-full bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200 px-2.5 py-0.5 text-xs font-semibold">
+                    {totalVisits} visits • {totalKg} kg
+                  </span>
                 </div>
               </div>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setQrModal(selected)}
+                className="gap-1.5 text-xs h-9 px-3 rounded-lg cursor-pointer"
+                title="View Member QR Status & Public Link"
+              >
+                <QrCode className="w-3.5 h-3.5 text-primary" /> QR Status
+              </Button>
               <Button
                 size="sm"
                 variant="outline"
@@ -564,6 +597,33 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: LoyaltyPageProps)
             </div>
           </CardHeader>
           <CardContent className="p-4 sm:p-5 space-y-4">
+            {/* Remaining Laundries Banner */}
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <Gift className="w-5 h-5 text-primary shrink-0" />
+                <div>
+                  <p className="text-xs font-bold text-foreground sm:text-sm">
+                    {stampsUntilReward > 0
+                      ? `Only ${stampsUntilReward} more ${stampsUntilReward === 1 ? 'laundry' : 'laundries'} remaining before ${rewardName}!`
+                      : `🎉 Reward Unlocked! Customer can claim a ${rewardName}!`}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    {stampsUntilReward > 0
+                      ? `${currentCycleStamps} of ${washesPerReward} laundries completed in this cycle. Next reward unlocks at stamp #${(Math.floor(selected.stampCount / washesPerReward) + 1) * washesPerReward}.`
+                      : `Ready to claim at checkout or claim verification.`}
+                  </p>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setQrModal(selected)}
+                className="h-8 text-xs gap-1.5 shrink-0 bg-background cursor-pointer self-start sm:self-auto"
+              >
+                <QrCode className="w-3.5 h-3.5 text-primary" /> View QR Status
+              </Button>
+            </div>
+
             <StampDots count={currentCycleStamps} max={washesPerReward} />
             <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
               <div
@@ -574,15 +634,22 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: LoyaltyPageProps)
           </CardContent>
         </Card>
 
-        {/* Visits in Current Cycle Table */}
+        {/* Laundry Records Table */}
         <Card className="border border-border shadow-xs bg-card overflow-hidden">
           <CardHeader className="pb-3 border-b border-border/60">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-primary" /> Cycle Activity
-            </CardTitle>
-            <CardDescription className="text-xs mt-0.5">
-              Recent visits recorded towards the next free reward
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Package className="w-4 h-4 text-primary" /> Laundry Records & History
+                </CardTitle>
+                <CardDescription className="text-xs mt-0.5">
+                  Laundry visits and records tracked for this member
+                </CardDescription>
+              </div>
+              <span className="text-xs font-semibold text-muted-foreground">
+                {matchingTxns.length > 0 ? `${matchingTxns.length} laundry records` : `${selected.stampHistory?.length || 0} visits`}
+              </span>
+            </div>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -590,25 +657,48 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: LoyaltyPageProps)
                 <thead>
                   <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold">
                     <th className="px-4 py-2.5">Date</th>
-                    <th className="px-4 py-2.5">Ticket / Source</th>
-                    <th className="px-4 py-2.5">Stamps</th>
-                    <th className="px-4 py-2.5">Notes</th>
+                    <th className="px-4 py-2.5">Ticket</th>
+                    <th className="px-4 py-2.5">Service</th>
+                    <th className="px-4 py-2.5">KG</th>
+                    <th className="px-4 py-2.5">Reward</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/60">
-                  {selected.stampHistory && selected.stampHistory.length > 0 ? (
-                    selected.stampHistory.slice(0, washesPerReward).map((h, i) => (
+                  {matchingTxns.length > 0 ? (
+                    matchingTxns.map((t, i) => {
+                      const isReward = t.fee === 0 || (t.washInstructions || "").toLowerCase().includes("reward");
+                      return (
+                        <tr key={t.ticketId || i} className="hover:bg-muted/30 transition-colors">
+                          <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">{t.arrivalDateTime || t.dropOffDate}</td>
+                          <td className="px-4 py-2.5 font-mono text-primary font-medium">{t.ticketId}</td>
+                          <td className="px-4 py-2.5 font-medium text-foreground">{t.washType}</td>
+                          <td className="px-4 py-2.5 text-muted-foreground">{t.weight} kg</td>
+                          <td className="px-4 py-2.5 font-semibold">
+                            {isReward ? (
+                              <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Yes
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : selected.stampHistory && selected.stampHistory.length > 0 ? (
+                    selected.stampHistory.map((h, i) => (
                       <tr key={i} className="hover:bg-muted/30 transition-colors">
                         <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">{h.date}</td>
                         <td className="px-4 py-2.5 font-mono text-primary font-medium">{h.ticket}</td>
-                        <td className="px-4 py-2.5 font-semibold text-emerald-600 dark:text-emerald-400">+{h.stamps}</td>
-                        <td className="px-4 py-2.5 text-muted-foreground">{h.notes || "—"}</td>
+                        <td className="px-4 py-2.5 font-medium text-foreground">Regular Wash</td>
+                        <td className="px-4 py-2.5 text-muted-foreground">—</td>
+                        <td className="px-4 py-2.5 font-semibold text-emerald-600 dark:text-emerald-400">+{h.stamps} stamp</td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={4} className="text-center py-6 text-muted-foreground">
-                        No stamps recorded in this cycle yet.
+                      <td colSpan={5} className="text-center py-6 text-muted-foreground">
+                        No laundry records found for this member yet.
                       </td>
                     </tr>
                   )}
@@ -619,46 +709,50 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: LoyaltyPageProps)
         </Card>
 
         {/* Reward Redemption History */}
-        {selected.rewardHistory && selected.rewardHistory.length > 0 && (
-          <Card className="border border-border shadow-xs bg-card overflow-hidden">
-            <CardHeader className="pb-3 border-b border-border/60">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Award className="w-4 h-4 text-primary" /> Redeemed Rewards History
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead>
-                    <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold">
-                      <th className="px-4 py-2.5">Date Redeemed</th>
-                      <th className="px-4 py-2.5">Reward Unlocked</th>
-                      <th className="px-4 py-2.5 text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/60">
-                    {selected.rewardHistory.map((r, i) => (
+        <Card className="border border-border shadow-xs bg-card overflow-hidden">
+          <CardHeader className="pb-3 border-b border-border/60">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Award className="w-4 h-4 text-primary" /> Redeemed Rewards History
+            </CardTitle>
+            <CardDescription className="text-xs mt-0.5">
+              Recent rewards claimed and redeemed by this member
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold">
+                    <th className="px-4 py-2.5">Date Redeemed</th>
+                    <th className="px-4 py-2.5">Reward Unlocked</th>
+                    <th className="px-4 py-2.5 text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/60">
+                  {selected.rewardHistory && selected.rewardHistory.length > 0 ? (
+                    selected.rewardHistory.map((r, i) => (
                       <tr key={i} className="hover:bg-muted/30 transition-colors">
                         <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">{r.date}</td>
                         <td className="px-4 py-2.5 font-semibold text-foreground">{r.reward}</td>
                         <td className="px-4 py-2.5 text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 text-xs text-primary hover:text-primary hover:bg-primary/10"
-                            onClick={() => setRewardCycleModal(r)}
-                          >
-                            View Cycle
-                          </Button>
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+                            <CheckCircle2 className="w-3 h-3" /> Claimed
+                          </span>
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={3} className="text-center py-6 text-muted-foreground">
+                        No rewards claimed yet.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -852,7 +946,16 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: LoyaltyPageProps)
                       </div>
 
                       {/* Actions */}
-                      <div className="flex items-center gap-2 pt-1">
+                      <div className="flex items-center gap-1.5 pt-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setQrModal(member)}
+                          className="h-8 text-xs px-2.5 cursor-pointer gap-1"
+                          title="View Member QR Status & Public Link"
+                        >
+                          <QrCode className="w-3.5 h-3.5 text-primary" /> QR
+                        </Button>
                         <Button
                           size="sm"
                           variant="outline"
@@ -903,6 +1006,15 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: LoyaltyPageProps)
                         <td className="px-4 py-3 text-foreground">{member.rewardsRedeemed}</td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex items-center justify-end gap-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs px-2"
+                              onClick={() => setQrModal(member)}
+                              title="View Member QR Status"
+                            >
+                              <QrCode className="w-3 h-3 text-primary" />
+                            </Button>
                             <Button
                               size="sm"
                               variant="outline"
@@ -1110,6 +1222,101 @@ export default function LoyaltyPage({ loyaltyEnabled = true }: LoyaltyPageProps)
             <p className="text-muted-foreground">This reward was successfully earned after achieving {washesPerReward} qualifying stamps.</p>
             <Button variant="outline" className="w-full mt-2" onClick={() => setRewardCycleModal(null)}>Close</Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Member QR Status Dialog */}
+      <Dialog
+        open={!!qrModal}
+        onOpenChange={(open) => {
+          if (!open) {
+            setQrModal(null);
+            setCopiedLink(false);
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <QrCode className="w-5 h-5 text-primary" /> Member QR & Status Card
+            </DialogTitle>
+          </DialogHeader>
+          {qrModal && (() => {
+            const memberCode = qrModal.id.startsWith("MEM-") ? qrModal.id : `MEM-${qrModal.id.slice(-6).toUpperCase()}`;
+            const publicUrl = typeof window !== "undefined" ? `${window.location.origin}/member/${qrModal.id}` : `/member/${qrModal.id}`;
+            const cycleStamps = qrModal.stampCount % washesPerReward;
+            const remaining = washesPerReward - cycleStamps;
+            const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(publicUrl)}`;
+
+            return (
+              <div className="space-y-4 pt-2">
+                <div className="flex flex-col items-center justify-center p-4 bg-muted/40 rounded-xl border border-border">
+                  <div className="bg-white p-3 rounded-xl shadow-xs border border-border/80">
+                    <img
+                      src={qrImageUrl}
+                      alt={`QR code for ${qrModal.name}`}
+                      className="w-44 h-44 object-contain rounded"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2 font-mono">{memberCode}</p>
+                </div>
+
+                <div className="space-y-1 text-center">
+                  <h3 className="font-bold text-base text-foreground">{qrModal.name}</h3>
+                  <p className="text-xs text-muted-foreground">{qrModal.phone || "No phone registered"}</p>
+                </div>
+
+                {/* Remaining Laundries Banner */}
+                <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 text-center space-y-1">
+                  <div className="flex items-center justify-center gap-1.5 text-xs font-semibold text-primary">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>{cycleStamps} of {washesPerReward} washes collected</span>
+                  </div>
+                  <p className="text-sm font-bold text-foreground">
+                    Only <span className="text-primary underline decoration-primary/40 underline-offset-2">{remaining} more {remaining === 1 ? "laundry" : "laundries"}</span> remaining before your <span className="font-bold">{rewardName}</span>!
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="gap-1.5 text-xs"
+                    onClick={() => {
+                      if (typeof navigator !== "undefined" && navigator.clipboard) {
+                        navigator.clipboard.writeText(publicUrl);
+                        setCopiedLink(true);
+                        setTimeout(() => setCopiedLink(false), 2000);
+                      }
+                    }}
+                  >
+                    {copiedLink ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-600" /> Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" /> Copy Link
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    className="gap-1.5 text-xs bg-primary text-primary-foreground hover:bg-primary/90"
+                    onClick={() => {
+                      window.open(`/member/${qrModal.id}`, "_blank");
+                    }}
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" /> Open Page
+                  </Button>
+                </div>
+
+                <p className="text-[11px] text-muted-foreground text-center">
+                  Customers can scan this QR code anytime to view their stamp progress, laundry order history, and claimed rewards.
+                </p>
+              </div>
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </div>

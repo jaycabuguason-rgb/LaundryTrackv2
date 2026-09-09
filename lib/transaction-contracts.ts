@@ -66,3 +66,35 @@ export interface PublicTrackingRecord {
   dropOffTime: string;
   shopProfile: PublicShopProfile;
 }
+
+export interface PublicLoyaltyMemberRecord {
+  id: string;
+  name: string;
+  phone: string;
+  dateJoined: string;
+  stampCount: number;
+  currentCycleStamps: number;
+  washesPerReward: number;
+  stampsUntilReward: number;
+  progressPct: number;
+  rewardsAvailable: number;
+  rewardsRedeemed: number;
+  rewardDescription: string;
+  totalVisits: number;
+  totalKgWashed: number;
+  laundryRecords: Array<{
+    ticketId: string;
+    date: string;
+    washType: string;
+    weight: number;
+    fee: number;
+    status: TransactionStatus;
+    rewardUsed?: boolean;
+  }>;
+  rewardHistory: Array<{
+    reward: string;
+    date: string;
+  }>;
+  shopProfile: PublicShopProfile;
+}
+
