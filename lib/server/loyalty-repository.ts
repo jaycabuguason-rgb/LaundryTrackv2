@@ -317,40 +317,36 @@ export async function getLoyaltyMemberWithHistory(memberId: string): Promise<Loy
   // 2. Fetch stamp history
   let stamps: StampHistoryRow[] = [];
   try {
-    stamps = await restRequest<StampHistoryRow[]>(
-      `stamp_history?member_id=eq.${encodeURIComponent(memberId)}&select=id,member_id,transaction_id,stamps_added,source,notes,created_at,transactions(ticket_id)&order=created_at.desc`
+    const rawStamps = await restRequest<StampHistoryRow[]>(
+      `stamp_history?member_id=eq.${encodeURIComponent(memberId)}&select=id,member_id,transaction_id,stamps_added,created_at&order=created_at.desc`
     );
+    stamps = Array.isArray(rawStamps) ? rawStamps : [];
   } catch {
-    try {
-      stamps = await restRequest<StampHistoryRow[]>(
-        `stamp_history?member_id=eq.${encodeURIComponent(memberId)}&select=id,member_id,transaction_id,stamps_added,created_at,transactions(ticket_id)&order=created_at.desc`
-      );
-    } catch {
-      stamps = [];
-    }
+    stamps = [];
   }
 
   // 3. Fetch reward history
   let rewards: RewardHistoryRow[] = [];
   try {
-    rewards = await restRequest<RewardHistoryRow[]>(
+    const rawRewards = await restRequest<RewardHistoryRow[]>(
       `reward_history?member_id=eq.${encodeURIComponent(memberId)}&select=id,member_id,reward_type,redeemed_at&order=redeemed_at.desc`
     );
+    rewards = Array.isArray(rawRewards) ? rawRewards : [];
   } catch {
     rewards = [];
   }
 
   member.stampHistory = stamps.map((s) => ({
-    date: new Date(s.created_at).toISOString().split("T")[0],
+    date: s.created_at ? new Date(s.created_at).toISOString().split("T")[0] : "",
     stamps: s.stamps_added,
-    ticket: s.transactions?.ticket_id ?? "Manual",
-    source: (s.source as "auto_claim" | "manual") || "manual",
-    notes: s.notes ?? undefined,
+    ticket: s.transaction_id ? `TKT-${s.transaction_id.slice(0, 4)}` : "Manual",
+    source: "manual",
+    notes: undefined,
   }));
 
   member.rewardHistory = rewards.map((r) => ({
-    date: new Date(r.redeemed_at).toISOString().split("T")[0],
-    reward: r.reward_type ?? "Unknown Reward",
+    date: r.redeemed_at ? new Date(r.redeemed_at).toISOString().split("T")[0] : "",
+    reward: r.reward_type ?? "Free Wash",
   }));
 
   return member;
