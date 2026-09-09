@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { createAuditLog } from "@/lib/server/audit-log-repository";
 import { createTransaction, listTransactions } from "@/lib/server/laundry-repository";
-import { getAuthErrorStatus, getRequestActor, requireAuthRequest } from "@/lib/server/request-auth";
+import { getAuthErrorStatus, requireAuthRequest } from "@/lib/server/request-auth";
 import { getRequestIp } from "@/lib/server/request-meta";
 import type { CreateTransactionInput } from "@/lib/transaction-contracts";
 

@@ -9,12 +9,9 @@ import {
   Edit,
   Trash2,
   Phone,
-  RotateCcw,
-  Scale,
   Gift,
   Award,
   Check,
-  Percent,
   Sparkles,
   CheckCircle2,
   LayoutGrid,
@@ -33,7 +30,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -91,7 +87,7 @@ interface LoyaltyPageProps {
   transactions?: Transaction[];
 }
 
-export default function LoyaltyPage({ loyaltyEnabled = true, transactions }: LoyaltyPageProps) {
+export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, transactions }: LoyaltyPageProps) {
   const { members, loading, refetch } = useLoyaltyMembers();
   const [activeTab, setActiveTab] = useState<"members" | "rewards">("members");
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
@@ -100,7 +96,6 @@ export default function LoyaltyPage({ loyaltyEnabled = true, transactions }: Loy
 
   // Loyalty Program Config state
   const [loyaltyConfig, setLoyaltyConfig] = useState<LoyaltySettings>(() => loadLoyaltySettings());
-  const [savingConfig, setSavingConfig] = useState(false);
 
   // Modals state
   const [addModal, setAddModal] = useState(false);
@@ -385,7 +380,7 @@ export default function LoyaltyPage({ loyaltyEnabled = true, transactions }: Loy
     }
   }
 
-  async function handleAddStamps(e: React.FormEvent<HTMLFormElement>) {
+  async function _handleAddStamps(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!stampModal) return;
     setSaving(true);
@@ -1267,6 +1262,7 @@ export default function LoyaltyPage({ loyaltyEnabled = true, transactions }: Loy
               <div className="space-y-4 pt-2">
                 <div className="flex flex-col items-center justify-center p-4 bg-muted/40 rounded-xl border border-border">
                   <div className="bg-white p-3 rounded-xl shadow-xs border border-border/80">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={qrImageUrl}
                       alt={`QR code for ${qrModal.name}`}

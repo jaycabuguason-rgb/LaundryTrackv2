@@ -285,7 +285,7 @@ export async function addStampsToMember(
 export async function getLoyaltySettings(): Promise<{ loyalty_enabled: boolean; washes_per_reward: number; reward_description: string }> {
   if (!hasSupabaseConfig()) return { loyalty_enabled: true, washes_per_reward: 7, reward_description: "Free wash" };
   try {
-    const rows = await restRequest<any[]>("settings?key=eq.loyalty&select=key,value&limit=1");
+    const rows = await restRequest<Array<{ key: string; value: { enabled?: boolean; washesPerReward?: number; rewardDescription?: string } }>>("settings?key=eq.loyalty&select=key,value&limit=1");
     if (rows && rows[0]?.value) {
       const val = rows[0].value;
       return {
@@ -386,7 +386,7 @@ export async function awardClaimStamp(
   const member = memberRows[0];
 
   // 3. Check if stamp already awarded for this transaction
-  const existingStamps = await restRequest<any[]>(
+  const existingStamps = await restRequest<Array<{ id: string }>>(
     `stamp_history?transaction_id=eq.${encodeURIComponent(transactionId)}&select=id`
   );
   if (existingStamps && existingStamps.length > 0) {

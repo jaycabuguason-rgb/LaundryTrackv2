@@ -3,7 +3,6 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import {
   CheckCircle2,
-  Clock3,
   MapPin,
   Phone,
   Mail,
@@ -143,19 +142,13 @@ export default async function PublicTrackingPage(
     ? await getPublicLoyaltyMemberRecord(record.customerPhone || record.customerName)
     : null;
 
-  const finalMessage =
-    record.status === "Claimed"
-      ? "This laundry order has already been claimed."
-      : record.status === "Ready"
-        ? "Ready for pickup."
-        : "Your laundry is still in progress.";
-
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(139,92,246,0.08),_transparent_32%),linear-gradient(180deg,var(--background)_0%,hsl(35,28%,92%)_100%)] dark:bg-background px-4 py-8 text-foreground">
       <div className="mx-auto max-w-2xl space-y-6">
         {/* Header with Logo and Shop Name */}
         <div className="flex flex-col items-center gap-3 text-center">
           {record.shopProfile.logoDataUrl && (
+            /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={record.shopProfile.logoDataUrl}
               alt={`${record.shopProfile.shopName} logo`}
@@ -301,6 +294,7 @@ export default async function PublicTrackingPage(
             {/* Member QR Code */}
             <div className="flex flex-col sm:flex-row items-center gap-4 rounded-2xl border border-border/80 bg-muted/20 p-4">
               <div className="bg-white p-2 rounded-xl shadow-xs border border-border/80 shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(
                     `${protocol}://${host}/member/${loyaltyRecord.id}`
@@ -540,6 +534,7 @@ export default async function PublicTrackingPage(
               Pickup QR Code
             </div>
             <div className="mt-4 flex flex-col items-center rounded-2xl border border-border bg-muted/20 p-5 text-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={pickupQrUrl}
                 alt={`Pickup QR code for ${record.ticketId}`}

@@ -2,9 +2,9 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import {
-  Search, Eye, EyeOff, Edit, Ban, Printer, ChevronRight, X, QrCode, CalendarIcon,
+  Search, EyeOff, Edit, Ban, Printer, ChevronRight, X, QrCode, CalendarIcon,
   AlertTriangle, Plus, User, Star, Camera, CameraOff,
-  ChevronLeft, Check, RefreshCw, ExternalLink, Inbox, MoreHorizontal
+  ChevronLeft, Check, RefreshCw, Inbox, MoreHorizontal
 } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
@@ -53,7 +53,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { PrintReceiptModal } from "@/components/print-receipt-modal";
 import { StatusUpdateSheet, type StatusOption } from "@/components/status-update-sheet";
 import { StatusBadge, PaymentBadge, STATUS_ICONS } from "@/components/status-badge";
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import type { Page } from "@/components/sidebar";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // QR Scanner (inline, no package)
@@ -257,7 +258,7 @@ function NewTransactionWizard({
   // Dynamic settings loaded from shared store
   const { members: loyaltyMembers } = useLoyaltyMembers();
   const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
-  const [svcEnabled, setSvcEnabled] = useState(true);
+  const [, setSvcEnabled] = useState(true);
   const [basePerKg, setBasePerKg] = useState("0");
   const [addOnOptions, setAddOnOptions] = useState<AddOn[]>([]);
   const [minWeight, setMinWeightSetting] = useState("0");
@@ -361,9 +362,12 @@ function NewTransactionWizard({
           setPricingModeSetting(data.pricingConfig.pricingMode);
           setLoadTiersSetting(data.pricingConfig.loadTiers);
           setPriceDisplayMode(data.pricingConfig.priceDisplayMode ?? "show");
-          if (!data.pricingConfig.loadTiers.find((t: LoadTier) => t.id === selectedTierId)) {
-            setSelectedTierId(data.pricingConfig.loadTiers[0]?.id ?? "");
-          }
+          setSelectedTierId((currentTierId) => {
+            if (!data.pricingConfig.loadTiers.find((t: LoadTier) => t.id === currentTierId)) {
+              return data.pricingConfig.loadTiers[0]?.id ?? "";
+            }
+            return currentTierId;
+          });
         }
         if (data.serviceTypes) {
           persistServiceTypes(data.serviceTypes);
@@ -389,7 +393,7 @@ function NewTransactionWizard({
         m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q) || m.phone.includes(q)
       )
     );
-  }, [memberSearch]);
+  }, [memberSearch, loyaltyMembers]);
 
   const selectMember = (m: LoyaltyMember) => {
     setForm((f) => ({ ...f, loyaltyMember: m, customerName: m.name, phone: m.phone }));
@@ -1164,7 +1168,7 @@ interface TransactionsPageProps {
   onEditComplete?: () => void;
   initialWizardOpen?: boolean;
   onWizardClose?: () => void;
-  onNavigate?: (page: any) => void;
+  onNavigate?: (page: Page) => void;
 }
 
 const MOBILE_STATUS_OPTIONS: StatusOption[] = [
@@ -1260,7 +1264,7 @@ export default function TransactionsPage({
     }
   };
 
-  const moveToNextStatus = async () => {
+  const _moveToNextStatus = async () => {
     if (!editTxn) return;
     const idx = statusOrder.indexOf(editTxn.status as (typeof statusOrder)[number]);
     if (idx < 0 || idx >= statusOrder.length - 1) return;
@@ -1966,6 +1970,7 @@ export default function TransactionsPage({
 
               {/* QR Code */}
               <div className="flex flex-col items-center gap-2 py-2 bg-muted/30 rounded-lg">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={getTrackingQrSrc(viewTxn, 100)}
                   alt={`QR for ${viewTxn.ticketId}`}
@@ -2264,6 +2269,7 @@ export default function TransactionsPage({
           </DialogHeader>
           {reprintTxn && (
             <div className="flex flex-col items-center gap-3 py-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={getTrackingQrSrc(reprintTxn, 180)}
                 alt={`QR code for ${reprintTxn.ticketId}`}

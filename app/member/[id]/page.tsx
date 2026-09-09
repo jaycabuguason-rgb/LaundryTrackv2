@@ -83,6 +83,7 @@ export default async function MemberLoyaltyStatusPage({
         {/* Header with Logo and Shop Name */}
         <div className="flex flex-col items-center gap-2 text-center">
           {record.shopProfile.logoDataUrl && (
+            /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={record.shopProfile.logoDataUrl}
               alt={`${record.shopProfile.shopName} logo`}
@@ -124,6 +125,7 @@ export default async function MemberLoyaltyStatusPage({
           {/* Member QR Code */}
           <div className="mt-6 flex flex-col items-center rounded-2xl border border-border bg-muted/20 p-5 text-center">
             <div className="rounded-2xl border border-border bg-white p-3 shadow-xs">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={memberQrUrl}
                 alt={`Member QR for ${record.name}`}

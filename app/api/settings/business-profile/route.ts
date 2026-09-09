@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { normalizeBusinessProfile, type BusinessProfile } from "@/lib/business-profile";
 import { createAuditLog } from "@/lib/server/audit-log-repository";
 import { getBusinessProfile, saveBusinessProfile } from "@/lib/server/laundry-repository";
-import { getRequestActor, requireAuthRequest } from "@/lib/server/request-auth";
+import { requireAuthRequest } from "@/lib/server/request-auth";
 import { getRequestIp } from "@/lib/server/request-meta";
 
 export async function GET(request: Request) {

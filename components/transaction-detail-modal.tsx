@@ -90,7 +90,6 @@ export function TransactionDetailModal({ open, onOpenChange, transaction, onEdit
                 {STATUS_STEPS.map((step, i) => {
                   const done    = i < stepIndex;
                   const current = i === stepIndex;
-                  const pending = i > stepIndex;
                   return (
                     <div key={step} className="flex items-center">
                       <div className="flex flex-col items-center gap-1">
