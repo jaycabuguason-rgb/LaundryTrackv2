@@ -159,6 +159,7 @@ function mapRowToPublicRecord(row: TransactionRow, profile: BusinessProfile): Pu
   return {
     ticketId: transaction.ticketId,
     customerName: transaction.customerName,
+    customerPhone: transaction.phone || undefined,
     status: transaction.status,
     eta: transaction.eta ?? null,
     updatedAt: transaction.updatedAt ?? null,
@@ -513,13 +514,14 @@ export async function resolveScannedTransaction(value: string): Promise<Transact
 }
 
 export async function getPublicTrackingRecord(token: string): Promise<PublicTrackingRecord | null> {
+  const cleanTicket = extractTicketId(token);
   const cleanToken = extractTrackingToken(token);
-  if (!cleanToken) return null;
+  if (!cleanToken && !cleanTicket) return null;
 
   const [row, profile] = await Promise.all([
     hasSupabaseConfig()
-      ? getSupabaseTransactionByToken(cleanToken)
-      : Promise.resolve(getMockTransactionByToken(cleanToken)),
+      ? (cleanToken ? getSupabaseTransactionByToken(cleanToken) : (cleanTicket ? getSupabaseTransactionByTicket(cleanTicket) : null))
+      : Promise.resolve(cleanToken ? getMockTransactionByToken(cleanToken) : (cleanTicket ? getMockTransactionByTicket(cleanTicket) : null)),
     getBusinessProfile(),
   ]);
 
