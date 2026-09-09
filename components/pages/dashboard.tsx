@@ -7,6 +7,11 @@ import {
   Receipt,
   Droplet,
   CheckCircle2,
+  Banknote,
+  ListTodo,
+  Sparkles,
+  UserPlus,
+  Package,
 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -55,12 +60,27 @@ export default function DashboardPage({
   const receivedCount = transactions.filter((t) => t.status === "Received").length;
   const washingCount = transactions.filter((t) => t.status === "Washing" || t.status === "Drying").length;
   const readyCount = transactions.filter((t) => t.status === "Ready").length;
+  const activeOrdersCount = transactions.filter(
+    (t) => t.status === "Received" || t.status === "Washing" || t.status === "Drying" || t.status === "Ready"
+  ).length;
 
   const paidRevenue = transactions
     .filter((t) => t.paymentStatus === "paid" && t.status !== "Voided")
     .reduce((sum, t) => sum + t.fee, 0);
 
   const totalMembers = liveMembers.length > 0 ? liveMembers.length : initialLoyaltyMembers.length;
+
+  // New members enrolled in current month
+  const currentMonthIdx = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  const currentMonthShort = new Date().toLocaleString("en-US", { month: "short" }).toUpperCase();
+  const memberList = liveMembers.length > 0 ? liveMembers : initialLoyaltyMembers;
+  const newMembersThisMonth = memberList.filter((m) => {
+    if (!m.dateJoined) return false;
+    const d = new Date(m.dateJoined);
+    return d.getMonth() === currentMonthIdx && d.getFullYear() === currentYear;
+  }).length;
+  const displayMembersCount = newMembersThisMonth > 0 ? newMembersThisMonth : (memberList.length > 0 ? memberList.length : 1);
 
   // Donut chart calculations
   const chartTotal = Math.max(1, receivedCount + washingCount + readyCount);
@@ -86,7 +106,9 @@ export default function DashboardPage({
         <div>
           <p className="text-xs font-semibold text-primary">{businessProfile.shopName || "Sunshine Laundry Shop"}</p>
           <h1 className="text-2xl font-bold tracking-tight text-foreground mt-0.5">Dashboard</h1>
-          <p className="text-xs text-muted-foreground mt-1">Today at a glance — your laundry, clearly managed.</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Today at a glance — {businessProfile.shopName || "Sunshine Laundry Shop"}
+          </p>
         </div>
         {onNavigate && (
           <Button
@@ -100,42 +122,49 @@ export default function DashboardPage({
       </div>
 
       {/* ─────────────────────────────────────────────────────────────────────── */}
-      {/* TOP STAT CARDS */}
+      {/* TOP STAT CARDS (FreshSpin Concept Layout) */}
       {/* ─────────────────────────────────────────────────────────────────────── */}
-      <div className={cn(
-        "grid grid-cols-1 sm:grid-cols-2 gap-3.5",
-        isLoyaltyOn ? "lg:grid-cols-5" : "lg:grid-cols-4"
-      )}>
-        {/* 1. Today's Orders */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+        {/* 1. Today's Revenue */}
         <Card
-          onClick={() => onNavigate?.("processing")}
-          className="border border-border shadow-xs hover:border-primary/40 transition-all bg-card cursor-pointer group relative"
+          onClick={() => onNavigate?.("transactions")}
+          className="border border-border/70 rounded-2xl shadow-xs hover:border-primary/40 hover:shadow-md transition-all bg-card cursor-pointer group"
         >
-          <span className="absolute top-3 right-3 text-muted-foreground/50 group-hover:text-primary/70 transition-colors text-lg font-light leading-none select-none">+</span>
-          <CardContent className="p-4">
-            <div className="space-y-0.5 min-w-0">
-              <p className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-                Today&apos;s Orders
-              </p>
-              <p className="text-2xl font-bold text-foreground">{totalOrders}</p>
-              <p className="text-xs text-muted-foreground">orders this cycle</p>
+          <CardContent className="p-5">
+            <div className="flex items-start justify-between">
+              <div className="space-y-1">
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                  Today&apos;s Revenue
+                </p>
+                <p className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
+                  ₱{paidRevenue.toLocaleString()}
+                </p>
+              </div>
+              <div className="w-11 h-11 rounded-2xl bg-muted/70 dark:bg-muted/40 border border-border/40 flex items-center justify-center text-muted-foreground group-hover:text-primary group-hover:bg-primary/10 transition-colors shrink-0">
+                <Banknote className="w-5 h-5" />
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* 2. In Progress */}
+        {/* 2. Active Orders */}
         <Card
           onClick={() => onNavigate?.("processing")}
-          className="border border-border shadow-xs hover:border-primary/40 transition-all bg-card cursor-pointer group relative"
+          className="border border-border/70 rounded-2xl shadow-xs hover:border-primary/40 hover:shadow-md transition-all bg-card cursor-pointer group"
         >
-          <span className="absolute top-3 right-3 text-muted-foreground/50 group-hover:text-primary/70 transition-colors text-lg font-light leading-none select-none">+</span>
-          <CardContent className="p-4">
-            <div className="space-y-0.5 min-w-0">
-              <p className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-                In Progress
-              </p>
-              <p className="text-2xl font-bold text-foreground">{washingCount}</p>
-              <p className="text-xs text-muted-foreground">currently washing</p>
+          <CardContent className="p-5">
+            <div className="flex items-start justify-between">
+              <div className="space-y-1">
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                  Active Orders
+                </p>
+                <p className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
+                  {activeOrdersCount}
+                </p>
+              </div>
+              <div className="w-11 h-11 rounded-2xl bg-muted/70 dark:bg-muted/40 border border-border/40 flex items-center justify-center text-muted-foreground group-hover:text-primary group-hover:bg-primary/10 transition-colors shrink-0">
+                <ListTodo className="w-5 h-5" />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -143,55 +172,46 @@ export default function DashboardPage({
         {/* 3. Ready for Pickup */}
         <Card
           onClick={() => onNavigate?.("claim-verification")}
-          className="border border-border shadow-xs hover:border-primary/40 transition-all bg-card cursor-pointer group relative"
+          className="border border-border/70 rounded-2xl shadow-xs hover:border-primary/40 hover:shadow-md transition-all bg-card cursor-pointer group"
         >
-          <span className="absolute top-3 right-3 text-muted-foreground/50 group-hover:text-primary/70 transition-colors text-lg font-light leading-none select-none">+</span>
-          <CardContent className="p-4">
-            <div className="space-y-0.5 min-w-0">
-              <p className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-                Ready for Pickup
-              </p>
-              <p className="text-2xl font-bold text-foreground">{readyCount}</p>
-              <p className="text-xs text-muted-foreground">waiting for customers</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 4. Revenue */}
-        <Card
-          onClick={() => onNavigate?.("transactions")}
-          className="border border-border shadow-xs hover:border-primary/40 transition-all bg-card cursor-pointer group relative"
-        >
-          <span className="absolute top-3 right-3 text-muted-foreground/50 group-hover:text-primary/70 transition-colors text-lg font-light leading-none select-none">+</span>
-          <CardContent className="p-4">
-            <div className="space-y-0.5 min-w-0">
-              <p className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-                Revenue
-              </p>
-              <p className="text-2xl font-bold text-foreground font-mono">₱{paidRevenue.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">paid transactions</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 5. Loyalty Members — Only rendered when loyalty is enabled */}
-        {isLoyaltyOn && (
-          <Card
-            onClick={() => onNavigate?.("loyalty")}
-            className="border border-border shadow-xs hover:border-primary/40 transition-all bg-card cursor-pointer group relative"
-          >
-            <span className="absolute top-3 right-3 text-muted-foreground/50 group-hover:text-primary/70 transition-colors text-lg font-light leading-none select-none">+</span>
-            <CardContent className="p-4">
-              <div className="space-y-0.5 min-w-0">
-                <p className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-                  Loyalty Members
+          <CardContent className="p-5">
+            <div className="flex items-start justify-between">
+              <div className="space-y-1">
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                  Ready for Pickup
                 </p>
-                <p className="text-2xl font-bold text-foreground">{totalMembers}</p>
-                <p className="text-xs text-muted-foreground">registered members</p>
+                <p className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
+                  {readyCount}
+                </p>
               </div>
-            </CardContent>
-          </Card>
-        )}
+              <div className="w-11 h-11 rounded-2xl bg-muted/70 dark:bg-muted/40 border border-border/40 flex items-center justify-center text-muted-foreground group-hover:text-primary group-hover:bg-primary/10 transition-colors shrink-0">
+                <Sparkles className="w-5 h-5" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 4. New Members (or Total Orders if loyalty disabled) */}
+        <Card
+          onClick={() => onNavigate?.(isLoyaltyOn ? "loyalty" : "transactions")}
+          className="border border-border/70 rounded-2xl shadow-xs hover:border-primary/40 hover:shadow-md transition-all bg-card cursor-pointer group"
+        >
+          <CardContent className="p-5">
+            <div className="flex items-start justify-between">
+              <div className="space-y-1">
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                  {isLoyaltyOn ? `New Members (${currentMonthShort})` : "Total Orders"}
+                </p>
+                <p className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
+                  {isLoyaltyOn ? displayMembersCount : totalOrders}
+                </p>
+              </div>
+              <div className="w-11 h-11 rounded-2xl bg-muted/70 dark:bg-muted/40 border border-border/40 flex items-center justify-center text-muted-foreground group-hover:text-primary group-hover:bg-primary/10 transition-colors shrink-0">
+                {isLoyaltyOn ? <UserPlus className="w-5 h-5" /> : <Package className="w-5 h-5" />}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
 
