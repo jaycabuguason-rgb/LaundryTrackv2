@@ -53,6 +53,7 @@ export type PublicShopProfile = Pick<
 
 export interface PublicTrackingRecord {
   ticketId: string;
+  customerName: string;
   status: TransactionStatus;
   eta: string | null;
   updatedAt: string | null;

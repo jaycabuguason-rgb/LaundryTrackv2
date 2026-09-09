@@ -158,6 +158,7 @@ function mapRowToPublicRecord(row: TransactionRow, profile: BusinessProfile): Pu
 
   return {
     ticketId: transaction.ticketId,
+    customerName: transaction.customerName,
     status: transaction.status,
     eta: transaction.eta ?? null,
     updatedAt: transaction.updatedAt ?? null,

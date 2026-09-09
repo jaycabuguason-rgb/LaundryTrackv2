@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
-import { CheckCircle2, Clock3, MapPin, Phone, Mail, Shirt, ShieldCheck, Package } from "lucide-react";
+import { CheckCircle2, Clock3, MapPin, Phone, Mail, Shirt, ShieldCheck, Package, User } from "lucide-react";
 
 import { formatReadableDateTime } from "@/lib/date-format";
 import { StatusBadge } from "@/components/status-badge";
@@ -127,7 +127,15 @@ export default async function PublicTrackingPage(
                 Ticket ID
               </p>
               <h1 className="mt-2 text-2xl font-bold tracking-tight">{record.ticketId}</h1>
-              <p className="mt-2 text-sm text-muted-foreground">
+              {record.customerName && (
+                <div className="mt-2 flex items-center gap-1.5 text-sm">
+                  <User className="h-4 w-4 text-primary shrink-0" />
+                  <span className="text-muted-foreground">
+                    Recipient: <span className="font-semibold text-foreground">{record.customerName}</span>
+                  </span>
+                </div>
+              )}
+              <p className="mt-1 text-sm text-muted-foreground">
                 Drop-off: {record.dropOffTime}
               </p>
               {record.eta && (
@@ -155,6 +163,12 @@ export default async function PublicTrackingPage(
             Laundry Details
           </div>
           <dl className="mt-4 space-y-3 text-sm">
+            {record.customerName && (
+              <div className="flex items-start justify-between gap-4 rounded-lg bg-muted/30 px-3 py-2">
+                <dt className="text-muted-foreground">Recipient</dt>
+                <dd className="text-right font-medium text-foreground">{record.customerName}</dd>
+              </div>
+            )}
             <div className="flex items-start justify-between gap-4 rounded-lg bg-muted/30 px-3 py-2">
               <dt className="text-muted-foreground">Weight</dt>
               <dd className="text-right font-medium">{record.weight} kg</dd>
