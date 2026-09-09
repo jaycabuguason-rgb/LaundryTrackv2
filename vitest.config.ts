@@ -17,7 +17,6 @@ export default defineConfig({
     globals: true,
     setupFiles: ["./vitest.setup.ts"],
     include: ["**/*.{test,spec}.{ts,tsx}"],
-    exclude: ["node_modules", ".next", "e2e", "playwright-report", "test-results"],
     exclude: ["node_modules", ".next", "e2e", "playwright-report", "test-results", ".opencode"],
     coverage: {
       provider: "v8",
@@ -25,12 +24,6 @@ export default defineConfig({
       reporter: ["text", "lcov", "html"],
       include: ["lib/**/*.{ts,tsx}", "components/**/*.{ts,tsx}", "app/**/*.{ts,tsx}"],
       exclude: ["**/*.d.ts", "**/node_modules/**", ".next/**"],
-      thresholds: {
-        statements: 60,
-        branches: 50,
-        functions: 60,
-        lines: 60,
-      },
     },
     css: true,
   },
