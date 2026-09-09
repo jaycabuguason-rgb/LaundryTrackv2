@@ -4878,7 +4878,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/app/api/audit-logs/route.ts",
       "source_location": "L1",
       "id": "f_prgram_files_vs_code_repo_processing_page_update_app_api_audit_logs_route_ts",
-      "community": 44,
+      "community": 133,
       "norm_label": "route.ts"
     },
     {
@@ -4887,7 +4887,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/app/api/audit-logs/route.ts",
       "source_location": "L6",
       "id": "audit_logs_route_get",
-      "community": 44,
+      "community": 133,
       "norm_label": "get()"
     },
     {
@@ -4914,7 +4914,7 @@
       "source_file": "app/api/loyalty/route.ts",
       "source_location": "L1",
       "id": "app_api_loyalty_route_ts",
-      "community": 168,
+      "community": 49,
       "norm_label": "route.ts"
     },
     {
@@ -4923,7 +4923,7 @@
       "source_file": "app/api/loyalty/route.ts",
       "source_location": "L5",
       "id": "loyalty_route_get",
-      "community": 168,
+      "community": 49,
       "norm_label": "get()"
     },
     {
@@ -4932,7 +4932,7 @@
       "source_file": "app/api/loyalty/route.ts",
       "source_location": "L21",
       "id": "loyalty_route_post",
-      "community": 168,
+      "community": 49,
       "norm_label": "post()"
     },
     {
@@ -4941,7 +4941,7 @@
       "source_file": "app/api/loyalty/[id]/route.ts",
       "source_location": "L1",
       "id": "app_api_loyalty_id_route_ts",
-      "community": 168,
+      "community": 49,
       "norm_label": "route.ts"
     },
     {
@@ -4950,7 +4950,7 @@
       "source_file": "app/api/loyalty/[id]/route.ts",
       "source_location": "L5",
       "id": "id_route_get",
-      "community": 168,
+      "community": 49,
       "norm_label": "get()"
     },
     {
@@ -4959,7 +4959,7 @@
       "source_file": "app/api/loyalty/[id]/route.ts",
       "source_location": "L25",
       "id": "id_route_patch",
-      "community": 168,
+      "community": 49,
       "norm_label": "patch()"
     },
     {
@@ -4968,7 +4968,7 @@
       "source_file": "app/api/loyalty/[id]/route.ts",
       "source_location": "L50",
       "id": "id_route_delete",
-      "community": 168,
+      "community": 49,
       "norm_label": "delete()"
     },
     {
@@ -4977,7 +4977,7 @@
       "source_file": "app/api/loyalty/[id]/stamps/route.ts",
       "source_location": "L1",
       "id": "app_api_loyalty_id_stamps_route_ts",
-      "community": 168,
+      "community": 49,
       "norm_label": "route.ts"
     },
     {
@@ -4986,7 +4986,7 @@
       "source_file": "app/api/loyalty/[id]/stamps/route.ts",
       "source_location": "L5",
       "id": "stamps_route_post",
-      "community": 168,
+      "community": 49,
       "norm_label": "post()"
     },
     {
@@ -5094,7 +5094,7 @@
       "source_file": "app/api/settings/pricing/route.ts",
       "source_location": "L9",
       "id": "pricing_route_get",
-      "community": 168,
+      "community": 133,
       "norm_label": "get()"
     },
     {
@@ -5121,7 +5121,7 @@
       "source_file": "app/api/staff/route.ts",
       "source_location": "L9",
       "id": "staff_route_get",
-      "community": 44,
+      "community": 133,
       "norm_label": "get()"
     },
     {
@@ -5193,7 +5193,7 @@
       "source_file": "app/api/transactions/route.ts",
       "source_location": "L1",
       "id": "app_api_transactions_route_ts",
-      "community": 168,
+      "community": 49,
       "norm_label": "route.ts"
     },
     {
@@ -5202,7 +5202,7 @@
       "source_file": "app/api/transactions/route.ts",
       "source_location": "L9",
       "id": "transactions_route_formatcurrency",
-      "community": 168,
+      "community": 49,
       "norm_label": "formatcurrency()"
     },
     {
@@ -5211,7 +5211,7 @@
       "source_file": "app/api/transactions/route.ts",
       "source_location": "L17",
       "id": "transactions_route_get",
-      "community": 168,
+      "community": 49,
       "norm_label": "get()"
     },
     {
@@ -5220,7 +5220,7 @@
       "source_file": "app/api/transactions/route.ts",
       "source_location": "L33",
       "id": "transactions_route_valid_statuses",
-      "community": 168,
+      "community": 49,
       "norm_label": "valid_statuses"
     },
     {
@@ -5229,7 +5229,7 @@
       "source_file": "app/api/transactions/route.ts",
       "source_location": "L34",
       "id": "transactions_route_valid_payment_statuses",
-      "community": 168,
+      "community": 49,
       "norm_label": "valid_payment_statuses"
     },
     {
@@ -5238,7 +5238,7 @@
       "source_file": "app/api/transactions/route.ts",
       "source_location": "L36",
       "id": "transactions_route_post",
-      "community": 168,
+      "community": 49,
       "norm_label": "post()"
     },
     {
@@ -5247,7 +5247,7 @@
       "source_file": "app/api/transactions/[ticketId]/route.ts",
       "source_location": "L1",
       "id": "app_api_transactions_ticketid_route_ts",
-      "community": 133,
+      "community": 49,
       "norm_label": "route.ts"
     },
     {
@@ -5256,7 +5256,7 @@
       "source_file": "app/api/transactions/[ticketId]/route.ts",
       "source_location": "L10",
       "id": "ticketid_route_valid_statuses",
-      "community": 133,
+      "community": 49,
       "norm_label": "valid_statuses"
     },
     {
@@ -5265,7 +5265,7 @@
       "source_file": "app/api/transactions/[ticketId]/route.ts",
       "source_location": "L11",
       "id": "ticketid_route_valid_payment_statuses",
-      "community": 133,
+      "community": 49,
       "norm_label": "valid_payment_statuses"
     },
     {
@@ -5274,7 +5274,7 @@
       "source_file": "app/api/transactions/[ticketId]/route.ts",
       "source_location": "L13",
       "id": "ticketid_route_patch",
-      "community": 133,
+      "community": 49,
       "norm_label": "patch()"
     },
     {
@@ -5985,7 +5985,7 @@
       "source_file": "components/report-pdf.tsx",
       "source_location": "L1",
       "id": "components_report_pdf_tsx",
-      "community": 150,
+      "community": 34,
       "norm_label": "report-pdf.tsx"
     },
     {
@@ -5994,7 +5994,7 @@
       "source_file": "components/report-pdf.tsx",
       "source_location": "L15",
       "id": "components_report_pdf_s",
-      "community": 150,
+      "community": 34,
       "norm_label": "s"
     },
     {
@@ -6003,7 +6003,7 @@
       "source_file": "components/report-pdf.tsx",
       "source_location": "L126",
       "id": "components_report_pdf_table",
-      "community": 150,
+      "community": 34,
       "norm_label": "table()"
     },
     {
@@ -6012,7 +6012,7 @@
       "source_file": "components/report-pdf.tsx",
       "source_location": "L154",
       "id": "components_report_pdf_reportpdfprops",
-      "community": 150,
+      "community": 34,
       "norm_label": "reportpdfprops"
     },
     {
@@ -6021,7 +6021,7 @@
       "source_file": "components/report-pdf.tsx",
       "source_location": "L162",
       "id": "components_report_pdf_reportdocument",
-      "community": 150,
+      "community": 34,
       "norm_label": "reportdocument()"
     },
     {
@@ -6030,7 +6030,7 @@
       "source_file": "components/report-pdf.tsx",
       "source_location": "L258",
       "id": "components_report_pdf_downloadreportpdf",
-      "community": 150,
+      "community": 34,
       "norm_label": "downloadreportpdf()"
     },
     {
@@ -6039,7 +6039,7 @@
       "source_file": "components/report-pdf.tsx",
       "source_location": "L270",
       "id": "components_report_pdf_forecastpdfmetrics",
-      "community": 150,
+      "community": 34,
       "norm_label": "forecastpdfmetrics"
     },
     {
@@ -6048,7 +6048,7 @@
       "source_file": "components/report-pdf.tsx",
       "source_location": "L285",
       "id": "components_report_pdf_forecastreportpdfprops",
-      "community": 150,
+      "community": 34,
       "norm_label": "forecastreportpdfprops"
     },
     {
@@ -6057,7 +6057,7 @@
       "source_file": "components/report-pdf.tsx",
       "source_location": "L292",
       "id": "components_report_pdf_forecastreportdocument",
-      "community": 150,
+      "community": 34,
       "norm_label": "forecastreportdocument()"
     },
     {
@@ -6066,7 +6066,7 @@
       "source_file": "components/report-pdf.tsx",
       "source_location": "L370",
       "id": "components_report_pdf_downloadforecastreportpdf",
-      "community": 150,
+      "community": 34,
       "norm_label": "downloadforecastreportpdf()"
     },
     {
@@ -6372,7 +6372,7 @@
       "source_file": "components/transaction-edit-modal.tsx",
       "source_location": "L1",
       "id": "components_transaction_edit_modal_tsx",
-      "community": 154,
+      "community": 152,
       "norm_label": "transaction-edit-modal.tsx"
     },
     {
@@ -6381,7 +6381,7 @@
       "source_file": "components/transaction-edit-modal.tsx",
       "source_location": "L24",
       "id": "components_transaction_edit_modal_transactioneditmodalprops",
-      "community": 154,
+      "community": 152,
       "norm_label": "transactioneditmodalprops"
     },
     {
@@ -6390,7 +6390,7 @@
       "source_file": "components/transaction-edit-modal.tsx",
       "source_location": "L31",
       "id": "components_transaction_edit_modal_status_options",
-      "community": 154,
+      "community": 152,
       "norm_label": "status_options"
     },
     {
@@ -6399,7 +6399,7 @@
       "source_file": "components/transaction-edit-modal.tsx",
       "source_location": "L39",
       "id": "components_transaction_edit_modal_transactioneditmodal",
-      "community": 154,
+      "community": 152,
       "norm_label": "transactioneditmodal()"
     },
     {
@@ -6541,7 +6541,7 @@
       "label": "DashboardPageProps",
       "file_type": "code",
       "source_file": "components/pages/dashboard.tsx",
-      "source_location": "L31",
+      "source_location": "L32",
       "id": "pages_dashboard_dashboardpageprops",
       "community": 74,
       "norm_label": "dashboardpageprops"
@@ -6550,7 +6550,7 @@
       "label": "DashboardPage()",
       "file_type": "code",
       "source_file": "components/pages/dashboard.tsx",
-      "source_location": "L38",
+      "source_location": "L39",
       "id": "pages_dashboard_dashboardpage",
       "community": 74,
       "norm_label": "dashboardpage()"
@@ -6705,7 +6705,7 @@
       "source_file": "components/pages/loyalty.tsx",
       "source_location": "L1",
       "id": "components_pages_loyalty_tsx",
-      "community": 154,
+      "community": 152,
       "norm_label": "loyalty.tsx"
     },
     {
@@ -6714,7 +6714,7 @@
       "source_file": "components/pages/loyalty.tsx",
       "source_location": "L53",
       "id": "pages_loyalty_getinitials",
-      "community": 154,
+      "community": 152,
       "norm_label": "getinitials()"
     },
     {
@@ -6723,7 +6723,7 @@
       "source_file": "components/pages/loyalty.tsx",
       "source_location": "L62",
       "id": "pages_loyalty_stampdots",
-      "community": 154,
+      "community": 152,
       "norm_label": "stampdots()"
     },
     {
@@ -6732,7 +6732,7 @@
       "source_file": "components/pages/loyalty.tsx",
       "source_location": "L85",
       "id": "pages_loyalty_loyaltypageprops",
-      "community": 154,
+      "community": 152,
       "norm_label": "loyaltypageprops"
     },
     {
@@ -6741,7 +6741,7 @@
       "source_file": "components/pages/loyalty.tsx",
       "source_location": "L90",
       "id": "pages_loyalty_loyaltypage",
-      "community": 154,
+      "community": 152,
       "norm_label": "loyaltypage()"
     },
     {
@@ -7407,7 +7407,7 @@
       "source_file": "components/pages/staff-management.tsx",
       "source_location": "L1",
       "id": "components_pages_staff_management_tsx",
-      "community": 154,
+      "community": 152,
       "norm_label": "staff-management.tsx"
     },
     {
@@ -7416,7 +7416,7 @@
       "source_file": "components/pages/staff-management.tsx",
       "source_location": "L58",
       "id": "pages_staff_management_passwordfield",
-      "community": 154,
+      "community": 152,
       "norm_label": "passwordfield()"
     },
     {
@@ -7425,7 +7425,7 @@
       "source_file": "components/pages/staff-management.tsx",
       "source_location": "L103",
       "id": "pages_staff_management_field",
-      "community": 154,
+      "community": 152,
       "norm_label": "field()"
     },
     {
@@ -7434,7 +7434,7 @@
       "source_file": "components/pages/staff-management.tsx",
       "source_location": "L138",
       "id": "pages_staff_management_formatdate",
-      "community": 154,
+      "community": 152,
       "norm_label": "formatdate()"
     },
     {
@@ -7443,7 +7443,7 @@
       "source_file": "components/pages/staff-management.tsx",
       "source_location": "L146",
       "id": "pages_staff_management_getinitials",
-      "community": 154,
+      "community": 152,
       "norm_label": "getinitials()"
     },
     {
@@ -7452,7 +7452,7 @@
       "source_file": "components/pages/staff-management.tsx",
       "source_location": "L155",
       "id": "pages_staff_management_getdefaultemail",
-      "community": 154,
+      "community": 152,
       "norm_label": "getdefaultemail()"
     },
     {
@@ -7461,7 +7461,7 @@
       "source_file": "components/pages/staff-management.tsx",
       "source_location": "L160",
       "id": "pages_staff_management_rolebadge",
-      "community": 154,
+      "community": 152,
       "norm_label": "rolebadge()"
     },
     {
@@ -7470,7 +7470,7 @@
       "source_file": "components/pages/staff-management.tsx",
       "source_location": "L183",
       "id": "pages_staff_management_shiftstatusbadge",
-      "community": 154,
+      "community": 152,
       "norm_label": "shiftstatusbadge()"
     },
     {
@@ -7479,7 +7479,7 @@
       "source_file": "components/pages/staff-management.tsx",
       "source_location": "L209",
       "id": "pages_staff_management_staffmanagementpage",
-      "community": 154,
+      "community": 152,
       "norm_label": "staffmanagementpage()"
     },
     {
@@ -7632,7 +7632,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/alert-dialog.tsx",
       "source_location": "L1",
       "id": "f_prgram_files_vs_code_repo_processing_page_update_components_ui_alert_dialog_tsx",
-      "community": 154,
+      "community": 152,
       "norm_label": "alert-dialog.tsx"
     },
     {
@@ -7641,7 +7641,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/alert-dialog.tsx",
       "source_location": "L9",
       "id": "ui_alert_dialog_alertdialog",
-      "community": 154,
+      "community": 152,
       "norm_label": "alertdialog()"
     },
     {
@@ -7650,7 +7650,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/alert-dialog.tsx",
       "source_location": "L15",
       "id": "ui_alert_dialog_alertdialogtrigger",
-      "community": 154,
+      "community": 152,
       "norm_label": "alertdialogtrigger()"
     },
     {
@@ -7659,7 +7659,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/alert-dialog.tsx",
       "source_location": "L23",
       "id": "ui_alert_dialog_alertdialogportal",
-      "community": 154,
+      "community": 152,
       "norm_label": "alertdialogportal()"
     },
     {
@@ -7668,7 +7668,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/alert-dialog.tsx",
       "source_location": "L31",
       "id": "ui_alert_dialog_alertdialogoverlay",
-      "community": 154,
+      "community": 152,
       "norm_label": "alertdialogoverlay()"
     },
     {
@@ -7677,7 +7677,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/alert-dialog.tsx",
       "source_location": "L47",
       "id": "ui_alert_dialog_alertdialogcontent",
-      "community": 154,
+      "community": 152,
       "norm_label": "alertdialogcontent()"
     },
     {
@@ -7686,7 +7686,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/alert-dialog.tsx",
       "source_location": "L66",
       "id": "ui_alert_dialog_alertdialogheader",
-      "community": 154,
+      "community": 152,
       "norm_label": "alertdialogheader()"
     },
     {
@@ -7695,7 +7695,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/alert-dialog.tsx",
       "source_location": "L79",
       "id": "ui_alert_dialog_alertdialogfooter",
-      "community": 154,
+      "community": 152,
       "norm_label": "alertdialogfooter()"
     },
     {
@@ -7704,7 +7704,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/alert-dialog.tsx",
       "source_location": "L95",
       "id": "ui_alert_dialog_alertdialogtitle",
-      "community": 154,
+      "community": 152,
       "norm_label": "alertdialogtitle()"
     },
     {
@@ -7713,7 +7713,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/alert-dialog.tsx",
       "source_location": "L108",
       "id": "ui_alert_dialog_alertdialogdescription",
-      "community": 154,
+      "community": 152,
       "norm_label": "alertdialogdescription()"
     },
     {
@@ -7722,7 +7722,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/alert-dialog.tsx",
       "source_location": "L121",
       "id": "ui_alert_dialog_alertdialogaction",
-      "community": 154,
+      "community": 152,
       "norm_label": "alertdialogaction()"
     },
     {
@@ -7731,7 +7731,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/alert-dialog.tsx",
       "source_location": "L133",
       "id": "ui_alert_dialog_alertdialogcancel",
-      "community": 154,
+      "community": 152,
       "norm_label": "alertdialogcancel()"
     },
     {
@@ -7983,7 +7983,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/button.tsx",
       "source_location": "L1",
       "id": "f_prgram_files_vs_code_repo_processing_page_update_components_ui_button_tsx",
-      "community": 154,
+      "community": 152,
       "norm_label": "button.tsx"
     },
     {
@@ -7992,7 +7992,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/button.tsx",
       "source_location": "L7",
       "id": "ui_button_buttonvariants",
-      "community": 154,
+      "community": 152,
       "norm_label": "buttonvariants"
     },
     {
@@ -8478,7 +8478,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/context-menu.tsx",
       "source_location": "L1",
       "id": "f_prgram_files_vs_code_repo_processing_page_update_components_ui_context_menu_tsx",
-      "community": 31,
+      "community": 150,
       "norm_label": "context-menu.tsx"
     },
     {
@@ -8487,7 +8487,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/context-menu.tsx",
       "source_location": "L9",
       "id": "ui_context_menu_contextmenu",
-      "community": 31,
+      "community": 150,
       "norm_label": "contextmenu()"
     },
     {
@@ -8496,7 +8496,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/context-menu.tsx",
       "source_location": "L15",
       "id": "ui_context_menu_contextmenutrigger",
-      "community": 31,
+      "community": 150,
       "norm_label": "contextmenutrigger()"
     },
     {
@@ -8505,7 +8505,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/context-menu.tsx",
       "source_location": "L23",
       "id": "ui_context_menu_contextmenugroup",
-      "community": 31,
+      "community": 150,
       "norm_label": "contextmenugroup()"
     },
     {
@@ -8514,7 +8514,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/context-menu.tsx",
       "source_location": "L31",
       "id": "ui_context_menu_contextmenuportal",
-      "community": 31,
+      "community": 150,
       "norm_label": "contextmenuportal()"
     },
     {
@@ -8523,7 +8523,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/context-menu.tsx",
       "source_location": "L39",
       "id": "ui_context_menu_contextmenusub",
-      "community": 31,
+      "community": 150,
       "norm_label": "contextmenusub()"
     },
     {
@@ -8532,7 +8532,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/context-menu.tsx",
       "source_location": "L45",
       "id": "ui_context_menu_contextmenuradiogroup",
-      "community": 31,
+      "community": 150,
       "norm_label": "contextmenuradiogroup()"
     },
     {
@@ -8541,7 +8541,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/context-menu.tsx",
       "source_location": "L56",
       "id": "ui_context_menu_contextmenusubtrigger",
-      "community": 31,
+      "community": 150,
       "norm_label": "contextmenusubtrigger()"
     },
     {
@@ -8550,7 +8550,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/context-menu.tsx",
       "source_location": "L80",
       "id": "ui_context_menu_contextmenusubcontent",
-      "community": 31,
+      "community": 150,
       "norm_label": "contextmenusubcontent()"
     },
     {
@@ -8559,7 +8559,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/context-menu.tsx",
       "source_location": "L96",
       "id": "ui_context_menu_contextmenucontent",
-      "community": 31,
+      "community": 150,
       "norm_label": "contextmenucontent()"
     },
     {
@@ -8568,7 +8568,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/context-menu.tsx",
       "source_location": "L114",
       "id": "ui_context_menu_contextmenuitem",
-      "community": 31,
+      "community": 150,
       "norm_label": "contextmenuitem()"
     },
     {
@@ -8577,7 +8577,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/context-menu.tsx",
       "source_location": "L137",
       "id": "ui_context_menu_contextmenucheckboxitem",
-      "community": 31,
+      "community": 150,
       "norm_label": "contextmenucheckboxitem()"
     },
     {
@@ -8586,7 +8586,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/context-menu.tsx",
       "source_location": "L163",
       "id": "ui_context_menu_contextmenuradioitem",
-      "community": 31,
+      "community": 150,
       "norm_label": "contextmenuradioitem()"
     },
     {
@@ -8595,7 +8595,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/context-menu.tsx",
       "source_location": "L187",
       "id": "ui_context_menu_contextmenulabel",
-      "community": 31,
+      "community": 150,
       "norm_label": "contextmenulabel()"
     },
     {
@@ -8604,7 +8604,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/context-menu.tsx",
       "source_location": "L207",
       "id": "ui_context_menu_contextmenuseparator",
-      "community": 31,
+      "community": 150,
       "norm_label": "contextmenuseparator()"
     },
     {
@@ -8613,7 +8613,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/context-menu.tsx",
       "source_location": "L220",
       "id": "ui_context_menu_contextmenushortcut",
-      "community": 31,
+      "community": 150,
       "norm_label": "contextmenushortcut()"
     },
     {
@@ -9432,7 +9432,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/item.tsx",
       "source_location": "L1",
       "id": "f_prgram_files_vs_code_repo_processing_page_update_components_ui_item_tsx",
-      "community": 278,
+      "community": 31,
       "norm_label": "item.tsx"
     },
     {
@@ -9441,7 +9441,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/item.tsx",
       "source_location": "L8",
       "id": "ui_item_itemgroup",
-      "community": 278,
+      "community": 31,
       "norm_label": "itemgroup()"
     },
     {
@@ -9450,7 +9450,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/item.tsx",
       "source_location": "L19",
       "id": "ui_item_itemseparator",
-      "community": 278,
+      "community": 31,
       "norm_label": "itemseparator()"
     },
     {
@@ -9459,7 +9459,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/item.tsx",
       "source_location": "L33",
       "id": "ui_item_itemvariants",
-      "community": 278,
+      "community": 31,
       "norm_label": "itemvariants"
     },
     {
@@ -9468,7 +9468,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/item.tsx",
       "source_location": "L54",
       "id": "ui_item_item",
-      "community": 278,
+      "community": 31,
       "norm_label": "item()"
     },
     {
@@ -9477,7 +9477,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/item.tsx",
       "source_location": "L74",
       "id": "ui_item_itemmediavariants",
-      "community": 278,
+      "community": 31,
       "norm_label": "itemmediavariants"
     },
     {
@@ -9486,7 +9486,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/item.tsx",
       "source_location": "L91",
       "id": "ui_item_itemmedia",
-      "community": 278,
+      "community": 31,
       "norm_label": "itemmedia()"
     },
     {
@@ -9495,7 +9495,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/item.tsx",
       "source_location": "L106",
       "id": "ui_item_itemcontent",
-      "community": 278,
+      "community": 31,
       "norm_label": "itemcontent()"
     },
     {
@@ -9504,7 +9504,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/item.tsx",
       "source_location": "L119",
       "id": "ui_item_itemtitle",
-      "community": 278,
+      "community": 31,
       "norm_label": "itemtitle()"
     },
     {
@@ -9513,7 +9513,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/item.tsx",
       "source_location": "L132",
       "id": "ui_item_itemdescription",
-      "community": 278,
+      "community": 31,
       "norm_label": "itemdescription()"
     },
     {
@@ -9522,7 +9522,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/item.tsx",
       "source_location": "L146",
       "id": "ui_item_itemactions",
-      "community": 278,
+      "community": 31,
       "norm_label": "itemactions()"
     },
     {
@@ -9531,7 +9531,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/item.tsx",
       "source_location": "L156",
       "id": "ui_item_itemheader",
-      "community": 278,
+      "community": 31,
       "norm_label": "itemheader()"
     },
     {
@@ -9540,7 +9540,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/item.tsx",
       "source_location": "L169",
       "id": "ui_item_itemfooter",
-      "community": 278,
+      "community": 31,
       "norm_label": "itemfooter()"
     },
     {
@@ -10611,7 +10611,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/switch.tsx",
       "source_location": "L1",
       "id": "f_prgram_files_vs_code_repo_processing_page_update_components_ui_switch_tsx",
-      "community": 154,
+      "community": 152,
       "norm_label": "switch.tsx"
     },
     {
@@ -10620,7 +10620,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/switch.tsx",
       "source_location": "L8",
       "id": "ui_switch_switch",
-      "community": 154,
+      "community": 152,
       "norm_label": "switch()"
     },
     {
@@ -10755,7 +10755,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/textarea.tsx",
       "source_location": "L1",
       "id": "f_prgram_files_vs_code_repo_processing_page_update_components_ui_textarea_tsx",
-      "community": 154,
+      "community": 152,
       "norm_label": "textarea.tsx"
     },
     {
@@ -10764,7 +10764,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/ui/textarea.tsx",
       "source_location": "L5",
       "id": "ui_textarea_textarea",
-      "community": 154,
+      "community": 152,
       "norm_label": "textarea()"
     },
     {
@@ -11295,7 +11295,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/hooks/use-staff-accounts.ts",
       "source_location": "L44",
       "id": "hooks_use_staff_accounts_usestaffaccounts",
-      "community": 154,
+      "community": 152,
       "norm_label": "usestaffaccounts()"
     },
     {
@@ -11934,7 +11934,7 @@
       "source_file": "lib/data.ts",
       "source_location": "L172",
       "id": "lib_data_servicerevenuedata",
-      "community": 150,
+      "community": 34,
       "norm_label": "servicerevenuedata"
     },
     {
@@ -12933,7 +12933,7 @@
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/lib/server/audit-log-repository.ts",
       "source_location": "L127",
       "id": "server_audit_log_repository_listauditlogs",
-      "community": 44,
+      "community": 133,
       "norm_label": "listauditlogs()"
     },
     {
@@ -13419,7 +13419,7 @@
       "source_file": "lib/server/loyalty-repository.ts",
       "source_location": "L8",
       "id": "server_loyalty_repository_stampawardresult",
-      "community": 133,
+      "community": 49,
       "norm_label": "stampawardresult"
     },
     {
@@ -13608,7 +13608,7 @@
       "source_file": "lib/server/request-auth.ts",
       "source_location": "L1",
       "id": "lib_server_request_auth_ts",
-      "community": 168,
+      "community": 133,
       "norm_label": "request-auth.ts"
     },
     {
@@ -13617,7 +13617,7 @@
       "source_file": "lib/server/request-auth.ts",
       "source_location": "L8",
       "id": "server_request_auth_viewerprofilerow",
-      "community": 168,
+      "community": 133,
       "norm_label": "viewerprofilerow"
     },
     {
@@ -13626,7 +13626,7 @@
       "source_file": "lib/server/request-auth.ts",
       "source_location": "L17",
       "id": "server_request_auth_requestactorcache",
-      "community": 168,
+      "community": 133,
       "norm_label": "requestactorcache"
     },
     {
@@ -13635,7 +13635,7 @@
       "source_file": "lib/server/request-auth.ts",
       "source_location": "L19",
       "id": "server_request_auth_requestactor",
-      "community": 168,
+      "community": 133,
       "norm_label": "requestactor"
     },
     {
@@ -13644,7 +13644,7 @@
       "source_file": "lib/server/request-auth.ts",
       "source_location": "L28",
       "id": "server_request_auth_getbearertoken",
-      "community": 168,
+      "community": 133,
       "norm_label": "getbearertoken()"
     },
     {
@@ -13653,7 +13653,7 @@
       "source_file": "lib/server/request-auth.ts",
       "source_location": "L38",
       "id": "server_request_auth_getrolefromauthuser",
-      "community": 168,
+      "community": 133,
       "norm_label": "getrolefromauthuser()"
     },
     {
@@ -13662,7 +13662,7 @@
       "source_file": "lib/server/request-auth.ts",
       "source_location": "L45",
       "id": "server_request_auth_syncmissingprofilefromauthuser",
-      "community": 168,
+      "community": 133,
       "norm_label": "syncmissingprofilefromauthuser()"
     },
     {
@@ -13671,7 +13671,7 @@
       "source_file": "lib/server/request-auth.ts",
       "source_location": "L97",
       "id": "server_request_auth_getrequestactor",
-      "community": 168,
+      "community": 133,
       "norm_label": "getrequestactor()"
     },
     {
@@ -13680,7 +13680,7 @@
       "source_file": "lib/server/request-auth.ts",
       "source_location": "L102",
       "id": "server_request_auth_getactorfromtoken",
-      "community": 168,
+      "community": 133,
       "norm_label": "getactorfromtoken()"
     },
     {
@@ -13689,7 +13689,7 @@
       "source_file": "lib/server/request-auth.ts",
       "source_location": "L150",
       "id": "server_request_auth_requireadminrequest",
-      "community": 44,
+      "community": 133,
       "norm_label": "requireadminrequest()"
     },
     {
@@ -13698,7 +13698,7 @@
       "source_file": "lib/server/request-auth.ts",
       "source_location": "L168",
       "id": "server_request_auth_requireauthrequest",
-      "community": 168,
+      "community": 49,
       "norm_label": "requireauthrequest()"
     },
     {
@@ -13707,7 +13707,7 @@
       "source_file": "lib/server/request-auth.ts",
       "source_location": "L182",
       "id": "server_request_auth_getautherrorstatus",
-      "community": 168,
+      "community": 49,
       "norm_label": "getautherrorstatus()"
     },
     {
@@ -15768,7 +15768,7 @@
       "source_file": "plan/.obsidian/plugins/agent-client/main.js",
       "source_location": "L6",
       "id": "agent_client_main_za",
-      "community": 48,
+      "community": 54,
       "norm_label": "za()"
     },
     {
@@ -19008,7 +19008,7 @@
       "source_file": "plan/.obsidian/plugins/agent-client/main.js",
       "source_location": "L119",
       "id": "agent_client_main_k4",
-      "community": 20,
+      "community": 3,
       "norm_label": "k4()"
     },
     {
@@ -19575,7 +19575,7 @@
       "source_file": "plan/.obsidian/plugins/agent-client/main.js",
       "source_location": "L120",
       "id": "agent_client_main_u4",
-      "community": 32,
+      "community": 54,
       "norm_label": "u4()"
     },
     {
@@ -19629,7 +19629,7 @@
       "source_file": "plan/.obsidian/plugins/agent-client/main.js",
       "source_location": "L120",
       "id": "agent_client_main_getinitialagentid",
-      "community": 32,
+      "community": 54,
       "norm_label": "getinitialagentid()"
     },
     {
@@ -20970,7 +20970,7 @@
       "source_file": "plan/.obsidian/plugins/agent-client/main.js",
       "source_location": "L188",
       "id": "agent_client_main_ra",
-      "community": 20,
+      "community": 137,
       "norm_label": "ra()"
     },
     {
@@ -20997,7 +20997,7 @@
       "source_file": "plan/.obsidian/plugins/agent-client/main.js",
       "source_location": "L188",
       "id": "agent_client_main_la",
-      "community": 48,
+      "community": 54,
       "norm_label": "la()"
     },
     {
@@ -21024,7 +21024,7 @@
       "source_file": "plan/.obsidian/plugins/agent-client/main.js",
       "source_location": "L188",
       "id": "agent_client_main_pa",
-      "community": 40,
+      "community": 37,
       "norm_label": "pa()"
     },
     {
@@ -21033,7 +21033,7 @@
       "source_file": "plan/.obsidian/plugins/agent-client/main.js",
       "source_location": "L188",
       "id": "agent_client_main_ma",
-      "community": 128,
+      "community": 54,
       "norm_label": "ma()"
     },
     {
@@ -21042,7 +21042,7 @@
       "source_file": "plan/.obsidian/plugins/agent-client/main.js",
       "source_location": "L188",
       "id": "agent_client_main_ga",
-      "community": 40,
+      "community": 37,
       "norm_label": "ga()"
     },
     {
@@ -21555,7 +21555,7 @@
       "source_file": "plan/.obsidian/plugins/agent-client/main.js",
       "source_location": "L188",
       "id": "agent_client_main_s2",
-      "community": 48,
+      "community": 54,
       "norm_label": "s2()"
     },
     {
@@ -21618,7 +21618,7 @@
       "source_file": "plan/.obsidian/plugins/agent-client/main.js",
       "source_location": "L188",
       "id": "agent_client_main_i2",
-      "community": 20,
+      "community": 54,
       "norm_label": "i2()"
     },
     {
@@ -21690,7 +21690,7 @@
       "source_file": "plan/.obsidian/plugins/agent-client/main.js",
       "source_location": "L188",
       "id": "agent_client_main_o2",
-      "community": 128,
+      "community": 54,
       "norm_label": "o2()"
     },
     {
@@ -21699,7 +21699,7 @@
       "source_file": "plan/.obsidian/plugins/agent-client/main.js",
       "source_location": "L188",
       "id": "agent_client_main_d2",
-      "community": 48,
+      "community": 54,
       "norm_label": "d2()"
     },
     {
@@ -25632,7 +25632,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L2",
       "id": "terminal_main_j",
-      "community": 198,
+      "community": 135,
       "norm_label": "j()"
     },
     {
@@ -25650,7 +25650,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L2",
       "id": "terminal_main_a",
-      "community": 32,
+      "community": 128,
       "norm_label": "a"
     },
     {
@@ -25740,7 +25740,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L9",
       "id": "terminal_main_v8",
-      "community": 48,
+      "community": 54,
       "norm_label": "v8()"
     },
     {
@@ -25749,7 +25749,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L9",
       "id": "terminal_main_h11",
-      "community": 54,
+      "community": 40,
       "norm_label": "h11()"
     },
     {
@@ -25758,7 +25758,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L9",
       "id": "terminal_main_bw",
-      "community": 48,
+      "community": 54,
       "norm_label": "bw()"
     },
     {
@@ -25767,7 +25767,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L9",
       "id": "terminal_main_fe",
-      "community": 128,
+      "community": 54,
       "norm_label": "fe()"
     },
     {
@@ -25794,7 +25794,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L9",
       "id": "terminal_main_lw",
-      "community": 48,
+      "community": 54,
       "norm_label": "lw()"
     },
     {
@@ -25812,7 +25812,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L9",
       "id": "terminal_main_w",
-      "community": 135,
+      "community": 361,
       "norm_label": "_w()"
     },
     {
@@ -25911,7 +25911,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L15",
       "id": "terminal_main_k11",
-      "community": 48,
+      "community": 54,
       "norm_label": "k11()"
     },
     {
@@ -25929,7 +25929,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L18",
       "id": "terminal_main_y11",
-      "community": 48,
+      "community": 54,
       "norm_label": "y11()"
     },
     {
@@ -25938,7 +25938,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L18",
       "id": "terminal_main_az",
-      "community": 40,
+      "community": 37,
       "norm_label": "az()"
     },
     {
@@ -26046,7 +26046,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L18",
       "id": "terminal_main_sz",
-      "community": 128,
+      "community": 54,
       "norm_label": "sz()"
     },
     {
@@ -26064,7 +26064,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L18",
       "id": "terminal_main_u7",
-      "community": 3,
+      "community": 54,
       "norm_label": "u7()"
     },
     {
@@ -26325,7 +26325,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_r",
-      "community": 153,
+      "community": 8,
       "norm_label": "r()"
     },
     {
@@ -26352,7 +26352,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_g",
-      "community": 8,
+      "community": 153,
       "norm_label": "g()"
     },
     {
@@ -26379,7 +26379,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_notifylisteners",
-      "community": 45,
+      "community": 40,
       "norm_label": "notifylisteners()"
     },
     {
@@ -26460,7 +26460,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_getcookies",
-      "community": 45,
+      "community": 40,
       "norm_label": "getcookies()"
     },
     {
@@ -26604,7 +26604,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_sb",
-      "community": 128,
+      "community": 54,
       "norm_label": "sb()"
     },
     {
@@ -26613,7 +26613,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_u71",
-      "community": 128,
+      "community": 54,
       "norm_label": "u71()"
     },
     {
@@ -26874,7 +26874,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_ab",
-      "community": 54,
+      "community": 40,
       "norm_label": "ab()"
     },
     {
@@ -26883,7 +26883,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_w71",
-      "community": 54,
+      "community": 40,
       "norm_label": "w71()"
     },
     {
@@ -26964,7 +26964,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_fromarray",
-      "community": 54,
+      "community": 40,
       "norm_label": "fromarray()"
     },
     {
@@ -26982,7 +26982,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_add",
-      "community": 54,
+      "community": 40,
       "norm_label": "add()"
     },
     {
@@ -26991,7 +26991,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_has",
-      "community": 54,
+      "community": 40,
       "norm_label": "has()"
     },
     {
@@ -27009,7 +27009,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_at",
-      "community": 37,
+      "community": 3,
       "norm_label": "at()"
     },
     {
@@ -27027,7 +27027,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_l71",
-      "community": 54,
+      "community": 40,
       "norm_label": "l71()"
     },
     {
@@ -27036,7 +27036,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_unsortedforeach",
-      "community": 45,
+      "community": 40,
       "norm_label": "unsortedforeach()"
     },
     {
@@ -27045,7 +27045,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_fromsourcemap",
-      "community": 45,
+      "community": 40,
       "norm_label": "fromsourcemap()"
     },
     {
@@ -27054,7 +27054,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_addmapping",
-      "community": 45,
+      "community": 40,
       "norm_label": "addmapping()"
     },
     {
@@ -27063,7 +27063,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_setsourcecontent",
-      "community": 45,
+      "community": 40,
       "norm_label": "setsourcecontent()"
     },
     {
@@ -27072,7 +27072,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_applysourcemap",
-      "community": 45,
+      "community": 40,
       "norm_label": "applysourcemap()"
     },
     {
@@ -27081,7 +27081,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_validatemapping",
-      "community": 45,
+      "community": 40,
       "norm_label": "_validatemapping()"
     },
     {
@@ -27288,7 +27288,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_eachmapping",
-      "community": 45,
+      "community": 40,
       "norm_label": "eachmapping()"
     },
     {
@@ -27297,7 +27297,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_allgeneratedpositionsfor",
-      "community": 45,
+      "community": 40,
       "norm_label": "allgeneratedpositionsfor()"
     },
     {
@@ -27315,7 +27315,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_findsourceindex",
-      "community": 45,
+      "community": 40,
       "norm_label": "_findsourceindex()"
     },
     {
@@ -27360,7 +27360,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_originalpositionfor",
-      "community": 37,
+      "community": 3,
       "norm_label": "originalpositionfor()"
     },
     {
@@ -27369,7 +27369,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_hascontentsofallsources",
-      "community": 128,
+      "community": 20,
       "norm_label": "hascontentsofallsources()"
     },
     {
@@ -27378,7 +27378,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_sourcecontentfor",
-      "community": 45,
+      "community": 40,
       "norm_label": "sourcecontentfor()"
     },
     {
@@ -27387,7 +27387,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_generatedpositionfor",
-      "community": 45,
+      "community": 40,
       "norm_label": "generatedpositionfor()"
     },
     {
@@ -27396,7 +27396,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_findsectionindex",
-      "community": 45,
+      "community": 40,
       "norm_label": "_findsectionindex()"
     },
     {
@@ -27414,7 +27414,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_p71",
-      "community": 45,
+      "community": 40,
       "norm_label": "p71()"
     },
     {
@@ -27423,7 +27423,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_fromstringwithsourcemap",
-      "community": 45,
+      "community": 40,
       "norm_label": "fromstringwithsourcemap()"
     },
     {
@@ -27441,7 +27441,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_walk",
-      "community": 45,
+      "community": 40,
       "norm_label": "walk()"
     },
     {
@@ -27468,7 +27468,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_walksourcecontents",
-      "community": 45,
+      "community": 40,
       "norm_label": "walksourcecontents()"
     },
     {
@@ -27477,7 +27477,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L21",
       "id": "terminal_main_tostringwithsourcemap",
-      "community": 45,
+      "community": 40,
       "norm_label": "tostringwithsourcemap()"
     },
     {
@@ -27630,7 +27630,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_intersects",
-      "community": 128,
+      "community": 20,
       "norm_label": "intersects()"
     },
     {
@@ -27684,7 +27684,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_m",
-      "community": 8,
+      "community": 361,
       "norm_label": "m"
     },
     {
@@ -27720,7 +27720,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_o_constructor",
-      "community": 13,
+      "community": 153,
       "norm_label": ".constructor()"
     },
     {
@@ -27774,7 +27774,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_o_handleselectionchanged",
-      "community": 357,
+      "community": 37,
       "norm_label": ".handleselectionchanged()"
     },
     {
@@ -27972,7 +27972,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_b_refresh",
-      "community": 37,
+      "community": 32,
       "norm_label": ".refresh()"
     },
     {
@@ -27981,7 +27981,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_b_generate",
-      "community": 37,
+      "community": 32,
       "norm_label": "._generate()"
     },
     {
@@ -27990,7 +27990,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_m_constructor",
-      "community": 135,
+      "community": 361,
       "norm_label": ".constructor()"
     },
     {
@@ -27999,7 +27999,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_m_textureatlas",
-      "community": 8,
+      "community": 361,
       "norm_label": ".textureatlas()"
     },
     {
@@ -28035,7 +28035,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_m_handleblur",
-      "community": 8,
+      "community": 361,
       "norm_label": ".handleblur()"
     },
     {
@@ -28044,7 +28044,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_m_handlefocus",
-      "community": 8,
+      "community": 361,
       "norm_label": ".handlefocus()"
     },
     {
@@ -28053,7 +28053,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_m_handleselectionchanged",
-      "community": 8,
+      "community": 361,
       "norm_label": ".handleselectionchanged()"
     },
     {
@@ -28062,7 +28062,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_m_handlecursormove",
-      "community": 8,
+      "community": 361,
       "norm_label": ".handlecursormove()"
     },
     {
@@ -28071,7 +28071,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_m_clear",
-      "community": 8,
+      "community": 361,
       "norm_label": ".clear()"
     },
     {
@@ -28080,7 +28080,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_m_runoperation",
-      "community": 8,
+      "community": 361,
       "norm_label": "._runoperation()"
     },
     {
@@ -28098,7 +28098,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_m_cleartextureatlas",
-      "community": 8,
+      "community": 361,
       "norm_label": ".cleartextureatlas()"
     },
     {
@@ -28107,7 +28107,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_m_updatedimensions",
-      "community": 8,
+      "community": 361,
       "norm_label": "._updatedimensions()"
     },
     {
@@ -28125,7 +28125,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_m_requestredrawviewport",
-      "community": 8,
+      "community": 361,
       "norm_label": "._requestredrawviewport()"
     },
     {
@@ -28134,7 +28134,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_f_constructor",
-      "community": 361,
+      "community": 153,
       "norm_label": ".constructor()"
     },
     {
@@ -28143,7 +28143,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_f_resize",
-      "community": 45,
+      "community": 40,
       "norm_label": ".resize()"
     },
     {
@@ -28152,7 +28152,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_f_reset",
-      "community": 157,
+      "community": 361,
       "norm_label": ".reset()"
     },
     {
@@ -28170,7 +28170,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_f_handlefocus",
-      "community": 198,
+      "community": 35,
       "norm_label": ".handlefocus()"
     },
     {
@@ -28188,7 +28188,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_f_handlecursormove",
-      "community": 157,
+      "community": 361,
       "norm_label": ".handlecursormove()"
     },
     {
@@ -28197,7 +28197,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_f_handlegridchanged",
-      "community": 157,
+      "community": 361,
       "norm_label": ".handlegridchanged()"
     },
     {
@@ -28215,7 +28215,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_f_clearcursor",
-      "community": 157,
+      "community": 143,
       "norm_label": "._clearcursor()"
     },
     {
@@ -28242,7 +28242,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_f_renderunderlinecursor",
-      "community": 8,
+      "community": 153,
       "norm_label": "._renderunderlinecursor()"
     },
     {
@@ -28278,7 +28278,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_g_resize",
-      "community": 8,
+      "community": 153,
       "norm_label": ".resize()"
     },
     {
@@ -28287,7 +28287,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_g_reset",
-      "community": 8,
+      "community": 153,
       "norm_label": ".reset()"
     },
     {
@@ -28296,7 +28296,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_g_clearcurrentlink",
-      "community": 8,
+      "community": 153,
       "norm_label": "._clearcurrentlink()"
     },
     {
@@ -28305,7 +28305,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_g_handleshowlinkunderline",
-      "community": 8,
+      "community": 153,
       "norm_label": "._handleshowlinkunderline()"
     },
     {
@@ -28314,7 +28314,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_g_handlehidelinkunderline",
-      "community": 8,
+      "community": 153,
       "norm_label": "._handlehidelinkunderline()"
     },
     {
@@ -28431,7 +28431,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_d_reset",
-      "community": 153,
+      "community": 8,
       "norm_label": ".reset()"
     },
     {
@@ -28512,7 +28512,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_dispose",
-      "community": 198,
+      "community": 135,
       "norm_label": "dispose()"
     },
     {
@@ -28521,7 +28521,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_restartblinkanimation",
-      "community": 157,
+      "community": 361,
       "norm_label": "restartblinkanimation()"
     },
     {
@@ -28530,7 +28530,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_restartinterval",
-      "community": 37,
+      "community": 3,
       "norm_label": "_restartinterval()"
     },
     {
@@ -28548,7 +28548,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_resume",
-      "community": 37,
+      "community": 3,
       "norm_label": "resume()"
     },
     {
@@ -28575,7 +28575,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_n_constructor",
-      "community": 13,
+      "community": 153,
       "norm_label": ".constructor()"
     },
     {
@@ -28620,7 +28620,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_b_dispose",
-      "community": 198,
+      "community": 135,
       "norm_label": ".dispose()"
     },
     {
@@ -28980,7 +28980,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_clearlisteners",
-      "community": 198,
+      "community": 135,
       "norm_label": "clearlisteners()"
     },
     {
@@ -28989,7 +28989,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_unregister",
-      "community": 35,
+      "community": 157,
       "norm_label": "unregister()"
     },
     {
@@ -28998,7 +28998,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_value",
-      "community": 198,
+      "community": 135,
       "norm_label": "value()"
     },
     {
@@ -29421,7 +29421,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_r_ext",
-      "community": 153,
+      "community": 8,
       "norm_label": ".ext()"
     },
     {
@@ -29430,7 +29430,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_r_underlinestyle",
-      "community": 153,
+      "community": 8,
       "norm_label": ".underlinestyle()"
     },
     {
@@ -29439,7 +29439,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_r_underlinecolor",
-      "community": 153,
+      "community": 8,
       "norm_label": ".underlinecolor()"
     },
     {
@@ -29448,7 +29448,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_r_urlid",
-      "community": 153,
+      "community": 8,
       "norm_label": ".urlid()"
     },
     {
@@ -29457,7 +29457,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_r_underlinevariantoffset",
-      "community": 153,
+      "community": 8,
       "norm_label": ".underlinevariantoffset()"
     },
     {
@@ -29466,7 +29466,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_r_constructor",
-      "community": 54,
+      "community": 40,
       "norm_label": ".constructor()"
     },
     {
@@ -29493,7 +29493,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_g_fromchardata",
-      "community": 361,
+      "community": 153,
       "norm_label": ".fromchardata()"
     },
     {
@@ -29502,7 +29502,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_g_iscombined",
-      "community": 8,
+      "community": 153,
       "norm_label": ".iscombined()"
     },
     {
@@ -29511,7 +29511,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_g_getwidth",
-      "community": 8,
+      "community": 153,
       "norm_label": ".getwidth()"
     },
     {
@@ -29520,7 +29520,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_g_getchars",
-      "community": 8,
+      "community": 153,
       "norm_label": ".getchars()"
     },
     {
@@ -29529,7 +29529,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_g_getcode",
-      "community": 8,
+      "community": 153,
       "norm_label": ".getcode()"
     },
     {
@@ -29538,7 +29538,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_g_setfromchardata",
-      "community": 8,
+      "community": 153,
       "norm_label": ".setfromchardata()"
     },
     {
@@ -29556,7 +29556,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_decode",
-      "community": 35,
+      "community": 157,
       "norm_label": "decode()"
     },
     {
@@ -29592,7 +29592,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L22",
       "id": "terminal_main_l_cleartextureatlas",
-      "community": 8,
+      "community": 361,
       "norm_label": ".cleartextureatlas()"
     },
     {
@@ -29664,7 +29664,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L23",
       "id": "terminal_main_wd",
-      "community": 32,
+      "community": 37,
       "norm_label": "wd()"
     },
     {
@@ -29691,7 +29691,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_p1",
-      "community": 155,
+      "community": 4,
       "norm_label": "p1()"
     },
     {
@@ -29709,7 +29709,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_s1",
-      "community": 155,
+      "community": 4,
       "norm_label": "s1()"
     },
     {
@@ -29718,7 +29718,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_d1",
-      "community": 155,
+      "community": 4,
       "norm_label": "d1()"
     },
     {
@@ -29727,7 +29727,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_1",
-      "community": 155,
+      "community": 4,
       "norm_label": "_1()"
     },
     {
@@ -29736,7 +29736,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_a0",
-      "community": 155,
+      "community": 4,
       "norm_label": "a0()"
     },
     {
@@ -29745,7 +29745,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_t0",
-      "community": 155,
+      "community": 4,
       "norm_label": "t0()"
     },
     {
@@ -29754,7 +29754,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_q0",
-      "community": 155,
+      "community": 4,
       "norm_label": "q0()"
     },
     {
@@ -29763,7 +29763,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_t1",
-      "community": 155,
+      "community": 4,
       "norm_label": "t1()"
     },
     {
@@ -29772,7 +29772,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_u1",
-      "community": 155,
+      "community": 4,
       "norm_label": "u1()"
     },
     {
@@ -29817,7 +29817,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_v0",
-      "community": 45,
+      "community": 40,
       "norm_label": "v0()"
     },
     {
@@ -29826,7 +29826,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_o2",
-      "community": 45,
+      "community": 40,
       "norm_label": "o2()"
     },
     {
@@ -29907,7 +29907,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_v1",
-      "community": 4,
+      "community": 32,
       "norm_label": "v1()"
     },
     {
@@ -29943,7 +29943,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_h0",
-      "community": 45,
+      "community": 40,
       "norm_label": "h0()"
     },
     {
@@ -30258,7 +30258,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_rk",
-      "community": 40,
+      "community": 37,
       "norm_label": "rk()"
     },
     {
@@ -30492,7 +30492,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_ls",
-      "community": 136,
+      "community": 54,
       "norm_label": "ls()"
     },
     {
@@ -30501,7 +30501,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_oa",
-      "community": 20,
+      "community": 3,
       "norm_label": "oa()"
     },
     {
@@ -30510,7 +30510,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_u5",
-      "community": 136,
+      "community": 54,
       "norm_label": "u5()"
     },
     {
@@ -30627,7 +30627,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_xv",
-      "community": 35,
+      "community": 157,
       "norm_label": "xv()"
     },
     {
@@ -31095,7 +31095,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_lengthcalculator",
-      "community": 45,
+      "community": 40,
       "norm_label": "lengthcalculator()"
     },
     {
@@ -31122,7 +31122,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_rforeach",
-      "community": 32,
+      "community": 128,
       "norm_label": "rforeach()"
     },
     {
@@ -31131,7 +31131,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_foreach",
-      "community": 32,
+      "community": 128,
       "norm_label": "foreach()"
     },
     {
@@ -31158,7 +31158,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_reset",
-      "community": 37,
+      "community": 45,
       "norm_label": "reset()"
     },
     {
@@ -31203,7 +31203,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_del",
-      "community": 35,
+      "community": 157,
       "norm_label": "del()"
     },
     {
@@ -31221,7 +31221,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_prune",
-      "community": 45,
+      "community": 40,
       "norm_label": "prune()"
     },
     {
@@ -31230,7 +31230,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_write",
-      "community": 37,
+      "community": 128,
       "norm_label": "_write()"
     },
     {
@@ -31248,7 +31248,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_read",
-      "community": 37,
+      "community": 45,
       "norm_label": "read()"
     },
     {
@@ -31419,7 +31419,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_l_initlinescache",
-      "community": 135,
+      "community": 38,
       "norm_label": ".initlinescache()"
     },
     {
@@ -31653,7 +31653,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_filter",
-      "community": 32,
+      "community": 37,
       "norm_label": "filter()"
     },
     {
@@ -31671,7 +31671,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_some",
-      "community": 128,
+      "community": 20,
       "norm_label": "some()"
     },
     {
@@ -31743,7 +31743,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main",
-      "community": 135,
+      "community": 8,
       "norm_label": "_"
     },
     {
@@ -31833,7 +31833,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_cancel",
-      "community": 198,
+      "community": 135,
       "norm_label": "cancel()"
     },
     {
@@ -31959,7 +31959,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_cancelandset",
-      "community": 198,
+      "community": 135,
       "norm_label": "cancelandset()"
     },
     {
@@ -31968,7 +31968,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_setifnotset",
-      "community": 8,
+      "community": 361,
       "norm_label": "setifnotset()"
     },
     {
@@ -31986,7 +31986,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_e_dispose",
-      "community": 198,
+      "community": 135,
       "norm_label": ".dispose()"
     },
     {
@@ -31995,7 +31995,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_e_cancel",
-      "community": 198,
+      "community": 135,
       "norm_label": ".cancel()"
     },
     {
@@ -32004,7 +32004,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_e_schedule",
-      "community": 198,
+      "community": 135,
       "norm_label": ".schedule()"
     },
     {
@@ -32058,7 +32058,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_schedule",
-      "community": 198,
+      "community": 135,
       "norm_label": "schedule()"
     },
     {
@@ -32067,7 +32067,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_isscheduled",
-      "community": 198,
+      "community": 135,
       "norm_label": "isscheduled()"
     },
     {
@@ -32085,7 +32085,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_work",
-      "community": 198,
+      "community": 135,
       "norm_label": "work()"
     },
     {
@@ -32157,7 +32157,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_m_value",
-      "community": 198,
+      "community": 135,
       "norm_label": ".value()"
     },
     {
@@ -32166,7 +32166,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_m_isinitialized",
-      "community": 8,
+      "community": 361,
       "norm_label": ".isinitialized()"
     },
     {
@@ -32193,7 +32193,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_f_cancelrunning",
-      "community": 198,
+      "community": 135,
       "norm_label": ".cancelrunning()"
     },
     {
@@ -32256,7 +32256,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_increment",
-      "community": 3,
+      "community": 54,
       "norm_label": "increment()"
     },
     {
@@ -32436,7 +32436,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_coalesce",
-      "community": 32,
+      "community": 37,
       "norm_label": "coalesce()"
     },
     {
@@ -32454,7 +32454,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_emitone",
-      "community": 198,
+      "community": 35,
       "norm_label": "emitone()"
     },
     {
@@ -32463,7 +32463,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_emitmany",
-      "community": 198,
+      "community": 35,
       "norm_label": "emitmany()"
     },
     {
@@ -32481,7 +32481,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_j_constructor",
-      "community": 198,
+      "community": 135,
       "norm_label": ".constructor()"
     },
     {
@@ -32490,7 +32490,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_j_cancel",
-      "community": 198,
+      "community": 135,
       "norm_label": ".cancel()"
     },
     {
@@ -32508,7 +32508,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_g_cancel",
-      "community": 198,
+      "community": 135,
       "norm_label": ".cancel()"
     },
     {
@@ -32517,7 +32517,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_g_iscancellationrequested",
-      "community": 8,
+      "community": 153,
       "norm_label": ".iscancellationrequested()"
     },
     {
@@ -32535,7 +32535,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_g_dispose",
-      "community": 198,
+      "community": 135,
       "norm_label": ".dispose()"
     },
     {
@@ -32562,7 +32562,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_p_cancel",
-      "community": 198,
+      "community": 135,
       "norm_label": ".cancel()"
     },
     {
@@ -32571,7 +32571,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_p_dispose",
-      "community": 198,
+      "community": 135,
       "norm_label": ".dispose()"
     },
     {
@@ -32580,7 +32580,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_r_size",
-      "community": 153,
+      "community": 8,
       "norm_label": ".size()"
     },
     {
@@ -32607,7 +32607,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_r_has",
-      "community": 54,
+      "community": 40,
       "norm_label": ".has()"
     },
     {
@@ -32616,7 +32616,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_r_entries",
-      "community": 32,
+      "community": 40,
       "norm_label": ".entries()"
     },
     {
@@ -32625,7 +32625,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_r_keys",
-      "community": 153,
+      "community": 8,
       "norm_label": ".keys()"
     },
     {
@@ -32634,7 +32634,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_r_values",
-      "community": 153,
+      "community": 8,
       "norm_label": ".values()"
     },
     {
@@ -32652,7 +32652,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_r_foreach",
-      "community": 45,
+      "community": 40,
       "norm_label": ".foreach()"
     },
     {
@@ -32661,7 +32661,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L34",
       "id": "terminal_main_r_symbol_iterator",
-      "community": 153,
+      "community": 8,
       "norm_label": ".[symbol.iterator]()"
     },
     {
@@ -32679,7 +32679,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L39",
       "id": "terminal_main_n_emit",
-      "community": 45,
+      "community": 40,
       "norm_label": ".emit()"
     },
     {
@@ -32688,7 +32688,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L39",
       "id": "terminal_main_n_removelistener",
-      "community": 35,
+      "community": 157,
       "norm_label": "._removelistener()"
     },
     {
@@ -32760,7 +32760,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L39",
       "id": "terminal_main_w_constructor",
-      "community": 135,
+      "community": 361,
       "norm_label": ".constructor()"
     },
     {
@@ -32787,7 +32787,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L39",
       "id": "terminal_main_latch",
-      "community": 135,
+      "community": 8,
       "norm_label": ".latch()"
     },
     {
@@ -32796,7 +32796,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L39",
       "id": "terminal_main_evaluate",
-      "community": 135,
+      "community": 8,
       "norm_label": ".evaluate()"
     },
     {
@@ -32805,7 +32805,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L39",
       "id": "terminal_main_t_constructor",
-      "community": 54,
+      "community": 40,
       "norm_label": ".constructor()"
     },
     {
@@ -32841,7 +32841,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L39",
       "id": "terminal_main_t_endupdate",
-      "community": 35,
+      "community": 157,
       "norm_label": ".endupdate()"
     },
     {
@@ -32859,7 +32859,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L39",
       "id": "terminal_main_stop",
-      "community": 153,
+      "community": 8,
       "norm_label": "stop()"
     },
     {
@@ -32886,7 +32886,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L39",
       "id": "terminal_main_m_create",
-      "community": 8,
+      "community": 361,
       "norm_label": ".create()"
     },
     {
@@ -32904,7 +32904,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L41",
       "id": "terminal_main_a_constructor",
-      "community": 32,
+      "community": 128,
       "norm_label": ".constructor()"
     },
     {
@@ -33012,7 +33012,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L41",
       "id": "terminal_main_x_resume",
-      "community": 198,
+      "community": 35,
       "norm_label": ".resume()"
     },
     {
@@ -33021,7 +33021,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L41",
       "id": "terminal_main_x_fire",
-      "community": 198,
+      "community": 35,
       "norm_label": ".fire()"
     },
     {
@@ -33030,7 +33030,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L41",
       "id": "terminal_main_m_event",
-      "community": 8,
+      "community": 361,
       "norm_label": ".event()"
     },
     {
@@ -33048,7 +33048,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L41",
       "id": "terminal_main_m_onfirstlisteneradd",
-      "community": 45,
+      "community": 40,
       "norm_label": ".onfirstlisteneradd()"
     },
     {
@@ -33057,7 +33057,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L41",
       "id": "terminal_main_m_onlastlistenerremove",
-      "community": 45,
+      "community": 40,
       "norm_label": ".onlastlistenerremove()"
     },
     {
@@ -33066,7 +33066,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L41",
       "id": "terminal_main_m_hook",
-      "community": 8,
+      "community": 361,
       "norm_label": ".hook()"
     },
     {
@@ -33075,7 +33075,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L41",
       "id": "terminal_main_m_unhook",
-      "community": 198,
+      "community": 135,
       "norm_label": ".unhook()"
     },
     {
@@ -33183,7 +33183,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L58",
       "id": "terminal_main_acquire",
-      "community": 37,
+      "community": 128,
       "norm_label": "acquire()"
     },
     {
@@ -33192,7 +33192,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L58",
       "id": "terminal_main_release",
-      "community": 198,
+      "community": 135,
       "norm_label": "release()"
     },
     {
@@ -33210,7 +33210,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L58",
       "id": "terminal_main_x_has",
-      "community": 54,
+      "community": 40,
       "norm_label": ".has()"
     },
     {
@@ -33219,7 +33219,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L58",
       "id": "terminal_main_x_size",
-      "community": 128,
+      "community": 20,
       "norm_label": ".size()"
     },
     {
@@ -33228,7 +33228,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L58",
       "id": "terminal_main_x_get",
-      "community": 35,
+      "community": 157,
       "norm_label": ".get()"
     },
     {
@@ -33237,7 +33237,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L58",
       "id": "terminal_main_x_set",
-      "community": 198,
+      "community": 135,
       "norm_label": ".set()"
     },
     {
@@ -33264,7 +33264,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L58",
       "id": "terminal_main_x_keys",
-      "community": 45,
+      "community": 40,
       "norm_label": ".keys()"
     },
     {
@@ -33273,7 +33273,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L58",
       "id": "terminal_main_x_values",
-      "community": 153,
+      "community": 8,
       "norm_label": ".values()"
     },
     {
@@ -33300,7 +33300,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L58",
       "id": "terminal_main_r_push",
-      "community": 153,
+      "community": 8,
       "norm_label": ".push()"
     },
     {
@@ -33309,7 +33309,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L58",
       "id": "terminal_main_r_insert",
-      "community": 153,
+      "community": 8,
       "norm_label": "._insert()"
     },
     {
@@ -33327,7 +33327,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L58",
       "id": "terminal_main_r_pop",
-      "community": 153,
+      "community": 8,
       "norm_label": ".pop()"
     },
     {
@@ -33336,7 +33336,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L58",
       "id": "terminal_main_r_remove",
-      "community": 153,
+      "community": 8,
       "norm_label": "._remove()"
     },
     {
@@ -33345,7 +33345,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L58",
       "id": "terminal_main_getkey",
-      "community": 35,
+      "community": 157,
       "norm_label": "getkey()"
     },
     {
@@ -33354,7 +33354,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L58",
       "id": "terminal_main_r_create",
-      "community": 153,
+      "community": 8,
       "norm_label": ".create()"
     },
     {
@@ -33372,7 +33372,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L58",
       "id": "terminal_main_r_reset",
-      "community": 153,
+      "community": 8,
       "norm_label": ".reset()"
     },
     {
@@ -33381,7 +33381,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L58",
       "id": "terminal_main_r_elapsed",
-      "community": 153,
+      "community": 8,
       "norm_label": ".elapsed()"
     },
     {
@@ -33507,7 +33507,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L58",
       "id": "terminal_main_r_nextcell",
-      "community": 153,
+      "community": 8,
       "norm_label": "._nextcell()"
     },
     {
@@ -33516,7 +33516,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L58",
       "id": "terminal_main_r_rowend",
-      "community": 153,
+      "community": 8,
       "norm_label": "._rowend()"
     },
     {
@@ -33525,7 +33525,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L58",
       "id": "terminal_main_r_beforeserialize",
-      "community": 153,
+      "community": 8,
       "norm_label": "._beforeserialize()"
     },
     {
@@ -33534,7 +33534,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L58",
       "id": "terminal_main_r_afterserialize",
-      "community": 153,
+      "community": 8,
       "norm_label": "._afterserialize()"
     },
     {
@@ -33543,7 +33543,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L58",
       "id": "terminal_main_r_serializestring",
-      "community": 153,
+      "community": 8,
       "norm_label": "._serializestring()"
     },
     {
@@ -33741,7 +33741,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L59",
       "id": "terminal_main_l_extractshouldjoin",
-      "community": 35,
+      "community": 157,
       "norm_label": ".extractshouldjoin()"
     },
     {
@@ -33750,7 +33750,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L59",
       "id": "terminal_main_l_extractwidth",
-      "community": 35,
+      "community": 157,
       "norm_label": ".extractwidth()"
     },
     {
@@ -33777,7 +33777,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L59",
       "id": "terminal_main_l_dispose",
-      "community": 198,
+      "community": 135,
       "norm_label": ".dispose()"
     },
     {
@@ -33786,7 +33786,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L59",
       "id": "terminal_main_l_versions",
-      "community": 45,
+      "community": 40,
       "norm_label": ".versions()"
     },
     {
@@ -33795,7 +33795,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L59",
       "id": "terminal_main_l_activeversion",
-      "community": 198,
+      "community": 35,
       "norm_label": ".activeversion()"
     },
     {
@@ -33822,7 +33822,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L59",
       "id": "terminal_main_l_getstringcellwidth",
-      "community": 35,
+      "community": 157,
       "norm_label": ".getstringcellwidth()"
     },
     {
@@ -33831,7 +33831,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L59",
       "id": "terminal_main_l_charproperties",
-      "community": 35,
+      "community": 157,
       "norm_label": ".charproperties()"
     },
     {
@@ -33894,7 +33894,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L117",
       "id": "terminal_main_b_clear",
-      "community": 35,
+      "community": 157,
       "norm_label": ".clear()"
     },
     {
@@ -33975,7 +33975,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_a_handleresize",
-      "community": 32,
+      "community": 128,
       "norm_label": ".handleresize()"
     },
     {
@@ -33993,7 +33993,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_a_updatecachedcolors",
-      "community": 32,
+      "community": 128,
       "norm_label": "._updatecachedcolors()"
     },
     {
@@ -34002,7 +34002,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_a_updateviewportrectangle",
-      "community": 32,
+      "community": 128,
       "norm_label": "._updateviewportrectangle()"
     },
     {
@@ -34011,7 +34011,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_a_updatebackgrounds",
-      "community": 32,
+      "community": 128,
       "norm_label": ".updatebackgrounds()"
     },
     {
@@ -34020,7 +34020,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_a_updatecursor",
-      "community": 32,
+      "community": 128,
       "norm_label": ".updatecursor()"
     },
     {
@@ -34029,7 +34029,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_a_updaterectangle",
-      "community": 32,
+      "community": 128,
       "norm_label": "._updaterectangle()"
     },
     {
@@ -34038,7 +34038,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_a_addrectangle",
-      "community": 32,
+      "community": 128,
       "norm_label": "._addrectangle()"
     },
     {
@@ -34047,7 +34047,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_a_addrectanglefloat",
-      "community": 32,
+      "community": 128,
       "norm_label": "._addrectanglefloat()"
     },
     {
@@ -34056,7 +34056,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_a_colortofloat32array",
-      "community": 32,
+      "community": 128,
       "norm_label": "._colortofloat32array()"
     },
     {
@@ -34389,7 +34389,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_p_fillbottomlineatcells",
-      "community": 8,
+      "community": 153,
       "norm_label": "._fillbottomlineatcells()"
     },
     {
@@ -34407,7 +34407,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_p_clearcells",
-      "community": 157,
+      "community": 143,
       "norm_label": "._clearcells()"
     },
     {
@@ -34461,7 +34461,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_h1",
-      "community": 3,
+      "community": 37,
       "norm_label": "h1"
     },
     {
@@ -34470,7 +34470,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_registerwindow",
-      "community": 54,
+      "community": 40,
       "norm_label": "registerwindow()"
     },
     {
@@ -34497,7 +34497,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_o_cancelandset",
-      "community": 13,
+      "community": 135,
       "norm_label": ".cancelandset()"
     },
     {
@@ -34542,7 +34542,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_converttopixels",
-      "community": 135,
+      "community": 8,
       "norm_label": ".converttopixels()"
     },
     {
@@ -34551,7 +34551,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_getdimension",
-      "community": 135,
+      "community": 8,
       "norm_label": ".getdimension()"
     },
     {
@@ -34560,7 +34560,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_getborderleftwidth",
-      "community": 135,
+      "community": 8,
       "norm_label": ".getborderleftwidth()"
     },
     {
@@ -34569,7 +34569,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_getborderrightwidth",
-      "community": 135,
+      "community": 8,
       "norm_label": ".getborderrightwidth()"
     },
     {
@@ -34578,7 +34578,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_getbordertopwidth",
-      "community": 135,
+      "community": 8,
       "norm_label": ".getbordertopwidth()"
     },
     {
@@ -34587,7 +34587,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_getborderbottomwidth",
-      "community": 135,
+      "community": 8,
       "norm_label": ".getborderbottomwidth()"
     },
     {
@@ -34596,7 +34596,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_getpaddingleft",
-      "community": 135,
+      "community": 8,
       "norm_label": ".getpaddingleft()"
     },
     {
@@ -34605,7 +34605,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_getpaddingright",
-      "community": 135,
+      "community": 8,
       "norm_label": ".getpaddingright()"
     },
     {
@@ -34614,7 +34614,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_getpaddingtop",
-      "community": 135,
+      "community": 8,
       "norm_label": ".getpaddingtop()"
     },
     {
@@ -34623,7 +34623,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_getpaddingbottom",
-      "community": 135,
+      "community": 8,
       "norm_label": ".getpaddingbottom()"
     },
     {
@@ -34632,7 +34632,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_getmarginleft",
-      "community": 135,
+      "community": 8,
       "norm_label": ".getmarginleft()"
     },
     {
@@ -34641,7 +34641,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_getmargintop",
-      "community": 135,
+      "community": 8,
       "norm_label": ".getmargintop()"
     },
     {
@@ -34650,7 +34650,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_getmarginright",
-      "community": 135,
+      "community": 8,
       "norm_label": ".getmarginright()"
     },
     {
@@ -34659,7 +34659,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_getmarginbottom",
-      "community": 135,
+      "community": 8,
       "norm_label": ".getmarginbottom()"
     },
     {
@@ -34695,7 +34695,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_1_constructor",
-      "community": 155,
+      "community": 4,
       "norm_label": ".constructor()"
     },
     {
@@ -34704,7 +34704,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_1_setstyle",
-      "community": 155,
+      "community": 4,
       "norm_label": ".setstyle()"
     },
     {
@@ -34713,7 +34713,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_1_dispose",
-      "community": 155,
+      "community": 4,
       "norm_label": ".dispose()"
     },
     {
@@ -34722,7 +34722,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_observe",
-      "community": 155,
+      "community": 37,
       "norm_label": "observe()"
     },
     {
@@ -34758,7 +34758,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_o0",
-      "community": 198,
+      "community": 168,
       "norm_label": "o0"
     },
     {
@@ -34767,7 +34767,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_o0_constructor",
-      "community": 198,
+      "community": 168,
       "norm_label": ".constructor()"
     },
     {
@@ -34776,7 +34776,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_o0_registerlisteners",
-      "community": 198,
+      "community": 168,
       "norm_label": ".registerlisteners()"
     },
     {
@@ -34785,7 +34785,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_o0_keystatus",
-      "community": 198,
+      "community": 168,
       "norm_label": ".keystatus()"
     },
     {
@@ -34794,7 +34794,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_o0_ismodifierpressed",
-      "community": 198,
+      "community": 168,
       "norm_label": ".ismodifierpressed()"
     },
     {
@@ -34803,7 +34803,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_o0_resetkeystatus",
-      "community": 198,
+      "community": 168,
       "norm_label": ".resetkeystatus()"
     },
     {
@@ -34812,7 +34812,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_o0_doresetkeystatus",
-      "community": 198,
+      "community": 168,
       "norm_label": ".doresetkeystatus()"
     },
     {
@@ -34821,7 +34821,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_o0_getinstance",
-      "community": 198,
+      "community": 168,
       "norm_label": ".getinstance()"
     },
     {
@@ -34830,7 +34830,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_o0_dispose",
-      "community": 198,
+      "community": 168,
       "norm_label": ".dispose()"
     },
     {
@@ -34839,7 +34839,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_v1_constructor",
-      "community": 4,
+      "community": 32,
       "norm_label": ".constructor()"
     },
     {
@@ -34848,7 +34848,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L140",
       "id": "terminal_main_v1_registerlisteners",
-      "community": 4,
+      "community": 32,
       "norm_label": ".registerlisteners()"
     },
     {
@@ -34956,7 +34956,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L147",
       "id": "terminal_main_update",
-      "community": 357,
+      "community": 37,
       "norm_label": "update()"
     },
     {
@@ -35001,7 +35001,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L147",
       "id": "terminal_main_h_define",
-      "community": 32,
+      "community": 128,
       "norm_label": ".define()"
     },
     {
@@ -35154,7 +35154,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L164",
       "id": "terminal_main_nextcodepoint",
-      "community": 32,
+      "community": 128,
       "norm_label": "nextcodepoint()"
     },
     {
@@ -35181,7 +35181,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L164",
       "id": "terminal_main_g_textureatlas",
-      "community": 8,
+      "community": 153,
       "norm_label": ".textureatlas()"
     },
     {
@@ -35190,7 +35190,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L164",
       "id": "terminal_main_g_cleartextureatlas",
-      "community": 8,
+      "community": 361,
       "norm_label": ".cleartextureatlas()"
     },
     {
@@ -35208,7 +35208,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L166",
       "id": "terminal_main_getcss",
-      "community": 35,
+      "community": 157,
       "norm_label": "getcss()"
     },
     {
@@ -35361,7 +35361,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L166",
       "id": "terminal_main_x_synctextarea",
-      "community": 35,
+      "community": 157,
       "norm_label": "._synctextarea()"
     },
     {
@@ -35667,7 +35667,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L166",
       "id": "terminal_main_x_inputevent",
-      "community": 198,
+      "community": 135,
       "norm_label": "._inputevent()"
     },
     {
@@ -35694,7 +35694,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L166",
       "id": "terminal_main_x_clear",
-      "community": 198,
+      "community": 135,
       "norm_label": ".clear()"
     },
     {
@@ -35712,7 +35712,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L166",
       "id": "terminal_main_x_cleartextureatlas",
-      "community": 8,
+      "community": 361,
       "norm_label": ".cleartextureatlas()"
     },
     {
@@ -35739,7 +35739,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L166",
       "id": "terminal_main_x_cancel",
-      "community": 198,
+      "community": 135,
       "norm_label": ".cancel()"
     },
     {
@@ -35964,7 +35964,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L169",
       "id": "terminal_main_u_setfromchardata",
-      "community": 361,
+      "community": 153,
       "norm_label": ".setfromchardata()"
     },
     {
@@ -35982,7 +35982,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L169",
       "id": "terminal_main_g_window",
-      "community": 198,
+      "community": 35,
       "norm_label": ".window()"
     },
     {
@@ -35991,7 +35991,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L169",
       "id": "terminal_main_g_dpr",
-      "community": 8,
+      "community": 153,
       "norm_label": ".dpr()"
     },
     {
@@ -36000,7 +36000,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L169",
       "id": "terminal_main_g_isfocused",
-      "community": 8,
+      "community": 153,
       "norm_label": ".isfocused()"
     },
     {
@@ -36153,7 +36153,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_l_splice",
-      "community": 35,
+      "community": 157,
       "norm_label": ".splice()"
     },
     {
@@ -36171,7 +36171,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_l_shiftelements",
-      "community": 35,
+      "community": 157,
       "norm_label": ".shiftelements()"
     },
     {
@@ -36189,7 +36189,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_x_onscroll",
-      "community": 8,
+      "community": 361,
       "norm_label": ".onscroll()"
     },
     {
@@ -36261,7 +36261,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_x_scroll",
-      "community": 35,
+      "community": 157,
       "norm_label": ".scroll()"
     },
     {
@@ -36369,7 +36369,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_print",
-      "community": 35,
+      "community": 157,
       "norm_label": ".print()"
     },
     {
@@ -36414,7 +36414,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_bell",
-      "community": 198,
+      "community": 35,
       "norm_label": ".bell()"
     },
     {
@@ -36423,7 +36423,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_linefeed",
-      "community": 35,
+      "community": 157,
       "norm_label": ".linefeed()"
     },
     {
@@ -36441,7 +36441,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_backspace",
-      "community": 35,
+      "community": 157,
       "norm_label": ".backspace()"
     },
     {
@@ -36477,7 +36477,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_restrictcursor",
-      "community": 35,
+      "community": 157,
       "norm_label": "._restrictcursor()"
     },
     {
@@ -36657,7 +36657,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_eraseinbufferline",
-      "community": 35,
+      "community": 157,
       "norm_label": "._eraseinbufferline()"
     },
     {
@@ -36666,7 +36666,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_resetbufferline",
-      "community": 35,
+      "community": 157,
       "norm_label": "._resetbufferline()"
     },
     {
@@ -36675,7 +36675,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_eraseindisplay",
-      "community": 35,
+      "community": 157,
       "norm_label": ".eraseindisplay()"
     },
     {
@@ -36684,7 +36684,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_eraseinline",
-      "community": 35,
+      "community": 157,
       "norm_label": ".eraseinline()"
     },
     {
@@ -36693,7 +36693,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_insertlines",
-      "community": 35,
+      "community": 157,
       "norm_label": ".insertlines()"
     },
     {
@@ -36702,7 +36702,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_deletelines",
-      "community": 35,
+      "community": 157,
       "norm_label": ".deletelines()"
     },
     {
@@ -36711,7 +36711,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_insertchars",
-      "community": 35,
+      "community": 157,
       "norm_label": ".insertchars()"
     },
     {
@@ -36720,7 +36720,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_deletechars",
-      "community": 35,
+      "community": 157,
       "norm_label": ".deletechars()"
     },
     {
@@ -36729,7 +36729,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_scrollup",
-      "community": 35,
+      "community": 157,
       "norm_label": ".scrollup()"
     },
     {
@@ -36738,7 +36738,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_scrolldown",
-      "community": 35,
+      "community": 157,
       "norm_label": ".scrolldown()"
     },
     {
@@ -36747,7 +36747,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_scrollleft",
-      "community": 35,
+      "community": 157,
       "norm_label": ".scrollleft()"
     },
     {
@@ -36756,7 +36756,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_scrollright",
-      "community": 35,
+      "community": 157,
       "norm_label": ".scrollright()"
     },
     {
@@ -36765,7 +36765,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_insertcolumns",
-      "community": 35,
+      "community": 157,
       "norm_label": ".insertcolumns()"
     },
     {
@@ -36774,7 +36774,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_deletecolumns",
-      "community": 35,
+      "community": 157,
       "norm_label": ".deletecolumns()"
     },
     {
@@ -36783,7 +36783,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_erasechars",
-      "community": 35,
+      "community": 157,
       "norm_label": ".erasechars()"
     },
     {
@@ -36792,7 +36792,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_repeatprecedingcharacter",
-      "community": 35,
+      "community": 157,
       "norm_label": ".repeatprecedingcharacter()"
     },
     {
@@ -36864,7 +36864,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_requestmode",
-      "community": 155,
+      "community": 4,
       "norm_label": ".requestmode()"
     },
     {
@@ -36963,7 +36963,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_windowoptions",
-      "community": 198,
+      "community": 35,
       "norm_label": ".windowoptions()"
     },
     {
@@ -36990,7 +36990,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_settitle",
-      "community": 198,
+      "community": 35,
       "norm_label": ".settitle()"
     },
     {
@@ -36999,7 +36999,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_seticonname",
-      "community": 198,
+      "community": 35,
       "norm_label": ".seticonname()"
     },
     {
@@ -37089,7 +37089,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_restorefgcolor",
-      "community": 198,
+      "community": 35,
       "norm_label": ".restorefgcolor()"
     },
     {
@@ -37098,7 +37098,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_restorebgcolor",
-      "community": 198,
+      "community": 35,
       "norm_label": ".restorebgcolor()"
     },
     {
@@ -37107,7 +37107,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_restorecursorcolor",
-      "community": 198,
+      "community": 35,
       "norm_label": ".restorecursorcolor()"
     },
     {
@@ -37179,7 +37179,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_reverseindex",
-      "community": 35,
+      "community": 157,
       "norm_label": ".reverseindex()"
     },
     {
@@ -37206,7 +37206,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_eraseattrdata",
-      "community": 35,
+      "community": 157,
       "norm_label": "._eraseattrdata()"
     },
     {
@@ -37233,7 +37233,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_i_requeststatusstring",
-      "community": 35,
+      "community": 157,
       "norm_label": ".requeststatusstring()"
     },
     {
@@ -37260,7 +37260,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_markdirty",
-      "community": 35,
+      "community": 157,
       "norm_label": "markdirty()"
     },
     {
@@ -37269,7 +37269,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_markrangedirty",
-      "community": 35,
+      "community": 157,
       "norm_label": "markrangedirty()"
     },
     {
@@ -37359,7 +37359,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_getnullcell",
-      "community": 35,
+      "community": 157,
       "norm_label": "getnullcell()"
     },
     {
@@ -37377,7 +37377,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_getblankline",
-      "community": 35,
+      "community": 157,
       "norm_label": "getblankline()"
     },
     {
@@ -37413,7 +37413,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_fillviewportrows",
-      "community": 8,
+      "community": 153,
       "norm_label": "fillviewportrows()"
     },
     {
@@ -37440,7 +37440,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_reflow",
-      "community": 334,
+      "community": 157,
       "norm_label": "_reflow()"
     },
     {
@@ -37449,7 +37449,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_reflowlarger",
-      "community": 334,
+      "community": 157,
       "norm_label": "_reflowlarger()"
     },
     {
@@ -37458,7 +37458,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_reflowlargeradjustviewport",
-      "community": 334,
+      "community": 157,
       "norm_label": "_reflowlargeradjustviewport()"
     },
     {
@@ -37467,7 +37467,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_reflowsmaller",
-      "community": 35,
+      "community": 157,
       "norm_label": "_reflowsmaller()"
     },
     {
@@ -37476,7 +37476,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_translatebufferlinetostring",
-      "community": 35,
+      "community": 157,
       "norm_label": "translatebufferlinetostring()"
     },
     {
@@ -37485,7 +37485,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_getwrappedrangeforline",
-      "community": 35,
+      "community": 157,
       "norm_label": "getwrappedrangeforline()"
     },
     {
@@ -37521,7 +37521,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_clearmarkers",
-      "community": 35,
+      "community": 157,
       "norm_label": "clearmarkers()"
     },
     {
@@ -37530,7 +37530,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_clearallmarkers",
-      "community": 198,
+      "community": 135,
       "norm_label": "clearallmarkers()"
     },
     {
@@ -37548,7 +37548,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_removemarker",
-      "community": 35,
+      "community": 157,
       "norm_label": "_removemarker()"
     },
     {
@@ -37557,7 +37557,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_f_get",
-      "community": 35,
+      "community": 157,
       "norm_label": ".get()"
     },
     {
@@ -37584,7 +37584,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_f_haswidth",
-      "community": 35,
+      "community": 157,
       "norm_label": ".haswidth()"
     },
     {
@@ -37593,7 +37593,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_f_getfg",
-      "community": 35,
+      "community": 157,
       "norm_label": ".getfg()"
     },
     {
@@ -37602,7 +37602,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_f_getbg",
-      "community": 35,
+      "community": 157,
       "norm_label": ".getbg()"
     },
     {
@@ -37611,7 +37611,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_f_hascontent",
-      "community": 35,
+      "community": 157,
       "norm_label": ".hascontent()"
     },
     {
@@ -37629,7 +37629,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_f_iscombined",
-      "community": 8,
+      "community": 153,
       "norm_label": ".iscombined()"
     },
     {
@@ -37647,7 +37647,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_f_isprotected",
-      "community": 35,
+      "community": 157,
       "norm_label": ".isprotected()"
     },
     {
@@ -37665,7 +37665,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_f_setcell",
-      "community": 35,
+      "community": 157,
       "norm_label": ".setcell()"
     },
     {
@@ -37674,7 +37674,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_f_setcellfromcodepoint",
-      "community": 35,
+      "community": 157,
       "norm_label": ".setcellfromcodepoint()"
     },
     {
@@ -37683,7 +37683,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_f_addcodepointtocell",
-      "community": 35,
+      "community": 157,
       "norm_label": ".addcodepointtocell()"
     },
     {
@@ -37692,7 +37692,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_f_insertcells",
-      "community": 35,
+      "community": 157,
       "norm_label": ".insertcells()"
     },
     {
@@ -37701,7 +37701,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_f_deletecells",
-      "community": 35,
+      "community": 157,
       "norm_label": ".deletecells()"
     },
     {
@@ -37710,7 +37710,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_f_replacecells",
-      "community": 35,
+      "community": 157,
       "norm_label": ".replacecells()"
     },
     {
@@ -37728,7 +37728,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_f_fill",
-      "community": 35,
+      "community": 157,
       "norm_label": ".fill()"
     },
     {
@@ -37737,7 +37737,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_f_copyfrom",
-      "community": 35,
+      "community": 157,
       "norm_label": ".copyfrom()"
     },
     {
@@ -37773,7 +37773,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_f_copycellsfrom",
-      "community": 35,
+      "community": 157,
       "norm_label": ".copycellsfrom()"
     },
     {
@@ -37791,7 +37791,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_g_alt",
-      "community": 8,
+      "community": 153,
       "norm_label": ".alt()"
     },
     {
@@ -37800,7 +37800,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_g_active",
-      "community": 8,
+      "community": 153,
       "norm_label": ".active()"
     },
     {
@@ -37809,7 +37809,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_g_normal",
-      "community": 8,
+      "community": 153,
       "norm_label": ".normal()"
     },
     {
@@ -37818,7 +37818,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_g_activatenormalbuffer",
-      "community": 198,
+      "community": 135,
       "norm_label": ".activatenormalbuffer()"
     },
     {
@@ -37827,7 +37827,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_g_activatealtbuffer",
-      "community": 8,
+      "community": 153,
       "norm_label": ".activatealtbuffer()"
     },
     {
@@ -37836,7 +37836,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L171",
       "id": "terminal_main_g_setuptabstops",
-      "community": 8,
+      "community": 153,
       "norm_label": ".setuptabstops()"
     },
     {
@@ -37926,7 +37926,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_unhook",
-      "community": 37,
+      "community": 45,
       "norm_label": "unhook()"
     },
     {
@@ -37935,7 +37935,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_p_setdefault",
-      "community": 35,
+      "community": 157,
       "norm_label": ".setdefault()"
     },
     {
@@ -37944,7 +37944,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_p_add",
-      "community": 54,
+      "community": 40,
       "norm_label": ".add()"
     },
     {
@@ -38169,7 +38169,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_end",
-      "community": 37,
+      "community": 45,
       "norm_label": "end()"
     },
     {
@@ -38178,7 +38178,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_r_fromarray",
-      "community": 153,
+      "community": 8,
       "norm_label": ".fromarray()"
     },
     {
@@ -38196,7 +38196,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_r_addparam",
-      "community": 153,
+      "community": 8,
       "norm_label": ".addparam()"
     },
     {
@@ -38205,7 +38205,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_r_addsubparam",
-      "community": 153,
+      "community": 8,
       "norm_label": ".addsubparam()"
     },
     {
@@ -38232,7 +38232,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_r_getsubparamsall",
-      "community": 153,
+      "community": 8,
       "norm_label": ".getsubparamsall()"
     },
     {
@@ -38241,7 +38241,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_r_adddigit",
-      "community": 153,
+      "community": 8,
       "norm_label": ".adddigit()"
     },
     {
@@ -38259,7 +38259,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_wrappedaddondispose",
-      "community": 54,
+      "community": 40,
       "norm_label": "_wrappedaddondispose()"
     },
     {
@@ -38349,7 +38349,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_g_alternate",
-      "community": 8,
+      "community": 153,
       "norm_label": ".alternate()"
     },
     {
@@ -38457,7 +38457,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_scroll",
-      "community": 35,
+      "community": 157,
       "norm_label": "scroll()"
     },
     {
@@ -38493,7 +38493,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_d_decorations",
-      "community": 153,
+      "community": 8,
       "norm_label": ".decorations()"
     },
     {
@@ -38547,7 +38547,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_u_dispose",
-      "community": 198,
+      "community": 135,
       "norm_label": ".dispose()"
     },
     {
@@ -38556,7 +38556,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_l_foreach",
-      "community": 45,
+      "community": 40,
       "norm_label": ".foreach()"
     },
     {
@@ -38565,7 +38565,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_l_has",
-      "community": 54,
+      "community": 40,
       "norm_label": ".has()"
     },
     {
@@ -38583,7 +38583,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_getservice",
-      "community": 35,
+      "community": 157,
       "norm_label": "getservice()"
     },
     {
@@ -38637,7 +38637,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_n_setmaxwidth",
-      "community": 153,
+      "community": 8,
       "norm_label": ".setmaxwidth()"
     },
     {
@@ -38700,7 +38700,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_n_setpaddingtop",
-      "community": 153,
+      "community": 8,
       "norm_label": ".setpaddingtop()"
     },
     {
@@ -38709,7 +38709,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_n_setpaddingleft",
-      "community": 153,
+      "community": 8,
       "norm_label": ".setpaddingleft()"
     },
     {
@@ -38718,7 +38718,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_n_setpaddingbottom",
-      "community": 153,
+      "community": 8,
       "norm_label": ".setpaddingbottom()"
     },
     {
@@ -38727,7 +38727,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_n_setpaddingright",
-      "community": 153,
+      "community": 8,
       "norm_label": ".setpaddingright()"
     },
     {
@@ -38754,7 +38754,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_n_setfontsize",
-      "community": 153,
+      "community": 8,
       "norm_label": ".setfontsize()"
     },
     {
@@ -38799,7 +38799,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_n_setlineheight",
-      "community": 153,
+      "community": 8,
       "norm_label": ".setlineheight()"
     },
     {
@@ -38808,7 +38808,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_n_setletterspacing",
-      "community": 153,
+      "community": 8,
       "norm_label": ".setletterspacing()"
     },
     {
@@ -38817,7 +38817,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_n_setclassname",
-      "community": 8,
+      "community": 153,
       "norm_label": ".setclassname()"
     },
     {
@@ -38844,7 +38844,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_n_setposition",
-      "community": 13,
+      "community": 153,
       "norm_label": ".setposition()"
     },
     {
@@ -38925,7 +38925,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_n_appendchild",
-      "community": 135,
+      "community": 361,
       "norm_label": ".appendchild()"
     },
     {
@@ -38943,7 +38943,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_stopmonitoring",
-      "community": 13,
+      "community": 135,
       "norm_label": "stopmonitoring()"
     },
     {
@@ -38952,7 +38952,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_ismonitoring",
-      "community": 13,
+      "community": 135,
       "norm_label": "ismonitoring()"
     },
     {
@@ -38961,7 +38961,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_startmonitoring",
-      "community": 13,
+      "community": 135,
       "norm_label": "startmonitoring()"
     },
     {
@@ -38997,7 +38997,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_ontouchstart",
-      "community": 40,
+      "community": 128,
       "norm_label": "ontouchstart()"
     },
     {
@@ -39006,7 +39006,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_ontouchend",
-      "community": 40,
+      "community": 128,
       "norm_label": "ontouchend()"
     },
     {
@@ -39015,7 +39015,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_newgestureevent",
-      "community": 40,
+      "community": 128,
       "norm_label": "newgestureevent()"
     },
     {
@@ -39024,7 +39024,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_dispatchevent",
-      "community": 40,
+      "community": 128,
       "norm_label": "dispatchevent()"
     },
     {
@@ -39033,7 +39033,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_inertia",
-      "community": 40,
+      "community": 128,
       "norm_label": "inertia()"
     },
     {
@@ -39042,7 +39042,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_ontouchmove",
-      "community": 40,
+      "community": 128,
       "norm_label": "ontouchmove()"
     },
     {
@@ -39051,7 +39051,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_o_createarrow",
-      "community": 135,
+      "community": 361,
       "norm_label": "._createarrow()"
     },
     {
@@ -39069,7 +39069,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_o_onelementsize",
-      "community": 13,
+      "community": 153,
       "norm_label": "._onelementsize()"
     },
     {
@@ -39078,7 +39078,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_o_onelementscrollsize",
-      "community": 13,
+      "community": 153,
       "norm_label": "._onelementscrollsize()"
     },
     {
@@ -39087,7 +39087,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_o_onelementscrollposition",
-      "community": 13,
+      "community": 153,
       "norm_label": "._onelementscrollposition()"
     },
     {
@@ -39096,7 +39096,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_o_beginreveal",
-      "community": 8,
+      "community": 153,
       "norm_label": ".beginreveal()"
     },
     {
@@ -39114,7 +39114,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_o_render",
-      "community": 13,
+      "community": 153,
       "norm_label": ".render()"
     },
     {
@@ -39168,7 +39168,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_o_updatescrollbarsize",
-      "community": 13,
+      "community": 153,
       "norm_label": ".updatescrollbarsize()"
     },
     {
@@ -39177,7 +39177,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_o_isneeded",
-      "community": 13,
+      "community": 153,
       "norm_label": ".isneeded()"
     },
     {
@@ -39204,7 +39204,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_g_ondidscroll",
-      "community": 13,
+      "community": 153,
       "norm_label": ".ondidscroll()"
     },
     {
@@ -39258,7 +39258,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_g_updateoptions",
-      "community": 8,
+      "community": 153,
       "norm_label": ".updateoptions()"
     },
     {
@@ -39312,7 +39312,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_m_options",
-      "community": 8,
+      "community": 361,
       "norm_label": ".options()"
     },
     {
@@ -39321,7 +39321,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_m_getdomnode",
-      "community": 8,
+      "community": 361,
       "norm_label": ".getdomnode()"
     },
     {
@@ -39330,7 +39330,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_m_getoverviewrulerlayoutinfo",
-      "community": 8,
+      "community": 361,
       "norm_label": ".getoverviewrulerlayoutinfo()"
     },
     {
@@ -39366,7 +39366,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_m_updateclassname",
-      "community": 8,
+      "community": 361,
       "norm_label": ".updateclassname()"
     },
     {
@@ -39375,7 +39375,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_m_updateoptions",
-      "community": 8,
+      "community": 361,
       "norm_label": ".updateoptions()"
     },
     {
@@ -39384,7 +39384,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_m_setrevealonscroll",
-      "community": 8,
+      "community": 361,
       "norm_label": ".setrevealonscroll()"
     },
     {
@@ -39402,7 +39402,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_m_setlisteningtomousewheel",
-      "community": 8,
+      "community": 361,
       "norm_label": "._setlisteningtomousewheel()"
     },
     {
@@ -39420,7 +39420,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_m_ondidscroll",
-      "community": 13,
+      "community": 153,
       "norm_label": "._ondidscroll()"
     },
     {
@@ -39429,7 +39429,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_m_rendernow",
-      "community": 8,
+      "community": 361,
       "norm_label": ".rendernow()"
     },
     {
@@ -39438,7 +39438,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_m_render",
-      "community": 8,
+      "community": 361,
       "norm_label": "._render()"
     },
     {
@@ -39447,7 +39447,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_m_ondragstart",
-      "community": 8,
+      "community": 361,
       "norm_label": "._ondragstart()"
     },
     {
@@ -39456,7 +39456,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_m_ondragend",
-      "community": 8,
+      "community": 153,
       "norm_label": "._ondragend()"
     },
     {
@@ -39465,7 +39465,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_m_onmouseleave",
-      "community": 8,
+      "community": 153,
       "norm_label": "._onmouseleave()"
     },
     {
@@ -39474,7 +39474,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_m_onmouseover",
-      "community": 8,
+      "community": 361,
       "norm_label": "._onmouseover()"
     },
     {
@@ -39483,7 +39483,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_m_reveal",
-      "community": 8,
+      "community": 361,
       "norm_label": "._reveal()"
     },
     {
@@ -39501,7 +39501,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_m_schedulehide",
-      "community": 8,
+      "community": 361,
       "norm_label": "._schedulehide()"
     },
     {
@@ -39528,7 +39528,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_scandomnode",
-      "community": 13,
+      "community": 153,
       "norm_label": "scandomnode()"
     },
     {
@@ -39537,7 +39537,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_u_arrowpointerdown",
-      "community": 13,
+      "community": 135,
       "norm_label": "._arrowpointerdown()"
     },
     {
@@ -39546,7 +39546,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_n_setvisiblesize",
-      "community": 13,
+      "community": 153,
       "norm_label": ".setvisiblesize()"
     },
     {
@@ -39555,7 +39555,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_n_setscrollsize",
-      "community": 13,
+      "community": 153,
       "norm_label": ".setscrollsize()"
     },
     {
@@ -39564,7 +39564,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_n_setscrollposition",
-      "community": 13,
+      "community": 153,
       "norm_label": ".setscrollposition()"
     },
     {
@@ -39573,7 +39573,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_n_setscrollbarsize",
-      "community": 13,
+      "community": 153,
       "norm_label": ".setscrollbarsize()"
     },
     {
@@ -39582,7 +39582,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_n_setoppositescrollbarsize",
-      "community": 8,
+      "community": 153,
       "norm_label": ".setoppositescrollbarsize()"
     },
     {
@@ -39591,7 +39591,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_n_computevalues",
-      "community": 13,
+      "community": 153,
       "norm_label": "._computevalues()"
     },
     {
@@ -39600,7 +39600,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_n_refreshcomputedvalues",
-      "community": 13,
+      "community": 153,
       "norm_label": "._refreshcomputedvalues()"
     },
     {
@@ -39609,7 +39609,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_n_getarrowsize",
-      "community": 13,
+      "community": 153,
       "norm_label": ".getarrowsize()"
     },
     {
@@ -39627,7 +39627,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_n_getrectanglelargesize",
-      "community": 13,
+      "community": 153,
       "norm_label": ".getrectanglelargesize()"
     },
     {
@@ -39636,7 +39636,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_n_getrectanglesmallsize",
-      "community": 13,
+      "community": 153,
       "norm_label": ".getrectanglesmallsize()"
     },
     {
@@ -39645,7 +39645,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_n_isneeded",
-      "community": 13,
+      "community": 153,
       "norm_label": ".isneeded()"
     },
     {
@@ -39699,7 +39699,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_g_setvisibility",
-      "community": 8,
+      "community": 153,
       "norm_label": ".setvisibility()"
     },
     {
@@ -39708,7 +39708,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_g_setshouldbevisible",
-      "community": 8,
+      "community": 153,
       "norm_label": ".setshouldbevisible()"
     },
     {
@@ -39717,7 +39717,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_g_applyvisibilitysetting",
-      "community": 8,
+      "community": 153,
       "norm_label": "._applyvisibilitysetting()"
     },
     {
@@ -39726,7 +39726,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_g_updateshouldbevisible",
-      "community": 8,
+      "community": 153,
       "norm_label": "._updateshouldbevisible()"
     },
     {
@@ -39735,7 +39735,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_g_setisneeded",
-      "community": 13,
+      "community": 153,
       "norm_label": ".setisneeded()"
     },
     {
@@ -39744,7 +39744,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_g_setdomnode",
-      "community": 8,
+      "community": 153,
       "norm_label": ".setdomnode()"
     },
     {
@@ -39753,7 +39753,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_g_ensurevisibility",
-      "community": 8,
+      "community": 153,
       "norm_label": ".ensurevisibility()"
     },
     {
@@ -39762,7 +39762,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_g_reveal",
-      "community": 8,
+      "community": 361,
       "norm_label": "._reveal()"
     },
     {
@@ -39771,7 +39771,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_g_hide",
-      "community": 8,
+      "community": 153,
       "norm_label": "._hide()"
     },
     {
@@ -39789,7 +39789,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_w_onmousedown",
-      "community": 135,
+      "community": 361,
       "norm_label": ".onmousedown()"
     },
     {
@@ -39798,7 +39798,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_w_onmouseover",
-      "community": 135,
+      "community": 361,
       "norm_label": ".onmouseover()"
     },
     {
@@ -39807,7 +39807,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_w_onmouseleave",
-      "community": 135,
+      "community": 361,
       "norm_label": ".onmouseleave()"
     },
     {
@@ -39816,7 +39816,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_w_onkeydown",
-      "community": 135,
+      "community": 361,
       "norm_label": ".onkeydown()"
     },
     {
@@ -39825,7 +39825,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_w_onkeyup",
-      "community": 135,
+      "community": 361,
       "norm_label": ".onkeyup()"
     },
     {
@@ -39834,7 +39834,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_w_oninput",
-      "community": 135,
+      "community": 361,
       "norm_label": ".oninput()"
     },
     {
@@ -39852,7 +39852,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_w_onfocus",
-      "community": 135,
+      "community": 361,
       "norm_label": ".onfocus()"
     },
     {
@@ -39861,7 +39861,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L172",
       "id": "terminal_main_w_onchange",
-      "community": 135,
+      "community": 361,
       "norm_label": ".onchange()"
     },
     {
@@ -39906,7 +39906,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L196",
       "id": "terminal_main_g_createscrollevent",
-      "community": 8,
+      "community": 153,
       "norm_label": ".createscrollevent()"
     },
     {
@@ -40104,7 +40104,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L196",
       "id": "terminal_main_u_oncursormove",
-      "community": 135,
+      "community": 38,
       "norm_label": ".oncursormove()"
     },
     {
@@ -40158,7 +40158,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L196",
       "id": "terminal_main_u_onscroll",
-      "community": 135,
+      "community": 361,
       "norm_label": ".onscroll()"
     },
     {
@@ -40365,7 +40365,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L196",
       "id": "terminal_main_u_deregistercharacterjoiner",
-      "community": 198,
+      "community": 135,
       "norm_label": ".deregistercharacterjoiner()"
     },
     {
@@ -40554,7 +40554,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L197",
       "id": "terminal_main_u_cleartextureatlas",
-      "community": 8,
+      "community": 361,
       "norm_label": ".cleartextureatlas()"
     },
     {
@@ -40671,7 +40671,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L203",
       "id": "terminal_main_nr1",
-      "community": 37,
+      "community": 32,
       "norm_label": "nr1()"
     },
     {
@@ -40779,7 +40779,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L203",
       "id": "terminal_main_hu",
-      "community": 128,
+      "community": 54,
       "norm_label": "hu()"
     },
     {
@@ -40869,7 +40869,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L203",
       "id": "terminal_main_aj",
-      "community": 20,
+      "community": 3,
       "norm_label": "aj()"
     },
     {
@@ -40896,7 +40896,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L203",
       "id": "terminal_main_gj",
-      "community": 20,
+      "community": 3,
       "norm_label": "gj()"
     },
     {
@@ -40932,7 +40932,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L203",
       "id": "terminal_main_mj",
-      "community": 20,
+      "community": 3,
       "norm_label": "mj()"
     },
     {
@@ -40950,7 +40950,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L203",
       "id": "terminal_main_uj",
-      "community": 40,
+      "community": 37,
       "norm_label": "uj()"
     },
     {
@@ -40959,7 +40959,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L203",
       "id": "terminal_main_kj",
-      "community": 20,
+      "community": 3,
       "norm_label": "kj()"
     },
     {
@@ -40968,7 +40968,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L203",
       "id": "terminal_main_vj",
-      "community": 20,
+      "community": 3,
       "norm_label": "vj()"
     },
     {
@@ -41049,7 +41049,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L203",
       "id": "terminal_main_nz",
-      "community": 48,
+      "community": 54,
       "norm_label": "nz()"
     },
     {
@@ -41067,7 +41067,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L203",
       "id": "terminal_main_uz",
-      "community": 20,
+      "community": 54,
       "norm_label": "uz()"
     },
     {
@@ -41085,7 +41085,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L203",
       "id": "terminal_main_dz",
-      "community": 54,
+      "community": 40,
       "norm_label": "dz()"
     },
     {
@@ -41094,7 +41094,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L203",
       "id": "terminal_main_yz",
-      "community": 54,
+      "community": 40,
       "norm_label": "yz()"
     },
     {
@@ -41148,7 +41148,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L203",
       "id": "terminal_main_fz",
-      "community": 40,
+      "community": 37,
       "norm_label": "fz()"
     },
     {
@@ -41157,7 +41157,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L203",
       "id": "terminal_main_qz",
-      "community": 20,
+      "community": 54,
       "norm_label": "qz()"
     },
     {
@@ -41166,7 +41166,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L203",
       "id": "terminal_main_tz",
-      "community": 3,
+      "community": 54,
       "norm_label": "tz()"
     },
     {
@@ -41175,7 +41175,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L203",
       "id": "terminal_main_hz",
-      "community": 3,
+      "community": 54,
       "norm_label": "hz()"
     },
     {
@@ -41193,7 +41193,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L203",
       "id": "terminal_main_hh",
-      "community": 54,
+      "community": 40,
       "norm_label": "hh()"
     },
     {
@@ -41220,7 +41220,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L203",
       "id": "terminal_main_wz",
-      "community": 128,
+      "community": 54,
       "norm_label": "wz()"
     },
     {
@@ -41247,7 +41247,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L203",
       "id": "terminal_main_uw",
-      "community": 35,
+      "community": 157,
       "norm_label": "uw()"
     },
     {
@@ -41346,7 +41346,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L203",
       "id": "terminal_main_qw",
-      "community": 32,
+      "community": 37,
       "norm_label": "qw()"
     },
     {
@@ -41373,7 +41373,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L203",
       "id": "terminal_main_fx",
-      "community": 128,
+      "community": 54,
       "norm_label": "fx()"
     },
     {
@@ -41427,7 +41427,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L203",
       "id": "terminal_main_e11",
-      "community": 20,
+      "community": 3,
       "norm_label": "e11()"
     },
     {
@@ -42012,7 +42012,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L211",
       "id": "terminal_main_addcached",
-      "community": 32,
+      "community": 37,
       "norm_label": "addcached()"
     },
     {
@@ -42021,7 +42021,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L211",
       "id": "terminal_main_queueload",
-      "community": 45,
+      "community": 40,
       "norm_label": "queueload()"
     },
     {
@@ -42039,7 +42039,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L211",
       "id": "terminal_main_prepareloading",
-      "community": 45,
+      "community": 40,
       "norm_label": "prepareloading()"
     },
     {
@@ -42048,7 +42048,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L211",
       "id": "terminal_main_reload",
-      "community": 45,
+      "community": 40,
       "norm_label": "reload()"
     },
     {
@@ -42057,7 +42057,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L211",
       "id": "terminal_main_loadone",
-      "community": 37,
+      "community": 45,
       "norm_label": "loadone()"
     },
     {
@@ -42084,7 +42084,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L211",
       "id": "terminal_main_reloadresources",
-      "community": 45,
+      "community": 40,
       "norm_label": "reloadresources()"
     },
     {
@@ -42192,7 +42192,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L211",
       "id": "terminal_main_so",
-      "community": 32,
+      "community": 54,
       "norm_label": "so()"
     },
     {
@@ -42201,7 +42201,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L213",
       "id": "terminal_main_ro",
-      "community": 136,
+      "community": 54,
       "norm_label": "ro()"
     },
     {
@@ -42228,7 +42228,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L217",
       "id": "terminal_main_ue",
-      "community": 54,
+      "community": 4,
       "norm_label": "ue()"
     },
     {
@@ -42264,7 +42264,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L223",
       "id": "terminal_main_me",
-      "community": 128,
+      "community": 54,
       "norm_label": "me()"
     },
     {
@@ -42273,7 +42273,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L229",
       "id": "terminal_main_ce",
-      "community": 128,
+      "community": 54,
       "norm_label": "ce()"
     },
     {
@@ -42363,7 +42363,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L247",
       "id": "terminal_main_d2",
-      "community": 128,
+      "community": 54,
       "norm_label": "d2()"
     },
     {
@@ -42372,7 +42372,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L247",
       "id": "terminal_main_p4",
-      "community": 128,
+      "community": 54,
       "norm_label": "p4()"
     },
     {
@@ -42381,7 +42381,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L247",
       "id": "terminal_main_q7",
-      "community": 128,
+      "community": 54,
       "norm_label": "q7()"
     },
     {
@@ -42399,7 +42399,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L247",
       "id": "terminal_main_j8",
-      "community": 128,
+      "community": 54,
       "norm_label": "j8()"
     },
     {
@@ -42489,7 +42489,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L250",
       "id": "terminal_main_bs",
-      "community": 136,
+      "community": 54,
       "norm_label": "bs()"
     },
     {
@@ -42525,7 +42525,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L250",
       "id": "terminal_main_po",
-      "community": 136,
+      "community": 54,
       "norm_label": "po()"
     },
     {
@@ -42534,7 +42534,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L250",
       "id": "terminal_main_p01",
-      "community": 32,
+      "community": 54,
       "norm_label": "p01()"
     },
     {
@@ -42543,7 +42543,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L256",
       "id": "terminal_main_re",
-      "community": 136,
+      "community": 54,
       "norm_label": "re()"
     },
     {
@@ -42561,7 +42561,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L256",
       "id": "terminal_main_mo",
-      "community": 128,
+      "community": 54,
       "norm_label": "mo()"
     },
     {
@@ -42642,7 +42642,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L256",
       "id": "terminal_main_oncommit",
-      "community": 54,
+      "community": 40,
       "norm_label": "oncommit()"
     },
     {
@@ -42651,7 +42651,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L256",
       "id": "terminal_main_ondiscard",
-      "community": 54,
+      "community": 40,
       "norm_label": "ondiscard()"
     },
     {
@@ -42660,7 +42660,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L256",
       "id": "terminal_main_on_fork_commit",
-      "community": 54,
+      "community": 40,
       "norm_label": "on_fork_commit()"
     },
     {
@@ -42678,7 +42678,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L256",
       "id": "terminal_main_settled",
-      "community": 32,
+      "community": 54,
       "norm_label": "settled()"
     },
     {
@@ -42696,7 +42696,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L256",
       "id": "terminal_main_apply",
-      "community": 54,
+      "community": 40,
       "norm_label": "apply()"
     },
     {
@@ -42732,7 +42732,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L256",
       "id": "terminal_main_yu",
-      "community": 54,
+      "community": 4,
       "norm_label": "yu()"
     },
     {
@@ -42750,7 +42750,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L256",
       "id": "terminal_main_defer_effect",
-      "community": 128,
+      "community": 54,
       "norm_label": "defer_effect()"
     },
     {
@@ -42759,7 +42759,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L256",
       "id": "terminal_main_is_rendered",
-      "community": 3,
+      "community": 54,
       "norm_label": "is_rendered()"
     },
     {
@@ -42777,7 +42777,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L256",
       "id": "terminal_main_update_pending_count",
-      "community": 3,
+      "community": 54,
       "norm_label": "update_pending_count()"
     },
     {
@@ -42795,7 +42795,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L256",
       "id": "terminal_main_os",
-      "community": 3,
+      "community": 54,
       "norm_label": "os()"
     },
     {
@@ -42948,7 +42948,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L256",
       "id": "terminal_main_v5",
-      "community": 128,
+      "community": 54,
       "norm_label": "v5()"
     },
     {
@@ -42957,7 +42957,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L256",
       "id": "terminal_main_c4",
-      "community": 128,
+      "community": 54,
       "norm_label": "c4()"
     },
     {
@@ -42966,7 +42966,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L256",
       "id": "terminal_main_q3",
-      "community": 128,
+      "community": 54,
       "norm_label": "q3()"
     },
     {
@@ -42975,7 +42975,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L256",
       "id": "terminal_main_l9",
-      "community": 128,
+      "community": 54,
       "norm_label": "l9()"
     },
     {
@@ -42984,7 +42984,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L256",
       "id": "terminal_main_c7",
-      "community": 128,
+      "community": 54,
       "norm_label": "c7()"
     },
     {
@@ -42993,7 +42993,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L256",
       "id": "terminal_main_io",
-      "community": 128,
+      "community": 54,
       "norm_label": "io()"
     },
     {
@@ -43083,7 +43083,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L256",
       "id": "terminal_main_vu",
-      "community": 136,
+      "community": 54,
       "norm_label": "vu()"
     },
     {
@@ -43101,7 +43101,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L256",
       "id": "terminal_main_e4",
-      "community": 136,
+      "community": 54,
       "norm_label": "e4()"
     },
     {
@@ -43155,7 +43155,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L256",
       "id": "terminal_main_gb",
-      "community": 128,
+      "community": 54,
       "norm_label": "gb()"
     },
     {
@@ -43164,7 +43164,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L256",
       "id": "terminal_main_xu",
-      "community": 128,
+      "community": 54,
       "norm_label": "xu()"
     },
     {
@@ -43290,7 +43290,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L256",
       "id": "terminal_main_bb",
-      "community": 54,
+      "community": 40,
       "norm_label": "bb()"
     },
     {
@@ -43299,7 +43299,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L256",
       "id": "terminal_main_s6",
-      "community": 136,
+      "community": 54,
       "norm_label": "s6()"
     },
     {
@@ -43362,7 +43362,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L257",
       "id": "terminal_main_eg",
-      "community": 136,
+      "community": 54,
       "norm_label": "eg()"
     },
     {
@@ -43371,7 +43371,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L257",
       "id": "terminal_main_t8",
-      "community": 136,
+      "community": 54,
       "norm_label": "t8()"
     },
     {
@@ -43479,7 +43479,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_ng",
-      "community": 136,
+      "community": 32,
       "norm_label": "ng()"
     },
     {
@@ -43506,7 +43506,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_connectedcallback",
-      "community": 54,
+      "community": 4,
       "norm_label": "connectedcallback()"
     },
     {
@@ -43524,7 +43524,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_disconnectedcallback",
-      "community": 37,
+      "community": 45,
       "norm_label": "disconnectedcallback()"
     },
     {
@@ -43542,7 +43542,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_x21",
-      "community": 54,
+      "community": 4,
       "norm_label": "x21()"
     },
     {
@@ -43551,7 +43551,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_ob",
-      "community": 136,
+      "community": 54,
       "norm_label": "ob()"
     },
     {
@@ -43560,7 +43560,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_z21",
-      "community": 136,
+      "community": 54,
       "norm_label": "z21()"
     },
     {
@@ -43587,7 +43587,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_i6",
-      "community": 45,
+      "community": 40,
       "norm_label": "i6()"
     },
     {
@@ -43596,7 +43596,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_g71",
-      "community": 54,
+      "community": 40,
       "norm_label": "g71()"
     },
     {
@@ -43614,7 +43614,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_then",
-      "community": 37,
+      "community": 45,
       "norm_label": "then()"
     },
     {
@@ -43794,7 +43794,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_node_modules_bun_lz_string_1_5_0_node_modules_lz_string_libs_lz_string_js",
-      "community": 32,
+      "community": 128,
       "norm_label": "\"node_modules/.bun/lz-string@1.5.0/node_modules/lz-string/libs/lz-string.js\"()"
     },
     {
@@ -44262,7 +44262,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_b2",
-      "community": 40,
+      "community": 37,
       "norm_label": "b2()"
     },
     {
@@ -44343,7 +44343,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_call0",
-      "community": 45,
+      "community": 40,
       "norm_label": "call0()"
     },
     {
@@ -44352,7 +44352,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_ht",
-      "community": 37,
+      "community": 128,
       "norm_label": "ht()"
     },
     {
@@ -44406,7 +44406,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_dd",
-      "community": 136,
+      "community": 54,
       "norm_label": "dd()"
     },
     {
@@ -44514,7 +44514,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_od",
-      "community": 54,
+      "community": 357,
       "norm_label": "od()"
     },
     {
@@ -44523,7 +44523,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_cd",
-      "community": 136,
+      "community": 54,
       "norm_label": "cd()"
     },
     {
@@ -44550,7 +44550,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_ld",
-      "community": 54,
+      "community": 357,
       "norm_label": "ld()"
     },
     {
@@ -44577,7 +44577,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_hd",
-      "community": 35,
+      "community": 157,
       "norm_label": "hd()"
     },
     {
@@ -44586,7 +44586,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_pt",
-      "community": 40,
+      "community": 3,
       "norm_label": "pt()"
     },
     {
@@ -44595,7 +44595,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_fd",
-      "community": 128,
+      "community": 20,
       "norm_label": "fd()"
     },
     {
@@ -44613,7 +44613,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_x9",
-      "community": 37,
+      "community": 3,
       "norm_label": "x9()"
     },
     {
@@ -44622,7 +44622,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_qi",
-      "community": 37,
+      "community": 3,
       "norm_label": "qi()"
     },
     {
@@ -44658,7 +44658,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_ud",
-      "community": 155,
+      "community": 37,
       "norm_label": "ud()"
     },
     {
@@ -44667,7 +44667,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_f91",
-      "community": 155,
+      "community": 37,
       "norm_label": "f91()"
     },
     {
@@ -44712,7 +44712,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_hc",
-      "community": 32,
+      "community": 128,
       "norm_label": "hc()"
     },
     {
@@ -44721,7 +44721,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_uc",
-      "community": 32,
+      "community": 128,
       "norm_label": "uc()"
     },
     {
@@ -44730,7 +44730,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_c8",
-      "community": 37,
+      "community": 128,
       "norm_label": "c8()"
     },
     {
@@ -44757,7 +44757,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_e6",
-      "community": 136,
+      "community": 54,
       "norm_label": "e6()"
     },
     {
@@ -44766,7 +44766,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_i0",
-      "community": 155,
+      "community": 37,
       "norm_label": "i0()"
     },
     {
@@ -44802,7 +44802,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_w4",
-      "community": 37,
+      "community": 3,
       "norm_label": "w4()"
     },
     {
@@ -44820,7 +44820,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_z9",
-      "community": 128,
+      "community": 20,
       "norm_label": "z9()"
     },
     {
@@ -44874,7 +44874,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L258",
       "id": "terminal_main_onloaded",
-      "community": 37,
+      "community": 45,
       "norm_label": "onloaded()"
     },
     {
@@ -44991,7 +44991,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L260",
       "id": "terminal_main_b9",
-      "community": 32,
+      "community": 3,
       "norm_label": "b9()"
     },
     {
@@ -45027,7 +45027,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L260",
       "id": "terminal_main_state",
-      "community": 32,
+      "community": 3,
       "norm_label": "state()"
     },
     {
@@ -45036,7 +45036,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L260",
       "id": "terminal_main_getviewtype",
-      "community": 40,
+      "community": 3,
       "norm_label": "getviewtype()"
     },
     {
@@ -45108,7 +45108,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L260",
       "id": "terminal_main_load0",
-      "community": 3,
+      "community": 37,
       "norm_label": "load0()"
     },
     {
@@ -45135,7 +45135,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L260",
       "id": "terminal_main_zd",
-      "community": 40,
+      "community": 3,
       "norm_label": "zd()"
     },
     {
@@ -45180,7 +45180,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L260",
       "id": "terminal_main_getitems",
-      "community": 32,
+      "community": 40,
       "norm_label": "getitems()"
     },
     {
@@ -45189,7 +45189,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L260",
       "id": "terminal_main_getitemtext",
-      "community": 3,
+      "community": 32,
       "norm_label": "getitemtext()"
     },
     {
@@ -45216,7 +45216,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L260",
       "id": "terminal_main_onclose",
-      "community": 3,
+      "community": 37,
       "norm_label": "onclose()"
     },
     {
@@ -45225,7 +45225,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L260",
       "id": "terminal_main_postmutate",
-      "community": 3,
+      "community": 37,
       "norm_label": "postmutate()"
     },
     {
@@ -45234,7 +45234,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L260",
       "id": "terminal_main_setuplistsubui",
-      "community": 32,
+      "community": 40,
       "norm_label": "setuplistsubui()"
     },
     {
@@ -45261,7 +45261,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L260",
       "id": "terminal_main_close",
-      "community": 37,
+      "community": 32,
       "norm_label": "close()"
     },
     {
@@ -45432,7 +45432,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L262",
       "id": "terminal_main_z91",
-      "community": 357,
+      "community": 37,
       "norm_label": "z91()"
     },
     {
@@ -45459,7 +45459,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L262",
       "id": "terminal_main_w91",
-      "community": 45,
+      "community": 40,
       "norm_label": "w91()"
     },
     {
@@ -45549,7 +45549,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L263",
       "id": "terminal_main_info",
-      "community": 3,
+      "community": 32,
       "norm_label": "info()"
     },
     {
@@ -45702,7 +45702,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L267",
       "id": "terminal_main_ka1",
-      "community": 136,
+      "community": 32,
       "norm_label": "ka1()"
     },
     {
@@ -45801,7 +45801,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L271",
       "id": "terminal_main_b8",
-      "community": 40,
+      "community": 37,
       "norm_label": "b8()"
     },
     {
@@ -45882,7 +45882,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L294",
       "id": "terminal_main_fg",
-      "community": 54,
+      "community": 40,
       "norm_label": "fg()"
     },
     {
@@ -45891,7 +45891,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L294",
       "id": "terminal_main_km",
-      "community": 136,
+      "community": 32,
       "norm_label": "km()"
     },
     {
@@ -45900,7 +45900,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L294",
       "id": "terminal_main_ol",
-      "community": 136,
+      "community": 32,
       "norm_label": "ol()"
     },
     {
@@ -45909,7 +45909,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L294",
       "id": "terminal_main_na1",
-      "community": 136,
+      "community": 32,
       "norm_label": "na1()"
     },
     {
@@ -46017,7 +46017,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L294",
       "id": "terminal_main_q9",
-      "community": 4,
+      "community": 32,
       "norm_label": "q9()"
     },
     {
@@ -46080,7 +46080,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L294",
       "id": "terminal_main_ya1",
-      "community": 136,
+      "community": 32,
       "norm_label": "ya1()"
     },
     {
@@ -46215,7 +46215,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L294",
       "id": "terminal_main_io1",
-      "community": 357,
+      "community": 37,
       "norm_label": "io1()"
     },
     {
@@ -46314,7 +46314,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L294",
       "id": "terminal_main_ll",
-      "community": 3,
+      "community": 32,
       "norm_label": "ll()"
     },
     {
@@ -46323,7 +46323,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L294",
       "id": "terminal_main_bg",
-      "community": 3,
+      "community": 32,
       "norm_label": "bg()"
     },
     {
@@ -46368,7 +46368,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L294",
       "id": "terminal_main_nn",
-      "community": 4,
+      "community": 32,
       "norm_label": "nn()"
     },
     {
@@ -46377,7 +46377,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L294",
       "id": "terminal_main_cn",
-      "community": 4,
+      "community": 32,
       "norm_label": "cn()"
     },
     {
@@ -46386,7 +46386,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L294",
       "id": "terminal_main_ln",
-      "community": 4,
+      "community": 32,
       "norm_label": "ln()"
     },
     {
@@ -46395,7 +46395,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L294",
       "id": "terminal_main_hn",
-      "community": 4,
+      "community": 32,
       "norm_label": "hn()"
     },
     {
@@ -46521,7 +46521,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L294",
       "id": "terminal_main_af",
-      "community": 4,
+      "community": 32,
       "norm_label": "af()"
     },
     {
@@ -46593,7 +46593,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L294",
       "id": "terminal_main_vo1",
-      "community": 357,
+      "community": 37,
       "norm_label": "vo1()"
     },
     {
@@ -46818,7 +46818,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L294",
       "id": "terminal_main_mf",
-      "community": 40,
+      "community": 37,
       "norm_label": "mf()"
     },
     {
@@ -46872,7 +46872,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L294",
       "id": "terminal_main_p9",
-      "community": 45,
+      "community": 40,
       "norm_label": "p9()"
     },
     {
@@ -46890,7 +46890,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L295",
       "id": "terminal_main_o9",
-      "community": 37,
+      "community": 128,
       "norm_label": "o9()"
     },
     {
@@ -46899,7 +46899,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L297",
       "id": "terminal_main_setvalue",
-      "community": 37,
+      "community": 128,
       "norm_label": "setvalue()"
     },
     {
@@ -46908,7 +46908,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L299",
       "id": "terminal_main_tn1",
-      "community": 32,
+      "community": 37,
       "norm_label": "tn1()"
     },
     {
@@ -46917,7 +46917,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L299",
       "id": "terminal_main_sn1",
-      "community": 32,
+      "community": 37,
       "norm_label": "sn1()"
     },
     {
@@ -46926,7 +46926,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L299",
       "id": "terminal_main_in1",
-      "community": 32,
+      "community": 37,
       "norm_label": "in1()"
     },
     {
@@ -46944,7 +46944,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L299",
       "id": "terminal_main_an1",
-      "community": 32,
+      "community": 40,
       "norm_label": "an1()"
     },
     {
@@ -46953,7 +46953,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L299",
       "id": "terminal_main_nn1",
-      "community": 32,
+      "community": 37,
       "norm_label": "nn1()"
     },
     {
@@ -46962,7 +46962,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L299",
       "id": "terminal_main_zl",
-      "community": 40,
+      "community": 37,
       "norm_label": "zl()"
     },
     {
@@ -46971,7 +46971,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L299",
       "id": "terminal_main_pn",
-      "community": 32,
+      "community": 40,
       "norm_label": "pn()"
     },
     {
@@ -46980,7 +46980,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L299",
       "id": "terminal_main_cn1",
-      "community": 32,
+      "community": 40,
       "norm_label": "cn1()"
     },
     {
@@ -46989,7 +46989,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L299",
       "id": "terminal_main_p8",
-      "community": 32,
+      "community": 40,
       "norm_label": "p8()"
     },
     {
@@ -47016,7 +47016,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L299",
       "id": "terminal_main_dup",
-      "community": 40,
+      "community": 37,
       "norm_label": "dup()"
     },
     {
@@ -47025,7 +47025,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L299",
       "id": "terminal_main_kill",
-      "community": 37,
+      "community": 32,
       "norm_label": "kill()"
     },
     {
@@ -47043,7 +47043,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L299",
       "id": "terminal_main_text",
-      "community": 37,
+      "community": 3,
       "norm_label": "text()"
     },
     {
@@ -47052,7 +47052,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L299",
       "id": "terminal_main_rewrite",
-      "community": 37,
+      "community": 3,
       "norm_label": "rewrite()"
     },
     {
@@ -47088,7 +47088,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L302",
       "id": "terminal_main_e_load0",
-      "community": 37,
+      "community": 3,
       "norm_label": ".load0()"
     },
     {
@@ -47160,7 +47160,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L309",
       "id": "terminal_main_opener",
-      "community": 40,
+      "community": 37,
       "norm_label": "opener()"
     },
     {
@@ -47169,7 +47169,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L309",
       "id": "terminal_main_postmutate2",
-      "community": 3,
+      "community": 37,
       "norm_label": "postmutate2()"
     },
     {
@@ -47187,7 +47187,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L310",
       "id": "terminal_main_formatshortcut",
-      "community": 32,
+      "community": 37,
       "norm_label": "formatshortcut()"
     },
     {
@@ -47205,7 +47205,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L310",
       "id": "terminal_main_if",
-      "community": 20,
+      "community": 137,
       "norm_label": "if()"
     },
     {
@@ -47223,7 +47223,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L310",
       "id": "terminal_main_emulator",
-      "community": 37,
+      "community": 32,
       "norm_label": "emulator()"
     },
     {
@@ -47232,7 +47232,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L310",
       "id": "terminal_main_rawtitle",
-      "community": 32,
+      "community": 3,
       "norm_label": "rawtitle()"
     },
     {
@@ -47250,7 +47250,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L310",
       "id": "terminal_main_titlegenerated",
-      "community": 136,
+      "community": 54,
       "norm_label": "titlegenerated()"
     },
     {
@@ -47286,7 +47286,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L310",
       "id": "terminal_main_unfocus",
-      "community": 40,
+      "community": 3,
       "norm_label": "unfocus()"
     },
     {
@@ -47304,7 +47304,7 @@
       "source_file": "plan/.obsidian/plugins/terminal/main.js",
       "source_location": "L310",
       "id": "terminal_main_startfind",
-      "community": 128,
+      "community": 20,
       "norm_label": "startfind()"
     },
     {
@@ -57725,7 +57725,7 @@
       "file_type": "code",
       "source_file": "components/pages/loyalty.tsx",
       "source_location": "L63",
-      "community": 154,
+      "community": 152,
       "norm_label": "stampdotsprops",
       "id": "pages_loyalty_stampdotsprops"
     },
@@ -57734,7 +57734,7 @@
       "file_type": "code",
       "source_file": "components/pages/loyalty.tsx",
       "source_location": "L68",
-      "community": 154,
+      "community": 152,
       "norm_label": "stampdotsvisual()",
       "id": "pages_loyalty_stampdotsvisual"
     },
@@ -58058,7 +58058,7 @@
       "file_type": "code",
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/pages/staff-management.tsx",
       "source_location": "L1",
-      "community": 154,
+      "community": 152,
       "norm_label": "staff-management.tsx",
       "id": "f_prgram_files_vs_code_repo_processing_page_update_components_pages_staff_management_tsx"
     },
@@ -58274,7 +58274,7 @@
       "file_type": "code",
       "source_file": "F:/PRGRAM FILES/VS CODE REPO/processing-page-update/components/transaction-edit-modal.tsx",
       "source_location": "L1",
-      "community": 154,
+      "community": 152,
       "norm_label": "transaction-edit-modal.tsx",
       "id": "f_prgram_files_vs_code_repo_processing_page_update_components_transaction_edit_modal_tsx"
     },
@@ -64376,7 +64376,7 @@
       "file_type": "code",
       "source_file": "app/api/audit-logs/route.ts",
       "source_location": "L1",
-      "community": 44,
+      "community": 133,
       "norm_label": "route.ts",
       "id": "app_api_audit_logs_route_ts"
     },
@@ -64448,7 +64448,7 @@
       "file_type": "code",
       "source_file": "components/ui/alert-dialog.tsx",
       "source_location": "L1",
-      "community": 154,
+      "community": 152,
       "norm_label": "alert-dialog.tsx",
       "id": "components_ui_alert_dialog_tsx"
     },
@@ -64556,7 +64556,7 @@
       "file_type": "code",
       "source_file": "components/ui/context-menu.tsx",
       "source_location": "L1",
-      "community": 31,
+      "community": 150,
       "norm_label": "context-menu.tsx",
       "id": "components_ui_context_menu_tsx"
     },
@@ -64655,7 +64655,7 @@
       "file_type": "code",
       "source_file": "components/ui/item.tsx",
       "source_location": "L1",
-      "community": 278,
+      "community": 31,
       "norm_label": "item.tsx",
       "id": "components_ui_item_tsx"
     },
@@ -64826,7 +64826,7 @@
       "file_type": "code",
       "source_file": "components/ui/switch.tsx",
       "source_location": "L1",
-      "community": 154,
+      "community": 152,
       "norm_label": "switch.tsx",
       "id": "components_ui_switch_tsx"
     },
@@ -64853,7 +64853,7 @@
       "file_type": "code",
       "source_file": "components/ui/textarea.tsx",
       "source_location": "L1",
-      "community": 154,
+      "community": 152,
       "norm_label": "textarea.tsx",
       "id": "components_ui_textarea_tsx"
     },
@@ -242556,5 +242556,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "6e08dff94943738eddbe50e63aa34412347d280b"
+  "built_at_commit": "4d4d38ae89b02fc25a0fa1c614ad1f015a93d72d"
 }
