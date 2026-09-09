@@ -15,7 +15,7 @@ import {
   Package,
 } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   transactions as initialTransactions,
@@ -54,6 +54,13 @@ export default function DashboardPage({
   const openDetail = (txn: Transaction) => {
     setSelectedTxn(txn);
     setDetailOpen(true);
+  };
+
+  const handleCardKeyDown = (e: React.KeyboardEvent, page: Page) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onNavigate?.(page);
+    }
   };
 
   // Counts & Metrics
@@ -114,7 +121,7 @@ export default function DashboardPage({
         {onNavigate && (
           <Button
             onClick={() => onNavigate("new-transaction")}
-            className="gap-2 shrink-0 self-start sm:self-auto shadow-xs cursor-pointer"
+            className="gap-2 shrink-0 w-full sm:w-auto shadow-xs cursor-pointer"
           >
             <Plus className="h-4 w-4" aria-hidden="true" />
             New order
@@ -127,12 +134,16 @@ export default function DashboardPage({
       {/* ─────────────────────────────────────────────────────────────────────── */}
       <div className={cn(
         "grid grid-cols-1 sm:grid-cols-2 gap-3.5",
-        isLoyaltyOn ? "lg:grid-cols-5" : "lg:grid-cols-4"
+        isLoyaltyOn ? "md:grid-cols-3 lg:grid-cols-5" : "md:grid-cols-2 lg:grid-cols-4"
       )}>
         {/* 1. Today's Orders */}
         <Card
+          role={onNavigate ? "button" : undefined}
+          tabIndex={onNavigate ? 0 : undefined}
           onClick={() => onNavigate?.("processing")}
-          className="border border-border/70 rounded-2xl shadow-xs hover:border-primary/40 hover:shadow-sm transition-all bg-card cursor-pointer group"
+          onKeyDown={(e) => onNavigate && handleCardKeyDown(e, "processing")}
+          className="border border-border/70 rounded-2xl shadow-xs hover:border-primary/40 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none transition-[border-color,box-shadow] motion-reduce:transition-none bg-card cursor-pointer group"
+          aria-label={onNavigate ? "Today's Orders, click to view processing board" : undefined}
         >
           <CardContent className="p-4 sm:p-5">
             <div className="flex items-start justify-between gap-2">
@@ -140,13 +151,13 @@ export default function DashboardPage({
                 <p className="text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
                   Today&apos;s Orders
                 </p>
-                <p className="text-2xl font-bold tracking-tight text-foreground">
+                <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
                   {totalOrders}
                 </p>
                 <p className="text-xs text-muted-foreground">orders this cycle</p>
               </div>
-              <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0 group-hover:scale-105 transition-transform">
-                <Receipt className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0 group-hover:scale-105 motion-reduce:group-hover:transform-none transition-transform">
+                <Receipt className="w-5 h-5" aria-hidden="true" />
               </div>
             </div>
           </CardContent>
@@ -154,8 +165,12 @@ export default function DashboardPage({
 
         {/* 2. In Progress */}
         <Card
+          role={onNavigate ? "button" : undefined}
+          tabIndex={onNavigate ? 0 : undefined}
           onClick={() => onNavigate?.("processing")}
-          className="border border-border/70 rounded-2xl shadow-xs hover:border-primary/40 hover:shadow-sm transition-all bg-card cursor-pointer group"
+          onKeyDown={(e) => onNavigate && handleCardKeyDown(e, "processing")}
+          className="border border-border/70 rounded-2xl shadow-xs hover:border-primary/40 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none transition-[border-color,box-shadow] motion-reduce:transition-none bg-card cursor-pointer group"
+          aria-label={onNavigate ? "In Progress orders, click to view processing board" : undefined}
         >
           <CardContent className="p-4 sm:p-5">
             <div className="flex items-start justify-between gap-2">
@@ -163,13 +178,13 @@ export default function DashboardPage({
                 <p className="text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
                   In Progress
                 </p>
-                <p className="text-2xl font-bold tracking-tight text-foreground">
+                <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
                   {washingCount}
                 </p>
                 <p className="text-xs text-muted-foreground">currently washing</p>
               </div>
-              <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0 group-hover:scale-105 transition-transform">
-                <Droplet className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0 group-hover:scale-105 motion-reduce:group-hover:transform-none transition-transform">
+                <Droplet className="w-5 h-5" aria-hidden="true" />
               </div>
             </div>
           </CardContent>
@@ -177,8 +192,12 @@ export default function DashboardPage({
 
         {/* 3. Ready for Pickup */}
         <Card
+          role={onNavigate ? "button" : undefined}
+          tabIndex={onNavigate ? 0 : undefined}
           onClick={() => onNavigate?.("claim-verification")}
-          className="border border-border/70 rounded-2xl shadow-xs hover:border-primary/40 hover:shadow-sm transition-all bg-card cursor-pointer group"
+          onKeyDown={(e) => onNavigate && handleCardKeyDown(e, "claim-verification")}
+          className="border border-border/70 rounded-2xl shadow-xs hover:border-primary/40 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none transition-[border-color,box-shadow] motion-reduce:transition-none bg-card cursor-pointer group"
+          aria-label={onNavigate ? "Ready for Pickup orders, click to view claim verification" : undefined}
         >
           <CardContent className="p-4 sm:p-5">
             <div className="flex items-start justify-between gap-2">
@@ -186,13 +205,13 @@ export default function DashboardPage({
                 <p className="text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
                   Ready for Pickup
                 </p>
-                <p className="text-2xl font-bold tracking-tight text-foreground">
+                <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
                   {readyCount}
                 </p>
                 <p className="text-xs text-muted-foreground">waiting for customers</p>
               </div>
-              <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0 group-hover:scale-105 transition-transform">
-                <Sparkles className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0 group-hover:scale-105 motion-reduce:group-hover:transform-none transition-transform">
+                <Sparkles className="w-5 h-5" aria-hidden="true" />
               </div>
             </div>
           </CardContent>
@@ -200,8 +219,12 @@ export default function DashboardPage({
 
         {/* 4. Revenue */}
         <Card
+          role={onNavigate ? "button" : undefined}
+          tabIndex={onNavigate ? 0 : undefined}
           onClick={() => onNavigate?.("transactions")}
-          className="border border-border/70 rounded-2xl shadow-xs hover:border-primary/40 hover:shadow-sm transition-all bg-card cursor-pointer group"
+          onKeyDown={(e) => onNavigate && handleCardKeyDown(e, "transactions")}
+          className="border border-border/70 rounded-2xl shadow-xs hover:border-primary/40 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none transition-[border-color,box-shadow] motion-reduce:transition-none bg-card cursor-pointer group"
+          aria-label={onNavigate ? "Revenue, click to view transactions" : undefined}
         >
           <CardContent className="p-4 sm:p-5">
             <div className="flex items-start justify-between gap-2">
@@ -209,13 +232,13 @@ export default function DashboardPage({
                 <p className="text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
                   Revenue
                 </p>
-                <p className="text-2xl font-bold tracking-tight text-foreground font-mono">
+                <p className="text-2xl font-bold tracking-tight text-foreground font-mono tabular-nums">
                   ₱{paidRevenue.toLocaleString()}
                 </p>
                 <p className="text-xs text-muted-foreground">paid transactions</p>
               </div>
-              <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0 group-hover:scale-105 transition-transform">
-                <Banknote className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0 group-hover:scale-105 motion-reduce:group-hover:transform-none transition-transform">
+                <Banknote className="w-5 h-5" aria-hidden="true" />
               </div>
             </div>
           </CardContent>
@@ -224,8 +247,12 @@ export default function DashboardPage({
         {/* 5. Loyalty Members — Only rendered when loyalty is enabled */}
         {isLoyaltyOn && (
           <Card
+            role={onNavigate ? "button" : undefined}
+            tabIndex={onNavigate ? 0 : undefined}
             onClick={() => onNavigate?.("loyalty")}
-            className="border border-border/70 rounded-2xl shadow-xs hover:border-primary/40 hover:shadow-sm transition-all bg-card cursor-pointer group"
+            onKeyDown={(e) => onNavigate && handleCardKeyDown(e, "loyalty")}
+            className="border border-border/70 rounded-2xl shadow-xs hover:border-primary/40 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none transition-[border-color,box-shadow] motion-reduce:transition-none bg-card cursor-pointer group"
+            aria-label={onNavigate ? "Loyalty Members, click to view loyalty page" : undefined}
           >
             <CardContent className="p-4 sm:p-5">
               <div className="flex items-start justify-between gap-2">
@@ -233,13 +260,13 @@ export default function DashboardPage({
                   <p className="text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
                     Loyalty Members
                   </p>
-                  <p className="text-2xl font-bold tracking-tight text-foreground">
+                  <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
                     {totalMembers}
                   </p>
                   <p className="text-xs text-muted-foreground">registered members</p>
                 </div>
-                <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0 group-hover:scale-105 transition-transform">
-                  <Users className="w-5 h-5" />
+                <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0 group-hover:scale-105 motion-reduce:group-hover:transform-none transition-transform">
+                  <Users className="w-5 h-5" aria-hidden="true" />
                 </div>
               </div>
             </CardContent>
@@ -256,14 +283,14 @@ export default function DashboardPage({
         <div className="lg:col-span-2">
           <Card className="border border-border shadow-none h-full flex flex-col">
             <CardHeader className="p-4 sm:p-5 flex flex-row items-center justify-between pb-3">
-              <CardTitle className="text-sm font-semibold text-foreground">Recent Orders</CardTitle>
+              <h2 className="text-sm font-semibold text-foreground">Recent Orders</h2>
               {onNavigate && (
                 <button
                   type="button"
                   onClick={() => onNavigate("processing")}
-                  className="text-xs font-medium text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                  className="text-xs font-medium text-primary hover:underline rounded-md px-2 py-1 -my-1 -mr-2 min-h-[44px] inline-flex items-center gap-1 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
                 >
-                  View board <ArrowRight className="w-3 h-3" />
+                  View board <ArrowRight className="w-3 h-3" aria-hidden="true" />
                 </button>
               )}
             </CardHeader>
@@ -271,33 +298,42 @@ export default function DashboardPage({
               <table className="w-full text-xs min-w-[500px]">
                 <thead>
                   <tr className="border-y border-border bg-muted/30 text-muted-foreground uppercase tracking-wider font-semibold">
-                    <th className="text-left px-4 py-3">Ticket</th>
-                    <th className="text-left px-3 py-3">Customer</th>
-                    <th className="text-left px-3 py-3">Service</th>
-                    <th className="text-left px-3 py-3">Status</th>
-                    <th className="text-right px-4 py-3">Total</th>
+                    <th scope="col" className="text-left px-4 py-3">Ticket</th>
+                    <th scope="col" className="text-left px-3 py-3">Customer</th>
+                    <th scope="col" className="text-left px-3 py-3">Service</th>
+                    <th scope="col" className="text-left px-3 py-3">Status</th>
+                    <th scope="col" className="text-right px-4 py-3">Total</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {transactions.slice(0, 6).map((txn) => (
                     <tr
                       key={txn.id}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => openDetail(txn)}
-                      className="hover:bg-muted/20 transition-colors cursor-pointer group"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          openDetail(txn);
+                        }
+                      }}
+                      className="hover:bg-muted/20 focus-visible:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary transition-colors cursor-pointer group"
+                      aria-label={`View order #${txn.ticketId} for ${txn.customerName}`}
                     >
-                      <td className="px-4 py-3 font-medium text-primary group-hover:underline">
+                      <td className="px-4 py-3.5 font-medium text-primary group-hover:underline tabular-nums">
                         #{txn.ticketId}
                       </td>
-                      <td className="px-3 py-3 font-medium text-foreground">
+                      <td className="px-3 py-3.5 font-medium text-foreground max-w-[140px] sm:max-w-[200px] truncate">
                         {txn.customerName}
                       </td>
-                      <td className="px-3 py-3 text-muted-foreground">
+                      <td className="px-3 py-3.5 text-muted-foreground truncate">
                         {txn.washType || "Regular"}
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-3.5">
                         <StatusBadge status={txn.status} />
                       </td>
-                      <td className="px-4 py-3 text-right font-medium text-foreground">
+                      <td className="px-4 py-3.5 text-right font-medium text-foreground tabular-nums">
                         ₱{txn.fee.toLocaleString()}
                       </td>
                     </tr>
@@ -319,14 +355,19 @@ export default function DashboardPage({
         <div>
           <Card className="border border-border shadow-none h-full flex flex-col justify-between p-4 sm:p-5">
             <div>
-              <CardTitle className="text-sm font-semibold text-foreground">Orders by Stage</CardTitle>
-              <CardDescription className="text-xs text-muted-foreground mt-0.5">
+              <h2 className="text-sm font-semibold text-foreground">Orders by Stage</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
                 Where today&apos;s laundry sits right now
-              </CardDescription>
+              </p>
 
               {/* Donut graphic */}
               <div className="relative my-6 flex items-center justify-center">
-                <svg className="w-36 h-36 -rotate-90" viewBox="0 0 100 100">
+                <svg
+                  className="w-36 h-36 -rotate-90"
+                  viewBox="0 0 100 100"
+                  role="img"
+                  aria-label={`Order distribution: ${receivedCount} received, ${washingCount} washing, ${readyCount} ready`}
+                >
                   {/* Background Track */}
                   <circle
                     cx="50"
@@ -383,7 +424,7 @@ export default function DashboardPage({
 
                 {/* Center text */}
                 <div className="absolute flex flex-col items-center justify-center text-center">
-                  <span className="text-2xl font-bold tracking-tight text-foreground">{totalOrders}</span>
+                  <span className="text-2xl font-bold tracking-tight text-foreground tabular-nums">{totalOrders}</span>
                   <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                     Total Orders
                   </span>
@@ -396,27 +437,27 @@ export default function DashboardPage({
               {/* Received */}
               <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 p-2.5 text-center flex flex-col items-center justify-center">
                 <div className="w-6 h-6 rounded-md bg-purple-500/10 text-purple-500 flex items-center justify-center mb-1">
-                  <Receipt className="w-3.5 h-3.5" />
+                  <Receipt className="w-3.5 h-3.5" aria-hidden="true" />
                 </div>
-                <span className="text-sm font-bold text-foreground">{receivedCount}</span>
+                <span className="text-sm font-bold text-foreground tabular-nums">{receivedCount}</span>
                 <span className="text-[10px] text-muted-foreground font-medium">Received</span>
               </div>
 
               {/* Washing */}
               <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-2.5 text-center flex flex-col items-center justify-center">
                 <div className="w-6 h-6 rounded-md bg-blue-500/10 text-blue-500 flex items-center justify-center mb-1">
-                  <Droplet className="w-3.5 h-3.5" />
+                  <Droplet className="w-3.5 h-3.5" aria-hidden="true" />
                 </div>
-                <span className="text-sm font-bold text-foreground">{washingCount}</span>
+                <span className="text-sm font-bold text-foreground tabular-nums">{washingCount}</span>
                 <span className="text-[10px] text-muted-foreground font-medium">Washing</span>
               </div>
 
               {/* Ready */}
               <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-2.5 text-center flex flex-col items-center justify-center">
                 <div className="w-6 h-6 rounded-md bg-green-500/10 text-green-500 flex items-center justify-center mb-1">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                 </div>
-                <span className="text-sm font-bold text-foreground">{readyCount}</span>
+                <span className="text-sm font-bold text-foreground tabular-nums">{readyCount}</span>
                 <span className="text-[10px] text-muted-foreground font-medium">Ready</span>
               </div>
             </div>

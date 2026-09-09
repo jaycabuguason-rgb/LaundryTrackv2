@@ -25,12 +25,26 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
     }
     const sanitized: Partial<BusinessProfile> = {};
-    const stringFields: (keyof BusinessProfile)[] = ["shopName", "tagline", "address", "contactNumber", "email", "receiptFooter", "pickupInstructions"];
+    const stringFields = [
+      "shopName",
+      "tagline",
+      "address",
+      "contactNumber",
+      "email",
+      "receiptFooter",
+      "pickupInstructions",
+    ] as const;
     for (const field of stringFields) {
       if (raw[field] != null) sanitized[field] = String(raw[field]).trim().slice(0, 1000);
     }
     if (raw.logoDataUrl != null) {
       sanitized.logoDataUrl = String(raw.logoDataUrl).trim();
+    }
+    if (raw.receiptPaperWidth === "58mm" || raw.receiptPaperWidth === "80mm") {
+      sanitized.receiptPaperWidth = raw.receiptPaperWidth;
+    }
+    if (typeof raw.receiptShowLogo === "boolean") {
+      sanitized.receiptShowLogo = raw.receiptShowLogo;
     }
     const profile = await saveBusinessProfile(normalizeBusinessProfile(sanitized));
 

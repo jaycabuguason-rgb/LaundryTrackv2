@@ -7,6 +7,8 @@ export interface BusinessProfile {
   logoDataUrl: string;
   receiptFooter: string;
   pickupInstructions: string;
+  receiptPaperWidth?: "80mm" | "58mm";
+  receiptShowLogo?: boolean;
 }
 
 export const DEFAULT_BUSINESS_PROFILE: BusinessProfile = {
@@ -18,6 +20,8 @@ export const DEFAULT_BUSINESS_PROFILE: BusinessProfile = {
   logoDataUrl: "",
   receiptFooter: "Thank you for choosing Sunshine Laundry Shop!",
   pickupInstructions: "Present this receipt or QR code upon claiming.",
+  receiptPaperWidth: "80mm",
+  receiptShowLogo: true,
 };
 
 export function normalizeBusinessProfile(

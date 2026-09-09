@@ -2280,10 +2280,19 @@ export default function TransactionsPage({
               <p className="text-sm font-mono font-semibold text-foreground">{reprintTxn.ticketId}</p>
               <p className="text-xs text-muted-foreground">{reprintTxn.customerName}</p>
               <div className="flex gap-2 mt-2 w-full">
-                <Button size="sm" className="flex-1 flex items-center gap-1.5" onClick={() => window.print()}>
-                  <Printer className="w-3.5 h-3.5" /> Print
+                <Button
+                  size="sm"
+                  className="flex-1 flex items-center gap-1.5 cursor-pointer"
+                  onClick={() => {
+                    const t = reprintTxn;
+                    setReprintTxn(null);
+                    setPrintTxn(t);
+                    setPrintPostCreate(false);
+                  }}
+                >
+                  <Printer className="w-3.5 h-3.5" /> Print Receipt
                 </Button>
-                <Button size="sm" variant="outline" className="flex-1" onClick={() => setReprintTxn(null)}>
+                <Button size="sm" variant="outline" className="flex-1 cursor-pointer" onClick={() => setReprintTxn(null)}>
                   Close
                 </Button>
               </div>

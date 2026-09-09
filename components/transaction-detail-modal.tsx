@@ -82,7 +82,7 @@ export function TransactionDetailModal({ open, onOpenChange, transaction, onEdit
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Status Timeline</p>
             {isVoided ? (
               <div className="flex items-center gap-2 text-destructive text-sm font-medium">
-                <Circle className="w-4 h-4" />
+                <Circle className="w-4 h-4" aria-hidden="true" />
                 This transaction has been voided.
               </div>
             ) : (
@@ -94,11 +94,11 @@ export function TransactionDetailModal({ open, onOpenChange, transaction, onEdit
                     <div key={step} className="flex items-center">
                       <div className="flex flex-col items-center gap-1">
                         {done ? (
-                          <CheckCircle2 className="w-5 h-5 text-primary" />
+                          <CheckCircle2 className="w-5 h-5 text-primary" aria-hidden="true" />
                         ) : current ? (
-                          <CircleDot className="w-5 h-5 text-primary" />
+                          <CircleDot className="w-5 h-5 text-primary" aria-hidden="true" />
                         ) : (
-                          <Circle className="w-5 h-5 text-muted-foreground/40" />
+                          <Circle className="w-5 h-5 text-muted-foreground/40" aria-hidden="true" />
                         )}
                         <span className={[
                           "text-xs font-medium text-center leading-tight",
@@ -126,7 +126,7 @@ export function TransactionDetailModal({ open, onOpenChange, transaction, onEdit
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Fee</p>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Total</span>
-              <span className="text-xl font-bold text-primary">₱{transaction.fee.toLocaleString()}</span>
+              <span className="text-xl font-bold text-primary tabular-nums">₱{transaction.fee.toLocaleString()}</span>
             </div>
             <div className="mt-3 pt-3 border-t border-primary/10 flex items-center justify-between">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Payment Status</span>
@@ -148,7 +148,7 @@ export function TransactionDetailModal({ open, onOpenChange, transaction, onEdit
               }}
               className="cursor-pointer gap-1.5"
             >
-              <Edit className="w-3.5 h-3.5" /> Edit Status
+              <Edit className="w-3.5 h-3.5" aria-hidden="true" /> Edit Status
             </Button>
           )}
         </div>
