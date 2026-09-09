@@ -524,15 +524,23 @@ export async function getPublicLoyaltyMemberRecord(
   );
   const totalVisits = Math.max(memberTxns.length, member.stampCount);
 
-  const laundryRecords: PublicLoyaltyMemberRecord["laundryRecords"] = memberTxns.map((t) => ({
-    ticketId: t.ticketId,
-    date: t.arrivalDateTime || t.dropOffDate || "",
-    washType: t.washType || "Regular",
-    weight: Number(t.weight) || 0,
-    fee: Number(t.fee) || 0,
-    status: t.status,
-    rewardUsed: t.fee === 0 || (t.washInstructions || "").toLowerCase().includes("reward"),
-  }));
+  const laundryRecords: PublicLoyaltyMemberRecord["laundryRecords"] = memberTxns.map((t) => {
+    const status = t.status === "Drying" ? "Washing" : t.status;
+    const isClaimed = status === "Claimed";
+    const dropOffTime = t.arrivalDateTime || t.dropOffDate || "";
+    const claimedTime = isClaimed ? (t.claimedAt || t.updatedAt || dropOffTime) : null;
+
+    return {
+      ticketId: t.ticketId,
+      date: dropOffTime,
+      claimedDate: claimedTime,
+      washType: t.washType || "Regular",
+      weight: Number(t.weight) || 0,
+      fee: Number(t.fee) || 0,
+      status,
+      rewardUsed: t.fee === 0 || (t.washInstructions || "").toLowerCase().includes("reward"),
+    };
+  });
 
   // Merge any tickets in stampHistory that weren't in memberTxns
   const existingTickets = new Set(laundryRecords.map((r) => r.ticketId));
@@ -543,6 +551,7 @@ export async function getPublicLoyaltyMemberRecord(
         laundryRecords.push({
           ticketId: sh.ticket,
           date: sh.date,
+          claimedDate: sh.date,
           washType: "Regular",
           weight: 0,
           fee: 0,

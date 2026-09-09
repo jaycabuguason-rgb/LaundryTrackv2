@@ -19,6 +19,7 @@ import {
   QrCode,
   ExternalLink,
   History,
+  Calendar,
 } from "lucide-react";
 
 import { formatReadableDateTime } from "@/lib/date-format";
@@ -330,12 +331,12 @@ export default async function PublicTrackingPage(
                   </span>
                 </div>
                 <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                  {loyaltyRecord.laundryRecords.slice(0, 5).map((item, idx) => (
+                  {loyaltyRecord.laundryRecords.slice(0, 8).map((item, idx) => (
                     <div
                       key={`${item.ticketId}-${idx}`}
-                      className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-muted/30 p-2.5 text-xs"
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-xl border border-border/60 bg-muted/30 p-3 text-xs"
                     >
-                      <div className="space-y-0.5">
+                      <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <span className="font-mono font-bold text-foreground">{item.ticketId}</span>
                           <StatusBadge status={item.status} className="px-1.5 py-0 text-[10px]" />
@@ -346,12 +347,26 @@ export default async function PublicTrackingPage(
                           )}
                         </div>
                         <p className="text-[11px] text-muted-foreground">
-                          {item.washType} {item.weight > 0 ? `• ${item.weight} kg` : ""}
+                          {item.washType} {item.weight > 0 ? `• ${item.weight} kg` : ""} {item.fee > 0 ? `• ₱${item.fee}` : ""}
                         </p>
                       </div>
-                      <span className="text-[11px] text-muted-foreground whitespace-nowrap">
-                        {item.date}
-                      </span>
+
+                      <div className="flex flex-wrap sm:flex-col sm:items-end gap-x-3 gap-y-1 text-[11px] self-start sm:self-auto">
+                        <div className="flex items-center gap-1.5 text-muted-foreground whitespace-nowrap" title="Date dropped off">
+                          <Calendar className="w-3.5 h-3.5 shrink-0 opacity-70" />
+                          <span>In: <span className="font-medium text-foreground">{item.date}</span></span>
+                        </div>
+                        {item.status === "Claimed" ? (
+                          <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium whitespace-nowrap" title="Date claimed">
+                            <CheckCircle2 className="w-3 h-3 shrink-0" />
+                            <span>Claimed: {item.claimedDate || item.date}</span>
+                          </div>
+                        ) : item.status === "Ready" ? (
+                          <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Ready for pickup</span>
+                        ) : (
+                          <span className="text-amber-600 dark:text-amber-400 font-medium">In Progress</span>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>

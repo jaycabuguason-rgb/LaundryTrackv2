@@ -24,21 +24,23 @@ export const STATUS_ICONS: Record<TransactionStatus, LucideIcon> = {
   Voided: Ban,
 };
 
-export function getStatusIcon(status: TransactionStatus, className = "w-4 h-4") {
+export function getStatusIcon(rawStatus: TransactionStatus | string, className = "w-4 h-4") {
+  const status: TransactionStatus = rawStatus === "Drying" ? "Washing" : (rawStatus as TransactionStatus);
   const Icon = STATUS_ICONS[status] ?? Inbox;
   return <Icon className={className} aria-hidden="true" />;
 }
 
 /** Icon pill for transaction status — icon + label, never color-only */
 export function StatusBadge({
-  status,
+  status: rawStatus,
   className,
   iconClassName = "w-3 h-3",
 }: {
-  status: TransactionStatus;
+  status: TransactionStatus | string;
   className?: string;
   iconClassName?: string;
 }) {
+  const status: TransactionStatus = rawStatus === "Drying" ? "Washing" : (rawStatus as TransactionStatus);
   const Icon = STATUS_ICONS[status] ?? Inbox;
   return (
     <span

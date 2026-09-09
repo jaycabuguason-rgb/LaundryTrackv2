@@ -262,9 +262,21 @@ export default async function MemberLoyaltyStatusPage({
                       {item.fee > 0 && <span>• ₱{item.fee}</span>}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 self-start sm:self-auto text-xs text-muted-foreground">
-                    <Calendar className="h-3.5 w-3.5" />
-                    <span>{item.date}</span>
+                  <div className="flex flex-wrap sm:flex-col sm:items-end gap-x-3 gap-y-1 text-xs self-start sm:self-auto">
+                    <div className="flex items-center gap-1.5 text-muted-foreground whitespace-nowrap" title="Date dropped in">
+                      <Calendar className="h-3.5 w-3.5 opacity-70" />
+                      <span>In: <span className="font-medium text-foreground">{item.date}</span></span>
+                    </div>
+                    {item.status === "Claimed" ? (
+                      <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium whitespace-nowrap" title="Date claimed">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        <span>Claimed: {item.claimedDate || item.date}</span>
+                      </div>
+                    ) : item.status === "Ready" ? (
+                      <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-[11px]">Ready for pickup</span>
+                    ) : (
+                      <span className="text-amber-600 dark:text-amber-400 font-medium text-[11px]">In Progress</span>
+                    )}
                   </div>
                 </div>
               ))

@@ -33,6 +33,7 @@ type TransactionRow = {
   public_tracking_token: string | null;
   eta: string | null;
   arrival_time: string | null;
+  claimed_at?: string | null;
   updated_at: string | null;
   created_at: string | null;
   void_reason: string | null;
@@ -44,7 +45,7 @@ type SettingsRow<T = unknown> = {
 };
 
 const TRANSACTION_SELECT =
-  "id,ticket_id,customer_name,phone_number,wash_type,weight_kg,addons,special_instructions,fee,status,payment_status,public_tracking_token,eta,arrival_time,updated_at,created_at,void_reason";
+  "id,ticket_id,customer_name,phone_number,wash_type,weight_kg,addons,special_instructions,fee,status,payment_status,public_tracking_token,eta,arrival_time,claimed_at,updated_at,created_at,void_reason";
 const TRANSACTION_LIST_CACHE_TTL_MS = 5_000;
 const transactionListCache = createTtlCache<Transaction[]>();
 
@@ -80,6 +81,7 @@ let mockTransactions: TransactionRow[] = seedTransactions.map((transaction, inde
     public_tracking_token: createTrackingToken(),
     eta: null,
     arrival_time: timestamp,
+    claimed_at: transaction.claimedAt ? normalizeLocalDateTime(transaction.claimedAt) : null,
     updated_at: timestamp,
     created_at: timestamp,
     void_reason: transaction.status === "Voided" ? "Voided in mock data" : null,
@@ -93,6 +95,7 @@ function isValidTransactionStatus(value: string): value is TransactionStatus {
 }
 
 function normalizeStatus(value: string | null | undefined): TransactionStatus {
+  if (value === "Drying") return "Washing";
   return value && isValidTransactionStatus(value) ? value : "Received";
 }
 
@@ -119,6 +122,8 @@ function createTrackingToken(): string {
 
 function mapRowToTransaction(row: TransactionRow): Transaction {
   const arrivalTimestamp = row.arrival_time ?? row.created_at;
+  const status = normalizeStatus(row.status);
+  const claimedTimestamp = row.claimed_at ?? (status === "Claimed" ? (row.updated_at ?? arrivalTimestamp) : null);
 
   return {
     id: row.id,
@@ -127,10 +132,11 @@ function mapRowToTransaction(row: TransactionRow): Transaction {
     phone: row.phone_number ?? "",
     arrivalDateTime: formatCompactDateTime(arrivalTimestamp),
     dropOffDate: formatCompactDate(arrivalTimestamp),
+    claimedAt: claimedTimestamp ? formatCompactDateTime(claimedTimestamp) : undefined,
     washType: row.wash_type,
     weight: Number(row.weight_kg ?? 0),
     fee: Number(row.fee ?? 0),
-    status: normalizeStatus(row.status),
+    status,
     paymentStatus: normalizePaymentStatus(row.payment_status),
     addOns: row.addons ?? [],
     washInstructions: row.special_instructions ?? undefined,
@@ -395,6 +401,7 @@ function createMockTransaction(input: CreateTransactionInput): TransactionRow {
     public_tracking_token: createTrackingToken(),
     eta: normalizeLocalDateTime(input.eta ?? null),
     arrival_time: normalizeLocalDateTime(input.arrivalDateTime) ?? now,
+    claimed_at: null,
     updated_at: now,
     created_at: now,
     void_reason: null,

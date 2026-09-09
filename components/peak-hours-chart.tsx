@@ -26,7 +26,7 @@ export default function PeakHoursChart({ data }: PeakHoursChartProps) {
           wrapperClassName="dark:[&_.recharts-tooltip-wrapper]:!bg-[hsl(255_20%_11%)] dark:[&_.recharts-tooltip-wrapper]:!border-[hsl(255_15%_18%)]"
           cursor={{ fill: "hsl(257 58% 49% / 0.06)" }}
           formatter={(value: number) => [`${value} transaction${value !== 1 ? 's' : ''}`, '']}
-          labelFormatter={(label) => label}
+          labelFormatter={(label: any) => label}
         />
         <Bar dataKey="count" fill="hsl(257 58% 49%)" radius={[3, 3, 0, 0]} />
       </BarChart>

@@ -656,7 +656,8 @@ export default function LoyaltyPage({ loyaltyEnabled = true, transactions }: Loy
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold">
-                    <th className="px-4 py-2.5">Date</th>
+                    <th className="px-4 py-2.5">Date In</th>
+                    <th className="px-4 py-2.5">Date Claimed</th>
                     <th className="px-4 py-2.5">Ticket</th>
                     <th className="px-4 py-2.5">Service</th>
                     <th className="px-4 py-2.5">KG</th>
@@ -670,6 +671,17 @@ export default function LoyaltyPage({ loyaltyEnabled = true, transactions }: Loy
                       return (
                         <tr key={t.ticketId || i} className="hover:bg-muted/30 transition-colors">
                           <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">{t.arrivalDateTime || t.dropOffDate}</td>
+                          <td className="px-4 py-2.5 whitespace-nowrap">
+                            {t.status === "Claimed" ? (
+                              <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3" /> {t.claimedAt || t.updatedAt || t.arrivalDateTime}
+                              </span>
+                            ) : t.status === "Ready" ? (
+                              <span className="text-emerald-600 dark:text-emerald-400 font-medium">Ready</span>
+                            ) : (
+                              <span className="text-amber-600 dark:text-amber-400">In Progress</span>
+                            )}
+                          </td>
                           <td className="px-4 py-2.5 font-mono text-primary font-medium">{t.ticketId}</td>
                           <td className="px-4 py-2.5 font-medium text-foreground">{t.washType}</td>
                           <td className="px-4 py-2.5 text-muted-foreground">{t.weight} kg</td>
@@ -689,6 +701,9 @@ export default function LoyaltyPage({ loyaltyEnabled = true, transactions }: Loy
                     selected.stampHistory.map((h, i) => (
                       <tr key={i} className="hover:bg-muted/30 transition-colors">
                         <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">{h.date}</td>
+                        <td className="px-4 py-2.5 text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" /> {h.date}
+                        </td>
                         <td className="px-4 py-2.5 font-mono text-primary font-medium">{h.ticket}</td>
                         <td className="px-4 py-2.5 font-medium text-foreground">Regular Wash</td>
                         <td className="px-4 py-2.5 text-muted-foreground">—</td>
@@ -697,7 +712,7 @@ export default function LoyaltyPage({ loyaltyEnabled = true, transactions }: Loy
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={5} className="text-center py-6 text-muted-foreground">
+                      <td colSpan={6} className="text-center py-6 text-muted-foreground">
                         No laundry records found for this member yet.
                       </td>
                     </tr>

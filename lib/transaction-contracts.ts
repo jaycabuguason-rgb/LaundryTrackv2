@@ -86,6 +86,7 @@ export interface PublicLoyaltyMemberRecord {
   laundryRecords: Array<{
     ticketId: string;
     date: string;
+    claimedDate?: string | null;
     washType: string;
     weight: number;
     fee: number;

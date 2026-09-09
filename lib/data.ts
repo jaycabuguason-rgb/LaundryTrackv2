@@ -8,6 +8,7 @@ export interface Transaction {
   phone: string;
   arrivalDateTime: string; // Customer drop-off date & time
   dropOffDate: string;
+  claimedAt?: string; // Date customer claimed
   washType: string;
   weight: number;
   fee: number;
@@ -58,11 +59,11 @@ export interface Notification {
 export const transactions: Transaction[] = [
   { id: "1",  ticketId: "TKT-0001", customerName: "Maria Santos",    phone: "09171234567", arrivalDateTime: "2026-04-05 08:14", dropOffDate: "2026-04-05", washType: "Regular",  weight: 5.2, fee: 156, status: "Ready",    paymentStatus: "paid",   addOns: ["Fabcon"],              washInstructions: "Cold water only" },
   { id: "2",  ticketId: "TKT-0002", customerName: "Jose Reyes",      phone: "09281234567", arrivalDateTime: "2026-04-05 09:02", dropOffDate: "2026-04-05", washType: "Express",  weight: 3.8, fee: 228, status: "Washing",  paymentStatus: "unpaid", addOns: ["Fabcon", "Bleach"] },
-  { id: "3",  ticketId: "TKT-0003", customerName: "Ana Cruz",        phone: "09351234567", arrivalDateTime: "2026-04-05 09:45", dropOffDate: "2026-04-05", washType: "Delicate", weight: 2.1, fee: 105, status: "Drying", paymentStatus: "unpaid", addOns: [] },
-  { id: "4",  ticketId: "TKT-0004", customerName: "Pedro Bautista",  phone: "09461234567", arrivalDateTime: "2026-04-04 10:30", dropOffDate: "2026-04-04", washType: "Regular",  weight: 7.5, fee: 225, status: "Claimed",  paymentStatus: "paid",   addOns: ["Fabcon"] },
+  { id: "3",  ticketId: "TKT-0003", customerName: "Ana Cruz",        phone: "09351234567", arrivalDateTime: "2026-04-05 09:45", dropOffDate: "2026-04-05", washType: "Delicate", weight: 2.1, fee: 105, status: "Washing", paymentStatus: "unpaid", addOns: [] },
+  { id: "4",  ticketId: "TKT-0004", customerName: "Pedro Bautista",  phone: "09461234567", arrivalDateTime: "2026-04-04 10:30", dropOffDate: "2026-04-04", claimedAt: "2026-04-05 10:32", washType: "Regular",  weight: 7.5, fee: 225, status: "Claimed",  paymentStatus: "paid",   addOns: ["Fabcon"] },
   { id: "5",  ticketId: "TKT-0005", customerName: "Rosa Dela Cruz",  phone: "09571234567", arrivalDateTime: "2026-04-04 11:55", dropOffDate: "2026-04-04", washType: "Express",  weight: 4.0, fee: 240, status: "Ready",    paymentStatus: "unpaid", addOns: ["Bleach"] },
   { id: "6",  ticketId: "TKT-0006", customerName: "Carlos Garcia",   phone: "09681234567", arrivalDateTime: "2026-04-04 14:10", dropOffDate: "2026-04-04", washType: "Regular",  weight: 6.3, fee: 189, status: "Received", paymentStatus: "unpaid", addOns: [] },
-  { id: "7",  ticketId: "TKT-0007", customerName: "Lita Mendoza",    phone: "09791234567", arrivalDateTime: "2026-04-03 07:50", dropOffDate: "2026-04-03", washType: "Delicate", weight: 1.8, fee: 90,  status: "Claimed",  paymentStatus: "paid",   addOns: ["Fabcon"] },
+  { id: "7",  ticketId: "TKT-0007", customerName: "Lita Mendoza",    phone: "09791234567", arrivalDateTime: "2026-04-03 07:50", dropOffDate: "2026-04-03", claimedAt: "2026-04-04 15:40", washType: "Delicate", weight: 1.8, fee: 90,  status: "Claimed",  paymentStatus: "paid",   addOns: ["Fabcon"] },
   { id: "8",  ticketId: "TKT-0008", customerName: "Ramon Torres",    phone: "09821234567", arrivalDateTime: "2026-04-03 08:35", dropOffDate: "2026-04-03", washType: "Regular",  weight: 8.1, fee: 243, status: "Ready",    paymentStatus: "unpaid", addOns: [] },
   { id: "9",  ticketId: "TKT-0009", customerName: "Gloria Aquino",   phone: "09931234567", arrivalDateTime: "2026-04-05 10:20", dropOffDate: "2026-04-05", washType: "Express",  weight: 3.5, fee: 210, status: "Washing",  paymentStatus: "unpaid", addOns: ["Fabcon", "Starch"] },
   { id: "10", ticketId: "TKT-0010", customerName: "Eduardo Lim",     phone: "09041234567", arrivalDateTime: "2026-04-05 11:05", dropOffDate: "2026-04-05", washType: "Regular",  weight: 5.9, fee: 177, status: "Received", paymentStatus: "unpaid", addOns: [] },
