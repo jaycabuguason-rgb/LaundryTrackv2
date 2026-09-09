@@ -283,10 +283,21 @@ export async function addStampsToMember(
 }
 
 export async function getLoyaltySettings(): Promise<{ loyalty_enabled: boolean; washes_per_reward: number; reward_description: string }> {
-  if (!hasSupabaseConfig()) return { loyalty_enabled: true, washes_per_reward: 10, reward_description: "Free Wash" };
-  const rows = await restRequest<any[]>("settings?select=loyalty_enabled,washes_per_reward,reward_description");
-  if (!rows || rows.length === 0) return { loyalty_enabled: true, washes_per_reward: 10, reward_description: "Free Wash" };
-  return rows[0];
+  if (!hasSupabaseConfig()) return { loyalty_enabled: true, washes_per_reward: 7, reward_description: "Free wash" };
+  try {
+    const rows = await restRequest<any[]>("settings?key=eq.loyalty&select=key,value&limit=1");
+    if (rows && rows[0]?.value) {
+      const val = rows[0].value;
+      return {
+        loyalty_enabled: val.enabled ?? true,
+        washes_per_reward: Number(val.washesPerReward) || 7,
+        reward_description: val.rewardDescription || "Free wash",
+      };
+    }
+  } catch {
+    // fallback if error
+  }
+  return { loyalty_enabled: true, washes_per_reward: 7, reward_description: "Free wash" };
 }
 
 export async function getLoyaltyMemberWithHistory(memberId: string): Promise<LoyaltyMember> {
@@ -427,6 +438,10 @@ function cleanPhone(num: string | null | undefined): string {
   return (num || "").replace(/\D/g, "");
 }
 
+function isUuid(val: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+}
+
 export async function getPublicLoyaltyMemberRecord(
   memberIdentifier: string
 ): Promise<PublicLoyaltyMemberRecord | null> {
@@ -450,13 +465,29 @@ export async function getPublicLoyaltyMemberRecord(
       ) || null;
   } else {
     try {
-      const rows = await restRequest<LoyaltyMemberRow[]>(
-        `loyalty_members?or=(id.eq.${encodeURIComponent(normalizedId)},id.eq.${encodeURIComponent(cleanId)},phone_number.eq.${encodeURIComponent(cleanId)},full_name.ilike.${encodeURIComponent(cleanId)})&limit=1`
-      );
+      let rows: LoyaltyMemberRow[] = [];
+      if (isUuid(cleanId)) {
+        rows = await restRequest<LoyaltyMemberRow[]>(
+          `loyalty_members?id=eq.${encodeURIComponent(cleanId)}&select=id,full_name,phone_number,stamp_count,rewards_redeemed,preferences,date_joined,created_at&limit=1`
+        );
+      } else if (isUuid(normalizedId)) {
+        rows = await restRequest<LoyaltyMemberRow[]>(
+          `loyalty_members?id=eq.${encodeURIComponent(normalizedId)}&select=id,full_name,phone_number,stamp_count,rewards_redeemed,preferences,date_joined,created_at&limit=1`
+        );
+      } else {
+        rows = await restRequest<LoyaltyMemberRow[]>(
+          `loyalty_members?or=(phone_number.eq.${encodeURIComponent(cleanId)},full_name.ilike.${encodeURIComponent(cleanId)})&select=id,full_name,phone_number,stamp_count,rewards_redeemed,preferences,date_joined,created_at&limit=1`
+        );
+      }
+
       if (rows && rows.length > 0) {
         member = await getLoyaltyMemberWithHistory(rows[0].id);
       }
     } catch {
+      // ignore
+    }
+
+    if (!member) {
       member =
         mockMembers.find(
           (m) =>
