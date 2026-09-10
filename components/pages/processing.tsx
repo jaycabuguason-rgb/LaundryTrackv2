@@ -157,6 +157,19 @@ function formatLastUpdated(date: Date): string {
   return `${mins} min ago`;
 }
 
+function getNextStageAction(status: TransactionStatus): { nextStatus: TransactionStatus; label: string; shortLabel: string } | null {
+  if (status === "Received") {
+    return { nextStatus: "Washing", label: "Start Wash →", shortLabel: "Wash →" };
+  }
+  if (status === "Washing" || status === "Drying") {
+    return { nextStatus: "Ready", label: "Mark Ready ✓", shortLabel: "Ready ✓" };
+  }
+  if (status === "Ready") {
+    return { nextStatus: "Claimed", label: "Claim Order", shortLabel: "Claim" };
+  }
+  return null;
+}
+
 // ─── Toast ────────────────────────────────────────────────────────────────────
 
 interface ToastMsg { id: number; text: string; }
@@ -369,6 +382,7 @@ export default function ProcessingPage({
                 const hoursInStage = getHoursInStage(txn.arrivalDateTime);
                 const isPriorityReady = stage === "Ready" && hoursInStage >= 2;
                 const isUpdating = updatingTicket === txn.ticketId;
+                const nextAction = getNextStageAction(txn.status);
                 return (
                   <div key={txn.id} className="space-y-3 px-4 py-3">
                     <div className="flex items-start justify-between gap-2">
@@ -401,22 +415,39 @@ export default function ProcessingPage({
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-2">
                       {isPriorityReady ? (
                         <span className="inline-flex items-center rounded bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
                           Waiting {Math.floor(hoursInStage)}h
                         </span>
+                      ) : hoursInStage >= 4 ? (
+                        <span className="inline-flex items-center rounded bg-amber-500/10 px-1.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-300">
+                          {Math.floor(hoursInStage)}h in stage
+                        </span>
                       ) : <span />}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={isUpdating}
-                        className="h-8 gap-1.5 text-xs px-2.5"
-                        onClick={() => setSheetTxn(txn)}
-                      >
-                        {isUpdating ? "Updating..." : "Update Status"}
-                        <ChevronDown className="h-3 w-3" />
-                      </Button>
+
+                      <div className="flex items-center gap-1.5">
+                        {nextAction && (
+                          <Button
+                            size="sm"
+                            disabled={isUpdating}
+                            className="h-8 gap-1 text-xs px-2.5 font-semibold shadow-xs cursor-pointer"
+                            onClick={() => handleStatusSelect(txn, nextAction.nextStatus)}
+                          >
+                            {nextAction.shortLabel}
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={isUpdating}
+                          className="h-8 px-2 text-xs"
+                          onClick={() => setSheetTxn(txn)}
+                          aria-label="More status options"
+                        >
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -440,7 +471,9 @@ export default function ProcessingPage({
                   {items.map((txn) => {
                     const hoursInStage = getHoursInStage(txn.arrivalDateTime);
                     const isPriorityReady = stage === "Ready" && hoursInStage >= 2;
+                    const isLongWaiting = !isPriorityReady && hoursInStage >= 4;
                     const isUpdating = updatingTicket === txn.ticketId;
+                    const nextAction = getNextStageAction(txn.status);
 
                     return (
                       <tr
@@ -448,6 +481,7 @@ export default function ProcessingPage({
                         className={cn(
                           "border-b border-border last:border-0 transition-colors hover:bg-muted/20",
                           isPriorityReady && "border-l-2 border-l-amber-400",
+                          isLongWaiting && "border-l-2 border-l-amber-500/50",
                         )}
                       >
                         <td className="px-4 py-3 md:px-5">
@@ -466,6 +500,14 @@ export default function ProcessingPage({
                               Waiting {Math.floor(hoursInStage)}h
                             </span>
                           )}
+                          {isLongWaiting && (
+                            <span
+                              className="ml-1.5 inline-block rounded bg-amber-500/10 px-1 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-300"
+                              title={`In stage for ${Math.floor(hoursInStage)} hrs`}
+                            >
+                              {Math.floor(hoursInStage)}h
+                            </span>
+                          )}
                         </td>
                         <td className="px-3 py-3 text-xs font-medium text-foreground">{txn.customerName}</td>
                         <td className="px-3 py-3 text-xs text-muted-foreground whitespace-nowrap">{txn.arrivalDateTime}</td>
@@ -481,50 +523,64 @@ export default function ProcessingPage({
                           </span>
                         </td>
                         <td className="px-3 py-3 pr-4 md:pr-5">
-                          {/* Update Status dropdown — shows ALL statuses */}
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
+                          <div className="flex items-center gap-1.5">
+                            {nextAction && (
                               <Button
-                                variant="outline"
                                 size="sm"
                                 disabled={isUpdating}
-                                className="h-8 gap-1.5 text-xs px-3 rounded-xl border-border/80 font-medium hover:bg-muted/50 cursor-pointer shadow-xs"
+                                className="h-8 gap-1 text-xs px-3 rounded-xl font-medium cursor-pointer shadow-xs whitespace-nowrap"
+                                onClick={() => handleStatusSelect(txn, nextAction.nextStatus)}
                               >
-                                {isUpdating ? "Updating…" : "Update Status"}
-                                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                                {isUpdating ? "Updating…" : nextAction.label}
                               </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="min-w-[200px] rounded-2xl border-border/60 bg-card p-1.5 shadow-xl">
-                              {ALL_STATUS_OPTIONS.map(({ status, label }) => {
-                                const isCurrent = txn.status === status || (status === "Washing" && txn.status === "Drying");
-                                const StatusIcon = STATUS_ICONS[status];
-                                return (
-                                  <DropdownMenuItem
-                                    key={status}
-                                    disabled={isCurrent}
-                                    className={cn(
-                                      "cursor-pointer rounded-xl px-3 py-2.5 mb-1 last:mb-0 transition-all duration-150 outline-none border",
-                                      isCurrent
-                                        ? "bg-primary/10 border-primary/20 text-primary font-semibold cursor-default"
-                                        : "border-transparent text-foreground hover:bg-muted/50 hover:border-border/40 focus:bg-muted/50",
-                                    )}
-                                    onClick={() => !isCurrent && handleStatusSelect(txn, status)}
-                                  >
-                                    <div className="flex items-center gap-3 w-full">
-                                      <StatusIcon className={cn("w-4 h-4 shrink-0", isCurrent ? "text-primary" : "text-muted-foreground")} aria-hidden="true" />
-                                      <span className={cn("text-sm flex-1", isCurrent ? "font-semibold text-primary" : "font-medium text-foreground")}>{label}</span>
-                                      {isCurrent && (
-                                        <div className="flex items-center gap-1 pl-2">
-                                          <span className="text-xs font-bold text-primary uppercase tracking-wider">Current</span>
-                                          <Check className="w-3.5 h-3.5 text-primary" />
-                                        </div>
+                            )}
+
+                            {/* Update Status dropdown — shows ALL statuses */}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={isUpdating}
+                                  className="h-8 w-8 p-0 rounded-xl border-border/80 hover:bg-muted/50 cursor-pointer shadow-xs"
+                                  aria-label="More status options"
+                                  title="More status options"
+                                >
+                                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="min-w-[200px] rounded-2xl border-border/60 bg-card p-1.5 shadow-xl">
+                                {ALL_STATUS_OPTIONS.map(({ status, label }) => {
+                                  const isCurrent = txn.status === status || (status === "Washing" && txn.status === "Drying");
+                                  const StatusIcon = STATUS_ICONS[status];
+                                  return (
+                                    <DropdownMenuItem
+                                      key={status}
+                                      disabled={isCurrent}
+                                      className={cn(
+                                        "cursor-pointer rounded-xl px-3 py-2.5 mb-1 last:mb-0 transition-all duration-150 outline-none border",
+                                        isCurrent
+                                          ? "bg-primary/10 border-primary/20 text-primary font-semibold cursor-default"
+                                          : "border-transparent text-foreground hover:bg-muted/50 hover:border-border/40 focus:bg-muted/50",
                                       )}
-                                    </div>
-                                  </DropdownMenuItem>
-                                );
-                              })}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                                      onClick={() => !isCurrent && handleStatusSelect(txn, status)}
+                                    >
+                                      <div className="flex items-center gap-3 w-full">
+                                        <StatusIcon className={cn("w-4 h-4 shrink-0", isCurrent ? "text-primary" : "text-muted-foreground")} aria-hidden="true" />
+                                        <span className={cn("text-sm flex-1", isCurrent ? "font-semibold text-primary" : "font-medium text-foreground")}>{label}</span>
+                                        {isCurrent && (
+                                          <div className="flex items-center gap-1 pl-2">
+                                            <span className="text-xs font-bold text-primary uppercase tracking-wider">Current</span>
+                                            <Check className="w-3.5 h-3.5 text-primary" />
+                                          </div>
+                                        )}
+                                      </div>
+                                    </DropdownMenuItem>
+                                  );
+                                })}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
                         </td>
                       </tr>
                     );

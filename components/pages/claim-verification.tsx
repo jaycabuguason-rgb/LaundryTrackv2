@@ -145,19 +145,21 @@ export default function ClaimVerificationPage({
     return () => window.clearTimeout(timeout);
   }, [isAutoLookupQuery, lookupTransaction, query]);
 
-  const handleClaim = async () => {
+  const handleClaim = async (overridePayment?: PaymentStatus) => {
     if (!result) return;
+    const finalPayment = overridePayment ?? paymentToggle;
 
     setSubmitting(true);
     try {
       const res = await onUpdateTransaction(result.ticketId, {
         status: "Claimed",
-        paymentStatus: paymentToggle,
+        paymentStatus: finalPayment,
       });
       const updated = res.transaction;
-      addLog(updated.ticketId, "Claimed", "Via Claim Verification", paymentToggle, updated.customerName);
+      setPaymentToggle(finalPayment);
+      addLog(updated.ticketId, "Claimed", "Via Claim Verification", finalPayment, updated.customerName);
       setSuccessMessage(
-        `${updated.ticketId} claimed. Payment marked as ${paymentToggle === "paid" ? "Paid" : "Unpaid"}.`,
+        `${updated.ticketId} claimed. Payment marked as ${finalPayment === "paid" ? "Paid" : "Unpaid"}.`,
       );
       setResult(updated);
 
@@ -362,20 +364,43 @@ export default function ClaimVerificationPage({
                   <div className="space-y-2 pt-1">
                     <div className="flex flex-wrap gap-2">
                       {!isAlreadyClaimed && (
-                        <Button
-                          size="sm"
-                          className={cn(
-                            "flex min-h-[44px] flex-1 items-center justify-center gap-1.5 font-medium sm:min-h-0 sm:flex-none transition-colors",
-                            isNotReady
-                              ? "bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-700 dark:hover:bg-amber-600"
-                              : "bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600",
-                          )}
-                          onClick={() => void handleClaim()}
-                          disabled={submitting}
-                        >
-                          {isNotReady ? <AlertTriangle className="h-3.5 w-3.5" /> : <CheckCircle className="h-3.5 w-3.5" />}
-                          {isNotReady ? "Claim Anyway" : "Confirm Claim & Save"}
-                        </Button>
+                        paymentToggle === "unpaid" ? (
+                          <>
+                            <Button
+                              size="sm"
+                              className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 font-bold sm:min-h-0 sm:flex-none bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 shadow-xs cursor-pointer"
+                              onClick={() => void handleClaim("paid")}
+                              disabled={submitting}
+                            >
+                              <CheckCircle className="h-3.5 w-3.5" />
+                              Collect ₱{result.fee.toLocaleString()} & Claim
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex min-h-[44px] items-center justify-center gap-1.5 font-medium sm:min-h-0 cursor-pointer"
+                              onClick={() => void handleClaim("unpaid")}
+                              disabled={submitting}
+                            >
+                              Claim as Unpaid
+                            </Button>
+                          </>
+                        ) : (
+                          <Button
+                            size="sm"
+                            className={cn(
+                              "flex min-h-[44px] flex-1 items-center justify-center gap-1.5 font-medium sm:min-h-0 sm:flex-none transition-colors cursor-pointer",
+                              isNotReady
+                                ? "bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-700 dark:hover:bg-amber-600"
+                                : "bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600",
+                            )}
+                            onClick={() => void handleClaim()}
+                            disabled={submitting}
+                          >
+                            {isNotReady ? <AlertTriangle className="h-3.5 w-3.5" /> : <CheckCircle className="h-3.5 w-3.5" />}
+                            {isNotReady ? "Claim Anyway" : "Confirm Claim & Release"}
+                          </Button>
+                        )
                       )}
                       <Button
                         size="sm"

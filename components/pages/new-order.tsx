@@ -324,6 +324,9 @@ export default function NewOrderPage({
                 Name <span className="text-destructive">*</span>
               </Label>
               <Input
+                id="customer-name"
+                name="customerName"
+                autoComplete="name"
                 placeholder="Customer name"
                 value={customerName}
                 onChange={(e) => {
@@ -364,8 +367,13 @@ export default function NewOrderPage({
 
             {/* Phone Input */}
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Phone</Label>
+              <Label htmlFor="customer-phone" className="text-xs font-semibold">Phone</Label>
               <Input
+                id="customer-phone"
+                name="phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
                 placeholder="Phone number (e.g. 09171234567)"
                 value={phone}
                 onChange={(e) => {
@@ -461,95 +469,130 @@ export default function NewOrderPage({
             {/* By Kilo Form Group */}
             {billBy === "per-kg" && (
               <div className="rounded-xl border border-border/80 p-4 bg-muted/20 space-y-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-foreground">By Kilo</span>
-                  <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary">
-                    Billing
-                  </Badge>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-foreground">By Kilo</span>
+                    <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary">
+                      Per kg
+                    </Badge>
+                  </div>
+                  <p className="text-xs font-semibold text-primary tabular-nums">Subtotal: ₱{basePrice}</p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-3">
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">
                       Service Type <span className="text-destructive">*</span>
                     </Label>
-                    <select
-                      value={selectedServiceId}
-                      onChange={(e) => setSelectedServiceId(e.target.value)}
-                      className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                    >
-                      {serviceTypes.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.name} (₱{s.price}/kg)
-                        </option>
-                      ))}
-                    </select>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {serviceTypes.map((s) => {
+                        const isSelected = selectedServiceId === s.id;
+                        return (
+                          <button
+                            key={s.id}
+                            type="button"
+                            onClick={() => setSelectedServiceId(s.id)}
+                            className={cn(
+                              "flex flex-col items-start justify-between p-3 rounded-xl border text-left transition-all cursor-pointer min-h-[56px]",
+                              isSelected
+                                ? "bg-primary/10 border-primary text-foreground ring-1 ring-primary shadow-xs"
+                                : "bg-card border-border hover:border-primary/40 hover:bg-muted/40 text-muted-foreground"
+                            )}
+                          >
+                            <span className={cn("text-xs font-bold leading-tight", isSelected ? "text-primary" : "text-foreground")}>
+                              {s.name}
+                            </span>
+                            <span className="text-[11px] font-semibold text-muted-foreground mt-1 tabular-nums">
+                              ₱{s.price}/kg
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold">
+                    <Label htmlFor="order-weight" className="text-xs font-semibold">
                       Weight (kg) <span className="text-destructive">*</span>
                     </Label>
                     <Input
+                      id="order-weight"
                       type="number"
                       step="0.1"
                       min="0.1"
+                      inputMode="decimal"
                       placeholder="0.0"
                       value={weight}
                       onChange={(e) => setWeight(e.target.value)}
-                      className="h-10 text-sm"
+                      className="h-10 text-sm font-semibold tabular-nums"
                     />
                     <p className="text-[10px] text-muted-foreground">Enter weight greater than 0</p>
                   </div>
                 </div>
-
-                <p className="text-xs font-semibold text-primary">Live price: ₱{basePrice}</p>
               </div>
             )}
 
             {/* By Load Form Group */}
             {billBy === "per-load" && (
               <div className="rounded-xl border border-border/80 p-4 bg-muted/20 space-y-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-foreground">By Load</span>
-                  <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary">
-                    Billing
-                  </Badge>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-foreground">By Load</span>
+                    <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary">
+                      Per batch
+                    </Badge>
+                  </div>
+                  <p className="text-xs font-semibold text-primary tabular-nums">Subtotal: ₱{basePrice}</p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-3">
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">
                       Load Size <span className="text-destructive">*</span>
                     </Label>
-                    <select
-                      value={selectedTierId}
-                      onChange={(e) => setSelectedTierId(e.target.value)}
-                      className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                    >
-                      {loadTiers.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.name} — {t.range} (₱{t.price})
-                        </option>
-                      ))}
-                    </select>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {loadTiers.map((t) => {
+                        const isSelected = selectedTierId === t.id;
+                        return (
+                          <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => setSelectedTierId(t.id)}
+                            className={cn(
+                              "flex flex-col items-start justify-between p-3 rounded-xl border text-left transition-all cursor-pointer min-h-[56px]",
+                              isSelected
+                                ? "bg-primary/10 border-primary text-foreground ring-1 ring-primary shadow-xs"
+                                : "bg-card border-border hover:border-primary/40 hover:bg-muted/40 text-muted-foreground"
+                            )}
+                          >
+                            <span className={cn("text-xs font-bold leading-tight", isSelected ? "text-primary" : "text-foreground")}>
+                              {t.name}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground mt-0.5">{t.range}</span>
+                            <span className="text-[11px] font-semibold text-muted-foreground mt-1 tabular-nums">
+                              ₱{t.price}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold">
+                    <Label htmlFor="order-loads" className="text-xs font-semibold">
                       Number of Loads <span className="text-destructive">*</span>
                     </Label>
                     <Input
+                      id="order-loads"
                       type="number"
                       min="1"
+                      inputMode="numeric"
                       value={numberOfLoads}
                       onChange={(e) => setNumberOfLoads(e.target.value)}
-                      className="h-10 text-sm"
+                      className="h-10 text-sm font-semibold tabular-nums"
                     />
                   </div>
                 </div>
-
-                <p className="text-xs font-semibold text-primary">Live price: ₱{basePrice}</p>
               </div>
             )}
 
