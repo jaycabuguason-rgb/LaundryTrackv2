@@ -121,6 +121,28 @@ export default function TopNav({ activePage, onNavigate, onSignOut, adminProfile
         <h1 className="text-sm font-semibold text-foreground truncate">
           {pageTitles[activePage]}
         </h1>
+        {/* Mobile network indicator dot */}
+        <span
+          className={`md:hidden inline-block w-2 h-2 rounded-full shrink-0 ${
+            syncStatus === "online"
+              ? "bg-emerald-500"
+              : syncStatus === "syncing"
+                ? "bg-blue-500 animate-pulse"
+                : syncStatus === "error"
+                  ? "bg-red-500"
+                  : "bg-orange-500"
+          }`}
+          title={
+            syncStatus === "online"
+              ? "Online"
+              : syncStatus === "syncing"
+                ? "Syncing changes"
+                : syncStatus === "error"
+                  ? `Sync Error: ${lastSyncError || "failed"}`
+                  : "Offline mode"
+          }
+          aria-label={`Network status: ${syncStatus}`}
+        />
       </div>
 
       <div className="flex items-center gap-1 md:gap-3 shrink-0">

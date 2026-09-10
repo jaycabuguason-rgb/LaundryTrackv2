@@ -385,7 +385,7 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
           onTransactionDetail={handleTransactionDetail}
           onEditTransaction={handleEditTransaction}
         />
-        <main className="flex-1 overflow-y-auto p-4 pb-20 md:p-6">
+        <main className="flex-1 overflow-y-auto p-4 pb-24 lg:p-6 lg:pb-6">
           {showOfflineNotice && (
             <OfflineAccessNotice
               syncStatus={syncStatus}

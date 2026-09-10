@@ -20,7 +20,7 @@ const ITEMS: Array<{ page: Page; label: string; icon: typeof LayoutDashboard }> 
 
 export default function MobileBottomNav({ activePage, onNavigate, onPreload }: MobileBottomNavProps) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card lg:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card pb-[env(safe-area-inset-bottom)] lg:hidden">
       <div className="grid grid-cols-5">
         {ITEMS.map(({ page, label, icon: Icon }) => {
           const active = activePage === page;
