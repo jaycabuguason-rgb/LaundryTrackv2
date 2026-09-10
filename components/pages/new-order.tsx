@@ -768,7 +768,7 @@ export default function NewOrderPage({
                 className="gap-1.5 text-xs h-9 px-6 bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 {submitting ? (
-                  "Creating Order..."
+                  "Creating Order…"
                 ) : (
                   <>
                     <Check className="w-4 h-4" /> Create Order

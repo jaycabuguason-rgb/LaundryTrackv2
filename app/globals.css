@@ -129,6 +129,9 @@
   body {
     @apply bg-background text-foreground;
   }
+  td, th {
+    font-variant-numeric: tabular-nums;
+  }
 }
 
 /* P2-1: respect reduced motion */

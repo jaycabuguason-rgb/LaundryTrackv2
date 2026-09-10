@@ -23,6 +23,7 @@ import {
 
 import { formatReadableDateTime } from "@/lib/date-format";
 import { StatusBadge } from "@/components/status-badge";
+import { TrackerLiveRefresh } from "@/components/tracker-live-refresh";
 import { getPublicTrackingRecord } from "@/lib/server/laundry-repository";
 import { getPublicLoyaltyMemberRecord } from "@/lib/server/loyalty-repository";
 import { cn } from "@/lib/utils";
@@ -168,7 +169,7 @@ export default async function PublicTrackingPage(
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
                 Ticket ID
               </p>
-              <h1 className="mt-2 text-2xl font-bold tracking-tight">{record.ticketId}</h1>
+              <h1 className="mt-2 text-2xl font-bold tracking-tight font-mono tabular-nums">{record.ticketId}</h1>
               {record.customerName && (
                 <div className="mt-2 flex items-center gap-1.5 text-sm">
                   <User className="h-4 w-4 text-primary shrink-0" />
@@ -189,12 +190,30 @@ export default async function PublicTrackingPage(
             <StatusBadge status={record.status} className="px-3 py-1 text-xs font-semibold" />
           </div>
 
+          {/* Ready for Pickup Celebration Banner */}
+          {record.status === "Ready" && (
+            <div className="mt-5 rounded-2xl border-2 border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-950 dark:text-emerald-100 flex items-start gap-3.5 shadow-xs animate-in fade-in">
+              <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold">Your Laundry is Ready for Pickup!</h3>
+                <p className="text-xs text-emerald-900/90 dark:text-emerald-300/90 mt-0.5 leading-relaxed">
+                  All items are washed and neatly packaged. Present your ticket ID or QR pass at the shop counter to claim.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Status Timeline */}
           <div className="mt-6 rounded-2xl border border-border bg-muted/30 p-4">
             <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Status Timeline
             </p>
             <StatusStepper status={record.status} />
+            <div className="mt-4 pt-3 border-t border-border/60">
+              <TrackerLiveRefresh status={record.status} />
+            </div>
           </div>
         </section>
 
@@ -416,7 +435,7 @@ export default async function PublicTrackingPage(
             )}
             <div className="flex items-start justify-between gap-4 rounded-lg bg-muted/30 px-3 py-2">
               <dt className="text-muted-foreground">Weight</dt>
-              <dd className="text-right font-medium">{record.weight} kg</dd>
+              <dd className="text-right font-medium tabular-nums">{record.weight} kg</dd>
             </div>
             <div className="flex items-start justify-between gap-4 rounded-lg bg-muted/30 px-3 py-2">
               <dt className="text-muted-foreground">Wash Type</dt>
@@ -463,7 +482,7 @@ export default async function PublicTrackingPage(
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Balance Due
               </p>
-              <p className="text-2xl font-bold text-primary">
+              <p className="text-2xl font-bold text-primary tabular-nums">
                 ₱{record.balanceDue.toLocaleString()}
               </p>
             </div>

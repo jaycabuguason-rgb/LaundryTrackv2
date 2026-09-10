@@ -434,7 +434,7 @@ export default function ProcessingPage({
                             className="h-8 gap-1 text-xs px-2.5 font-semibold shadow-xs cursor-pointer"
                             onClick={() => handleStatusSelect(txn, nextAction.nextStatus)}
                           >
-                            {nextAction.shortLabel}
+                            {isUpdating ? "…" : nextAction.shortLabel}
                           </Button>
                         )}
                         <Button

@@ -253,7 +253,7 @@ export default function ClaimVerificationPage({
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Claim code, Ticket ID, or customer name..."
+                  placeholder="Claim code, Ticket ID, or customer name…"
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   onKeyDown={(event) => event.key === "Enter" && void handleSearch()}
@@ -430,7 +430,7 @@ export default function ClaimVerificationPage({
                 ) : (
                   <div className="space-y-2 pt-1">
                     <Textarea
-                      placeholder="Reason for denial (optional)..."
+                      placeholder="Reason for denial (optional)…"
                       value={denyReason}
                       onChange={(event) => setDenyReason(event.target.value)}
                       className="resize-none text-sm bg-background border-border"
