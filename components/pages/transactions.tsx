@@ -54,6 +54,7 @@ import { PrintReceiptModal } from "@/components/print-receipt-modal";
 import { StatusUpdateSheet, type StatusOption } from "@/components/status-update-sheet";
 import { StatusBadge, PaymentBadge, STATUS_ICONS } from "@/components/status-badge";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { playScanSuccessFeedback } from "@/lib/scanner-feedback";
 import type { Page } from "@/components/sidebar";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -91,6 +92,7 @@ function InlineQRScanner({ onScan, onClose }: { onScan: (v: string) => void; onC
           if (res.length > 0) {
             const raw = res[0].rawValue;
             const m = raw.match(/member\/([A-Z0-9-]+)/i);
+            playScanSuccessFeedback();
             onScan(m ? m[1].toUpperCase() : raw);
             stop(); return;
           }
@@ -1807,12 +1809,15 @@ export default function TransactionsPage({
                       View
                     </Button>
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
                       onClick={() => { setPrintTxn(txn); setPrintPostCreate(false); }}
-                      className="h-7 px-2 text-xs text-foreground font-medium hover:text-primary hover:bg-primary/10 cursor-pointer"
+                      className="h-7 px-2 text-xs text-foreground font-medium hover:text-primary hover:border-primary/50 cursor-pointer gap-1"
+                      title="Print receipt"
+                      aria-label={`Print receipt for ticket ${txn.ticketId}`}
                     >
-                      Print
+                      <Printer className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span className="hidden xs:inline">Print</span>
                     </Button>
                     <Button
                       variant="ghost"
@@ -1826,11 +1831,17 @@ export default function TransactionsPage({
                     {/* Quick Dropdown Actions */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground cursor-pointer">
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground cursor-pointer" aria-label="More actions">
                           <MoreHorizontal className="w-3.5 h-3.5" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => { setPrintTxn(txn); setPrintPostCreate(false); }}>
+                          <Printer className="w-3.5 h-3.5 mr-2" /> Print Receipt
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setReprintTxn(txn)}>
+                          <QrCode className="w-3.5 h-3.5 mr-2" /> QR Code Ticket
+                        </DropdownMenuItem>
                         <DropdownMenuItem disabled={isVoided} onClick={() => openEdit(txn)}>
                           <Edit className="w-3.5 h-3.5 mr-2" /> Edit Order
                         </DropdownMenuItem>

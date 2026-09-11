@@ -13,6 +13,7 @@ import { StatusBadge, PaymentBadge } from "@/components/status-badge";
 import { CategoryBadge, SeverityBadge } from "@/components/pages/audit-logs";
 import type { UpdateTransactionInput } from "@/lib/transaction-contracts";
 import { cn } from "@/lib/utils";
+import { playScanSuccessFeedback } from "@/lib/scanner-feedback";
 
 interface ClaimVerificationPageProps {
   transactions: Transaction[];
@@ -87,6 +88,9 @@ export default function ClaimVerificationPage({
     setPaymentToggle(transaction.paymentStatus);
     setNotFound(false);
     addLog(transaction.ticketId, "Scanned", notes, transaction.paymentStatus, transaction.customerName);
+    if (notes !== "Via QR Scan") {
+      playScanSuccessFeedback();
+    }
   };
 
   const lookupTransaction = useCallback(async (value: string, notes: string) => {

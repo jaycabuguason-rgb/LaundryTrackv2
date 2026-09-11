@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CameraOff } from "lucide-react";
 import jsQR from "jsqr";
+import { playScanSuccessFeedback } from "@/lib/scanner-feedback";
 
 interface QRScannerProps {
   onScan: (value: string) => void;
@@ -69,6 +70,7 @@ export default function QRScanner({ onScan }: QRScannerProps) {
           if (detector) {
             const results = await detector.detect(videoRef.current);
             if (results.length > 0) {
+              playScanSuccessFeedback();
               onScan(normalizeScannedValue(results[0].rawValue));
               stopScanner();
               return;
@@ -87,6 +89,7 @@ export default function QRScanner({ onScan }: QRScannerProps) {
               });
 
               if (result?.data) {
+                playScanSuccessFeedback();
                 onScan(normalizeScannedValue(result.data));
                 stopScanner();
                 return;
