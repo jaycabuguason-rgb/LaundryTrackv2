@@ -13,6 +13,9 @@ import {
   UserPlus,
   Users,
   Package,
+  Inbox,
+  RotateCw,
+  Wind,
 } from "lucide-react";
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -66,11 +69,10 @@ export default function DashboardPage({
   // Counts & Metrics
   const totalOrders = transactions.length;
   const receivedCount = transactions.filter((t) => t.status === "Received").length;
-  const washingCount = transactions.filter((t) => t.status === "Washing" || t.status === "Drying").length;
+  const washingCount = transactions.filter((t) => t.status === "Washing").length;
+  const dryingCount = transactions.filter((t) => t.status === "Drying").length;
   const readyCount = transactions.filter((t) => t.status === "Ready").length;
-  const activeOrdersCount = transactions.filter(
-    (t) => t.status === "Received" || t.status === "Washing" || t.status === "Drying" || t.status === "Ready"
-  ).length;
+  const activeOrdersCount = receivedCount + washingCount + dryingCount + readyCount;
 
   const paidRevenue = transactions
     .filter((t) => t.paymentStatus === "paid" && t.status !== "Voided")
@@ -78,22 +80,11 @@ export default function DashboardPage({
 
   const totalMembers = liveMembers.length > 0 ? liveMembers.length : initialLoyaltyMembers.length;
 
-  // New members enrolled in current month
-  const currentMonthIdx = new Date().getMonth();
-  const currentYear = new Date().getFullYear();
-  const currentMonthShort = new Date().toLocaleString("en-US", { month: "short" }).toUpperCase();
-  const memberList = liveMembers.length > 0 ? liveMembers : initialLoyaltyMembers;
-  const newMembersThisMonth = memberList.filter((m) => {
-    if (!m.dateJoined) return false;
-    const d = new Date(m.dateJoined);
-    return d.getMonth() === currentMonthIdx && d.getFullYear() === currentYear;
-  }).length;
-  const displayMembersCount = newMembersThisMonth > 0 ? newMembersThisMonth : (memberList.length > 0 ? memberList.length : 1);
-
-  // Donut chart calculations
-  const chartTotal = Math.max(1, receivedCount + washingCount + readyCount);
+  // Donut chart calculations (Active Pipeline)
+  const chartTotal = Math.max(1, activeOrdersCount);
   const receivedPct = (receivedCount / chartTotal) * 100;
   const washingPct = (washingCount / chartTotal) * 100;
+  const dryingPct = (dryingCount / chartTotal) * 100;
   const readyPct = (readyCount / chartTotal) * 100;
 
   // SVG Donut circumference (radius = 38, circumference ≈ 238.76)
@@ -101,11 +92,13 @@ export default function DashboardPage({
   const circumference = 2 * Math.PI * radius;
   const strokeReceived = (receivedPct / 100) * circumference;
   const strokeWashing = (washingPct / 100) * circumference;
+  const strokeDrying = (dryingPct / 100) * circumference;
   const strokeReady = (readyPct / 100) * circumference;
 
   const offsetReceived = 0;
   const offsetWashing = -strokeReceived;
-  const offsetReady = -(strokeReceived + strokeWashing);
+  const offsetDrying = -(strokeReceived + strokeWashing);
+  const offsetReady = -(strokeReceived + strokeWashing + strokeDrying);
 
   return (
     <div className="space-y-5 max-w-7xl mx-auto pb-10">
@@ -353,112 +346,209 @@ export default function DashboardPage({
 
         {/* Right Column: Orders by Stage Donut Chart */}
         <div>
-          <Card className="border border-border shadow-none h-full flex flex-col justify-between p-4 sm:p-5">
-            <div>
-              <h2 className="text-sm font-semibold text-foreground">Orders by Stage</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Where today&apos;s laundry sits right now
-              </p>
-
-              {/* Donut graphic */}
-              <div className="relative my-6 flex items-center justify-center">
-                <svg
-                  className="w-36 h-36 -rotate-90"
-                  viewBox="0 0 100 100"
-                  role="img"
-                  aria-label={`Order distribution: ${receivedCount} received, ${washingCount} washing, ${readyCount} ready`}
+          <Card className="border border-border shadow-none h-full flex flex-col justify-between p-4 sm:p-5 gap-3 sm:gap-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-semibold text-foreground">Orders by Stage</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Where today&apos;s laundry sits right now
+                </p>
+              </div>
+              {onNavigate && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onNavigate("processing")}
+                  className="text-xs text-primary hover:bg-primary/10 gap-1 h-7 px-2 cursor-pointer font-medium"
                 >
-                  {/* Background Track */}
+                  View board <ArrowRight className="w-3 h-3" />
+                </Button>
+              )}
+            </div>
+
+            {/* Donut graphic */}
+            <div className="relative my-2 flex items-center justify-center">
+              <svg
+                className="w-36 h-36 -rotate-90"
+                viewBox="0 0 100 100"
+                role="img"
+                aria-label={`Order distribution: ${receivedCount} received, ${washingCount} washing, ${dryingCount} drying, ${readyCount} ready`}
+              >
+                {/* Background Track */}
+                <circle
+                  cx="50"
+                  cy="50"
+                  r={radius}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="10"
+                  className="text-muted/20"
+                />
+                {/* Received Segment (Purple) */}
+                {receivedCount > 0 && (
                   <circle
                     cx="50"
                     cy="50"
                     r={radius}
                     fill="none"
-                    stroke="currentColor"
+                    stroke="#8b5cf6"
                     strokeWidth="10"
-                    className="text-muted/30"
+                    strokeDasharray={`${strokeReceived} ${circumference}`}
+                    strokeDashoffset={offsetReceived}
+                    strokeLinecap="round"
                   />
-                  {/* Received Segment (Purple) */}
-                  {receivedCount > 0 && (
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r={radius}
-                      fill="none"
-                      stroke="#8b5cf6"
-                      strokeWidth="10"
-                      strokeDasharray={`${strokeReceived} ${circumference}`}
-                      strokeDashoffset={offsetReceived}
-                      strokeLinecap="round"
-                    />
-                  )}
-                  {/* Washing Segment (Blue) */}
-                  {washingCount > 0 && (
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r={radius}
-                      fill="none"
-                      stroke="#3b82f6"
-                      strokeWidth="10"
-                      strokeDasharray={`${strokeWashing} ${circumference}`}
-                      strokeDashoffset={offsetWashing}
-                      strokeLinecap="round"
-                    />
-                  )}
-                  {/* Ready Segment (Green) */}
-                  {readyCount > 0 && (
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r={radius}
-                      fill="none"
-                      stroke="#22c55e"
-                      strokeWidth="10"
-                      strokeDasharray={`${strokeReady} ${circumference}`}
-                      strokeDashoffset={offsetReady}
-                      strokeLinecap="round"
-                    />
-                  )}
-                </svg>
+                )}
+                {/* Washing Segment (Blue) */}
+                {washingCount > 0 && (
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r={radius}
+                    fill="none"
+                    stroke="#3b82f6"
+                    strokeWidth="10"
+                    strokeDasharray={`${strokeWashing} ${circumference}`}
+                    strokeDashoffset={offsetWashing}
+                    strokeLinecap="round"
+                  />
+                )}
+                {/* Drying Segment (Amber) */}
+                {dryingCount > 0 && (
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r={radius}
+                    fill="none"
+                    stroke="#f59e0b"
+                    strokeWidth="10"
+                    strokeDasharray={`${strokeDrying} ${circumference}`}
+                    strokeDashoffset={offsetDrying}
+                    strokeLinecap="round"
+                  />
+                )}
+                {/* Ready Segment (Emerald) */}
+                {readyCount > 0 && (
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r={radius}
+                    fill="none"
+                    stroke="#10b981"
+                    strokeWidth="10"
+                    strokeDasharray={`${strokeReady} ${circumference}`}
+                    strokeDashoffset={offsetReady}
+                    strokeLinecap="round"
+                  />
+                )}
+              </svg>
 
-                {/* Center text */}
-                <div className="absolute flex flex-col items-center justify-center text-center">
-                  <span className="text-2xl font-bold tracking-tight text-foreground tabular-nums">{totalOrders}</span>
-                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                    Total Orders
-                  </span>
-                </div>
+              {/* Center text */}
+              <div className="absolute flex flex-col items-center justify-center text-center">
+                <span className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
+                  {activeOrdersCount}
+                </span>
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  In Pipeline
+                </span>
               </div>
             </div>
 
-            {/* Stage Summary Mini-Boxes */}
-            <div className="grid grid-cols-3 gap-2 pt-2">
+            {/* Stage Summary 2x2 Grid */}
+            <div className="grid grid-cols-2 gap-2.5">
               {/* Received */}
-              <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 p-2.5 text-center flex flex-col items-center justify-center">
-                <div className="w-6 h-6 rounded-md bg-purple-500/10 text-purple-500 flex items-center justify-center mb-1">
-                  <Receipt className="w-3.5 h-3.5" aria-hidden="true" />
+              <div
+                role={onNavigate ? "button" : undefined}
+                tabIndex={onNavigate ? 0 : undefined}
+                onClick={() => onNavigate?.("processing")}
+                onKeyDown={(e) => onNavigate && handleCardKeyDown(e, "processing")}
+                className="group rounded-xl border border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 p-2.5 transition-all cursor-pointer flex items-center justify-between"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-7 h-7 rounded-lg bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                    <Inbox className="w-3.5 h-3.5" aria-hidden="true" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs text-foreground font-semibold block truncate">Received</span>
+                    <span className="text-[11px] text-muted-foreground font-medium">
+                      {activeOrdersCount > 0 ? `${Math.round(receivedPct)}%` : "0%"}
+                    </span>
+                  </div>
                 </div>
-                <span className="text-sm font-bold text-foreground tabular-nums">{receivedCount}</span>
-                <span className="text-[10px] text-muted-foreground font-medium">Received</span>
+                <span className="text-base font-bold text-foreground tabular-nums shrink-0 ml-1">
+                  {receivedCount}
+                </span>
               </div>
 
               {/* Washing */}
-              <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-2.5 text-center flex flex-col items-center justify-center">
-                <div className="w-6 h-6 rounded-md bg-blue-500/10 text-blue-500 flex items-center justify-center mb-1">
-                  <Droplet className="w-3.5 h-3.5" aria-hidden="true" />
+              <div
+                role={onNavigate ? "button" : undefined}
+                tabIndex={onNavigate ? 0 : undefined}
+                onClick={() => onNavigate?.("processing")}
+                onKeyDown={(e) => onNavigate && handleCardKeyDown(e, "processing")}
+                className="group rounded-xl border border-blue-500/20 bg-blue-500/5 hover:bg-blue-500/10 p-2.5 transition-all cursor-pointer flex items-center justify-between"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-7 h-7 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                    <RotateCw className="w-3.5 h-3.5" aria-hidden="true" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs text-foreground font-semibold block truncate">Washing</span>
+                    <span className="text-[11px] text-muted-foreground font-medium">
+                      {activeOrdersCount > 0 ? `${Math.round(washingPct)}%` : "0%"}
+                    </span>
+                  </div>
                 </div>
-                <span className="text-sm font-bold text-foreground tabular-nums">{washingCount}</span>
-                <span className="text-[10px] text-muted-foreground font-medium">Washing</span>
+                <span className="text-base font-bold text-foreground tabular-nums shrink-0 ml-1">
+                  {washingCount}
+                </span>
+              </div>
+
+              {/* Drying */}
+              <div
+                role={onNavigate ? "button" : undefined}
+                tabIndex={onNavigate ? 0 : undefined}
+                onClick={() => onNavigate?.("processing")}
+                onKeyDown={(e) => onNavigate && handleCardKeyDown(e, "processing")}
+                className="group rounded-xl border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 p-2.5 transition-all cursor-pointer flex items-center justify-between"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-7 h-7 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                    <Wind className="w-3.5 h-3.5" aria-hidden="true" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs text-foreground font-semibold block truncate">Drying</span>
+                    <span className="text-[11px] text-muted-foreground font-medium">
+                      {activeOrdersCount > 0 ? `${Math.round(dryingPct)}%` : "0%"}
+                    </span>
+                  </div>
+                </div>
+                <span className="text-base font-bold text-foreground tabular-nums shrink-0 ml-1">
+                  {dryingCount}
+                </span>
               </div>
 
               {/* Ready */}
-              <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-2.5 text-center flex flex-col items-center justify-center">
-                <div className="w-6 h-6 rounded-md bg-green-500/10 text-green-500 flex items-center justify-center mb-1">
-                  <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
+              <div
+                role={onNavigate ? "button" : undefined}
+                tabIndex={onNavigate ? 0 : undefined}
+                onClick={() => onNavigate?.("processing")}
+                onKeyDown={(e) => onNavigate && handleCardKeyDown(e, "processing")}
+                className="group rounded-xl border border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 p-2.5 transition-all cursor-pointer flex items-center justify-between"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs text-foreground font-semibold block truncate">Ready</span>
+                    <span className="text-[11px] text-muted-foreground font-medium">
+                      {activeOrdersCount > 0 ? `${Math.round(readyPct)}%` : "0%"}
+                    </span>
+                  </div>
                 </div>
-                <span className="text-sm font-bold text-foreground tabular-nums">{readyCount}</span>
-                <span className="text-[10px] text-muted-foreground font-medium">Ready</span>
+                <span className="text-base font-bold text-foreground tabular-nums shrink-0 ml-1">
+                  {readyCount}
+                </span>
               </div>
             </div>
           </Card>
