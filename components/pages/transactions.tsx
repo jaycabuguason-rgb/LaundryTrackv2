@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import {
   Search, EyeOff, Edit, Ban, Printer, ChevronRight, X, QrCode, CalendarIcon,
-  AlertTriangle, Plus, User, Star, Camera, CameraOff,
+  AlertTriangle, Plus, User, Star, Camera,
   ChevronLeft, Check, RefreshCw, Inbox, MoreHorizontal
 } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -54,84 +54,24 @@ import { PrintReceiptModal } from "@/components/print-receipt-modal";
 import { StatusUpdateSheet, type StatusOption } from "@/components/status-update-sheet";
 import { StatusBadge, PaymentBadge, STATUS_ICONS } from "@/components/status-badge";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
-import { playScanSuccessFeedback } from "@/lib/scanner-feedback";
+import QRScanner from "@/components/qr-scanner";
 import type { Page } from "@/components/sidebar";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// QR Scanner (inline, no package)
+// QR Scanner
 // ─────────────────────────────────────────────────────────────────────────────
 function InlineQRScanner({ onScan, onClose }: { onScan: (v: string) => void; onClose: () => void }) {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const rafRef = useRef<number | null>(null);
-  const [active, setActive] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const stop = useCallback(() => {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    if (streamRef.current) streamRef.current.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
-    if (videoRef.current) videoRef.current.srcObject = null;
-    setActive(false);
-  }, []);
-
-  const start = useCallback(async () => {
-    setError(null);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-      streamRef.current = stream;
-      if (videoRef.current) { videoRef.current.srcObject = stream; await videoRef.current.play(); }
-      setActive(true);
-      const BD = (window as unknown as { BarcodeDetector?: new (o: { formats: string[] }) => { detect: (v: HTMLVideoElement) => Promise<{ rawValue: string }[]> } }).BarcodeDetector;
-      if (!BD) { setError("QR scanning not supported in this browser. Use manual ID entry below."); stop(); return; }
-      const det = new BD({ formats: ["qr_code"] });
-      const tick = async () => {
-        if (!videoRef.current || videoRef.current.readyState < 2) { rafRef.current = requestAnimationFrame(tick); return; }
-        try {
-          const res = await det.detect(videoRef.current);
-          if (res.length > 0) {
-            const raw = res[0].rawValue;
-            const m = raw.match(/member\/([A-Z0-9-]+)/i);
-            playScanSuccessFeedback();
-            onScan(m ? m[1].toUpperCase() : raw);
-            stop(); return;
-          }
-        } catch { /* ignore */ }
-        rafRef.current = requestAnimationFrame(tick);
-      };
-      rafRef.current = requestAnimationFrame(tick);
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      setError(msg.toLowerCase().includes("permission") ? "Camera permission denied." : "Could not start camera.");
-    }
-  }, [onScan, stop]);
-
-  useEffect(() => { start(); return () => stop(); }, [start, stop]);
-
   return (
-    <div className="space-y-2">
-      <div className="relative bg-black rounded-xl overflow-hidden aspect-video w-full">
-        <video ref={videoRef} muted playsInline className="w-full h-full object-cover" />
-        {!active && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted/60 backdrop-blur-sm">
-            <CameraOff className="w-8 h-8 text-muted-foreground" />
-            <p className="text-xs text-muted-foreground">Starting camera…</p>
-          </div>
-        )}
-        {active && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="relative w-40 h-40">
-              <span className="absolute top-0 left-0 w-5 h-5 border-t-2 border-l-2 border-white" />
-              <span className="absolute top-0 right-0 w-5 h-5 border-t-2 border-r-2 border-white" />
-              <span className="absolute bottom-0 left-0 w-5 h-5 border-b-2 border-l-2 border-white" />
-              <span className="absolute bottom-0 right-0 w-5 h-5 border-b-2 border-r-2 border-white" />
-            </div>
-          </div>
-        )}
-      </div>
-      {error && <p className="text-xs text-destructive bg-destructive/10 rounded px-3 py-2">{error}</p>}
-      {active && <p className="text-xs text-center text-muted-foreground">Point camera at member QR code…</p>}
-      <Button size="sm" variant="outline" className="w-full" onClick={onClose}>Cancel Scan</Button>
+    <div className="space-y-3">
+      <QRScanner
+        onScan={(raw) => {
+          const m = raw.match(/member\/([A-Z0-9-]+)/i);
+          onScan(m ? m[1].toUpperCase() : raw);
+        }}
+      />
+      <Button size="sm" variant="outline" className="w-full min-h-[44px]" onClick={onClose}>
+        Cancel Scan
+      </Button>
     </div>
   );
 }
@@ -1602,7 +1542,8 @@ export default function TransactionsPage({
             <div className="relative flex-1 min-w-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               <Input
-                placeholder="Search by customer name or ticket ID..."
+                placeholder="Search by customer name or ticket ID…"
+                aria-label="Search transactions by customer name or ticket ID"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9 pr-8 h-10 md:h-9 text-sm w-full"
@@ -1819,14 +1760,17 @@ export default function TransactionsPage({
                       <Printer className="w-3.5 h-3.5 text-muted-foreground" />
                       <span className="hidden xs:inline">Print</span>
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => window.open(`${origin}${txn.publicTrackingToken ? `/track/${txn.publicTrackingToken}` : `/ticket/${txn.ticketId}`}`, "_blank")}
-                      className="h-7 px-2 text-xs text-foreground font-medium hover:text-primary hover:bg-primary/10 cursor-pointer"
+                    <a
+                      href={`${origin}${txn.publicTrackingToken ? `/track/${txn.publicTrackingToken}` : `/ticket/${txn.ticketId}`}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={cn(
+                        buttonVariants({ variant: "ghost", size: "sm" }),
+                        "h-7 px-2 text-xs text-foreground font-medium hover:text-primary hover:bg-primary/10 cursor-pointer inline-flex items-center"
+                      )}
                     >
                       Track
-                    </Button>
+                    </a>
 
                     {/* Quick Dropdown Actions */}
                     <DropdownMenu>

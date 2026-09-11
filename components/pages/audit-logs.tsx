@@ -93,7 +93,7 @@ export function SeverityBadge({ severity }: { severity: "info" | "warning" | "er
   if (severity === "warning") {
     return (
       <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 dark:text-amber-400">
-        <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+        <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-amber-500" />
         warning
       </span>
     );
@@ -101,14 +101,14 @@ export function SeverityBadge({ severity }: { severity: "info" | "warning" | "er
   if (severity === "error") {
     return (
       <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 dark:text-red-400">
-        <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+        <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-red-500" />
         error
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+      <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
       info
     </span>
   );
@@ -141,8 +141,17 @@ function AuditTableRow({ entry }: { entry: AuditLogEntry }) {
   return (
     <>
       <tr
+        tabIndex={0}
+        role="button"
+        aria-expanded={expanded}
         onClick={() => setExpanded(!expanded)}
-        className="group border-b border-border/80 hover:bg-muted/40 cursor-pointer transition-colors text-sm"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setExpanded(!expanded);
+          }
+        }}
+        className="group border-b border-border/80 hover:bg-muted/40 focus-visible:bg-muted/50 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-primary/40 cursor-pointer transition-colors text-sm"
       >
         {/* Timestamp */}
         <td className="px-4 py-3.5 whitespace-nowrap text-xs text-muted-foreground">
@@ -387,7 +396,8 @@ function AuditLogsView({ onTabChange }: { onTabChange?: (tab: "staff" | "audit")
             <div className="relative min-w-[200px] flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search audit logs..."
+                placeholder="Search audit logs…"
+                aria-label="Search audit logs by staff, ticket, or action"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="h-9 pl-9 text-sm"

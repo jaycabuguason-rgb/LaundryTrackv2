@@ -63,12 +63,20 @@ function getInitials(name: string) {
 function StampDots({ count, max = 7 }: { count: number; max?: number }) {
   const effectiveCount = Math.min(count, max);
   return (
-    <div className="flex flex-wrap gap-2">
+    <div
+      role="meter"
+      aria-label={`Loyalty stamps: ${effectiveCount} of ${max}`}
+      aria-valuenow={effectiveCount}
+      aria-valuemin={0}
+      aria-valuemax={max}
+      className="flex flex-wrap gap-2"
+    >
       {Array.from({ length: max }).map((_, i) => {
         const filled = i < effectiveCount;
         return (
           <div
             key={i}
+            aria-hidden="true"
             className={`w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold transition-all ${
               filled
                 ? "bg-primary border-primary text-primary-foreground shadow-xs scale-105"
@@ -861,7 +869,8 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
             <div className="relative w-full sm:max-w-xs">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Search member name or phone..."
+                placeholder="Search member name or phone…"
+                aria-label="Search member name or phone"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9 h-9 text-xs w-full"
@@ -927,7 +936,8 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-muted-foreground hover:text-foreground cursor-pointer"
+                            aria-label={`Edit ${member.name}`}
+                            className="h-8 w-8 min-h-[32px] min-w-[32px] text-muted-foreground hover:text-foreground cursor-pointer"
                             onClick={() => setEditModal(member)}
                           >
                             <Edit className="w-3.5 h-3.5" />
@@ -935,7 +945,8 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-muted-foreground hover:text-destructive cursor-pointer"
+                            aria-label={`Delete ${member.name}`}
+                            className="h-8 w-8 min-h-[32px] min-w-[32px] text-muted-foreground hover:text-destructive cursor-pointer"
                             onClick={() => setDeleteModal(member)}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -962,6 +973,7 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
                         <Button
                           size="sm"
                           variant="outline"
+                          aria-label={`View QR status for ${member.name}`}
                           onClick={() => setQrModal(member)}
                           className="h-8 text-xs px-2.5 cursor-pointer gap-1"
                           title="View Member QR Status & Public Link"
@@ -1021,6 +1033,7 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
                             <Button
                               size="sm"
                               variant="outline"
+                              aria-label={`View QR status for ${member.name}`}
                               className="h-7 text-xs px-2"
                               onClick={() => setQrModal(member)}
                               title="View Member QR Status"

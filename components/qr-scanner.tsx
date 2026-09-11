@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { CameraOff } from "lucide-react";
+import { CameraOff, CheckCircle2 } from "lucide-react";
 import jsQR from "jsqr";
 import { playScanSuccessFeedback } from "@/lib/scanner-feedback";
+import { cn } from "@/lib/utils";
 
 interface QRScannerProps {
   onScan: (value: string) => void;
@@ -16,6 +17,7 @@ export default function QRScanner({ onScan }: QRScannerProps) {
   const rafRef     = useRef<number | null>(null);
   const canvasRef  = useRef<HTMLCanvasElement | null>(null);
   const [active, setActive] = useState(false);
+  const [scannedSuccess, setScannedSuccess] = useState(false);
   const [error, setError]   = useState<string | null>(null);
 
   const normalizeScannedValue = useCallback((raw: string) => {
@@ -70,9 +72,13 @@ export default function QRScanner({ onScan }: QRScannerProps) {
           if (detector) {
             const results = await detector.detect(videoRef.current);
             if (results.length > 0) {
+              setScannedSuccess(true);
               playScanSuccessFeedback();
               onScan(normalizeScannedValue(results[0].rawValue));
-              stopScanner();
+              setTimeout(() => {
+                stopScanner();
+                setScannedSuccess(false);
+              }, 250);
               return;
             }
           } else if (canvasRef.current && videoRef.current.videoWidth > 0 && videoRef.current.videoHeight > 0) {
@@ -89,9 +95,13 @@ export default function QRScanner({ onScan }: QRScannerProps) {
               });
 
               if (result?.data) {
+                setScannedSuccess(true);
                 playScanSuccessFeedback();
                 onScan(normalizeScannedValue(result.data));
-                stopScanner();
+                setTimeout(() => {
+                  stopScanner();
+                  setScannedSuccess(false);
+                }, 250);
                 return;
               }
             }
@@ -124,6 +134,7 @@ export default function QRScanner({ onScan }: QRScannerProps) {
           ref={videoRef}
           muted
           playsInline
+          aria-label="Live camera viewfinder for QR scanning"
           className="w-full h-full object-cover"
         />
         {/* Hidden canvas used if needed */}
@@ -140,12 +151,23 @@ export default function QRScanner({ onScan }: QRScannerProps) {
 
         {/* Corner guides when active */}
         {active && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div
+            aria-hidden="true"
+            className={cn(
+              "absolute inset-0 flex items-center justify-center pointer-events-none transition-colors duration-200",
+              scannedSuccess && "bg-emerald-500/20"
+            )}
+          >
             <div className="relative w-48 h-48">
-              <span className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-white rounded-tl-sm" />
-              <span className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-white rounded-tr-sm" />
-              <span className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-white rounded-bl-sm" />
-              <span className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-white rounded-br-sm" />
+              <span className={cn("absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 rounded-tl-sm transition-colors duration-200", scannedSuccess ? "border-emerald-400" : "border-white")} />
+              <span className={cn("absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 rounded-tr-sm transition-colors duration-200", scannedSuccess ? "border-emerald-400" : "border-white")} />
+              <span className={cn("absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 rounded-bl-sm transition-colors duration-200", scannedSuccess ? "border-emerald-400" : "border-white")} />
+              <span className={cn("absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 rounded-br-sm transition-colors duration-200", scannedSuccess ? "border-emerald-400" : "border-white")} />
+              {scannedSuccess && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <CheckCircle2 className="w-12 h-12 text-emerald-400 animate-in zoom-in-75 duration-150" />
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   Eye,
   EyeOff,
@@ -91,8 +91,8 @@ function PasswordField({
         <button
           type="button"
           onClick={() => setShow((current) => !current)}
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer text-muted-foreground transition-colors hover:text-foreground"
-          tabIndex={-1}
+          aria-label={show ? "Hide password" : "Show password"}
+          className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer p-1 rounded-md text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
         >
           {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
         </button>
@@ -266,7 +266,7 @@ export default function StaffManagementPage({
   // Maintain local metadata overrides for role and shift status per staff member ID
   const [staffMeta, setStaffMeta] = useState<Record<string, { role?: string; shiftStatus?: string }>>({});
 
-  const getStaffRole = (staffAccount: StaffAccountSummary): string => {
+  const getStaffRole = useCallback((staffAccount: StaffAccountSummary): string => {
     if (staffMeta[staffAccount.id]?.role) {
       return staffMeta[staffAccount.id].role!;
     }
@@ -280,9 +280,9 @@ export default function StaffManagementPage({
       return "Cashier";
     }
     return "Staff";
-  };
+  }, [staffMeta]);
 
-  const getStaffShiftStatus = (staffAccount: StaffAccountSummary): string => {
+  const getStaffShiftStatus = useCallback((staffAccount: StaffAccountSummary): string => {
     if (staffMeta[staffAccount.id]?.shiftStatus) {
       return staffMeta[staffAccount.id].shiftStatus!;
     }
@@ -290,7 +290,7 @@ export default function StaffManagementPage({
       return staffAccount.shiftStatus;
     }
     return staffAccount.isActive ? "On Shift" : "Off Duty";
-  };
+  }, [staffMeta]);
 
   const handleTabSwitch = (tab: "staff" | "audit") => {
     setActiveTab(tab);
@@ -313,7 +313,7 @@ export default function StaffManagementPage({
         getStaffShiftStatus(item),
       ].some((value) => value.toLowerCase().includes(query)),
     );
-  }, [search, staff, staffMeta]);
+  }, [search, staff, getStaffRole, getStaffShiftStatus]);
 
   const resetAddForm = () => {
     setAddName("");
@@ -589,7 +589,8 @@ export default function StaffManagementPage({
           <div className="relative min-w-0 flex-1 sm:w-64 sm:flex-none">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search staff, role, status..."
+              placeholder="Search staff, role, status…"
+              aria-label="Search staff members by name, role, or status"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               className="h-9 w-full pl-8 text-sm"
