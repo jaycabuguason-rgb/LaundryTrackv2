@@ -77,3 +77,4 @@ export function playScanSuccessFeedback(): void {
   playScanSuccessSound();
   triggerHapticFeedback();
 }
+
