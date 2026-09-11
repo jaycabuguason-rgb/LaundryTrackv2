@@ -52,6 +52,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useStaffAccounts } from "@/hooks/use-staff-accounts";
+import { Skeleton } from "boneyard-js/react";
 import type { CreateStaffAccountInput, StaffAccountSummary } from "@/lib/staff-contracts";
 import { cn } from "@/lib/utils";
 
@@ -535,7 +536,8 @@ export default function StaffManagementPage({
   }
 
   return (
-    <div className="w-full max-w-5xl space-y-5">
+    <Skeleton name="staff-management" loading={loading}>
+      <div className="w-full max-w-5xl space-y-5">
       {/* Header & Tab Switcher */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
@@ -1112,5 +1114,6 @@ export default function StaffManagementPage({
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </Skeleton>
   );
 }

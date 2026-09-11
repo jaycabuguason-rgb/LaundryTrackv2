@@ -41,6 +41,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useLoyaltyMembers } from "@/hooks/use-loyalty-members";
+import { Skeleton } from "boneyard-js/react";
 import { type LoyaltyMember, type Transaction, transactions as seedTransactions } from "@/lib/data";
 import { toast } from "@/hooks/use-toast";
 import { getBrowserAccessToken, refreshBrowserSession } from "@/lib/supabase/browser-session";
@@ -771,7 +772,8 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
   // MAIN MEMBERS & REWARDS VIEW (Step 1)
   // ─────────────────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-5">
+    <Skeleton name="loyalty-members" loading={loading}>
+      <div className="space-y-5">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -1331,5 +1333,6 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
         </DialogContent>
       </Dialog>
     </div>
+    </Skeleton>
   );
 }

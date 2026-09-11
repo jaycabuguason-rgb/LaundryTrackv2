@@ -26,6 +26,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import type { AuditActionType, AuditLogEntry } from "@/lib/audit-log-contracts";
 import { useAuditLogs } from "@/hooks/use-audit-logs";
+import { Skeleton } from "boneyard-js/react";
 import { cn } from "@/lib/utils";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -295,7 +296,8 @@ function AuditLogsView({ onTabChange }: { onTabChange?: (tab: "staff" | "audit")
   };
 
   return (
-    <div className="w-full space-y-5">
+    <Skeleton name="audit-logs" loading={loading}>
+      <div className="w-full space-y-5">
       {/* Header & Tabs */}
       <div className="flex flex-col gap-4">
         <div>
@@ -481,6 +483,7 @@ function AuditLogsView({ onTabChange }: { onTabChange?: (tab: "staff" | "audit")
         Audit logs are read-only and record system and user actions for compliance and traceability.
       </p>
     </div>
+    </Skeleton>
   );
 }
 
