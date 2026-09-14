@@ -265,8 +265,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\print-receipt-modal.tsx": {
-    "mtime": 1788945012.390308,
-    "ast_hash": "88b789729a72e8ad135f22b38c70ab1a",
+    "mtime": 1789367604.0091114,
+    "ast_hash": "0c3464c00008f19e6cf36a023b11b1ba",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pwa-init.tsx": {
@@ -370,7 +370,7 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pages\\settings.tsx": {
-    "mtime": 1789366561.3349464,
+    "mtime": 1789367124.5761206,
     "ast_hash": "76891473a8ab0db787048ee2d4d6caab",
     "semantic_hash": ""
   },
@@ -385,8 +385,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pages\\transactions.tsx": {
-    "mtime": 1789366615.5395317,
-    "ast_hash": "9e7fdc6746b3291080583f0fa5ac40f8",
+    "mtime": 1789367682.4131944,
+    "ast_hash": "da860d25596c706ee3ce1012ddadfaff",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\ui\\accordion.tsx": {
@@ -765,7 +765,7 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\settings-store.ts": {
-    "mtime": 1789366417.7680144,
+    "mtime": 1789367124.5811226,
     "ast_hash": "ee0bfae175e9ceb4f778d107767511e1",
     "semantic_hash": ""
   },
@@ -1475,7 +1475,7 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pages\\new-order.tsx": {
-    "mtime": 1789366590.8088007,
+    "mtime": 1789367124.572142,
     "ast_hash": "dc1a7f49e0aeff123cb1ce58c25217e4",
     "semantic_hash": ""
   },
@@ -1592,6 +1592,16 @@
   "E:\\sample project\\LaundryTrackv2-pr-11\\e2e\\visual.spec.ts-snapshots\\track-404-chromium-win32.png": {
     "mtime": 1789112806.2627258,
     "ast_hash": "7f28b0940b71675d7da52bb357c0dc0e",
+    "semantic_hash": ""
+  },
+  "E:\\sample project\\LaundryTrackv2-pr-11\\components\\receipt-pdf.tsx": {
+    "mtime": 1789367525.0158584,
+    "ast_hash": "ffdc2062e00fd52d02084a869d63d854",
+    "semantic_hash": ""
+  },
+  "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\qr-ticket.ts": {
+    "mtime": 1789367536.184215,
+    "ast_hash": "c63bbdd9300a465a46bff6267f85c01c",
     "semantic_hash": ""
   }
 }

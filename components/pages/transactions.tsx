@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import {
   Search, EyeOff, Edit, Ban, Printer, ChevronRight, X, QrCode, CalendarIcon,
   AlertTriangle, Plus, User, Star, Camera,
-  ChevronLeft, Check, RefreshCw, Inbox, MoreHorizontal
+  ChevronLeft, Check, RefreshCw, Inbox, MoreHorizontal, Download
 } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
@@ -15,6 +15,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -46,7 +47,9 @@ import {
   persistPricingConfig,
   persistServiceTypes,
   persistAddOns,
+  loadBusinessProfile,
 } from "@/lib/settings-store";
+import { downloadQrCodeImage, printQrTicketOnly } from "@/lib/qr-ticket";
 import type { CreateTransactionInput, UpdateTransactionInput } from "@/lib/transaction-contracts";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
@@ -1219,6 +1222,37 @@ export default function TransactionsPage({
     return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(`${origin}${path}`)}`;
   };
 
+  const handleDownloadQr = async (txn: Transaction) => {
+    try {
+      await downloadQrCodeImage(txn);
+      showToast(`QR Code for #${txn.ticketId} downloaded`);
+    } catch {
+      showToast(`Failed to download QR code`);
+    }
+  };
+
+  const handlePrintQrTicket = async (txn: Transaction) => {
+    try {
+      const profile = loadBusinessProfile();
+      await printQrTicketOnly(txn, profile, profile.receiptPaperWidth || "80mm");
+      showToast(`QR Tag sent to printer for #${txn.ticketId}`);
+    } catch {
+      showToast(`Failed to print QR tag`);
+    }
+  };
+
+  const handleDownloadReceipt = async (txn: Transaction) => {
+    try {
+      const profile = loadBusinessProfile();
+      const { downloadReceiptPdf } = await import("@/components/receipt-pdf");
+      await downloadReceiptPdf(txn, profile);
+      showToast(`Receipt PDF for #${txn.ticketId} downloaded`);
+    } catch (err) {
+      console.error(err);
+      showToast(`Failed to download receipt PDF`);
+    }
+  };
+
   // ── Actions ──────────────────────────────────────────────────────────────────
   const confirmVoid = async () => {
     if (!voidTxn || !voidReason.trim()) return;
@@ -1811,13 +1845,24 @@ export default function TransactionsPage({
                           <MoreHorizontal className="w-3.5 h-3.5" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
+                      <DropdownMenuContent align="end" className="w-48">
                         <DropdownMenuItem onClick={() => { setPrintTxn(txn); setPrintPostCreate(false); }}>
                           <Printer className="w-3.5 h-3.5 mr-2" /> Print Receipt
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => void handleDownloadReceipt(txn)}>
+                          <Download className="w-3.5 h-3.5 mr-2" /> Download Receipt
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => setReprintTxn(txn)}>
                           <QrCode className="w-3.5 h-3.5 mr-2" /> QR Code Ticket
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => void handlePrintQrTicket(txn)}>
+                          <Printer className="w-3.5 h-3.5 mr-2 text-primary" /> Print QR Only
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => void handleDownloadQr(txn)}>
+                          <Download className="w-3.5 h-3.5 mr-2 text-primary" /> Download QR Code
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem disabled={isVoided} onClick={() => openEdit(txn)}>
                           <Edit className="w-3.5 h-3.5 mr-2" /> Edit Order
                         </DropdownMenuItem>
@@ -2248,38 +2293,82 @@ export default function TransactionsPage({
         <DialogContent className="max-w-xs">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <QrCode className="w-4 h-4" /> Reprint Ticket
+              <QrCode className="w-4 h-4 text-primary" /> QR Code Ticket
             </DialogTitle>
             <DialogDescription>
-              Scan or print this QR code for ticket {reprintTxn?.ticketId}.
+              Scan, print bag tag, or download this QR code for #{reprintTxn?.ticketId}.
             </DialogDescription>
           </DialogHeader>
           {reprintTxn && (
-            <div className="flex flex-col items-center gap-3 py-4">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={getTrackingQrSrc(reprintTxn, 180)}
-                alt={`QR code for ${reprintTxn.ticketId}`}
-                width={180}
-                height={180}
-                crossOrigin="anonymous"
-              />
-              <p className="text-sm font-mono font-semibold text-foreground">{reprintTxn.ticketId}</p>
-              <p className="text-xs text-muted-foreground">{reprintTxn.customerName}</p>
-              <div className="flex gap-2 mt-2 w-full">
+            <div className="flex flex-col items-center gap-3 py-2">
+              <div className="bg-white p-3 rounded-xl border shadow-xs">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={getTrackingQrSrc(reprintTxn, 180)}
+                  alt={`QR code for ${reprintTxn.ticketId}`}
+                  width={180}
+                  height={180}
+                  crossOrigin="anonymous"
+                  className="rounded"
+                />
+              </div>
+              <div className="text-center">
+                <p className="text-base font-mono font-bold text-foreground">#{reprintTxn.ticketId}</p>
+                <p className="text-xs font-semibold text-foreground">{reprintTxn.customerName}</p>
+                <p className="text-[11px] text-muted-foreground">{reprintTxn.washType} &bull; {reprintTxn.weight > 0 ? `${reprintTxn.weight} kg` : "Per Load"}</p>
+              </div>
+
+              <div className="flex flex-col gap-2 w-full mt-1">
+                {/* Print QR Tag Without Receipt */}
                 <Button
                   size="sm"
-                  className="flex-1 flex items-center gap-1.5 cursor-pointer"
-                  onClick={() => {
-                    const t = reprintTxn;
-                    setReprintTxn(null);
-                    setPrintTxn(t);
-                    setPrintPostCreate(false);
-                  }}
+                  className="w-full flex items-center justify-center gap-1.5 cursor-pointer bg-primary text-primary-foreground font-semibold shadow-xs"
+                  onClick={() => handlePrintQrTicket(reprintTxn)}
                 >
-                  <Printer className="w-3.5 h-3.5" /> Print Receipt
+                  <Printer className="w-3.5 h-3.5" /> Print QR Tag Only
                 </Button>
-                <Button size="sm" variant="outline" className="flex-1 cursor-pointer" onClick={() => setReprintTxn(null)}>
+
+                {/* Download QR Image */}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full flex items-center justify-center gap-1.5 cursor-pointer font-medium"
+                  onClick={() => handleDownloadQr(reprintTxn)}
+                >
+                  <Download className="w-3.5 h-3.5 text-primary" /> Download QR Image
+                </Button>
+
+                <div className="flex items-center gap-2 my-0.5">
+                  <div className="h-px bg-border flex-1" />
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Receipt</span>
+                  <div className="h-px bg-border flex-1" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex items-center justify-center gap-1 text-xs cursor-pointer"
+                    onClick={() => handleDownloadReceipt(reprintTxn)}
+                  >
+                    <Download className="w-3 h-3 text-primary" /> PDF Receipt
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex items-center justify-center gap-1 text-xs cursor-pointer"
+                    onClick={() => {
+                      const t = reprintTxn;
+                      setReprintTxn(null);
+                      setPrintTxn(t);
+                      setPrintPostCreate(false);
+                    }}
+                  >
+                    <Printer className="w-3 h-3" /> Full Receipt
+                  </Button>
+                </div>
+
+                <Button size="sm" variant="ghost" className="cursor-pointer text-xs text-muted-foreground hover:text-foreground mt-0.5" onClick={() => setReprintTxn(null)}>
                   Close
                 </Button>
               </div>

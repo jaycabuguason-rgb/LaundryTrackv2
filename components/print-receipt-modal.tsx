@@ -3,10 +3,11 @@
 import { useRef, useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Printer, X, Loader2 } from "lucide-react";
+import { Printer, X, Loader2, Download, QrCode } from "lucide-react";
 import { type Transaction } from "@/lib/data";
 import { formatReadableDateTime } from "@/lib/date-format";
 import { loadBusinessProfile, type BusinessProfile } from "@/lib/settings-store";
+import { downloadQrCodeImage, printQrTicketOnly } from "@/lib/qr-ticket";
 
 interface PrintReceiptModalProps {
   open: boolean;
@@ -26,6 +27,7 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
   const [showLogo, setShowLogo] = useState<boolean>(true);
   const [showQr, setShowQr] = useState<boolean>(true);
   const [isPrinting, setIsPrinting] = useState<boolean>(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState<boolean>(false);
 
   // Reload business profile & stored paper size whenever modal opens
   useEffect(() => {
@@ -488,6 +490,19 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
     }, 350);
   };
 
+  const handleDownloadReceipt = async () => {
+    if (!transaction) return;
+    setIsDownloadingPdf(true);
+    try {
+      const { downloadReceiptPdf } = await import("@/components/receipt-pdf");
+      await downloadReceiptPdf(transaction, profile);
+    } catch (err) {
+      console.error("Failed to download PDF receipt:", err);
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
+
   const is58 = paperWidth === "58mm";
   const previewWidthPx = is58 ? 210 : 290;
 
@@ -589,6 +604,14 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
                   <span>Logo</span>
                 </label>
               )}
+              <button
+                type="button"
+                onClick={() => void printQrTicketOnly(transaction, profile, paperWidth)}
+                className="text-[11px] text-primary hover:underline font-semibold flex items-center gap-1 cursor-pointer ml-1 border-l pl-2 border-border/80"
+                title="Print only the QR tag without receipt"
+              >
+                <Printer className="w-3 h-3" /> Print QR Only
+              </button>
             </div>
           </div>
         </div>
@@ -772,9 +795,9 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-2 pt-3 border-t mt-2">
+        <div className="flex flex-wrap sm:flex-nowrap gap-2 pt-3 border-t mt-2">
           <Button
-            className="flex-1 gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer font-semibold shadow-xs"
+            className="flex-1 gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer font-semibold shadow-xs min-w-[140px]"
             onClick={handlePrint}
             disabled={isPrinting}
           >
@@ -787,6 +810,31 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
                 <Printer className="w-4 h-4" /> Print Thermal Receipt ({paperWidth})
               </>
             )}
+          </Button>
+
+          <Button
+            variant="outline"
+            className="cursor-pointer gap-1.5 font-medium shadow-xs"
+            onClick={handleDownloadReceipt}
+            disabled={isDownloadingPdf}
+            title="Download receipt as PDF document"
+          >
+            {isDownloadingPdf ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4 text-primary" />
+            )}
+            Download PDF
+          </Button>
+
+          <Button
+            variant="outline"
+            className="cursor-pointer gap-1.5 font-medium shadow-xs"
+            onClick={() => void downloadQrCodeImage(transaction)}
+            title="Download QR code PNG image"
+          >
+            <QrCode className="w-4 h-4 text-foreground" />
+            QR
           </Button>
 
           <Button
