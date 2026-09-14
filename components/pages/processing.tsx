@@ -5,15 +5,18 @@ import {
   AlertTriangle,
   Check,
   ChevronDown,
+  Loader2,
   PackageCheck,
   RefreshCw,
   Search,
+  SlidersHorizontal,
   X,
 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -85,7 +88,7 @@ const STAGES: ProcessingStageConfig[] = [
   },
 ];
 
-/** 3 active processing statuses shown in the dropdown */
+/** 3 active processing statuses shown in the quick stage workflow */
 const ALL_STATUS_OPTIONS: {
   status: TransactionStatus;
   label: string;
@@ -93,6 +96,17 @@ const ALL_STATUS_OPTIONS: {
   { status: "Received", label: "Received" },
   { status: "Washing",  label: "Washing" },
   { status: "Ready",    label: "Ready" },
+];
+
+/** All actionable statuses available for batch update */
+const BULK_STATUS_OPTIONS: {
+  status: TransactionStatus;
+  label: string;
+}[] = [
+  { status: "Received", label: "Received" },
+  { status: "Washing",  label: "Washing" },
+  { status: "Ready",    label: "Ready" },
+  { status: "Claimed",  label: "Claimed" },
 ];
 
 /** Statuses that require a confirmation dialog before applying */
@@ -221,6 +235,15 @@ export default function ProcessingPage({
   const [sheetTxn, setSheetTxn] = useState<Transaction | null>(null);
   const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // ── Multi-select state ──────────────────────────────────────────────────────
+  const [selectedTicketIds, setSelectedTicketIds] = useState<Set<string>>(new Set());
+  const [isBulkUpdating, setIsBulkUpdating] = useState<boolean>(false);
+  const [bulkConfirmDialog, setBulkConfirmDialog] = useState<{
+    open: boolean;
+    targetStatus: TransactionStatus | null;
+    ticketIds: string[];
+  }>({ open: false, targetStatus: null, ticketIds: [] });
+
   // ── Confirmation dialog state ──────────────────────────────────────────────
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
@@ -304,6 +327,112 @@ export default function ProcessingPage({
     setExpandedStage((prev) => (prev === stage ? null : stage));
   };
 
+  // ── Multi-select handlers ──────────────────────────────────────────────────
+  const handleToggleSelectTicket = (ticketId: string) => {
+    setSelectedTicketIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(ticketId)) {
+        next.delete(ticketId);
+      } else {
+        next.add(ticketId);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAllInStage = (items: Transaction[]) => {
+    const stageTicketIds = items.map((t) => t.ticketId);
+    const allSelected = stageTicketIds.length > 0 && stageTicketIds.every((id) => selectedTicketIds.has(id));
+
+    setSelectedTicketIds((prev) => {
+      const next = new Set(prev);
+      if (allSelected) {
+        // Deselect all in this stage
+        stageTicketIds.forEach((id) => next.delete(id));
+      } else {
+        // Select all in this stage
+        stageTicketIds.forEach((id) => next.add(id));
+      }
+      return next;
+    });
+  };
+
+  const handleClearSelection = () => {
+    setSelectedTicketIds(new Set());
+  };
+
+  // Core bulk update execution
+  const executeBulkStatusUpdate = async (ticketIds: string[], targetStatus: TransactionStatus) => {
+    if (!onUpdateTransaction || ticketIds.length === 0) return;
+    setIsBulkUpdating(true);
+    let successCount = 0;
+    let failCount = 0;
+
+    try {
+      // Process updates concurrently with Promise.allSettled
+      const results = await Promise.allSettled(
+        ticketIds.map((ticketId) => onUpdateTransaction(ticketId, { status: targetStatus }))
+      );
+
+      results.forEach((res) => {
+        if (res.status === "fulfilled") {
+          successCount++;
+        } else {
+          failCount++;
+        }
+      });
+
+      setLastUpdated(new Date());
+
+      if (successCount > 0) {
+        pushToast(
+          `Updated ${successCount} ticket${successCount > 1 ? "s" : ""} to ${targetStatus}${
+            failCount > 0 ? ` (${failCount} failed)` : ""
+          }`
+        );
+      } else {
+        pushToast("Failed to update the selected tickets. Please try again.");
+      }
+
+      // Remove successfully updated tickets from selection
+      setSelectedTicketIds((prev) => {
+        const next = new Set(prev);
+        ticketIds.forEach((id) => next.delete(id));
+        return next;
+      });
+    } catch {
+      pushToast("An error occurred during bulk status update.");
+    } finally {
+      setIsBulkUpdating(false);
+    }
+  };
+
+  // Called when user selects a target status for bulk update
+  const handleBulkStatusSelect = (targetStatus: TransactionStatus) => {
+    const validIds = Array.from(selectedTicketIds);
+    if (validIds.length === 0) return;
+
+    if (IRREVERSIBLE_STATUSES.includes(targetStatus)) {
+      setBulkConfirmDialog({
+        open: true,
+        targetStatus,
+        ticketIds: validIds,
+      });
+      return;
+    }
+
+    executeBulkStatusUpdate(validIds, targetStatus);
+  };
+
+  // Confirm bulk irreversible dialog
+  const handleConfirmBulkStatus = async () => {
+    const { targetStatus, ticketIds } = bulkConfirmDialog;
+    setBulkConfirmDialog({ open: false, targetStatus: null, ticketIds: [] });
+    if (targetStatus && ticketIds.length > 0) {
+      await executeBulkStatusUpdate(ticketIds, targetStatus);
+    }
+  };
+
   // Core update – called after any confirmation / immediate click
   const applyStatusUpdate = async (txn: Transaction, newStatus: TransactionStatus) => {
     if (!onUpdateTransaction) return;
@@ -355,20 +484,40 @@ export default function ProcessingPage({
   // ─── Stage list table ──────────────────────────────────────────────────────
 
   const renderList = (stage: ProcessingStageId, label: string, badgeColor: string, items: Transaction[]) => {
+    const stageTicketIds = items.map((t) => t.ticketId);
+    const selectedCountInStage = stageTicketIds.filter((id) => selectedTicketIds.has(id)).length;
+    const isAllInStageSelected = items.length > 0 && selectedCountInStage === items.length;
+    const isSomeInStageSelected = selectedCountInStage > 0 && !isAllInStageSelected;
+
     return (
       <Card className="border border-border shadow-none">
         <CardHeader className="px-4 pb-3 pt-4 md:px-5 md:pt-5">
-          <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <span
-              className={cn(
-                "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold",
-                badgeColor,
-              )}
-            >
-              {label}
-            </span>
-            <span className="text-muted-foreground font-normal">— {items.length} ticket{items.length !== 1 ? "s" : ""}</span>
-          </CardTitle>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <span
+                className={cn(
+                  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold",
+                  badgeColor,
+                )}
+              >
+                {label}
+              </span>
+              <span className="text-muted-foreground font-normal">— {items.length} ticket{items.length !== 1 ? "s" : ""}</span>
+            </CardTitle>
+
+            {items.length > 0 && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleSelectAllInStage(items)}
+                  className="h-8 text-xs font-medium text-muted-foreground hover:text-foreground cursor-pointer px-2"
+                >
+                  {isAllInStageSelected ? "Deselect All in Stage" : "Select All in Stage"}
+                </Button>
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="px-0 pb-0">
           {items.length === 0 ? (
@@ -383,19 +532,37 @@ export default function ProcessingPage({
                 const isPriorityReady = stage === "Ready" && hoursInStage >= 2;
                 const isUpdating = updatingTicket === txn.ticketId;
                 const nextAction = getNextStageAction(txn.status);
+                const isSelected = selectedTicketIds.has(txn.ticketId);
+
                 return (
-                  <div key={txn.id} className="space-y-3 px-4 py-3">
+                  <div
+                    key={txn.id}
+                    className={cn(
+                      "space-y-3 px-4 py-3 transition-colors",
+                      isSelected && "bg-primary/5 dark:bg-primary/10",
+                    )}
+                  >
                     <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <button
-                          onClick={() => handleViewTicket(txn)}
-                          className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 font-mono text-xs font-semibold text-primary hover:underline cursor-pointer"
-                          title="View ticket details"
-                        >
-                          {txn.ticketId}
-                        </button>
-                        <p className="mt-1 truncate text-xs font-medium text-foreground">{txn.customerName}</p>
-                        <p className="mt-0.5 text-xs text-muted-foreground">{txn.arrivalDateTime}</p>
+                      <div className="flex items-start gap-3 min-w-0">
+                        <div className="pt-0.5">
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => handleToggleSelectTicket(txn.ticketId)}
+                            aria-label={`Select ticket ${txn.ticketId}`}
+                            className="cursor-pointer"
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <button
+                            onClick={() => handleViewTicket(txn)}
+                            className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 font-mono text-xs font-semibold text-primary hover:underline cursor-pointer"
+                            title="View ticket details"
+                          >
+                            {txn.ticketId}
+                          </button>
+                          <p className="mt-1 truncate text-xs font-medium text-foreground">{txn.customerName}</p>
+                          <p className="mt-0.5 text-xs text-muted-foreground">{txn.arrivalDateTime}</p>
+                        </div>
                       </div>
                       <StatusBadge status={txn.status} />
                     </div>
@@ -454,10 +621,20 @@ export default function ProcessingPage({
               })}
             </div>
             <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[820px] text-sm">
+              <table className="w-full min-w-[860px] text-sm">
                 <thead>
                   <tr className="border-y border-border bg-muted/40">
-                    <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground md:px-5">Ticket ID</th>
+                    <th className="w-10 px-4 py-2.5 text-left md:px-5">
+                      <div className="flex items-center">
+                        <Checkbox
+                          checked={isAllInStageSelected ? true : isSomeInStageSelected ? "indeterminate" : false}
+                          onCheckedChange={() => handleSelectAllInStage(items)}
+                          aria-label="Select all tickets in this stage"
+                          className="cursor-pointer"
+                        />
+                      </div>
+                    </th>
+                    <th className="px-3 py-2.5 text-left text-xs font-medium text-muted-foreground">Ticket ID</th>
                     <th className="px-3 py-2.5 text-left text-xs font-medium text-muted-foreground">Customer</th>
                     <th className="px-3 py-2.5 text-left text-xs font-medium text-muted-foreground whitespace-nowrap">Drop-off</th>
                     <th className="px-3 py-2.5 text-left text-xs font-medium text-muted-foreground">Wash Type</th>
@@ -474,17 +651,27 @@ export default function ProcessingPage({
                     const isLongWaiting = !isPriorityReady && hoursInStage >= 4;
                     const isUpdating = updatingTicket === txn.ticketId;
                     const nextAction = getNextStageAction(txn.status);
+                    const isSelected = selectedTicketIds.has(txn.ticketId);
 
                     return (
                       <tr
                         key={txn.id}
                         className={cn(
                           "border-b border-border last:border-0 transition-colors hover:bg-muted/20",
+                          isSelected && "bg-primary/5 hover:bg-primary/10 dark:bg-primary/10 dark:hover:bg-primary/15",
                           isPriorityReady && "border-l-2 border-l-amber-400",
                           isLongWaiting && "border-l-2 border-l-amber-500/50",
                         )}
                       >
-                        <td className="px-4 py-3 md:px-5">
+                        <td className="w-10 px-4 py-3 md:px-5">
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => handleToggleSelectTicket(txn.ticketId)}
+                            aria-label={`Select ticket ${txn.ticketId}`}
+                            className="cursor-pointer"
+                          />
+                        </td>
+                        <td className="px-3 py-3">
                           <button
                             onClick={() => handleViewTicket(txn)}
                             className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 font-mono text-xs font-semibold text-primary hover:underline cursor-pointer"
@@ -739,6 +926,186 @@ export default function ProcessingPage({
           </>
         )}
       </div>
+
+      {/* ── Floating Bulk Action Bar ─────────────────────────────────────────── */}
+      {selectedTicketIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-200">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/80 bg-popover/95 px-4 py-3 text-popover-foreground shadow-2xl backdrop-blur-md">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                {selectedTicketIds.size}
+              </span>
+              <span className="text-xs font-semibold sm:text-sm">
+                ticket{selectedTicketIds.size > 1 ? "s" : ""} selected
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Quick advance button based on active stage */}
+              {expandedStage === "Received" && (
+                <Button
+                  size="sm"
+                  disabled={isBulkUpdating}
+                  onClick={() => handleBulkStatusSelect("Washing")}
+                  className="h-8 gap-1.5 rounded-xl text-xs font-semibold shadow-xs cursor-pointer"
+                >
+                  {isBulkUpdating ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Check className="h-3.5 w-3.5" />
+                  )}
+                  Start Wash ({selectedTicketIds.size})
+                </Button>
+              )}
+
+              {expandedStage === "Washed" && (
+                <Button
+                  size="sm"
+                  disabled={isBulkUpdating}
+                  onClick={() => handleBulkStatusSelect("Ready")}
+                  className="h-8 gap-1.5 rounded-xl text-xs font-semibold shadow-xs cursor-pointer"
+                >
+                  {isBulkUpdating ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Check className="h-3.5 w-3.5" />
+                  )}
+                  Mark Ready ({selectedTicketIds.size})
+                </Button>
+              )}
+
+              {expandedStage === "Ready" && (
+                <Button
+                  size="sm"
+                  disabled={isBulkUpdating}
+                  onClick={() => handleBulkStatusSelect("Claimed")}
+                  className="h-8 gap-1.5 rounded-xl text-xs font-semibold shadow-xs cursor-pointer"
+                >
+                  {isBulkUpdating ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <PackageCheck className="h-3.5 w-3.5" />
+                  )}
+                  Claim Selected ({selectedTicketIds.size})
+                </Button>
+              )}
+
+              {/* Status picker dropdown for any target status */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={isBulkUpdating}
+                    className="h-8 gap-1.5 rounded-xl text-xs font-medium cursor-pointer"
+                  >
+                    <SlidersHorizontal className="h-3.5 w-3.5" />
+                    <span>Change Status</span>
+                    <ChevronDown className="h-3 w-3 opacity-60" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[190px] rounded-2xl border-border/60 bg-card p-1.5 shadow-xl">
+                  {BULK_STATUS_OPTIONS.map(({ status, label }) => {
+                    const StatusIcon = STATUS_ICONS[status];
+                    return (
+                      <DropdownMenuItem
+                        key={status}
+                        onClick={() => handleBulkStatusSelect(status)}
+                        className="cursor-pointer rounded-xl px-3 py-2 text-xs font-medium focus:bg-muted/60"
+                      >
+                        <div className="flex items-center gap-2.5 w-full">
+                          <StatusIcon className="h-4 w-4 text-muted-foreground" />
+                          <span>Move to {label}</span>
+                        </div>
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Clear Selection */}
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={isBulkUpdating}
+                onClick={handleClearSelection}
+                className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                aria-label="Clear selection"
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Bulk irreversible-action confirmation dialog ─────────────────────── */}
+      <Dialog
+        open={bulkConfirmDialog.open}
+        onOpenChange={(open) => {
+          if (!open) setBulkConfirmDialog({ open: false, targetStatus: null, ticketIds: [] });
+        }}
+      >
+        <DialogContent className="max-w-md rounded-2xl border border-border/80 bg-card p-6 shadow-xl sm:max-w-md">
+          <DialogHeader className="gap-2">
+            <div className="flex items-center gap-3">
+              <div
+                className={cn(
+                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+                  bulkConfirmDialog.targetStatus === "Voided"
+                    ? "bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-300"
+                    : "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",
+                )}
+              >
+                {bulkConfirmDialog.targetStatus === "Voided" ? (
+                  <AlertTriangle className="h-5 w-5" />
+                ) : (
+                  <PackageCheck className="h-5 w-5" />
+                )}
+              </div>
+              <div>
+                <DialogTitle className="text-base font-semibold text-foreground">
+                  Update {bulkConfirmDialog.ticketIds.length} tickets to {bulkConfirmDialog.targetStatus}?
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground">
+                  This action cannot be undone. All selected tickets will be set to {bulkConfirmDialog.targetStatus}.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="my-2 rounded-xl border border-border/60 bg-muted/30 p-3.5 text-xs space-y-1.5">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Selected count:</span>
+              <span className="font-semibold text-foreground">{bulkConfirmDialog.ticketIds.length} tickets</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Target Status:</span>
+              <span className="font-semibold text-foreground">{bulkConfirmDialog.targetStatus}</span>
+            </div>
+            <div className="mt-2 text-muted-foreground break-all text-[11px]">
+              {bulkConfirmDialog.ticketIds.join(", ")}
+            </div>
+          </div>
+
+          <DialogFooter className="mt-4 flex flex-row items-center justify-end gap-2.5">
+            <Button
+              variant="outline"
+              className="rounded-xl border-border/80 text-xs font-medium cursor-pointer"
+              onClick={() => setBulkConfirmDialog({ open: false, targetStatus: null, ticketIds: [] })}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant={bulkConfirmDialog.targetStatus === "Voided" ? "destructive" : "default"}
+              className="rounded-xl text-xs font-medium cursor-pointer shadow-xs"
+              onClick={handleConfirmBulkStatus}
+            >
+              Confirm Update ({bulkConfirmDialog.ticketIds.length})
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
 
       {/* ── Irreversible-action confirmation dialog ─────────────────────────── */}
