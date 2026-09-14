@@ -1587,33 +1587,9 @@ export default function TransactionsPage({
         </Button>
       </div>
 
-      {/* Tabs — Active Orders, All Transactions, Claimed, Voided */}
+      {/* Tabs — All Transactions, Active Orders, Claimed, Voided */}
       <div className="flex items-center justify-between border-b border-border overflow-x-auto">
         <div className="flex gap-1 sm:gap-2 min-w-max">
-          <button
-            onClick={() => {
-              setActiveTab("transactions");
-              setFilterStatus("all");
-            }}
-            className={cn(
-              "flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-medium border-b-2 transition-all cursor-pointer -mb-[1px]",
-              activeTab === "transactions"
-                ? "border-primary text-primary font-semibold"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <span>Active Orders</span>
-            <span
-              className={cn(
-                "rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums",
-                activeTab === "transactions"
-                  ? "bg-primary/10 text-primary"
-                  : "bg-muted text-muted-foreground"
-              )}
-            >
-              {activeOrdersCount}
-            </span>
-          </button>
           <button
             onClick={() => {
               setActiveTab("all");
@@ -1636,6 +1612,30 @@ export default function TransactionsPage({
               )}
             >
               {allOrdersCount}
+            </span>
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab("transactions");
+              setFilterStatus("all");
+            }}
+            className={cn(
+              "flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-medium border-b-2 transition-all cursor-pointer -mb-[1px]",
+              activeTab === "transactions"
+                ? "border-primary text-primary font-semibold"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <span>Active Orders</span>
+            <span
+              className={cn(
+                "rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums",
+                activeTab === "transactions"
+                  ? "bg-primary/10 text-primary"
+                  : "bg-muted text-muted-foreground"
+              )}
+            >
+              {activeOrdersCount}
             </span>
           </button>
           <button
