@@ -106,7 +106,6 @@ const BULK_STATUS_OPTIONS: {
   { status: "Received", label: "Received" },
   { status: "Washing",  label: "Washing" },
   { status: "Ready",    label: "Ready" },
-  { status: "Claimed",  label: "Claimed" },
 ];
 
 /** Statuses that require a confirmation dialog before applying */
@@ -178,9 +177,7 @@ function getNextStageAction(status: TransactionStatus): { nextStatus: Transactio
   if (status === "Washing" || status === "Drying") {
     return { nextStatus: "Ready", label: "Mark Ready ✓", shortLabel: "Ready ✓" };
   }
-  if (status === "Ready") {
-    return { nextStatus: "Claimed", label: "Claim Order", shortLabel: "Claim" };
-  }
+  // Ready stage tickets are claimed via Claim Verification page
   return null;
 }
 
@@ -1000,26 +997,6 @@ export default function ProcessingPage({
                     <Check className="h-3.5 w-3.5" />
                   )}
                   Mark Ready ({selectedTicketIds.size})
-                </Button>
-              )}
-
-              {expandedStage === "Ready" && (
-                <Button
-                  type="button"
-                  size="sm"
-                  disabled={isBulkUpdating}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleBulkStatusSelect("Claimed");
-                  }}
-                  className="h-8 gap-1.5 rounded-xl text-xs font-semibold shadow-xs cursor-pointer"
-                >
-                  {isBulkUpdating ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <PackageCheck className="h-3.5 w-3.5" />
-                  )}
-                  Claim Selected ({selectedTicketIds.size})
                 </Button>
               )}
 

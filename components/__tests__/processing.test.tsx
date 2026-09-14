@@ -1,4 +1,4 @@
-﻿import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import ProcessingPage from "@/components/pages/processing";
 import { type Transaction } from "@/lib/data";
@@ -61,5 +61,39 @@ describe("ProcessingPage Single-Click Action Buttons", () => {
 
     expect(onUpdateTransaction).toHaveBeenCalledTimes(1);
     expect(onUpdateTransaction).toHaveBeenCalledWith("TKT-0030", { status: "Washing" });
+  });
+
+  it("does not display Claim Order button for Ready tickets since claiming is handled via Claim Verification", () => {
+    const readyTransactions: Transaction[] = [
+      {
+        id: "tx-ready",
+        ticketId: "TKT-0028",
+        customerName: "fdsdg",
+        phone: "09171234567",
+        washType: "Regular",
+        weight: 14,
+        fee: 430,
+        status: "Ready",
+        paymentStatus: "paid",
+        arrivalDateTime: "2026-09-09 09:07",
+        dropOffDate: "2026-09-09",
+        addOns: [],
+      },
+    ];
+
+    render(
+      <ProcessingPage
+        transactions={readyTransactions}
+        onUpdateTransaction={vi.fn()}
+      />
+    );
+
+    // Expand Ready stage card
+    const readyToggle = screen.getByRole("button", { name: /ready/i });
+    fireEvent.click(readyToggle);
+
+    // Ensure no "Claim Order" or "Claim" buttons exist
+    expect(screen.queryByRole("button", { name: /claim order/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^claim$/i })).not.toBeInTheDocument();
   });
 });
