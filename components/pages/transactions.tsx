@@ -1846,19 +1846,34 @@ export default function TransactionsPage({
             return (
               <div
                 key={txn.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => setViewTxn(txn)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    const target = e.target as HTMLElement;
+                    if (target.closest("button, a, input, select, textarea, [role='menuitem']")) return;
+                    e.preventDefault();
+                    setViewTxn(txn);
+                  }
+                }}
                 className={cn(
-                  "group relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 rounded-xl md:rounded-2xl border border-border/80 bg-card px-4 py-3 md:px-5 md:py-3.5 transition-all duration-150 hover:border-primary/40 hover:shadow-xs",
+                  "group relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 rounded-xl md:rounded-2xl border border-border/80 bg-card px-4 py-3 md:px-5 md:py-3.5 transition-all duration-150 hover:border-primary/40 hover:shadow-xs hover:bg-muted/15 dark:hover:bg-muted/20 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
                   isVoided && "opacity-60 bg-muted/20",
                   isClaimed && "bg-muted/10",
                   rowVisualClass(txn)
                 )}
+                aria-label={`View details for ticket ${txn.ticketId}`}
               >
                 {/* Left Section: Ticket ID Pill & Customer/Service info */}
                 <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                   {/* Ticket ID Pill */}
                   <button
                     type="button"
-                    onClick={() => setViewTxn(txn)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setViewTxn(txn);
+                    }}
                     className={cn(
                       "shrink-0 rounded-full px-3 py-1 font-mono text-xs font-semibold tracking-wider transition-colors cursor-pointer",
                       isVoided
@@ -1911,7 +1926,10 @@ export default function TransactionsPage({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setViewTxn(txn)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setViewTxn(txn);
+                      }}
                       className="h-7 px-2 text-xs text-foreground font-medium hover:text-primary hover:bg-primary/10 cursor-pointer"
                     >
                       View
@@ -1919,7 +1937,11 @@ export default function TransactionsPage({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => { setPrintTxn(txn); setPrintPostCreate(false); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPrintTxn(txn);
+                        setPrintPostCreate(false);
+                      }}
                       className="h-7 px-2 text-xs text-foreground font-medium hover:text-primary hover:border-primary/50 cursor-pointer gap-1"
                       title="Print receipt"
                       aria-label={`Print receipt for ticket ${txn.ticketId}`}
@@ -1931,6 +1953,7 @@ export default function TransactionsPage({
                       href={`${origin}${txn.publicTrackingToken ? `/track/${txn.publicTrackingToken}` : `/ticket/${txn.ticketId}`}`}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
                       className={cn(
                         buttonVariants({ variant: "ghost", size: "sm" }),
                         "h-7 px-2 text-xs text-foreground font-medium hover:text-primary hover:bg-primary/10 cursor-pointer inline-flex items-center"
@@ -1940,48 +1963,56 @@ export default function TransactionsPage({
                     </a>
 
                     {/* Quick Dropdown Actions */}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground cursor-pointer" aria-label="More actions">
-                          <MoreHorizontal className="w-3.5 h-3.5" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem onClick={() => { setPrintTxn(txn); setPrintPostCreate(false); }}>
-                          <Printer className="w-3.5 h-3.5 mr-2" /> Print Receipt
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => void handleDownloadReceipt(txn)}>
-                          <Download className="w-3.5 h-3.5 mr-2" /> Download Receipt
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => setReprintTxn(txn)}>
-                          <QrCode className="w-3.5 h-3.5 mr-2" /> QR Code Ticket
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => void handlePrintQrTicket(txn)}>
-                          <Printer className="w-3.5 h-3.5 mr-2 text-primary" /> Print QR Only
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => void handleDownloadQr(txn)}>
-                          <Download className="w-3.5 h-3.5 mr-2 text-primary" /> Download QR Code
-                        </DropdownMenuItem>
-                        {!isVoided && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => openEdit(txn)}>
-                              <Edit className="w-3.5 h-3.5 mr-2" /> Edit Order
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setMobileStatusTxn(txn)}>
-                              <RefreshCw className="w-3.5 h-3.5 mr-2" /> Change Status
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => { setVoidTxn(txn); setVoidReason(""); }}
-                              className="text-destructive focus:text-destructive"
-                            >
-                              <Ban className="w-3.5 h-3.5 mr-2" /> Void Order
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-foreground cursor-pointer"
+                            aria-label="More actions"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreHorizontal className="w-3.5 h-3.5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem onClick={() => { setPrintTxn(txn); setPrintPostCreate(false); }}>
+                            <Printer className="w-3.5 h-3.5 mr-2" /> Print Receipt
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => void handleDownloadReceipt(txn)}>
+                            <Download className="w-3.5 h-3.5 mr-2" /> Download Receipt
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setReprintTxn(txn)}>
+                            <QrCode className="w-3.5 h-3.5 mr-2" /> QR Code Ticket
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => void handlePrintQrTicket(txn)}>
+                            <Printer className="w-3.5 h-3.5 mr-2 text-primary" /> Print QR Only
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => void handleDownloadQr(txn)}>
+                            <Download className="w-3.5 h-3.5 mr-2 text-primary" /> Download QR Code
+                          </DropdownMenuItem>
+                          {!isVoided && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => openEdit(txn)}>
+                                <Edit className="w-3.5 h-3.5 mr-2" /> Edit Order
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setMobileStatusTxn(txn)}>
+                                <RefreshCw className="w-3.5 h-3.5 mr-2" /> Change Status
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => { setVoidTxn(txn); setVoidReason(""); }}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Ban className="w-3.5 h-3.5 mr-2" /> Void Order
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
 
                   {/* Price & Date Column */}
