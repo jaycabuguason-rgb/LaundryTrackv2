@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import { Loader2 } from "lucide-react";
 import LoginPage from "@/components/pages/login";
 import StaffLoginPage from "@/components/pages/staff-login";
 import {
@@ -191,6 +192,11 @@ export default function Home() {
         />
         <div className="relative z-10 w-full max-w-sm">
           <div className="bg-card rounded-2xl shadow-lg border border-border px-8 py-10 text-center">
+            <div className="flex justify-center mb-4">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Loader2 className="w-5 h-5 text-primary animate-spin" />
+              </div>
+            </div>
             <p className="text-sm font-semibold text-foreground">Loading LaundryTrack...</p>
             <p className="text-xs text-muted-foreground mt-2">
               Checking your Supabase admin session.

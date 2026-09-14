@@ -120,6 +120,10 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --animate-spin: spin 1.8s linear infinite;
+  --animate-pulse: pulse 2.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-ping: ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+  --animate-bounce: bounce 1.8s infinite;
 }
 
 @layer base {
@@ -134,11 +138,34 @@
   }
 }
 
-/* P2-1: respect reduced motion */
+/* Smooth, normal animation speeds across loading spinners and screens */
+.animate-spin {
+  animation: spin 1.8s linear infinite !important;
+}
+
+.animate-pulse {
+  animation: pulse 2.6s cubic-bezier(0.4, 0, 0.6, 1) infinite !important;
+}
+
+.animate-ping {
+  animation: ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite !important;
+}
+
+.animate-bounce {
+  animation: bounce 1.8s infinite !important;
+}
+
+.animate-in {
+  animation-duration: 250ms;
+}
+
+/* P2-1: respect reduced motion safely without spinning infinite animations at 100,000 FPS */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
