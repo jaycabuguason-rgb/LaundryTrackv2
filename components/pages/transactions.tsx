@@ -1591,7 +1591,10 @@ export default function TransactionsPage({
       <div className="flex items-center justify-between border-b border-border overflow-x-auto">
         <div className="flex gap-1 sm:gap-2 min-w-max">
           <button
-            onClick={() => setActiveTab("transactions")}
+            onClick={() => {
+              setActiveTab("transactions");
+              setFilterStatus("all");
+            }}
             className={cn(
               "flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-medium border-b-2 transition-all cursor-pointer -mb-[1px]",
               activeTab === "transactions"
@@ -1612,7 +1615,10 @@ export default function TransactionsPage({
             </span>
           </button>
           <button
-            onClick={() => setActiveTab("all")}
+            onClick={() => {
+              setActiveTab("all");
+              setFilterStatus("all");
+            }}
             className={cn(
               "flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-medium border-b-2 transition-all cursor-pointer -mb-[1px]",
               activeTab === "all"
@@ -1633,7 +1639,10 @@ export default function TransactionsPage({
             </span>
           </button>
           <button
-            onClick={() => setActiveTab("claimed")}
+            onClick={() => {
+              setActiveTab("claimed");
+              setFilterStatus("all");
+            }}
             className={cn(
               "flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-medium border-b-2 transition-all cursor-pointer -mb-[1px]",
               activeTab === "claimed"
@@ -1715,9 +1724,9 @@ export default function TransactionsPage({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Status</SelectItem>
-                    {statusOrder.map((s) => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
-                    ))}
+                    <SelectItem value="Received">Received</SelectItem>
+                    <SelectItem value="Washing">Washing</SelectItem>
+                    <SelectItem value="Ready">Ready</SelectItem>
                     {activeTab === "all" && (
                       <>
                         <SelectItem value="Claimed">Claimed</SelectItem>
