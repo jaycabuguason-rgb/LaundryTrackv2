@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is(.dark *):not(.force-light, .force-light *));
 
 :root {
   --background: hsl(36 33% 96%);           /* warm cream */
@@ -204,3 +204,39 @@
 .animate-stage-sparkle {
   animation: stage-sparkle-pulse 2s ease-in-out infinite;
 }
+
+/* Enforce permanent light mode styling (e.g. for customer-facing tracking page) */
+.force-light,
+.dark .force-light {
+  color-scheme: light;
+  --background: hsl(36 33% 96%);
+  --foreground: hsl(244 48% 12%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(244 48% 12%);
+  --popover: hsl(38 45% 99%);
+  --popover-foreground: hsl(244 48% 12%);
+  --primary: hsl(257 58% 49%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(35 28% 92%);
+  --secondary-foreground: hsl(244 35% 18%);
+  --muted: hsl(35 28% 93%);
+  --muted-foreground: hsl(251 15% 38%);
+  --accent: hsl(44 83% 61%);
+  --accent-foreground: hsl(30 50% 15%);
+  --destructive: hsl(0 84% 60%);
+  --destructive-foreground: hsl(0 0% 98%);
+  --border: hsl(33 18% 82%);
+  --input: hsl(33 18% 82%);
+  --ring: hsl(257 58% 49%);
+  --status-received: hsl(257 58% 49%);
+  --status-washing: hsl(214 62% 59%);
+  --status-ready: hsl(142 42% 46%);
+  background-color: var(--background) !important;
+  color: var(--foreground) !important;
+}
+
+.force-light *,
+.dark .force-light * {
+  border-color: var(--border);
+}
+

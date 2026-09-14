@@ -209,7 +209,7 @@ export default async function PublicTrackingPage(
     : null;
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(139,92,246,0.08),_transparent_32%),linear-gradient(180deg,var(--background)_0%,hsl(35,28%,92%)_100%)] dark:bg-background px-4 py-8 text-foreground">
+    <main className="min-h-screen force-light bg-[radial-gradient(circle_at_top,_rgba(139,92,246,0.08),_transparent_32%),linear-gradient(180deg,var(--background)_0%,hsl(35,28%,92%)_100%)] px-4 py-8 text-foreground">
       <div className="mx-auto max-w-2xl space-y-6">
         {/* Header with Logo and Shop Name */}
         <div className="flex flex-col items-center gap-3 text-center">
