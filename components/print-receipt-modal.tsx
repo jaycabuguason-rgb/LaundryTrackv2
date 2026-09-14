@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Printer, X, Loader2, Download, QrCode } from "lucide-react";
+import { Printer, X, Loader2, Download, QrCode, Receipt, Settings2, FileDown } from "lucide-react";
 import { type Transaction } from "@/lib/data";
 import { formatReadableDateTime } from "@/lib/date-format";
 import { loadBusinessProfile, type BusinessProfile } from "@/lib/settings-store";
@@ -518,348 +518,404 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-1rem)] sm:w-auto max-w-md max-h-[92vh] flex flex-col p-4 sm:p-6 overflow-hidden">
-        <DialogHeader className="pb-2 border-b">
-          <DialogTitle className="text-base font-bold flex items-center justify-between">
-            <span>{postCreate ? "Order Created Successfully!" : "Print Thermal Receipt"}</span>
-            <span className="text-xs font-mono font-normal bg-muted px-2 py-0.5 rounded text-foreground">
-              #{transaction.ticketId}
-            </span>
-          </DialogTitle>
-          <DialogDescription className="text-xs">
-            {postCreate
-              ? "Order recorded. Review the receipt below and send it to your thermal printer."
-              : `Thermal receipt formatted for #${transaction.ticketId} — ${transaction.customerName}`}
-          </DialogDescription>
+      <DialogContent className="w-[calc(100vw-1.5rem)] sm:max-w-2xl md:max-w-3xl lg:max-w-4xl max-h-[92vh] flex flex-col p-0 gap-0 overflow-hidden shadow-2xl">
+        <DialogHeader className="px-5 py-3.5 border-b bg-background shrink-0">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold">
+                <Printer className="w-4 h-4" />
+              </div>
+              <div>
+                <DialogTitle className="text-base font-bold flex items-center gap-2">
+                  <span>{postCreate ? "Order Created Successfully!" : "Print & Share Receipt"}</span>
+                  <span className="text-xs font-mono font-normal bg-muted px-2 py-0.5 rounded text-foreground border">
+                    #{transaction.ticketId}
+                  </span>
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                  {postCreate
+                    ? "Order recorded. Review the receipt preview below and send it to your thermal printer."
+                    : `Thermal receipt & tracking slips for #${transaction.ticketId} — ${transaction.customerName}`}
+                </DialogDescription>
+              </div>
+            </div>
+          </div>
         </DialogHeader>
 
-        {/* Printer Controls Bar */}
-        <div className="bg-muted/40 p-2.5 rounded-lg border text-xs space-y-2.5 my-1">
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <span className="font-semibold text-foreground">Paper Size:</span>
-            <div className="inline-flex rounded-md shadow-xs bg-background p-0.5 border">
-              <button
-                type="button"
-                onClick={() => handlePaperWidthChange("80mm")}
-                className={`px-2.5 py-1 text-xs font-medium rounded transition-colors cursor-pointer ${
-                  paperWidth === "80mm"
-                    ? "bg-primary text-primary-foreground font-semibold shadow-xs"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                80mm (Standard)
-              </button>
-              <button
-                type="button"
-                onClick={() => handlePaperWidthChange("58mm")}
-                className={`px-2.5 py-1 text-xs font-medium rounded transition-colors cursor-pointer ${
-                  paperWidth === "58mm"
-                    ? "bg-primary text-primary-foreground font-semibold shadow-xs"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                58mm (Compact)
-              </button>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between flex-wrap gap-2 pt-1 border-t border-border/50">
-            <div className="flex items-center gap-1.5">
-              <span className="font-semibold text-foreground">Copies:</span>
-              <div className="inline-flex rounded bg-background p-0.5 border">
-                <button
-                  type="button"
-                  onClick={() => setCopies(1)}
-                  className={`px-2 py-0.5 text-xs rounded cursor-pointer ${
-                    copies === 1
-                      ? "bg-primary text-primary-foreground font-semibold"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  1 Copy
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCopies(2)}
-                  className={`px-2 py-0.5 text-xs rounded cursor-pointer ${
-                    copies === 2
-                      ? "bg-primary text-primary-foreground font-semibold"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                  title="Prints Customer Copy + Bag/Store Copy"
-                >
-                  2 (Customer + Store)
-                </button>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <label className="flex items-center gap-1 cursor-pointer text-muted-foreground hover:text-foreground">
-                <input
-                  type="checkbox"
-                  checked={showQr}
-                  onChange={(e) => setShowQr(e.target.checked)}
-                  className="rounded text-primary focus:ring-primary h-3.5 w-3.5"
-                />
-                <span>QR</span>
-              </label>
-              {profile.logoDataUrl && (
-                <label className="flex items-center gap-1 cursor-pointer text-muted-foreground hover:text-foreground">
-                  <input
-                    type="checkbox"
-                    checked={showLogo}
-                    onChange={(e) => setShowLogo(e.target.checked)}
-                    className="rounded text-primary focus:ring-primary h-3.5 w-3.5"
-                  />
-                  <span>Logo</span>
-                </label>
-              )}
-              <button
-                type="button"
-                onClick={() => void printQrTicketOnly(transaction, profile, paperWidth)}
-                className="text-[11px] text-primary hover:underline font-semibold flex items-center gap-1 cursor-pointer ml-1 border-l pl-2 border-border/80"
-                title="Print only the QR tag without receipt"
-              >
-                <Printer className="w-3 h-3" /> Print QR Only
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Live Thermal Receipt Visual Preview */}
-        <div className="flex-1 overflow-y-auto bg-neutral-200 dark:bg-neutral-900 rounded-lg p-3 sm:p-4 flex justify-center border">
-          <div
-            ref={receiptPreviewRef}
-            style={{
-              width: `${previewWidthPx}px`,
-              fontFamily: "'Courier New', Courier, 'Lucida Console', Monaco, monospace",
-            }}
-            className="bg-white text-black p-3 rounded shadow-md text-xs leading-tight transition-all duration-200 select-none"
-          >
-            {/* Store Header */}
-            {showLogo && profile.logoDataUrl && (
-              <div className="text-center mb-1">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={profile.logoDataUrl}
-                  alt="Shop logo"
-                  className="mx-auto block object-contain max-h-12 grayscale contrast-125"
-                />
-              </div>
-            )}
-            {profile.shopName && (
-              <div className={`text-center font-bold tracking-tight ${is58 ? "text-xs" : "text-sm"} mb-0.5`}>
-                {profile.shopName}
-              </div>
-            )}
-            {profile.tagline && (
-              <div className="text-center text-[10px] text-neutral-800 leading-snug">{profile.tagline}</div>
-            )}
-            {profile.address && (
-              <div className="text-center text-[10px] text-neutral-800 leading-snug">{profile.address}</div>
-            )}
-            {profile.contactNumber && (
-              <div className="text-center text-[10px] text-neutral-800 leading-snug">Tel: {profile.contactNumber}</div>
-            )}
-            {profile.email && (
-              <div className="text-center text-[10px] text-neutral-800 leading-snug">{profile.email}</div>
-            )}
-
-            <div className="border-t-2 border-dashed border-black my-2" />
-
-            {/* Ticket ID & Time */}
-            <div className={`text-center font-bold tracking-wider ${is58 ? "text-sm" : "text-base"} my-1`}>
-              #{transaction.ticketId}
-            </div>
-            <div className="flex justify-between text-[11px] my-0.5">
-              <span className="text-neutral-700">Date/Time:</span>
-              <span className="font-semibold">{transaction.arrivalDateTime}</span>
-            </div>
-
-            <div className="border-t border-dashed border-black my-1.5" />
-
-            {/* Customer Details */}
-            <div className="flex justify-between text-[11px] my-0.5">
-              <span className="text-neutral-700">Customer:</span>
-              <span className="font-bold">{transaction.customerName}</span>
-            </div>
-            <div className="flex justify-between text-[11px] my-0.5">
-              <span className="text-neutral-700">Phone:</span>
-              <span>{maskPhoneNumber(transaction.phone)}</span>
-            </div>
-
-            <div className="border-t border-dashed border-black my-1.5" />
-
-            {/* Service & Items */}
-            <div className="flex justify-between text-[11px] my-0.5">
-              <span className="text-neutral-700">Service:</span>
-              <span className="font-bold">{transaction.washType}</span>
-            </div>
-            <div className="flex justify-between text-[11px] my-0.5">
-              <span className="text-neutral-700">{transaction.weight > 0 ? "Weight:" : "Load:"}</span>
-              <span>{transaction.weight > 0 ? `${transaction.weight} kg` : "Per Load"}</span>
-            </div>
-            {transaction.addOns && transaction.addOns.length > 0 && (
-              <div className="flex justify-between text-[11px] my-0.5">
-                <span className="text-neutral-700">Add-ons:</span>
-                <span className="text-right">{transaction.addOns.join(", ")}</span>
-              </div>
-            )}
-            {transaction.washInstructions && (
-              <div className="text-[10px] my-1 pt-0.5">
-                <span className="text-neutral-700">Note: </span>
-                <span className="italic">{transaction.washInstructions}</span>
-              </div>
-            )}
-
-            <div className="border-t border-dashed border-black my-1.5" />
-
-            {/* Fee Breakdown */}
-            <div className="text-[10px] font-bold text-neutral-800 uppercase tracking-wider mb-1">Cost Breakdown</div>
-            <div className="flex justify-between text-[11px] my-0.5">
-              <span>{breakdown.serviceName}</span>
-              <span>&#8369;{breakdown.serviceAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-            </div>
-            {breakdown.serviceDetail && (
-              <div className="text-[9.5px] text-neutral-500 pl-1 -mt-0.5 mb-1">
-                ({breakdown.serviceDetail})
-              </div>
-            )}
-            {breakdown.addOns.map((addon) => (
-              <div key={addon.name} className="flex justify-between text-[10px] text-neutral-700 my-0.5">
-                <span>+ Add-on: {addon.name}</span>
-                <span>&#8369;{addon.rate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-              </div>
-            ))}
-            <div className="border-t border-black my-1" />
-            <div className={`flex justify-between font-bold ${is58 ? "text-xs" : "text-sm"} my-1`}>
-              <span>TOTAL AMOUNT:</span>
-              <span>&#8369;{transaction.fee.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-            </div>
-
-            <div className="border-t-2 border-dashed border-black my-2" />
-
-            {/* Payment Status (Solid Thermal Block) */}
-            <div className="text-center my-2">
-              {transaction.paymentStatus === "paid" ? (
-                <div className="border-2 border-black inline-block px-3 py-1 font-bold text-xs tracking-wider">
-                  *** PAID IN FULL ***
-                </div>
-              ) : (
-                <div className="border-2 border-black inline-block px-2.5 py-1 font-bold text-xs leading-tight">
-                  <div>*** UNPAID ***</div>
-                  <div className="text-[10px] font-semibold mt-0.5">
-                    BALANCE DUE: &#8369;{transaction.fee.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="border-t border-dashed border-black my-1.5" />
-
-            {/* Status & ETA */}
-            <div className="flex justify-between text-[11px] my-0.5">
-              <span className="text-neutral-700">Status:</span>
-              <span className="font-bold">{transaction.status}</span>
-            </div>
-            <div className="flex justify-between text-[11px] my-0.5">
-              <span className="text-neutral-700">Est. Ready:</span>
-              <span className="text-right">
-                {transaction.eta ? formatReadableDateTime(transaction.eta) : "Pending Schedule"}
+        {/* Modal Body: 2-Column Split on Desktop, Stacked on Mobile */}
+        <div className="flex-1 overflow-y-auto md:overflow-hidden grid grid-cols-1 md:grid-cols-12 min-h-0">
+          {/* Left: Thermal Receipt Preview Column */}
+          <div className="md:col-span-6 lg:col-span-6 bg-neutral-100 dark:bg-neutral-950 p-4 flex flex-col items-center justify-start border-b md:border-b-0 md:border-r overflow-y-auto max-h-[46vh] md:max-h-[calc(92vh-75px)]">
+            <div className="w-full flex items-center justify-between text-[11px] font-medium text-muted-foreground mb-2 px-1 max-w-[320px]">
+              <span className="flex items-center gap-1.5 font-semibold text-foreground">
+                <Receipt className="w-3.5 h-3.5 text-primary" /> Live Thermal Slip
+              </span>
+              <span className="font-mono text-[10px] bg-background px-1.5 py-0.5 rounded border">
+                {paperWidth} • {copies === 1 ? "1 Copy" : "2 Copies"}
               </span>
             </div>
 
-            {/* QR Code */}
-            {showQr && (
-              <>
-                <div className="border-t border-dashed border-black my-1.5" />
-                <div className="text-center my-2">
+            <div
+              ref={receiptPreviewRef}
+              style={{
+                width: `${previewWidthPx}px`,
+                fontFamily: "'Courier New', Courier, 'Lucida Console', Monaco, monospace",
+              }}
+              className="bg-white text-black p-3.5 rounded shadow-md text-xs leading-tight transition-all duration-200 select-none border border-neutral-300"
+            >
+              {/* Store Header */}
+              {showLogo && profile.logoDataUrl && (
+                <div className="text-center mb-1">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={qrUrl}
-                    alt={`QR for ${transaction.ticketId}`}
-                    width={is58 ? 85 : 105}
-                    height={is58 ? 85 : 105}
-                    className="mx-auto block"
-                    crossOrigin="anonymous"
+                    src={profile.logoDataUrl}
+                    alt="Shop logo"
+                    className="mx-auto block object-contain max-h-12 grayscale contrast-125"
                   />
-                  <div className="text-[9px] text-neutral-800 mt-1">Scan with camera to track order</div>
                 </div>
-              </>
-            )}
+              )}
+              {profile.shopName && (
+                <div className={`text-center font-bold tracking-tight ${is58 ? "text-xs" : "text-sm"} mb-0.5`}>
+                  {profile.shopName}
+                </div>
+              )}
+              {profile.tagline && (
+                <div className="text-center text-[10px] text-neutral-800 leading-snug">{profile.tagline}</div>
+              )}
+              {profile.address && (
+                <div className="text-center text-[10px] text-neutral-800 leading-snug">{profile.address}</div>
+              )}
+              {profile.contactNumber && (
+                <div className="text-center text-[10px] text-neutral-800 leading-snug">Tel: {profile.contactNumber}</div>
+              )}
+              {profile.email && (
+                <div className="text-center text-[10px] text-neutral-800 leading-snug">{profile.email}</div>
+              )}
 
-            <div className="border-t border-dashed border-black my-1.5" />
+              <div className="border-t-2 border-dashed border-black my-2" />
 
-            {/* Footer / Notes */}
-            {profile.receiptFooter && (
-              <div className="text-center font-bold text-[10px] mt-1">{profile.receiptFooter}</div>
-            )}
-            <div className="text-center text-[9px] text-neutral-700 mt-0.5">
-              {profile.pickupInstructions || "Present this receipt or QR code upon claiming."}
-            </div>
-
-            {copies === 2 && (
-              <div className="mt-4 pt-2 border-t-2 border-dotted border-neutral-400 text-center text-[9px] text-neutral-500">
-                ✂ - - - - - Tear Line (2nd Store Copy will print below) - - - - - ✂
+              {/* Ticket ID & Time */}
+              <div className={`text-center font-bold tracking-wider ${is58 ? "text-sm" : "text-base"} my-1`}>
+                #{transaction.ticketId}
               </div>
-            )}
+              <div className="flex justify-between text-[11px] my-0.5">
+                <span className="text-neutral-700">Date/Time:</span>
+                <span className="font-semibold">{transaction.arrivalDateTime}</span>
+              </div>
 
-            <div className="text-center text-[8px] text-neutral-500 mt-2 pb-1">
-              [ ~20mm Auto-Cutter Clearance Included ]
+              <div className="border-t border-dashed border-black my-1.5" />
+
+              {/* Customer Details */}
+              <div className="flex justify-between text-[11px] my-0.5">
+                <span className="text-neutral-700">Customer:</span>
+                <span className="font-bold">{transaction.customerName}</span>
+              </div>
+              <div className="flex justify-between text-[11px] my-0.5">
+                <span className="text-neutral-700">Phone:</span>
+                <span>{maskPhoneNumber(transaction.phone)}</span>
+              </div>
+
+              <div className="border-t border-dashed border-black my-1.5" />
+
+              {/* Service & Items */}
+              <div className="flex justify-between text-[11px] my-0.5">
+                <span className="text-neutral-700">Service:</span>
+                <span className="font-bold">{transaction.washType}</span>
+              </div>
+              <div className="flex justify-between text-[11px] my-0.5">
+                <span className="text-neutral-700">{transaction.weight > 0 ? "Weight:" : "Load:"}</span>
+                <span>{transaction.weight > 0 ? `${transaction.weight} kg` : "Per Load"}</span>
+              </div>
+              {transaction.addOns && transaction.addOns.length > 0 && (
+                <div className="flex justify-between text-[11px] my-0.5">
+                  <span className="text-neutral-700">Add-ons:</span>
+                  <span className="text-right">{transaction.addOns.join(", ")}</span>
+                </div>
+              )}
+              {transaction.washInstructions && (
+                <div className="text-[10px] my-1 pt-0.5">
+                  <span className="text-neutral-700">Note: </span>
+                  <span className="italic">{transaction.washInstructions}</span>
+                </div>
+              )}
+
+              <div className="border-t border-dashed border-black my-1.5" />
+
+              {/* Fee Breakdown */}
+              <div className="text-[10px] font-bold text-neutral-800 uppercase tracking-wider mb-1">Cost Breakdown</div>
+              <div className="flex justify-between text-[11px] my-0.5">
+                <span>{breakdown.serviceName}</span>
+                <span>&#8369;{breakdown.serviceAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              </div>
+              {breakdown.serviceDetail && (
+                <div className="text-[9.5px] text-neutral-500 pl-1 -mt-0.5 mb-1">
+                  ({breakdown.serviceDetail})
+                </div>
+              )}
+              {breakdown.addOns.map((addon) => (
+                <div key={addon.name} className="flex justify-between text-[10px] text-neutral-700 my-0.5">
+                  <span>+ Add-on: {addon.name}</span>
+                  <span>&#8369;{addon.rate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+              ))}
+              <div className="border-t border-black my-1" />
+              <div className={`flex justify-between font-bold ${is58 ? "text-xs" : "text-sm"} my-1`}>
+                <span>TOTAL AMOUNT:</span>
+                <span>&#8369;{transaction.fee.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              </div>
+
+              <div className="border-t-2 border-dashed border-black my-2" />
+
+              {/* Payment Status (Solid Thermal Block) */}
+              <div className="text-center my-2">
+                {transaction.paymentStatus === "paid" ? (
+                  <div className="border-2 border-black inline-block px-3 py-1 font-bold text-xs tracking-wider">
+                    *** PAID IN FULL ***
+                  </div>
+                ) : (
+                  <div className="border-2 border-black inline-block px-2.5 py-1 font-bold text-xs leading-tight">
+                    <div>*** UNPAID ***</div>
+                    <div className="text-[10px] font-semibold mt-0.5">
+                      BALANCE DUE: &#8369;{transaction.fee.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t border-dashed border-black my-1.5" />
+
+              {/* Status & ETA */}
+              <div className="flex justify-between text-[11px] my-0.5">
+                <span className="text-neutral-700">Status:</span>
+                <span className="font-bold">{transaction.status}</span>
+              </div>
+              <div className="flex justify-between text-[11px] my-0.5">
+                <span className="text-neutral-700">Est. Ready:</span>
+                <span className="text-right">
+                  {transaction.eta ? formatReadableDateTime(transaction.eta) : "Pending Schedule"}
+                </span>
+              </div>
+
+              {/* QR Code */}
+              {showQr && (
+                <>
+                  <div className="border-t border-dashed border-black my-1.5" />
+                  <div className="text-center my-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={qrUrl}
+                      alt={`QR for ${transaction.ticketId}`}
+                      width={is58 ? 85 : 105}
+                      height={is58 ? 85 : 105}
+                      className="mx-auto block"
+                      crossOrigin="anonymous"
+                    />
+                    <div className="text-[9px] text-neutral-800 mt-1">Scan with camera to track order</div>
+                  </div>
+                </>
+              )}
+
+              <div className="border-t border-dashed border-black my-1.5" />
+
+              {/* Footer / Notes */}
+              {profile.receiptFooter && (
+                <div className="text-center font-bold text-[10px] mt-1">{profile.receiptFooter}</div>
+              )}
+              <div className="text-center text-[9px] text-neutral-700 mt-0.5">
+                {profile.pickupInstructions || "Present this receipt or QR code upon claiming."}
+              </div>
+
+              {copies === 2 && (
+                <div className="mt-4 pt-2 border-t-2 border-dotted border-neutral-400 text-center text-[9px] text-neutral-500">
+                  ✂ - - - - - Tear Line (2nd Store Copy will print below) - - - - - ✂
+                </div>
+              )}
+
+              <div className="text-center text-[8px] text-neutral-500 mt-2 pb-1">
+                [ ~20mm Auto-Cutter Clearance Included ]
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-wrap sm:flex-nowrap gap-2 pt-3 border-t mt-2">
-          <Button
-            className="flex-1 gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer font-semibold shadow-xs min-w-[140px]"
-            onClick={handlePrint}
-            disabled={isPrinting}
-          >
-            {isPrinting ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" /> Preparing Print...
-              </>
-            ) : (
-              <>
-                <Printer className="w-4 h-4" /> Print Thermal Receipt ({paperWidth})
-              </>
-            )}
-          </Button>
+          {/* Right: Print Options & Actions Column */}
+          <div className="md:col-span-6 lg:col-span-6 p-4 md:p-5 flex flex-col justify-between overflow-y-auto max-h-[calc(92vh-75px)] bg-background">
+            <div className="space-y-4">
+              {/* 1. Print Settings */}
+              <div>
+                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2.5 flex items-center gap-1.5">
+                  <Settings2 className="w-3.5 h-3.5 text-primary" /> Print Settings
+                </div>
 
-          <Button
-            variant="outline"
-            className="cursor-pointer gap-1.5 font-medium shadow-xs"
-            onClick={handleDownloadReceipt}
-            disabled={isDownloadingPdf}
-            title="Download receipt as PDF document"
-          >
-            {isDownloadingPdf ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Download className="w-4 h-4 text-primary" />
-            )}
-            Download PDF
-          </Button>
+                {/* Paper Size Selector */}
+                <div className="space-y-1.5">
+                  <span className="text-xs font-semibold text-foreground">Paper Width</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handlePaperWidthChange("80mm")}
+                      className={`p-2.5 text-xs rounded-lg border text-left flex flex-col gap-0.5 transition-all cursor-pointer ${
+                        paperWidth === "80mm"
+                          ? "border-primary bg-primary/10 text-primary font-semibold ring-1 ring-primary"
+                          : "border-border hover:bg-muted/50 text-muted-foreground"
+                      }`}
+                    >
+                      <span className="font-bold text-foreground">80mm (Standard)</span>
+                      <span className="text-[10px] text-muted-foreground">Standard desktop thermal</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handlePaperWidthChange("58mm")}
+                      className={`p-2.5 text-xs rounded-lg border text-left flex flex-col gap-0.5 transition-all cursor-pointer ${
+                        paperWidth === "58mm"
+                          ? "border-primary bg-primary/10 text-primary font-semibold ring-1 ring-primary"
+                          : "border-border hover:bg-muted/50 text-muted-foreground"
+                      }`}
+                    >
+                      <span className="font-bold text-foreground">58mm (Compact)</span>
+                      <span className="text-[10px] text-muted-foreground">Mini Bluetooth printer</span>
+                    </button>
+                  </div>
+                </div>
 
-          <Button
-            variant="outline"
-            className="cursor-pointer gap-1.5 font-medium shadow-xs"
-            onClick={() => void downloadQrCodeImage(transaction)}
-            title="Download QR code PNG image"
-          >
-            <QrCode className="w-4 h-4 text-foreground" />
-            QR
-          </Button>
+                {/* Copies Selector */}
+                <div className="mt-3 space-y-1.5">
+                  <span className="text-xs font-semibold text-foreground">Number of Copies</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setCopies(1)}
+                      className={`py-2 px-3 text-xs font-medium rounded-lg border text-center transition-all cursor-pointer ${
+                        copies === 1
+                          ? "border-primary bg-primary/10 text-primary font-semibold ring-1 ring-primary"
+                          : "border-border hover:bg-muted/50 text-muted-foreground"
+                      }`}
+                    >
+                      1 Copy (Customer)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCopies(2)}
+                      className={`py-2 px-3 text-xs font-medium rounded-lg border text-center transition-all cursor-pointer ${
+                        copies === 2
+                          ? "border-primary bg-primary/10 text-primary font-semibold ring-1 ring-primary"
+                          : "border-border hover:bg-muted/50 text-muted-foreground"
+                      }`}
+                    >
+                      2 Copies (Store + Customer)
+                    </button>
+                  </div>
+                </div>
 
-          <Button
-            variant="outline"
-            className="cursor-pointer gap-1.5"
-            onClick={() => onOpenChange(false)}
-          >
-            <X className="w-4 h-4" /> {postCreate ? "Done" : "Close"}
-          </Button>
+                {/* Inclusions */}
+                <div className="mt-3.5 flex items-center gap-4 pt-2.5 border-t text-xs">
+                  <label className="flex items-center gap-2 cursor-pointer select-none text-foreground font-medium">
+                    <input
+                      type="checkbox"
+                      checked={showQr}
+                      onChange={(e) => setShowQr(e.target.checked)}
+                      className="rounded text-primary focus:ring-primary h-4 w-4 cursor-pointer"
+                    />
+                    <span>Include QR Code</span>
+                  </label>
+                  {profile.logoDataUrl && (
+                    <label className="flex items-center gap-2 cursor-pointer select-none text-foreground font-medium">
+                      <input
+                        type="checkbox"
+                        checked={showLogo}
+                        onChange={(e) => setShowLogo(e.target.checked)}
+                        className="rounded text-primary focus:ring-primary h-4 w-4 cursor-pointer"
+                      />
+                      <span>Include Shop Logo</span>
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {/* 2. Standalone Claim Tag Box */}
+              <div className="rounded-lg border bg-muted/40 p-3 text-xs space-y-2">
+                <div className="font-semibold text-foreground flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 font-bold">
+                    <QrCode className="w-3.5 h-3.5 text-primary" /> Standalone Claim Tag
+                  </span>
+                  <span className="text-[10px] text-muted-foreground font-normal">Fast bag slip</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-snug">
+                  Need only a small claim tag with the tracking QR code for the laundry bag?
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void printQrTicketOnly(transaction, profile, paperWidth)}
+                  className="w-full flex items-center justify-center gap-1.5 text-xs cursor-pointer font-semibold hover:bg-background shadow-xs bg-background"
+                >
+                  <Printer className="w-3.5 h-3.5 text-primary" />
+                  Print QR Bag Tag Only ({paperWidth})
+                </Button>
+              </div>
+
+              {/* 3. Export & Digital Downloads */}
+              <div className="space-y-2">
+                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Download className="w-3.5 h-3.5 text-primary" /> Digital Copies & Downloads
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDownloadReceipt}
+                    disabled={isDownloadingPdf}
+                    className="flex items-center justify-center gap-1.5 text-xs cursor-pointer font-semibold hover:bg-background shadow-xs bg-background"
+                  >
+                    {isDownloadingPdf ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <FileDown className="w-3.5 h-3.5 text-primary" />
+                    )}
+                    Download PDF Receipt
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void downloadQrCodeImage(transaction)}
+                    className="flex items-center justify-center gap-1.5 text-xs cursor-pointer font-semibold hover:bg-background shadow-xs bg-background"
+                  >
+                    <QrCode className="w-3.5 h-3.5 text-primary" />
+                    Download QR Image
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Actions: Print & Close */}
+            <div className="pt-4 border-t mt-4 space-y-2">
+              <Button
+                className="w-full h-11 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer font-bold shadow-md text-sm"
+                onClick={handlePrint}
+                disabled={isPrinting}
+              >
+                {isPrinting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Preparing Thermal Print Job...
+                  </>
+                ) : (
+                  <>
+                    <Printer className="w-4 h-4" /> Print Thermal Receipt ({paperWidth})
+                  </>
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full cursor-pointer text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => onOpenChange(false)}
+              >
+                <X className="w-3.5 h-3.5 mr-1" /> {postCreate ? "Done" : "Close"}
+              </Button>
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
