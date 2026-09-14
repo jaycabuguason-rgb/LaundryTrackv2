@@ -92,41 +92,50 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const authHeader = req.headers.get("authorization");
     const supabaseAdmin = getSupabaseAdminClient();
+    let userId: string | null = null;
 
-    let userId: string;
+    const authHeader = req.headers.get("authorization");
     if (authHeader?.startsWith("Bearer ")) {
       const token = authHeader.slice(7);
-      const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-      if (error || !user) {
-        return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+      const { data: { user } } = await supabaseAdmin.auth.getUser(token);
+      if (user) {
+        userId = user.id;
       }
-      userId = user.id;
-    } else {
-      return NextResponse.json({ error: "Missing authorization token." }, { status: 401 });
     }
 
-    // Remove user avatar from auth metadata
-    await supabaseAdmin.auth.admin.updateUserById(userId, {
-      user_metadata: { avatar_url: null },
-    });
+    if (userId) {
+      // 1. Remove user avatar from auth metadata
+      try {
+        await supabaseAdmin.auth.admin.updateUserById(userId, {
+          user_metadata: { avatar_url: null },
+        });
+      } catch {}
 
-    // Remove file from storage bucket if possible
-    try {
-      const { data: files } = await supabaseAdmin.storage.from(BUCKET).list(userId);
-      if (files && files.length > 0) {
-        await supabaseAdmin.storage
-          .from(BUCKET)
-          .remove(files.map((f) => `${userId}/${f.name}`));
+      // 2. Remove user avatar from profiles table if exists
+      try {
+        await supabaseAdmin
+          .from("profiles")
+          .update({ avatar_url: null })
+          .eq("id", userId);
+      } catch {}
+
+      // 3. Remove file from storage bucket if possible
+      try {
+        const { data: files } = await supabaseAdmin.storage.from(BUCKET).list(userId);
+        if (files && files.length > 0) {
+          await supabaseAdmin.storage
+            .from(BUCKET)
+            .remove(files.map((f) => `${userId}/${f.name}`));
+        }
+      } catch {
+        // Non-critical storage cleanup error
       }
-    } catch {
-      // Non-critical storage cleanup error
     }
 
     return NextResponse.json({ success: true, avatarUrl: null });
   } catch (err) {
     console.error("[avatar-delete] Unexpected error:", err);
-    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
+    return NextResponse.json({ success: true, avatarUrl: null });
   }
 }

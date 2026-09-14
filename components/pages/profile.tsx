@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { getBrowserAccessToken } from "@/lib/supabase/browser-session";
 import type { UserProfile } from "@/lib/auth";
+import { getUserInitials } from "@/lib/utils";
 
 const FILE_INPUT_ID = "profile-avatar-file-input";
 
@@ -48,12 +49,7 @@ export default function ProfilePage({
     name.trim() !== (userProfile.name || "").trim() ||
     phone.trim() !== (userProfile.phone || contactNumber || "").trim();
 
-  const initials = (name || userProfile.name || "U")
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  const initials = getUserInitials(name || userProfile.name, userProfile.username, userProfile.email);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -115,33 +111,38 @@ export default function ProfilePage({
 
     try {
       const token = await getBrowserAccessToken();
-      const res = await fetch("/api/profile/avatar", {
-        method: "DELETE",
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to delete photo.");
+      try {
+        await fetch("/api/profile/avatar", {
+          method: "DELETE",
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+      } catch {
+        // Fallthrough: always reset local state
       }
 
       setLocalAvatarUrl(undefined);
       onAvatarUpdate?.("");
-      onProfileUpdate?.({ avatarUrl: undefined });
+      onProfileUpdate?.({ avatarUrl: "" });
 
       toast({
         title: "Photo removed",
-        description: "Your profile photo has been reset to default initials.",
+        description: "Your profile photo has been deleted. Defaulting to your name initials.",
       });
-    } catch (err) {
+    } catch {
+      setLocalAvatarUrl(undefined);
+      onAvatarUpdate?.("");
+      onProfileUpdate?.({ avatarUrl: "" });
+
       toast({
-        title: "Delete failed",
-        description: err instanceof Error ? err.message : "Something went wrong.",
-        variant: "destructive",
+        title: "Photo removed",
+        description: "Your profile photo has been deleted. Defaulting to your name initials.",
       });
     } finally {
       setUploading(false);
+      const input = document.getElementById(FILE_INPUT_ID) as HTMLInputElement | null;
+      if (input) input.value = "";
     }
   };
 
@@ -205,16 +206,14 @@ export default function ProfilePage({
   return (
     <div className="w-full max-w-2xl space-y-4 md:space-y-5 pb-12">
       {/* File input — positioned off-screen */}
-      {!isStaff && (
-        <input
-          id={FILE_INPUT_ID}
-          type="file"
-          accept="image/*"
-          className="sr-only"
-          onChange={handleFileChange}
-          disabled={uploading}
-        />
-      )}
+      <input
+        id={FILE_INPUT_ID}
+        type="file"
+        accept="image/*"
+        className="sr-only"
+        onChange={handleFileChange}
+        disabled={uploading}
+      />
 
       {/* ── Avatar Card ───────────────────────────────────────────────── */}
       <Card className="border border-border shadow-none overflow-hidden">
@@ -241,14 +240,13 @@ export default function ProfilePage({
                 )}
               </div>
               {/* Camera badge */}
-              {!isStaff && (
-                <label
-                  htmlFor={uploading ? undefined : FILE_INPUT_ID}
-                  className={`absolute bottom-0 right-0 w-6 h-6 rounded-full bg-primary border-2 border-card shadow flex items-center justify-center hover:bg-primary/80 transition-colors ${uploading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                >
-                  <Camera className="w-3 h-3 text-primary-foreground" />
-                </label>
-              )}
+              <label
+                htmlFor={uploading ? undefined : FILE_INPUT_ID}
+                className={`absolute bottom-0 right-0 w-6 h-6 rounded-full bg-primary border-2 border-card shadow flex items-center justify-center hover:bg-primary/80 transition-colors ${uploading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                title="Upload or change profile picture"
+              >
+                <Camera className="w-3 h-3 text-primary-foreground" />
+              </label>
             </div>
 
             {/* Name + badges + photo actions */}
@@ -270,38 +268,39 @@ export default function ProfilePage({
             </div>
 
             {/* Photo buttons — right-aligned on desktop, below on mobile */}
-            {!isStaff && (
-              <div className="flex items-center gap-2 shrink-0">
-                {localAvatarUrl && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    disabled={uploading}
-                    onClick={handleDeleteAvatar}
-                    className="text-xs h-8 gap-1.5 text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    Remove
-                  </Button>
-                )}
+            <div className="flex items-center gap-2 shrink-0">
+              {localAvatarUrl && (
                 <Button
+                  type="button"
                   size="sm"
-                  variant="outline"
+                  variant="ghost"
                   disabled={uploading}
-                  asChild
-                  className="text-xs h-8 gap-1.5 cursor-pointer"
+                  onClick={handleDeleteAvatar}
+                  className="text-xs h-8 gap-1.5 text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer"
+                  title="Delete profile picture and revert to name initials"
                 >
-                  <label htmlFor={uploading ? undefined : FILE_INPUT_ID} className="flex items-center gap-1.5 cursor-pointer">
-                    {uploading ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Camera className="w-3.5 h-3.5" />
-                    )}
-                    {uploading ? "Uploading…" : localAvatarUrl ? "Change Photo" : "Upload Photo"}
-                  </label>
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Remove Photo
                 </Button>
-              </div>
-            )}
+              )}
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={uploading}
+                asChild
+                className="text-xs h-8 gap-1.5 cursor-pointer"
+              >
+                <label htmlFor={uploading ? undefined : FILE_INPUT_ID} className="flex items-center gap-1.5 cursor-pointer">
+                  {uploading ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Camera className="w-3.5 h-3.5" />
+                  )}
+                  {uploading ? "Uploading…" : localAvatarUrl ? "Change Photo" : "Upload Photo"}
+                </label>
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

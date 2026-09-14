@@ -253,7 +253,7 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
           return <DashboardPage transactions={txns} loyaltyEnabled={loyaltyEnabled} onNavigate={handleNavigate} />;
         }
         return <LoyaltyPage loyaltyEnabled={loyaltyEnabled} transactions={txns} />;
-      case "profile": return <ProfilePage userProfile={adminProfile} shopName={businessProfile.shopName} contactNumber={businessProfile.contactNumber} onAvatarUpdate={(url: string) => onProfileUpdate({ avatarUrl: url })} />;
+      case "profile": return <ProfilePage userProfile={adminProfile} shopName={businessProfile.shopName} contactNumber={businessProfile.contactNumber} onAvatarUpdate={(url: string) => onProfileUpdate({ avatarUrl: url })} onProfileUpdate={onProfileUpdate} />;
       case "change-password": return <ChangePasswordPage adminProfile={adminProfile} onProfileUpdate={onProfileUpdate} />;
       default: return <DashboardPage transactions={txns} loyaltyEnabled={loyaltyEnabled} />;
     }

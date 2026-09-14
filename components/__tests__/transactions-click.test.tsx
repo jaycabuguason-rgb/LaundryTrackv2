@@ -1,4 +1,4 @@
-﻿import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import TransactionsPage from "@/components/pages/transactions";
 import { type Transaction } from "@/lib/data";
@@ -22,7 +22,13 @@ const mockTransactions: Transaction[] = [
 
 describe("TransactionsPage Card Click Interaction", () => {
   it("opens laundry status and ticket details modal when clicking the transaction card/box directly without clicking View", () => {
-    render(<TransactionsPage transactions={mockTransactions} />);
+    render(
+      <TransactionsPage
+        transactions={mockTransactions}
+        onCreateTransaction={vi.fn()}
+        onUpdateTransaction={vi.fn()}
+      />
+    );
 
     // Check modal is not open initially
     expect(screen.queryByText(/ticket details — TKT-0027/i)).not.toBeInTheDocument();

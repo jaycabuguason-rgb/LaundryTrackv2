@@ -24,6 +24,7 @@ import {
 import { type Page } from "@/components/sidebar";
 import type { UserProfile } from "@/lib/auth";
 import type { Transaction } from "@/lib/data";
+import { getUserInitials } from "@/lib/utils";
 
 const pageTitles: Record<Page, string> = {
   dashboard: "Dashboard",
@@ -271,7 +272,7 @@ export default function TopNav({ activePage, onNavigate, onSignOut, adminProfile
                   />
                 ) : (
                   <span className="text-xs font-bold text-primary-foreground select-none">
-                    {adminProfile.name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2)}
+                    {getUserInitials(adminProfile.name, adminProfile.username, adminProfile.email)}
                   </span>
                 )}
               </div>
