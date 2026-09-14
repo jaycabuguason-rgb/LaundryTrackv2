@@ -9,6 +9,7 @@ import { formatReadableDateTime } from "@/lib/date-format";
 import { loadBusinessProfile, type BusinessProfile } from "@/lib/settings-store";
 import { downloadQrCodeImage, printQrTicketOnly } from "@/lib/qr-ticket";
 import { getReceiptCostBreakdown } from "@/lib/receipt-breakdown";
+import { maskPhoneNumber } from "@/lib/phone-mask";
 
 interface PrintReceiptModalProps {
   open: boolean;
@@ -107,7 +108,7 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
         </div>
         <div class="row">
           <span class="label">Contact:</span>
-          <span class="value">${transaction.phone || "—"}</span>
+          <span class="value">${maskPhoneNumber(transaction.phone)}</span>
         </div>
 
         <div class="divider-dashed"></div>
@@ -684,7 +685,7 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
             </div>
             <div className="flex justify-between text-[11px] my-0.5">
               <span className="text-neutral-700">Phone:</span>
-              <span>{transaction.phone || "—"}</span>
+              <span>{maskPhoneNumber(transaction.phone)}</span>
             </div>
 
             <div className="border-t border-dashed border-black my-1.5" />

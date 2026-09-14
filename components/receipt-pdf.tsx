@@ -13,6 +13,7 @@ import type { Transaction } from "@/lib/data";
 import type { BusinessProfile } from "@/lib/settings-store";
 import { formatReadableDateTime } from "@/lib/date-format";
 import { getReceiptCostBreakdown } from "@/lib/receipt-breakdown";
+import { maskPhoneNumber } from "@/lib/phone-mask";
 
 const S = StyleSheet.create({
   page: {
@@ -231,7 +232,7 @@ export function ReceiptDocument({ transaction, profile, qrUrl }: ReceiptDocument
           </View>
           <View style={S.row}>
             <Text style={S.label}>Contact:</Text>
-            <Text style={S.value}>{transaction.phone || "—"}</Text>
+            <Text style={S.value}>{maskPhoneNumber(transaction.phone)}</Text>
           </View>
         </View>
 

@@ -265,8 +265,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\print-receipt-modal.tsx": {
-    "mtime": 1789368147.6156607,
-    "ast_hash": "dfc2ec685637a58903341cfa6adf93d4",
+    "mtime": 1789368638.3026543,
+    "ast_hash": "f5b7f131ad549b32ca3f2bbe93d2092a",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pwa-init.tsx": {
@@ -385,7 +385,7 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pages\\transactions.tsx": {
-    "mtime": 1789367682.4131944,
+    "mtime": 1789368400.090178,
     "ast_hash": "da860d25596c706ee3ce1012ddadfaff",
     "semantic_hash": ""
   },
@@ -1595,13 +1595,13 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\receipt-pdf.tsx": {
-    "mtime": 1789368171.9421296,
-    "ast_hash": "cbd95328e3bd76da9744c1bffc8b374e",
+    "mtime": 1789368650.6401672,
+    "ast_hash": "b76cf771f69559b6394a48092f6b3cbb",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\qr-ticket.ts": {
-    "mtime": 1789367536.184215,
-    "ast_hash": "c63bbdd9300a465a46bff6267f85c01c",
+    "mtime": 1789368667.1471684,
+    "ast_hash": "01ced6c5b67566fc5e35b3ac99bb1211",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\receipt-breakdown.ts": {
@@ -1612,6 +1612,16 @@
   "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\__tests__\\receipt-breakdown.test.ts": {
     "mtime": 1789368284.331439,
     "ast_hash": "f1c96448d8eae15de8c67f03f1824138",
+    "semantic_hash": ""
+  },
+  "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\phone-mask.ts": {
+    "mtime": 1789368515.541391,
+    "ast_hash": "fd20bd7a47dbd9ad4b10720f4f40741f",
+    "semantic_hash": ""
+  },
+  "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\__tests__\\phone-mask.test.ts": {
+    "mtime": 1789368519.3439834,
+    "ast_hash": "3172c06ef6baed0151d200522ee57f50",
     "semantic_hash": ""
   }
 }

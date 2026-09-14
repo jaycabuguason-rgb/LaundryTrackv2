@@ -2,6 +2,7 @@
 
 import type { Transaction } from "@/lib/data";
 import type { BusinessProfile } from "@/lib/settings-store";
+import { maskPhoneNumber } from "@/lib/phone-mask";
 
 export function getTrackingUrl(transaction: Transaction): string {
   const origin = typeof window !== "undefined" ? window.location.origin : "https://laundrytrack.ph";
@@ -165,7 +166,7 @@ export async function printQrTicketOnly(
   ${transaction.phone ? `
   <div class="detail-row">
     <span>Phone:</span>
-    <span>${transaction.phone}</span>
+    <span>${maskPhoneNumber(transaction.phone)}</span>
   </div>` : ""}
   <div class="detail-row">
     <span>Service:</span>
@@ -256,3 +257,4 @@ export async function printQrTicketOnly(
     }
   }
 }
+
