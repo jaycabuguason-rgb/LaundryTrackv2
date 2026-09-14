@@ -564,6 +564,7 @@ export default function DashboardPage({
             setDetailOpen(open);
             if (!open) setSelectedTxn(null);
           }}
+          loyaltyEnabled={isLoyaltyOn}
         />
       )}
     </div>

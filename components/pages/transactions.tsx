@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import {
   Search, EyeOff, Edit, Ban, Printer, ChevronRight, X, QrCode, CalendarIcon,
   AlertTriangle, Plus, User, Star, Camera,
-  ChevronLeft, Check, RefreshCw, Inbox, MoreHorizontal, Download
+  ChevronLeft, Check, RefreshCw, Inbox, MoreHorizontal, Download, Sparkles
 } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
@@ -1167,6 +1167,29 @@ export default function TransactionsPage({
   onEditComplete,
   onNavigate,
 }: TransactionsPageProps) {
+  const { members: loyaltyMemberList } = useLoyaltyMembers();
+
+  const getLoyaltyMemberForTxn = useCallback(
+    (txn: Transaction | null | undefined): LoyaltyMember | null => {
+      if (!loyaltyEnabled || !txn || !loyaltyMemberList || loyaltyMemberList.length === 0) return null;
+      const cleanTPhone = (txn.phone || "").replace(/\D/g, "");
+      if (cleanTPhone.length >= 7) {
+        const byPhone = loyaltyMemberList.find(
+          (m) => m.phone && m.phone.replace(/\D/g, "").includes(cleanTPhone)
+        );
+        if (byPhone) return byPhone;
+      }
+      const cleanTName = (txn.customerName || "").trim().toLowerCase();
+      if (cleanTName.length >= 2) {
+        const byName = loyaltyMemberList.find(
+          (m) => m.name.trim().toLowerCase() === cleanTName
+        );
+        if (byName) return byName;
+      }
+      return null;
+    },
+    [loyaltyEnabled, loyaltyMemberList]
+  );
 
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -1307,9 +1330,9 @@ export default function TransactionsPage({
         paymentStatus: editPaymentStatus,
       });
       showToast(`Ticket #${editTxn.ticketId} updated successfully`);
-      if (res.loyaltyResult?.stamped && res.loyaltyResult.rewarded) {
+      if (loyaltyEnabled && res.loyaltyResult?.stamped && res.loyaltyResult.rewarded) {
         showToast(`Reward Unlocked! 🎉 Customer earned a free wash! They now have ${res.loyaltyResult.newStampCount} stamps.`);
-      } else if (res.loyaltyResult?.stamped) {
+      } else if (loyaltyEnabled && res.loyaltyResult?.stamped) {
         showToast(`Stamp Added 🌟 Customer now has ${res.loyaltyResult.newStampCount} stamps.`);
       }
       setEditTxn(null);
@@ -1332,9 +1355,9 @@ export default function TransactionsPage({
         washInstructions: editInstructions,
       });
       showToast(`Ticket #${editTxn.ticketId} marked as Claimed`);
-      if (res.loyaltyResult?.stamped && res.loyaltyResult.rewarded) {
+      if (loyaltyEnabled && res.loyaltyResult?.stamped && res.loyaltyResult.rewarded) {
         showToast(`Reward Unlocked! 🎉 Customer earned a free wash! They now have ${res.loyaltyResult.newStampCount} stamps.`);
-      } else if (res.loyaltyResult?.stamped) {
+      } else if (loyaltyEnabled && res.loyaltyResult?.stamped) {
         showToast(`Stamp Added 🌟 Customer now has ${res.loyaltyResult.newStampCount} stamps.`);
       }
       setEditTxn(null);
@@ -1373,9 +1396,9 @@ export default function TransactionsPage({
         paymentStatus: mobileStatusTxn.paymentStatus,
       });
       showToast(`Ticket #${mobileStatusTxn.ticketId} moved to ${status}`);
-      if (res.loyaltyResult?.stamped && res.loyaltyResult.rewarded) {
+      if (loyaltyEnabled && res.loyaltyResult?.stamped && res.loyaltyResult.rewarded) {
         showToast(`Reward Unlocked! 🎉 Customer earned a free wash! They now have ${res.loyaltyResult.newStampCount} stamps.`);
-      } else if (res.loyaltyResult?.stamped) {
+      } else if (loyaltyEnabled && res.loyaltyResult?.stamped) {
         showToast(`Stamp Added 🌟 Customer now has ${res.loyaltyResult.newStampCount} stamps.`);
       }
       setMobileStatusTxn(null);
@@ -1849,9 +1872,20 @@ export default function TransactionsPage({
 
                   {/* Customer Name & Wash Details */}
                   <div className="min-w-0 flex-1">
-                    <p className={cn("truncate text-sm font-semibold text-foreground", isVoided && "line-through text-muted-foreground")}>
-                      {txn.customerName}
-                    </p>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <p className={cn("truncate text-sm font-semibold text-foreground", isVoided && "line-through text-muted-foreground")}>
+                        {txn.customerName}
+                      </p>
+                      {loyaltyEnabled && Boolean(getLoyaltyMemberForTxn(txn)) && (
+                        <span
+                          className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/25 px-2 py-0.5 text-[10px] font-semibold shrink-0"
+                          title="Registered Loyalty Member"
+                        >
+                          <Sparkles className="w-2.5 h-2.5 text-amber-500 fill-amber-500" aria-hidden="true" />
+                          Loyalty Member
+                        </span>
+                      )}
+                    </div>
                     <p className="truncate text-xs text-muted-foreground mt-0.5">
                       {txn.washType}{txn.weight ? ` · ${txn.weight} kg` : ""}
                       {txn.addOns && txn.addOns.length > 0 ? ` · ${txn.addOns.join(", ")}` : ""}
@@ -2027,7 +2061,18 @@ export default function TransactionsPage({
                 ].map((row) => (
                   <div key={row.label} className={cn("bg-muted/30 rounded-md p-2.5", row.span && "col-span-2")}>
                     <p className="text-xs text-muted-foreground">{row.label}</p>
-                    <p className="font-medium text-foreground text-xs mt-0.5">{row.value}</p>
+                    <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                      <p className="font-medium text-foreground text-xs">{row.value}</p>
+                      {row.label === "Customer Name" && loyaltyEnabled && Boolean(getLoyaltyMemberForTxn(viewTxn)) && (
+                        <span
+                          className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/25 px-1.5 py-0.5 text-[9px] font-semibold shrink-0"
+                          title="Registered Loyalty Member"
+                        >
+                          <Sparkles className="w-2.5 h-2.5 text-amber-500 fill-amber-500" aria-hidden="true" />
+                          Loyalty Member
+                        </span>
+                      )}
+                    </div>
                   </div>
                 ))}
                 {/* Payment Status */}
@@ -2160,7 +2205,18 @@ export default function TransactionsPage({
                 ].map((row) => (
                   <div key={row.label} className="bg-muted/40 rounded-xl p-3 border border-border/40 flex flex-col justify-center">
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">{row.label}</p>
-                    <p className="font-bold text-foreground text-[13px]">{row.value}</p>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <p className="font-bold text-foreground text-[13px]">{row.value}</p>
+                      {row.label === "Customer" && loyaltyEnabled && Boolean(getLoyaltyMemberForTxn(editTxn)) && (
+                        <span
+                          className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/25 px-1.5 py-0.5 text-[9px] font-semibold shrink-0"
+                          title="Registered Loyalty Member"
+                        >
+                          <Sparkles className="w-2.5 h-2.5 text-amber-500 fill-amber-500" aria-hidden="true" />
+                          Loyalty Member
+                        </span>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

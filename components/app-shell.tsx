@@ -248,7 +248,11 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
       case "staff-management":
       case "audit-logs":
         return <AuditLogsPage key={activePage} initialTab={activePage === "audit-logs" ? "audit" : "staff"} />;
-      case "loyalty": return <LoyaltyPage loyaltyEnabled={loyaltyEnabled} transactions={txns} />;
+      case "loyalty":
+        if (!loyaltyEnabled) {
+          return <DashboardPage transactions={txns} loyaltyEnabled={loyaltyEnabled} onNavigate={handleNavigate} />;
+        }
+        return <LoyaltyPage loyaltyEnabled={loyaltyEnabled} transactions={txns} />;
       case "profile": return <ProfilePage userProfile={adminProfile} shopName={businessProfile.shopName} contactNumber={businessProfile.contactNumber} onAvatarUpdate={(url: string) => onProfileUpdate({ avatarUrl: url })} />;
       case "change-password": return <ChangePasswordPage adminProfile={adminProfile} onProfileUpdate={onProfileUpdate} />;
       default: return <DashboardPage transactions={txns} loyaltyEnabled={loyaltyEnabled} />;
@@ -342,6 +346,11 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
       });
       return;
     }
+    if (!loyaltyEnabled && page === "loyalty") {
+      setActivePage("dashboard");
+      setMobileMenuOpen(false);
+      return;
+    }
     preloadPage(page);
     setActivePage(page);
     setMobileMenuOpen(false);
@@ -406,6 +415,7 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
       onOpenChange={setDetailOpen}
       transaction={detailTxn}
       onEditStatus={handleEditTransaction}
+      loyaltyEnabled={loyaltyEnabled}
     />
     </>
   );

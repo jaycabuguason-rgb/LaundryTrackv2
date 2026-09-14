@@ -29,7 +29,7 @@ import { formatReadableDateTime } from "@/lib/date-format";
 import { StatusBadge } from "@/components/status-badge";
 import { TrackerLiveRefresh } from "@/components/tracker-live-refresh";
 import { getPublicTrackingRecord } from "@/lib/server/laundry-repository";
-import { getPublicLoyaltyMemberRecord } from "@/lib/server/loyalty-repository";
+import { getPublicLoyaltyMemberRecord, getLoyaltySettings } from "@/lib/server/loyalty-repository";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -193,7 +193,10 @@ export default async function PublicTrackingPage(
   { params }: { params: Promise<{ token: string }> },
 ) {
   const { token } = await params;
-  const record = await getPublicTrackingRecord(token);
+  const [record, loyaltySettings] = await Promise.all([
+    getPublicTrackingRecord(token),
+    getLoyaltySettings(),
+  ]);
   const requestHeaders = await headers();
   const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "localhost:3000";
   const protocol = requestHeaders.get("x-forwarded-proto") ?? (host.includes("localhost") ? "http" : "https");
@@ -204,7 +207,9 @@ export default async function PublicTrackingPage(
     notFound();
   }
 
-  const loyaltyRecord = (record.customerPhone || record.customerName)
+  const isLoyaltyEnabled = Boolean(loyaltySettings?.loyalty_enabled);
+
+  const loyaltyRecord = (isLoyaltyEnabled && (record.customerPhone || record.customerName))
     ? await getPublicLoyaltyMemberRecord(record.customerPhone || record.customerName)
     : null;
 
@@ -283,7 +288,7 @@ export default async function PublicTrackingPage(
         </section>
 
         {/* Loyalty & Rewards Section */}
-        {loyaltyRecord && (
+        {isLoyaltyEnabled && loyaltyRecord && (
           <section className="rounded-3xl border border-primary/25 bg-background p-5 sm:p-6 shadow-sm space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/70 pb-4">
               <div className="flex items-center gap-3">
@@ -638,7 +643,7 @@ export default async function PublicTrackingPage(
         )}
 
         {/* Promotional Loyalty Program Banner (Shown at bottom for non-members) */}
-        {!loyaltyRecord && (
+        {isLoyaltyEnabled && !loyaltyRecord && (
           <section className="rounded-3xl border border-primary/20 bg-primary/5 p-6 shadow-sm text-center space-y-2.5">
             <div className="inline-flex items-center justify-center w-11 h-11 rounded-2xl bg-primary/10 text-primary">
               <Sparkles className="w-5 h-5" />

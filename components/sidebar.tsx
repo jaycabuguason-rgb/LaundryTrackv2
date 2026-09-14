@@ -93,10 +93,12 @@ export default function Sidebar({ activePage, onNavigate, onPreload, loyaltyEnab
   const isSettingsActive = activePage.startsWith("settings");
   const isStaff = role === "staff";
 
-  // Filter nav items based on role
-  const navItems = isStaff
-    ? allNavItems.filter((item) => !ADMIN_ONLY_NAV_PAGES.includes(item.id))
-    : allNavItems;
+  // Filter nav items based on role and loyalty
+  const navItems = (
+    isStaff
+      ? allNavItems.filter((item) => !ADMIN_ONLY_NAV_PAGES.includes(item.id))
+      : allNavItems
+  ).filter((item) => (item.id === "loyalty" ? loyaltyEnabled : true));
 
   // Filter settings sub-items based on role
   const visibleSettingsSubItems = isStaff
@@ -160,11 +162,6 @@ export default function Sidebar({ activePage, onNavigate, onPreload, loyaltyEnab
                       {item.id === "processing" && processingCount > 0 && (
                         <span className="shrink-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-xs font-bold text-primary-foreground">
                           {processingCount > 99 ? "99+" : processingCount}
-                        </span>
-                      )}
-                      {item.id === "loyalty" && !loyaltyEnabled && (
-                        <span className="shrink-0 px-1.5 py-0.5 rounded text-xs font-semibold bg-muted/40 text-sidebar-foreground/50 border border-sidebar-border/40">
-                          Disabled
                         </span>
                       )}
                     </span>

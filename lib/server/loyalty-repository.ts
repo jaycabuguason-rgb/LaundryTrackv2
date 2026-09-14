@@ -441,6 +441,9 @@ function isUuid(val: string): boolean {
 export async function getPublicLoyaltyMemberRecord(
   memberIdentifier: string
 ): Promise<PublicLoyaltyMemberRecord | null> {
+  const settings = await getLoyaltySettings();
+  if (!settings.loyalty_enabled) return null;
+
   const cleanId = memberIdentifier.trim();
   if (!cleanId) return null;
 
@@ -497,10 +500,9 @@ export async function getPublicLoyaltyMemberRecord(
 
   if (!member) return null;
 
-  const [allTxns, profile, settings] = await Promise.all([
+  const [allTxns, profile] = await Promise.all([
     listTransactions(),
     getBusinessProfile(),
-    getLoyaltySettings(),
   ]);
 
   const memberPhoneClean = cleanPhone(member.phone);

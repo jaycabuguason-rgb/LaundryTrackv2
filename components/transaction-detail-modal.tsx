@@ -1,16 +1,19 @@
 "use client";
 
+import { useMemo } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { type Transaction, type TransactionStatus } from "@/lib/data";
 import { StatusBadge, PaymentBadge } from "@/components/status-badge";
-import { CheckCircle2, Circle, CircleDot, Edit } from "lucide-react";
+import { CheckCircle2, Circle, CircleDot, Edit, Sparkles } from "lucide-react";
+import { useLoyaltyMembers } from "@/hooks/use-loyalty-members";
 
 interface TransactionDetailModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   transaction: Transaction | null;
   onEditStatus?: (ticketId: string) => void;
+  loyaltyEnabled?: boolean;
 }
 
 const STATUS_STEPS: TransactionStatus[] = ["Received", "Washing", "Ready", "Claimed"];
@@ -21,7 +24,24 @@ function getStepIndex(status: TransactionStatus): number {
   return STATUS_STEPS.indexOf(status);
 }
 
-export function TransactionDetailModal({ open, onOpenChange, transaction, onEditStatus }: TransactionDetailModalProps) {
+export function TransactionDetailModal({ open, onOpenChange, transaction, onEditStatus, loyaltyEnabled = true }: TransactionDetailModalProps) {
+  const { members: loyaltyMembers } = useLoyaltyMembers();
+
+  const isLoyaltyMember = useMemo(() => {
+    if (!loyaltyEnabled || !transaction || !loyaltyMembers || loyaltyMembers.length === 0) return false;
+    const cleanPhone = (transaction.phone || "").replace(/\D/g, "");
+    if (cleanPhone.length >= 7) {
+      const match = loyaltyMembers.some((m) => m.phone && m.phone.replace(/\D/g, "").includes(cleanPhone));
+      if (match) return true;
+    }
+    const cleanName = (transaction.customerName || "").trim().toLowerCase();
+    if (cleanName.length >= 2) {
+      const match = loyaltyMembers.some((m) => m.name.trim().toLowerCase() === cleanName);
+      if (match) return true;
+    }
+    return false;
+  }, [loyaltyEnabled, transaction, loyaltyMembers]);
+
   if (!transaction) return null;
 
   const stepIndex = getStepIndex(transaction.status);
@@ -45,7 +65,18 @@ export function TransactionDetailModal({ open, onOpenChange, transaction, onEdit
           <div className="grid grid-cols-2 gap-x-6 gap-y-3">
             <div>
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Customer</p>
-              <p className="text-sm font-semibold text-foreground">{transaction.customerName}</p>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <p className="text-sm font-semibold text-foreground">{transaction.customerName}</p>
+                {loyaltyEnabled && isLoyaltyMember && (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/25 px-2 py-0.5 text-[10px] font-semibold shrink-0"
+                    title="Registered Loyalty Member"
+                  >
+                    <Sparkles className="w-2.5 h-2.5 text-amber-500 fill-amber-500" aria-hidden="true" />
+                    Loyalty Member
+                  </span>
+                )}
+              </div>
             </div>
             <div>
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Phone</p>
