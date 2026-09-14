@@ -59,13 +59,6 @@ export default function DashboardPage({
     setDetailOpen(true);
   };
 
-  const handleCardKeyDown = (e: React.KeyboardEvent, page: Page) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      onNavigate?.(page);
-    }
-  };
-
   // Counts & Metrics
   const totalOrders = transactions.length;
   const receivedCount = transactions.filter((t) => t.status === "Received").length;
@@ -130,18 +123,11 @@ export default function DashboardPage({
         isLoyaltyOn ? "md:grid-cols-3 lg:grid-cols-5" : "md:grid-cols-2 lg:grid-cols-4"
       )}>
         {/* 1. Today's Orders */}
-        <Card
-          role={onNavigate ? "button" : undefined}
-          tabIndex={onNavigate ? 0 : undefined}
-          onClick={() => onNavigate?.("processing")}
-          onKeyDown={(e) => onNavigate && handleCardKeyDown(e, "processing")}
-          className="border border-border/70 rounded-2xl shadow-xs hover:border-primary/40 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none transition-[border-color,box-shadow] motion-reduce:transition-none bg-card cursor-pointer group"
-          aria-label={onNavigate ? "Today's Orders, click to view processing board" : undefined}
-        >
+        <Card className="border border-border/70 rounded-2xl shadow-xs bg-card">
           <CardContent className="p-4 sm:p-5">
             <div className="flex items-start justify-between gap-2">
               <div className="space-y-0.5 min-w-0">
-                <p className="text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
+                <p className="text-xs font-semibold text-muted-foreground">
                   Today&apos;s Orders
                 </p>
                 <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
@@ -149,7 +135,7 @@ export default function DashboardPage({
                 </p>
                 <p className="text-xs text-muted-foreground">orders this cycle</p>
               </div>
-              <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0 group-hover:scale-105 motion-reduce:group-hover:transform-none transition-transform">
+              <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0">
                 <Receipt className="w-5 h-5" aria-hidden="true" />
               </div>
             </div>
@@ -157,18 +143,11 @@ export default function DashboardPage({
         </Card>
 
         {/* 2. In Progress */}
-        <Card
-          role={onNavigate ? "button" : undefined}
-          tabIndex={onNavigate ? 0 : undefined}
-          onClick={() => onNavigate?.("processing")}
-          onKeyDown={(e) => onNavigate && handleCardKeyDown(e, "processing")}
-          className="border border-border/70 rounded-2xl shadow-xs hover:border-primary/40 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none transition-[border-color,box-shadow] motion-reduce:transition-none bg-card cursor-pointer group"
-          aria-label={onNavigate ? "In Progress orders, click to view processing board" : undefined}
-        >
+        <Card className="border border-border/70 rounded-2xl shadow-xs bg-card">
           <CardContent className="p-4 sm:p-5">
             <div className="flex items-start justify-between gap-2">
               <div className="space-y-0.5 min-w-0">
-                <p className="text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
+                <p className="text-xs font-semibold text-muted-foreground">
                   In Progress
                 </p>
                 <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
@@ -176,7 +155,7 @@ export default function DashboardPage({
                 </p>
                 <p className="text-xs text-muted-foreground">currently washing</p>
               </div>
-              <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0 group-hover:scale-105 motion-reduce:group-hover:transform-none transition-transform">
+              <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0">
                 <Droplet className="w-5 h-5" aria-hidden="true" />
               </div>
             </div>
@@ -184,18 +163,11 @@ export default function DashboardPage({
         </Card>
 
         {/* 3. Ready for Pickup */}
-        <Card
-          role={onNavigate ? "button" : undefined}
-          tabIndex={onNavigate ? 0 : undefined}
-          onClick={() => onNavigate?.("claim-verification")}
-          onKeyDown={(e) => onNavigate && handleCardKeyDown(e, "claim-verification")}
-          className="border border-border/70 rounded-2xl shadow-xs hover:border-primary/40 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none transition-[border-color,box-shadow] motion-reduce:transition-none bg-card cursor-pointer group"
-          aria-label={onNavigate ? "Ready for Pickup orders, click to view claim verification" : undefined}
-        >
+        <Card className="border border-border/70 rounded-2xl shadow-xs bg-card">
           <CardContent className="p-4 sm:p-5">
             <div className="flex items-start justify-between gap-2">
               <div className="space-y-0.5 min-w-0">
-                <p className="text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
+                <p className="text-xs font-semibold text-muted-foreground">
                   Ready for Pickup
                 </p>
                 <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
@@ -203,7 +175,7 @@ export default function DashboardPage({
                 </p>
                 <p className="text-xs text-muted-foreground">waiting for customers</p>
               </div>
-              <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0 group-hover:scale-105 motion-reduce:group-hover:transform-none transition-transform">
+              <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0">
                 <Sparkles className="w-5 h-5" aria-hidden="true" />
               </div>
             </div>
@@ -211,18 +183,11 @@ export default function DashboardPage({
         </Card>
 
         {/* 4. Revenue */}
-        <Card
-          role={onNavigate ? "button" : undefined}
-          tabIndex={onNavigate ? 0 : undefined}
-          onClick={() => onNavigate?.("transactions")}
-          onKeyDown={(e) => onNavigate && handleCardKeyDown(e, "transactions")}
-          className="border border-border/70 rounded-2xl shadow-xs hover:border-primary/40 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none transition-[border-color,box-shadow] motion-reduce:transition-none bg-card cursor-pointer group"
-          aria-label={onNavigate ? "Revenue, click to view transactions" : undefined}
-        >
+        <Card className="border border-border/70 rounded-2xl shadow-xs bg-card">
           <CardContent className="p-4 sm:p-5">
             <div className="flex items-start justify-between gap-2">
               <div className="space-y-0.5 min-w-0">
-                <p className="text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
+                <p className="text-xs font-semibold text-muted-foreground">
                   Revenue
                 </p>
                 <p className="text-2xl font-bold tracking-tight text-foreground font-mono tabular-nums">
@@ -230,7 +195,7 @@ export default function DashboardPage({
                 </p>
                 <p className="text-xs text-muted-foreground">paid transactions</p>
               </div>
-              <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0 group-hover:scale-105 motion-reduce:group-hover:transform-none transition-transform">
+              <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0">
                 <Banknote className="w-5 h-5" aria-hidden="true" />
               </div>
             </div>
@@ -239,18 +204,11 @@ export default function DashboardPage({
 
         {/* 5. Loyalty Members — Only rendered when loyalty is enabled */}
         {isLoyaltyOn && (
-          <Card
-            role={onNavigate ? "button" : undefined}
-            tabIndex={onNavigate ? 0 : undefined}
-            onClick={() => onNavigate?.("loyalty")}
-            onKeyDown={(e) => onNavigate && handleCardKeyDown(e, "loyalty")}
-            className="border border-border/70 rounded-2xl shadow-xs hover:border-primary/40 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none transition-[border-color,box-shadow] motion-reduce:transition-none bg-card cursor-pointer group"
-            aria-label={onNavigate ? "Loyalty Members, click to view loyalty page" : undefined}
-          >
+          <Card className="border border-border/70 rounded-2xl shadow-xs bg-card">
             <CardContent className="p-4 sm:p-5">
               <div className="flex items-start justify-between gap-2">
                 <div className="space-y-0.5 min-w-0">
-                  <p className="text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
+                  <p className="text-xs font-semibold text-muted-foreground">
                     Loyalty Members
                   </p>
                   <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
@@ -258,7 +216,7 @@ export default function DashboardPage({
                   </p>
                   <p className="text-xs text-muted-foreground">registered members</p>
                 </div>
-                <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0 group-hover:scale-105 motion-reduce:group-hover:transform-none transition-transform">
+                <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0">
                   <Users className="w-5 h-5" aria-hidden="true" />
                 </div>
               </div>

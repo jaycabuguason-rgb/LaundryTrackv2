@@ -48,25 +48,20 @@ describe("Dashboard Accessibility & Responsiveness", () => {
     expect(ordersByStageHeading).toBeInTheDocument();
   });
 
-  it("provides keyboard-accessible stat cards when onNavigate is provided", () => {
+  it("renders stat cards as informational non-clickable cards", () => {
     const onNavigate = vi.fn();
     render(<DashboardPage transactions={mockTransactions} onNavigate={onNavigate} />);
+
+    expect(screen.getByText("Today's Orders")).toBeInTheDocument();
+    expect(screen.getByText("In Progress")).toBeInTheDocument();
+    expect(screen.getByText("Ready for Pickup")).toBeInTheDocument();
+    expect(screen.getByText("Revenue")).toBeInTheDocument();
 
     const statButtons = screen.getAllByRole("button");
     const todayOrdersCard = statButtons.find((btn) =>
       btn.getAttribute("aria-label")?.includes("Today's Orders")
     );
-
-    expect(todayOrdersCard).toBeDefined();
-    expect(todayOrdersCard).toHaveAttribute("tabIndex", "0");
-
-    // Trigger via Enter key
-    fireEvent.keyDown(todayOrdersCard!, { key: "Enter" });
-    expect(onNavigate).toHaveBeenCalledWith("processing");
-
-    // Trigger via Space key
-    fireEvent.keyDown(todayOrdersCard!, { key: " " });
-    expect(onNavigate).toHaveBeenCalledWith("processing");
+    expect(todayOrdersCard).toBeUndefined();
   });
 
   it("renders Donut chart SVG with role=img and descriptive aria-label", () => {
