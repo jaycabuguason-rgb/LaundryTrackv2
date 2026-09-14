@@ -82,6 +82,7 @@ export default function NewOrderPage({
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("unpaid");
 
   // Pricing configuration loaded from settings
+  const [enablePaymentOption, setEnablePaymentOption] = useState<boolean>(true);
   const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
   const [loadTiers, setLoadTiers] = useState<LoadTier[]>([]);
   const [addOns, setAddOns] = useState<AddOn[]>([]);
@@ -96,6 +97,12 @@ export default function NewOrderPage({
     setLoadTiers(cfg.loadTiers || []);
     setAddOns(ads);
     setBasePricePerKg(cfg.pricePerKg || "30");
+
+    const paymentOpt = cfg.enablePaymentOption ?? true;
+    setEnablePaymentOption(paymentOpt);
+    if (!paymentOpt) {
+      setPaymentStatus("paid");
+    }
 
     if (svc.length > 0) setSelectedServiceId(svc[0].id);
     if (cfg.loadTiers && cfg.loadTiers.length > 0) setSelectedTierId(cfg.loadTiers[0].id);
@@ -722,32 +729,41 @@ export default function NewOrderPage({
             {/* Payment Status Selector */}
             <div className="space-y-2 pt-2">
               <Label className="text-xs font-semibold text-muted-foreground">Payment</Label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setPaymentStatus("paid")}
-                  className={cn(
-                    "py-2.5 px-3 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center justify-center gap-2",
-                    paymentStatus === "paid"
-                      ? "bg-green-500/10 border-green-500 text-green-600 dark:text-green-400 shadow-xs"
-                      : "border-border text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  <Check className="w-3.5 h-3.5" /> Paid
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPaymentStatus("unpaid")}
-                  className={cn(
-                    "py-2.5 px-3 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center justify-center gap-2",
-                    paymentStatus === "unpaid"
-                      ? "bg-red-500/10 border-red-500 text-red-600 dark:text-red-400 shadow-xs"
-                      : "border-border text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  Unpaid
-                </button>
-              </div>
+              {enablePaymentOption ? (
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentStatus("paid")}
+                    className={cn(
+                      "py-2.5 px-3 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center justify-center gap-2",
+                      paymentStatus === "paid"
+                        ? "bg-green-500/10 border-green-500 text-green-600 dark:text-green-400 shadow-xs"
+                        : "border-border text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <Check className="w-3.5 h-3.5" /> Paid
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentStatus("unpaid")}
+                    className={cn(
+                      "py-2.5 px-3 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center justify-center gap-2",
+                      paymentStatus === "unpaid"
+                        ? "bg-red-500/10 border-red-500 text-red-600 dark:text-red-400 shadow-xs"
+                        : "border-border text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    Unpaid
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between p-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-xs">
+                  <span className="font-semibold text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
+                    <Check className="w-4 h-4" /> Paid Directly
+                  </span>
+                  <span className="text-muted-foreground">Automatic payment on entry</span>
+                </div>
+              )}
             </div>
 
             {/* Action Buttons */}

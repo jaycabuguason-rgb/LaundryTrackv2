@@ -41,6 +41,7 @@ export interface PricingConfig {
   pricingMode: PricingMode;
   loadTiers: LoadTier[];
   priceDisplayMode: PriceDisplayMode;
+  enablePaymentOption?: boolean; // If false, orders are directly recorded as Paid and option is hidden
 }
 
 // ─── Business Profile ────────────────────────────────────────────────────────
@@ -99,6 +100,7 @@ export const DEFAULT_PRICING_CONFIG: PricingConfig = {
   pricingMode:      "per-kg",
   loadTiers:        DEFAULT_LOAD_TIERS,
   priceDisplayMode: "show",
+  enablePaymentOption: true,
 };
 
 // ─── Validation schemas (P0-F: prevent corrupt localStorage from crashing app) ──
@@ -132,6 +134,7 @@ const PricingConfigSchema = z.object({
   pricingMode: z.enum(["per-kg", "per-load", "both"]),
   loadTiers: z.array(LoadTierSchema),
   priceDisplayMode: z.enum(["show", "free", "hide"]),
+  enablePaymentOption: z.boolean().optional(),
 });
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

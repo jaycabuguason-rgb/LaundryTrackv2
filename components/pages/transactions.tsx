@@ -219,20 +219,26 @@ function NewTransactionWizard({
   const [selectedTierId, setSelectedTierId] = useState<string>("");
   // Price display mode from settings
   const [priceDisplayMode, setPriceDisplayMode] = useState<PriceDisplayMode>("show");
+  const [enablePaymentOption, setEnablePaymentOption] = useState<boolean>(
+    () => loadPricingConfig().enablePaymentOption ?? true
+  );
 
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState<WizardForm>({
-    customerType: "walkin",
-    customerName: "",
-    phone: "",
-    arrivalDateTime: format(new Date(), "yyyy-MM-dd HH:mm"),
-    loyaltyMember: null,
-    washType: "",
-    weight: "",
-    numberOfLoads: "1",
-    addOns: [],
-    washInstructions: "",
-    paymentStatus: "unpaid",
+  const [form, setForm] = useState<WizardForm>(() => {
+    const paymentOpt = loadPricingConfig().enablePaymentOption ?? true;
+    return {
+      customerType: "walkin",
+      customerName: "",
+      phone: "",
+      arrivalDateTime: format(new Date(), "yyyy-MM-dd HH:mm"),
+      loyaltyMember: null,
+      washType: "",
+      weight: "",
+      numberOfLoads: "1",
+      addOns: [],
+      washInstructions: "",
+      paymentStatus: paymentOpt ? "unpaid" : "paid",
+    };
   });
 
   // Loyalty search state
@@ -250,6 +256,8 @@ function NewTransactionWizard({
       const enabledServices = svcOn ? loadServiceTypes().filter((s) => s.active) : [];
       const addOns = loadAddOns();
       const pricingCfg = loadPricingConfig();
+      const paymentOpt = pricingCfg.enablePaymentOption ?? true;
+      setEnablePaymentOption(paymentOpt);
       setSvcEnabled(svcOn);
       setBasePerKg(pricingCfg.pricePerKg || "0");
       setServiceTypes(enabledServices);
@@ -273,7 +281,7 @@ function NewTransactionWizard({
         numberOfLoads: "1",
         addOns: [],
         washInstructions: "",
-        paymentStatus: "unpaid",
+        paymentStatus: paymentOpt ? "unpaid" : "paid",
       });
       setMemberSearch("");
       setMemberSearchRes([]);
@@ -304,6 +312,11 @@ function NewTransactionWizard({
           setPricingModeSetting(data.pricingConfig.pricingMode);
           setLoadTiersSetting(data.pricingConfig.loadTiers);
           setPriceDisplayMode(data.pricingConfig.priceDisplayMode ?? "show");
+          const serverPaymentOpt = data.pricingConfig.enablePaymentOption ?? true;
+          setEnablePaymentOption(serverPaymentOpt);
+          if (!serverPaymentOpt) {
+            setForm((f) => ({ ...f, paymentStatus: "paid" }));
+          }
           setSelectedTierId((currentTierId) => {
             if (!data.pricingConfig.loadTiers.find((t: LoadTier) => t.id === currentTierId)) {
               return data.pricingConfig.loadTiers[0]?.id ?? "";
@@ -964,31 +977,50 @@ function NewTransactionWizard({
           {/* Payment Status */}
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Payment Status</p>
-            <div className="grid grid-cols-2 gap-2">
-              {(["unpaid", "paid"] as const).map((ps) => (
-                <button
-                  key={ps}
-                  onClick={() => setForm((f) => ({ ...f, paymentStatus: ps }))}
-                  className={cn(
-                    "rounded-lg border-2 py-3 px-4 text-sm font-semibold transition-all cursor-pointer flex flex-col items-center gap-0.5",
-                    ps === "unpaid"
-                      ? form.paymentStatus === "unpaid"
-                        ? "border-red-500 bg-red-50 text-red-600"
-                        : "border-border bg-background text-muted-foreground hover:border-red-300"
-                      : form.paymentStatus === "paid"
-                        ? "border-green-500 bg-green-50 text-green-600"
-                        : "border-border bg-background text-muted-foreground hover:border-green-300"
-                  )}
-                >
-                  {ps === "unpaid" ? "Unpaid" : "Paid"}
-                </button>
-              ))}
-            </div>
-            <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-              {form.paymentStatus === "unpaid"
-                ? "Payment will be recorded as pending. Customer receipt will show balance due."
-                : "Payment confirmed. Receipt will show as fully paid."}
-            </p>
+            {enablePaymentOption ? (
+              <>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["unpaid", "paid"] as const).map((ps) => (
+                    <button
+                      key={ps}
+                      onClick={() => setForm((f) => ({ ...f, paymentStatus: ps }))}
+                      className={cn(
+                        "rounded-lg border-2 py-3 px-4 text-sm font-semibold transition-all cursor-pointer flex flex-col items-center gap-0.5",
+                        ps === "unpaid"
+                          ? form.paymentStatus === "unpaid"
+                            ? "border-red-500 bg-red-50 text-red-600"
+                            : "border-border bg-background text-muted-foreground hover:border-red-300"
+                          : form.paymentStatus === "paid"
+                            ? "border-green-500 bg-green-50 text-green-600"
+                            : "border-border bg-background text-muted-foreground hover:border-green-300"
+                      )}
+                    >
+                      {ps === "unpaid" ? "Unpaid" : "Paid"}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                  {form.paymentStatus === "unpaid"
+                    ? "Payment will be recorded as pending. Customer receipt will show balance due."
+                    : "Payment confirmed. Receipt will show as fully paid."}
+                </p>
+              </>
+            ) : (
+              <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xs">
+                    ✓
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">Paid Directly</p>
+                    <p className="text-[11px] text-muted-foreground">Payment is confirmed immediately on order creation.</p>
+                  </div>
+                </div>
+                <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full">
+                  Paid
+                </span>
+              </div>
+            )}
           </div>
         </div>
 

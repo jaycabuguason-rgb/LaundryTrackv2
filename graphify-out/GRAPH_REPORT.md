@@ -1,7 +1,7 @@
 # Graph Report - LaundryTrackv2-pr-11  (2026-09-14)
 
 ## Corpus Check
-- 285 files · ~312,806 words
+- 285 files · ~313,086 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `5a02cb99`
+- Built from commit: `4403d9e1`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -400,11 +400,11 @@ Nodes (55): dependencies, autoprefixer, class-variance-authority, clsx, cmdk, da
 
 ### Community 3 - "Community 3"
 Cohesion: 0.01
-Nodes (141): gA(), pA(), A71(), a9(), AB(), accept(), acceptStandardWheelEvent(), _addCallbacks() (+133 more)
+Nodes (143): L2(), uA(), A71(), a9(), accept(), acceptStandardWheelEvent(), _addCallbacks(), addDecoration() (+135 more)
 
 ### Community 4 - "Community 4"
-Cohesion: 0.09
-Nodes (30): StatusUpdateSheet(), SyncStatusDetail(), SyncStatusDetailProps, Toast, NewOrderPageProps, ALL_STATUS_OPTIONS, BULK_STATUS_OPTIONS, formatLastUpdated() (+22 more)
+Cohesion: 0.05
+Nodes (54): ITEMS, MobileBottomNavProps, ADMIN_ONLY_NAV_PAGES, ADMIN_ONLY_SETTINGS, allNavItems, NAV_SECTIONS, NavItem, NavSection (+46 more)
 
 ### Community 5 - "Community 5"
 Cohesion: 0.08
@@ -416,7 +416,7 @@ Nodes (122): useIsMobile(), cn(), Accordion(), AccordionContent(), AccordionItem
 
 ### Community 7 - "Community 7"
 Cohesion: 0.01
-Nodes (181): $, aj(), aN(), aP(), at, Aw(), az, BO() (+173 more)
+Nodes (171): $, addAutoDetectButton(), addInstallHint(), aj(), aP(), at, Aw(), az (+163 more)
 
 ### Community 9 - "Community 9"
 Cohesion: 0.05
@@ -427,8 +427,8 @@ Cohesion: 0.05
 Nodes (39): 1. ✅ Offline Fallback Page Enhancement, 2. ✅ Service Worker Cache Strategy Finalization, 3. ✅ Reusable Offline Storage Adapter, 4. ✅ Comprehensive Sync Status Component, 5. ✅ Offline Form Persistence (Already Implemented), 6. ✅ Theme Toggle (Already Implemented), 7. ✅ Mobile Bottom Navigation (Already Implemented), 8. ✅ Access Control & Restrictions (Already Implemented) (+31 more)
 
 ### Community 11 - "Community 11"
-Cohesion: 0.04
-Nodes (66): getStatusIcon(), PaymentBadge(), STATUS_ICONS, StatusBadge(), ACTIVE_STATUSES, TrackerLiveRefresh(), TrackerLiveRefreshProps, getInitials() (+58 more)
+Cohesion: 0.07
+Nodes (41): buildForecastMetrics(), DAY_LABELS, exportOptions, ExportSection, FORECAST_HOURS, ForecastRange, forecastRangeOptions, formatCurrency() (+33 more)
 
 ### Community 12 - "Community 12"
 Cohesion: 0.05
@@ -439,8 +439,8 @@ Cohesion: 0.04
 Nodes (7): digest(), has(), m, _push(), _step(), _w(), _wrapUp()
 
 ### Community 14 - "Community 14"
-Cohesion: 0.07
-Nodes (38): OfflineAccessNoticeProps, QRScanner(), QRScannerProps, AuditLog, auditLogs, playScanSuccessFeedback(), playScanSuccessSound(), triggerHapticFeedback() (+30 more)
+Cohesion: 0.11
+Nodes (27): OfflineAccessNoticeProps, OfflinePage(), Button(), buttonVariants, Calendar(), CalendarDayButton(), Carousel(), CarouselApi (+19 more)
 
 ### Community 15 - "Community 15"
 Cohesion: 0.06
@@ -451,16 +451,16 @@ Cohesion: 0.07
 Nodes (26): 1. Check git status, 2. Scan TODO/FIXME items, 3. Check MEMORY.md follow-ups, 4. Decide and act, 5. Update state, add — Add a Follow-up, autoDream Cycle (Memory Consolidation), code:json ({ "status": "running", "started": "<ISO timestamp>", "tick":) (+18 more)
 
 ### Community 18 - "Community 18"
-Cohesion: 0.07
-Nodes (71): _0(), aE(), Ag(), aL(), bj(), bu(), cE(), ch() (+63 more)
+Cohesion: 0.06
+Nodes (72): _0(), aE(), Ag(), aL(), bj(), bu(), cE(), ch() (+64 more)
 
 ### Community 19 - "Community 19"
 Cohesion: 0.08
 Nodes (22): Algorithm, assign — Assign Sprint to Agents, code:yaml (sprint: 1), code:yaml (project: "zippypanel"), code:block3 (Orchestration Status — {project}), code:json ({), Error Handling, init — Initialize Orchestrator (+14 more)
 
 ### Community 20 - "Community 20"
-Cohesion: 0.08
-Nodes (28): L2(), uA(), c9(), compare(), compareBuild(), compareMain(), comparePre(), cW() (+20 more)
+Cohesion: 0.10
+Nodes (25): I2(), k4(), aJ(), c9(), cW(), e11(), fd(), gJ() (+17 more)
 
 ### Community 21 - "Community 21"
 Cohesion: 0.08
@@ -483,8 +483,8 @@ Cohesion: 0.05
 Nodes (38): compilerOptions, allowJs, esModuleInterop, incremental, isolatedModules, jsx, lib, module (+30 more)
 
 ### Community 26 - "Community 26"
-Cohesion: 0.05
-Nodes (69): ad(), addDynamicHandler(), authenticate(), cancel(), cancelAll(), cancelAllOperations(), catch(), clear() (+61 more)
+Cohesion: 0.06
+Nodes (66): addDynamicHandler(), authenticate(), cancel(), cancelAll(), cancelAllOperations(), catch(), clear(), close() (+58 more)
 
 ### Community 27 - "Community 27"
 Cohesion: 0.04
@@ -508,15 +508,15 @@ Nodes (3): maxAge(), o, preventDefault()
 
 ### Community 32 - "Community 32"
 Cohesion: 0.05
-Nodes (42): A81(), acquire(), addPostProcessor(), C8(), catch(), changeLanguage(), clear(), _computeKeybinding() (+34 more)
+Nodes (35): add(), addMapping(), applySourceMap(), bb(), call0(), contains(), doUpgrade(), eachMapping() (+27 more)
 
 ### Community 33 - "Community 33"
 Cohesion: 0.12
 Nodes (14): AutoBuild — Autonomous Workflow Engine, cancel — Remove a Workflow, code:yaml (name: <name>), code:json ({ "workflows": [{ "name": "<name>", "cron": "<expr>", "lastR), code:block3 (Name           Cron            Last Run             Status), code:yaml (name: my-workflow), list — Show All Workflows, On Invocation (+6 more)
 
 ### Community 34 - "Community 34"
-Cohesion: 0.11
-Nodes (38): AddOn, AddOnSchema, DEFAULT_ADDONS, DEFAULT_LOAD_TIERS, DEFAULT_LOYALTY_SETTINGS, DEFAULT_PRICING_CONFIG, DEFAULT_SERVICE_TYPES, load() (+30 more)
+Cohesion: 0.09
+Nodes (42): AddOn, AddOnSchema, DEFAULT_ADDONS, DEFAULT_LOAD_TIERS, DEFAULT_LOYALTY_SETTINGS, DEFAULT_PRICING_CONFIG, DEFAULT_SERVICE_TYPES, load() (+34 more)
 
 ### Community 35 - "Community 35"
 Cohesion: 0.03
@@ -527,12 +527,12 @@ Cohesion: 0.13
 Nodes (19): Bm(), cf(), Dw(), fp(), gp(), Hm(), Hn(), iA() (+11 more)
 
 ### Community 37 - "Community 37"
-Cohesion: 0.09
-Nodes (31): clearAllCookies(), clearCookies(), deleteCookie(), destroy(), draw(), embed(), _final(), k91() (+23 more)
+Cohesion: 0.18
+Nodes (11): gA(), pA(), Az(), B8(), dup(), FZ(), mf(), opener() (+3 more)
 
 ### Community 38 - "Community 38"
-Cohesion: 0.06
-Nodes (33): ForecastPdfMetrics, ForecastReportPdfProps, ReportPdfProps, S, useLoyaltyMembers(), PeakHourData, usePeakHours(), busyDayData (+25 more)
+Cohesion: 0.03
+Nodes (66): QRScanner(), QRScannerProps, ForecastPdfMetrics, ForecastReportPdfProps, ReportPdfProps, S, getStatusIcon(), PaymentBadge() (+58 more)
 
 ### Community 39 - "Community 39"
 Cohesion: 0.17
@@ -540,7 +540,7 @@ Nodes (12): 1. Create Storage Adapter, 2. Save Data Offline, 3. Queue Mutations,
 
 ### Community 40 - "Community 40"
 Cohesion: 0.03
-Nodes (72): getInitialAgentId(), Hw(), U4(), y2(), add(), addEventListener(), allGeneratedPositionsFor(), apply() (+64 more)
+Nodes (74): getInitialAgentId(), Hw(), U4(), y2(), AB(), allGeneratedPositionsFor(), apply(), C01() (+66 more)
 
 ### Community 41 - "Community 41"
 Cohesion: 0.17
@@ -559,8 +559,8 @@ Cohesion: 0.23
 Nodes (15): AuditActionType, AuditLogEntry, AuditStaffRole, CreateAuditLogInput, PaymentStatus, auditLogCache, AuditLogRow, KNOWN_ACTIONS (+7 more)
 
 ### Community 45 - "Community 45"
-Cohesion: 0.03
-Nodes (111): es(), tU(), z0(), addListener(), addNamespaces(), addResource(), addResourceBundle(), addResources() (+103 more)
+Cohesion: 0.04
+Nodes (93): es(), tU(), z0(), addNamespaces(), addResource(), addResourceBundle(), addResources(), appendFile() (+85 more)
 
 ### Community 46 - "Community 46"
 Cohesion: 0.40
@@ -596,7 +596,7 @@ Nodes (7): Consensus, Cross-Agent Coordination Protocol — Cline, Multi-Agent T
 
 ### Community 54 - "Community 54"
 Cohesion: 0.03
-Nodes (118): $2(), $71(), a11(), AX(), B01(), bE(), bo(), Bs() (+110 more)
+Nodes (116): $2(), $71(), a11(), AX(), B01(), bE(), bo(), c2() (+108 more)
 
 ### Community 55 - "Community 55"
 Cohesion: 0.22
@@ -672,7 +672,7 @@ Nodes (11): Built with v0, code:bash (npm run dev), Documentation, Getting Start
 
 ### Community 73 - "Community 73"
 Cohesion: 0.03
-Nodes (81): _1(), an1(), ao1(), bufferEvents(), C81(), cc(), cn1(), co1() (+73 more)
+Nodes (93): _1(), an1(), ao1(), bG(), Bs(), bufferEvents(), C81(), cc() (+85 more)
 
 ### Community 74 - "Community 74"
 Cohesion: 0.07
@@ -751,12 +751,12 @@ Cohesion: 0.60
 Nodes (3): Collapsible(), CollapsibleContent(), CollapsibleTrigger()
 
 ### Community 93 - "Community 93"
-Cohesion: 0.05
-Nodes (61): Ea(), _91(), a0(), Bz(), call(), D1(), D41(), d9() (+53 more)
+Cohesion: 0.04
+Nodes (64): Ea(), _91(), a0(), Bz(), call(), D1(), D41(), d9() (+56 more)
 
 ### Community 94 - "Community 94"
 Cohesion: 0.05
-Nodes (83): acquireAcpClient(), activateNext(), add(), aI(), attach(), bE(), BI(), catchall() (+75 more)
+Nodes (84): acquireAcpClient(), activateNext(), add(), aI(), attach(), bE(), BI(), catchall() (+76 more)
 
 ### Community 95 - "Community 95"
 Cohesion: 0.50
@@ -827,20 +827,20 @@ Cohesion: 0.40
 Nodes (3): formatArrivalDateTime(), d, result
 
 ### Community 128 - "Community 128"
-Cohesion: 0.08
-Nodes (42): ax(), BC(), _d(), Dj(), F0(), getNoteWikiLinks(), Gh(), gu() (+34 more)
+Cohesion: 0.06
+Nodes (53): a0(), ax(), BC(), bv(), _d(), Dj(), F0(), getAllFiles() (+45 more)
 
 ### Community 129 - "Community 129"
-Cohesion: 0.03
-Nodes (86): Ew(), indented(), j2(), Vt, activate(), aD(), addCached(), addMapping() (+78 more)
+Cohesion: 0.02
+Nodes (122): Ew(), indented(), j2(), Vt, A81(), activate(), aD(), addCached() (+114 more)
 
 ### Community 130 - "Community 130"
 Cohesion: 0.05
 Nodes (6): fillViewportRows(), g(), isPhysicalMouseWheel(), setIfNotSet(), setScrollPosition(), start()
 
 ### Community 131 - "Community 131"
-Cohesion: 0.08
-Nodes (34): _6(), and(), AU(), bN(), C6(), e6(), en(), Fd() (+26 more)
+Cohesion: 0.07
+Nodes (39): _6(), aN(), and(), AU(), bN(), C6(), e6(), en() (+31 more)
 
 ### Community 132 - "Community 132"
 Cohesion: 0.05
@@ -855,8 +855,8 @@ Cohesion: 0.02
 Nodes (21): hA(), P2(), a1, addCsiHandler(), ANY(), cancelAndSet(), clearListeners(), createInstance() (+13 more)
 
 ### Community 136 - "Community 136"
-Cohesion: 0.11
-Nodes (15): a, dispatchEvent(), forEach(), hc(), inertia(), m3(), newGestureEvent(), nextCodePoint() (+7 more)
+Cohesion: 0.08
+Nodes (23): a, acquire(), C8(), clear(), dispatchEvent(), forEach(), _getCorrectBufferLength(), hc() (+15 more)
 
 ### Community 137 - "Community 137"
 Cohesion: 0.07
@@ -887,16 +887,16 @@ Cohesion: 0.06
 Nodes (7): b5(), getScrollPosition(), hash(), p(), removeListener(), t3(), translateBufferLineToString()
 
 ### Community 144 - "Community 144"
-Cohesion: 0.04
-Nodes (51): I2(), k4(), af(), aJ(), am(), attributeChangedCallback(), bG(), c() (+43 more)
+Cohesion: 0.06
+Nodes (49): af(), am(), aN(), attributeChangedCallback(), Bo1(), c(), cm(), cN() (+41 more)
 
 ### Community 145 - "Community 145"
 Cohesion: 0.40
 Nodes (5): computedHash, skillPath, source, sourceType, code-review
 
 ### Community 146 - "Community 146"
-Cohesion: 0.05
-Nodes (50): a, addAutoDetectButton(), addInstallHint(), ao(), attachSession(), builder(), buildSession(), bv() (+42 more)
+Cohesion: 0.06
+Nodes (43): a, ad(), ao(), attachSession(), BO(), builder(), buildSession(), compile() (+35 more)
 
 ### Community 147 - "Community 147"
 Cohesion: 0.40
@@ -919,8 +919,8 @@ Cohesion: 0.08
 Nodes (6): b, del(), getColor(), is(), isTriggered(), pop()
 
 ### Community 152 - "Community 152"
-Cohesion: 0.10
-Nodes (26): addEnabledToggleControl(), av(), B4(), collectAvailableAgentIds(), display(), ds(), ensureDefaultAgentId(), eT() (+18 more)
+Cohesion: 0.15
+Nodes (17): addEnabledToggleControl(), av(), B4(), collectAvailableAgentIds(), ds(), ensureDefaultAgentId(), getAvailableAgents(), lowercase() (+9 more)
 
 ### Community 153 - "Community 153"
 Cohesion: 0.03
@@ -931,12 +931,12 @@ Cohesion: 0.07
 Nodes (32): AM(), appendOutput(), compare(), compareBuild(), compareMain(), comparePre(), eC(), extend() (+24 more)
 
 ### Community 155 - "Community 155"
-Cohesion: 0.08
-Nodes (31): wA(), B11(), Br(), create(), D5(), Dl(), EN(), Er() (+23 more)
+Cohesion: 0.10
+Nodes (27): wA(), B11(), Br(), create(), D5(), Dl(), EN(), Er() (+19 more)
 
 ### Community 156 - "Community 156"
-Cohesion: 0.05
-Nodes (53): C2(), cd(), ct(), Cv(), dd(), e4(), ensureAtLeastOneEnabled(), Ev() (+45 more)
+Cohesion: 0.04
+Nodes (63): C2(), cd(), ct(), Cv(), Cw(), dd(), e4(), ensureAtLeastOneEnabled() (+55 more)
 
 ### Community 157 - "Community 157"
 Cohesion: 0.05
@@ -979,8 +979,8 @@ Cohesion: 0.07
 Nodes (31): active, agent-client:Open agent client, bases:Create new base, canvas:Create new canvas, command-palette:Open command palette, daily-notes:Open today's daily note, graph:Open graph view, switcher:Open quick switcher (+23 more)
 
 ### Community 168 - "Community 168"
-Cohesion: 0.11
-Nodes (18): a0(), attachToView(), destroy(), detachEditorListener(), ensureSelectionTracking(), handleSelectionChange(), jw(), notifySelectionListeners() (+10 more)
+Cohesion: 0.12
+Nodes (19): attachToView(), debug(), deleteSessionMessages(), destroy(), detachEditorListener(), ensureSelectionTracking(), ensureSessionsDir(), getSessionFilePath() (+11 more)
 
 ### Community 169 - "Community 169"
 Cohesion: 0.06
@@ -1023,8 +1023,8 @@ Cohesion: 0.10
 Nodes (20): addToCommand, addToContextMenu, createInstanceNearExistingOnes, defaultProfile, errorNoticeTimeout, exposeInternalModules, focusOnNewInstance, hideStatusBar (+12 more)
 
 ### Community 179 - "Community 179"
-Cohesion: 0.24
-Nodes (12): StatusOption, StatusUpdateSheetProps, Drawer(), DrawerClose(), DrawerContent(), DrawerDescription(), DrawerFooter(), DrawerHeader() (+4 more)
+Cohesion: 0.31
+Nodes (10): b4(), eo1(), Fm(), Ja1(), Nl(), po1(), To1(), Wa1() (+2 more)
 
 ### Community 180 - "Community 180"
 Cohesion: 0.21
@@ -1659,12 +1659,12 @@ Cohesion: 0.22
 Nodes (8): 1. Executive Summary & Design Principles, 2. Comprehensive Audit Findings & Implemented Fixes, 3. Implementation Verification & Standards Checklist, LaundryTrack UI/UX & POS Usability Audit Report, Phase 1: Responsive Layout & Mobile/Tablet Ergonomics, Phase 2: POS Speed, 1-Click Operations & Checkout Flow, Phase 3: Customer Real-Time Experience & Typography Polish, Phase 4: Scanner Feedback & Transactions Table Shortcuts
 
 ### Community 361 - "Community 361"
-Cohesion: 0.07
-Nodes (60): _2(), dI(), $61(), a4(), aN(), b71(), Bo1(), cN() (+52 more)
+Cohesion: 0.09
+Nodes (43): _2(), dI(), $61(), a4(), b71(), Dr(), e71(), fireAsync() (+35 more)
 
 ### Community 362 - "Community 362"
-Cohesion: 0.08
-Nodes (34): ITEMS, MobileBottomNavProps, ADMIN_ONLY_NAV_PAGES, ADMIN_ONLY_SETTINGS, allNavItems, NAV_SECTIONS, NavItem, NavSection (+26 more)
+Cohesion: 0.14
+Nodes (21): notifTypeColors, notifTypeLabels, pageTitles, TopNavProps, initialNotifications, transactions, DropdownMenu(), DropdownMenuCheckboxItem() (+13 more)
 
 ### Community 366 - "Community 366"
 Cohesion: 0.22
@@ -1678,11 +1678,11 @@ Nodes (15): ContextMenu(), ContextMenuCheckboxItem(), ContextMenuContent(), Cont
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `renderContent()` connect `Community 152` to `Community 146`, `Community 94`, `Community 7`?**
+- **Why does `renderContent()` connect `Community 7` to `Community 152`, `Community 94`?**
   _High betweenness centrality (0.140) - this node is a cross-community bridge._
-- **Why does `SettingsPage()` connect `Community 152` to `Community 34`?**
+- **Why does `SettingsPage()` connect `Community 7` to `Community 34`?**
   _High betweenness centrality (0.140) - this node is a cross-community bridge._
-- **Why does `cn()` connect `Community 6` to `Community 34`, `Community 2`, `Community 4`, `Community 5`, `Community 38`, `Community 359`, `Community 362`, `Community 11`, `Community 74`, `Community 42`, `Community 14`, `Community 366`, `Community 138`, `Community 142`, `Community 179`, `Community 180`, `Community 58`?**
+- **Why does `cn()` connect `Community 6` to `Community 34`, `Community 2`, `Community 4`, `Community 5`, `Community 38`, `Community 359`, `Community 74`, `Community 11`, `Community 42`, `Community 362`, `Community 14`, `Community 366`, `Community 138`, `Community 142`, `Community 180`, `Community 58`?**
   _High betweenness centrality (0.061) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `cn()` (e.g. with `clsx` and `clsx`) actually correct?**
   _`cn()` has 2 INFERRED edges - model-reasoned connections that need verification._

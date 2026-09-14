@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import {
   Plus, Trash2, Edit, Save, Upload, Clock, Download, Loader2, CheckCircle2,
   Scale, ShoppingBasket, Package, X, Eye, EyeOff, Tag, Undo2, Redo2, AlertTriangle,
-  Coins, Building2, Gift, Database
+  Coins, Building2, Gift, Database, CreditCard
 } from "lucide-react";
 import DataImportPage from "@/components/pages/data-import";
 import { Button } from "@/components/ui/button";
@@ -102,6 +102,8 @@ function PricingSettings() {
           setPricePerKg(data.pricingConfig.pricePerKg);
           setMinWeight(data.pricingConfig.minWeight);
           setLoadTiers(data.pricingConfig.loadTiers);
+          setPriceDisplayMode(data.pricingConfig.priceDisplayMode ?? "show");
+          setEnablePaymentOption(data.pricingConfig.enablePaymentOption ?? true);
           setTierHistory([]);
           setTierFuture([]);
           persistPricingConfig(data.pricingConfig);
@@ -191,45 +193,13 @@ function PricingSettings() {
     () => loadPricingConfig().priceDisplayMode ?? "show"
   );
 
+  // Payment option toggle — if false, orders default directly to Paid and option is hidden
+  const [enablePaymentOption, setEnablePaymentOption] = useState<boolean>(
+    () => loadPricingConfig().enablePaymentOption ?? true
+  );
+
   // Save state
   const [saved, setSaved] = useState(false);
-
-  // Load settings from database on mount
-  useEffect(() => {
-    let ignore = false;
-
-    void buildAuthHeaders()
-      .then(headers => fetch("/api/settings/pricing", { cache: "no-store", headers }))
-      .then(async (response) => {
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok || ignore) return;
-        
-        if (data.pricingConfig) {
-          const cfg = data.pricingConfig;
-          setPricePerKg(cfg.pricePerKg);
-          setMinWeight(cfg.minWeight);
-          setPricingMode(cfg.pricingMode);
-          setLoadTiers(cfg.loadTiers);
-          setPriceDisplayMode(cfg.priceDisplayMode ?? "show");
-          persistPricingConfig(cfg);
-        }
-        
-        if (data.serviceTypes) {
-          setServices(data.serviceTypes);
-          persistServiceTypes(data.serviceTypes);
-        }
-        
-        if (data.addOns) {
-          setAddOns(data.addOns);
-          persistAddOns(data.addOns);
-        }
-      })
-      .catch(() => undefined);
-
-    return () => {
-      ignore = true;
-    };
-  }, []);
 
   const addAddon = () => {
     if (!newName || !newRate) return;
@@ -289,7 +259,15 @@ function PricingSettings() {
   ];
 
   const handleSave = async () => {
-    persistPricingConfig({ pricePerKg, minWeight, pricingMode, loadTiers, priceDisplayMode });
+    const updatedPricingConfig = {
+      pricePerKg,
+      minWeight,
+      pricingMode,
+      loadTiers,
+      priceDisplayMode,
+      enablePaymentOption,
+    };
+    persistPricingConfig(updatedPricingConfig);
     persistAddOns(addOns);
     persistServiceTypes(services);
     if (typeof window !== "undefined") localStorage.setItem("laundrytrack_svc_enabled", String(svcEnabled));
@@ -301,7 +279,7 @@ function PricingSettings() {
           endpoint: "/api/settings/pricing",
           method: "PUT",
           body: {
-            pricingConfig: { pricePerKg, minWeight, pricingMode, loadTiers, priceDisplayMode },
+            pricingConfig: updatedPricingConfig,
             serviceTypes: services,
             addOns,
           },
@@ -315,7 +293,7 @@ function PricingSettings() {
           method: "PUT",
           headers: await buildAuthHeaders(),
           body: JSON.stringify({
-            pricingConfig: { pricePerKg, minWeight, pricingMode, loadTiers, priceDisplayMode },
+            pricingConfig: updatedPricingConfig,
             serviceTypes: services,
             addOns,
           }),
@@ -941,6 +919,40 @@ function PricingSettings() {
               </div>
             );
           })()}
+        </CardContent>
+      </Card>
+
+      {/* ── Payment Options Settings ─────────────────────────────────────── */}
+      <Card className="border border-border shadow-none">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-primary" />
+                <CardTitle className="text-sm">Payment Status Option</CardTitle>
+              </div>
+              <CardDescription className="text-xs">
+                Allow staff to choose between Paid and Unpaid when creating orders. Turn off if your shop only records orders as Paid directly.
+              </CardDescription>
+            </div>
+            <Switch
+              checked={enablePaymentOption}
+              onCheckedChange={setEnablePaymentOption}
+              aria-label="Toggle payment options"
+            />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-lg border border-border bg-muted/40 px-3 py-2.5 text-xs text-muted-foreground flex items-center justify-between">
+            <span>
+              {enablePaymentOption
+                ? "Payment option enabled — staff can select Paid or Unpaid for each transaction."
+                : "Payment option disabled — all new orders will be automatically recorded as Paid directly."}
+            </span>
+            <span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ml-2", enablePaymentOption ? "bg-primary/10 text-primary" : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400")}>
+              {enablePaymentOption ? "Choice Enabled" : "Direct Paid"}
+            </span>
+          </div>
         </CardContent>
       </Card>
 
