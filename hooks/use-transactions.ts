@@ -353,23 +353,44 @@ export function useTransactions() {
       return { transaction: (optimistic ?? ({ ticketId, ...updates } as Transaction)) };
     }
 
-    const headers = await getAuthHeaders();
-    const response = await fetch(`/api/transactions/${encodeURIComponent(ticketId)}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        ...headers,
-      },
-      body: JSON.stringify(updates),
+    // Apply optimistic update immediately for instant single-click UI responsiveness
+    let originalTxn: Transaction | undefined;
+    updateTransactions((current) => {
+      const found = current.find((t) => t.ticketId === ticketId);
+      if (found) originalTxn = found;
+      return current.map((transaction) =>
+        transaction.ticketId === ticketId ? ({ ...transaction, ...updates } as Transaction) : transaction,
+      );
     });
 
-    const data = await readJson<TransactionResponse>(response);
-    updateTransactions((current) =>
-      current.map((transaction) =>
-        transaction.ticketId === data.transaction.ticketId ? data.transaction : transaction,
-      ),
-    );
-    return { transaction: data.transaction, loyaltyResult: data.loyaltyResult };
+    try {
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/transactions/${encodeURIComponent(ticketId)}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...headers,
+        },
+        body: JSON.stringify(updates),
+      });
+
+      const data = await readJson<TransactionResponse>(response);
+      updateTransactions((current) =>
+        current.map((transaction) =>
+          transaction.ticketId === data.transaction.ticketId ? data.transaction : transaction,
+        ),
+      );
+      return { transaction: data.transaction, loyaltyResult: data.loyaltyResult };
+    } catch (err) {
+      if (originalTxn) {
+        updateTransactions((current) =>
+          current.map((transaction) =>
+            transaction.ticketId === ticketId ? originalTxn! : transaction,
+          ),
+        );
+      }
+      throw err;
+    }
   }, [updateTransactions]);
 
   const resolveScannedValue = useCallback(async (value: string) => {

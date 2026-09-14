@@ -596,20 +596,28 @@ export default function ProcessingPage({
                       <div className="flex items-center gap-1.5">
                         {nextAction && (
                           <Button
+                            type="button"
                             size="sm"
                             disabled={isUpdating}
                             className="h-8 gap-1 text-xs px-2.5 font-semibold shadow-xs cursor-pointer"
-                            onClick={() => handleStatusSelect(txn, nextAction.nextStatus)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleStatusSelect(txn, nextAction.nextStatus);
+                            }}
                           >
                             {isUpdating ? "…" : nextAction.shortLabel}
                           </Button>
                         )}
                         <Button
+                          type="button"
                           variant="outline"
                           size="sm"
                           disabled={isUpdating}
-                          className="h-8 px-2 text-xs"
-                          onClick={() => setSheetTxn(txn)}
+                          className="h-8 px-2 text-xs cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSheetTxn(txn);
+                          }}
                           aria-label="More status options"
                         >
                           <ChevronDown className="h-3.5 w-3.5" />
@@ -713,25 +721,31 @@ export default function ProcessingPage({
                           <div className="flex items-center gap-1.5">
                             {nextAction && (
                               <Button
+                                type="button"
                                 size="sm"
                                 disabled={isUpdating}
                                 className="h-8 gap-1 text-xs px-3 rounded-xl font-medium cursor-pointer shadow-xs whitespace-nowrap"
-                                onClick={() => handleStatusSelect(txn, nextAction.nextStatus)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleStatusSelect(txn, nextAction.nextStatus);
+                                }}
                               >
                                 {isUpdating ? "Updating…" : nextAction.label}
                               </Button>
                             )}
 
                             {/* Update Status dropdown — shows ALL statuses */}
-                            <DropdownMenu>
+                            <DropdownMenu modal={false}>
                               <DropdownMenuTrigger asChild>
                                 <Button
+                                  type="button"
                                   variant="outline"
                                   size="sm"
                                   disabled={isUpdating}
                                   className="h-8 w-8 p-0 rounded-xl border-border/80 hover:bg-muted/50 cursor-pointer shadow-xs"
                                   aria-label="More status options"
                                   title="More status options"
+                                  onClick={(e) => e.stopPropagation()}
                                 >
                                   <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                                 </Button>
@@ -750,7 +764,13 @@ export default function ProcessingPage({
                                           ? "bg-primary/10 border-primary/20 text-primary font-semibold cursor-default"
                                           : "border-transparent text-foreground hover:bg-muted/50 hover:border-border/40 focus:bg-muted/50",
                                       )}
-                                      onClick={() => !isCurrent && handleStatusSelect(txn, status)}
+                                      onSelect={() => {
+                                        if (!isCurrent) handleStatusSelect(txn, status);
+                                      }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (!isCurrent) handleStatusSelect(txn, status);
+                                      }}
                                     >
                                       <div className="flex items-center gap-3 w-full">
                                         <StatusIcon className={cn("w-4 h-4 shrink-0", isCurrent ? "text-primary" : "text-muted-foreground")} aria-hidden="true" />
@@ -862,6 +882,7 @@ export default function ProcessingPage({
                 return (
                   <button
                     key={stage}
+                    type="button"
                     onClick={() => handleToggleStage(stage)}
                     className={cn(
                       "rounded-xl border p-4 text-left transition-all duration-200 cursor-pointer",
@@ -944,9 +965,13 @@ export default function ProcessingPage({
               {/* Quick advance button based on active stage */}
               {expandedStage === "Received" && (
                 <Button
+                  type="button"
                   size="sm"
                   disabled={isBulkUpdating}
-                  onClick={() => handleBulkStatusSelect("Washing")}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleBulkStatusSelect("Washing");
+                  }}
                   className="h-8 gap-1.5 rounded-xl text-xs font-semibold shadow-xs cursor-pointer"
                 >
                   {isBulkUpdating ? (
@@ -960,9 +985,13 @@ export default function ProcessingPage({
 
               {expandedStage === "Washed" && (
                 <Button
+                  type="button"
                   size="sm"
                   disabled={isBulkUpdating}
-                  onClick={() => handleBulkStatusSelect("Ready")}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleBulkStatusSelect("Ready");
+                  }}
                   className="h-8 gap-1.5 rounded-xl text-xs font-semibold shadow-xs cursor-pointer"
                 >
                   {isBulkUpdating ? (
@@ -976,9 +1005,13 @@ export default function ProcessingPage({
 
               {expandedStage === "Ready" && (
                 <Button
+                  type="button"
                   size="sm"
                   disabled={isBulkUpdating}
-                  onClick={() => handleBulkStatusSelect("Claimed")}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleBulkStatusSelect("Claimed");
+                  }}
                   className="h-8 gap-1.5 rounded-xl text-xs font-semibold shadow-xs cursor-pointer"
                 >
                   {isBulkUpdating ? (
@@ -991,13 +1024,15 @@ export default function ProcessingPage({
               )}
 
               {/* Status picker dropdown for any target status */}
-              <DropdownMenu>
+              <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                   <Button
+                    type="button"
                     variant="outline"
                     size="sm"
                     disabled={isBulkUpdating}
                     className="h-8 gap-1.5 rounded-xl text-xs font-medium cursor-pointer"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     <SlidersHorizontal className="h-3.5 w-3.5" />
                     <span>Change Status</span>
@@ -1010,7 +1045,11 @@ export default function ProcessingPage({
                     return (
                       <DropdownMenuItem
                         key={status}
-                        onClick={() => handleBulkStatusSelect(status)}
+                        onSelect={() => handleBulkStatusSelect(status)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleBulkStatusSelect(status);
+                        }}
                         className="cursor-pointer rounded-xl px-3 py-2 text-xs font-medium focus:bg-muted/60"
                       >
                         <div className="flex items-center gap-2.5 w-full">
@@ -1025,6 +1064,7 @@ export default function ProcessingPage({
 
               {/* Clear Selection */}
               <Button
+                type="button"
                 variant="ghost"
                 size="sm"
                 disabled={isBulkUpdating}

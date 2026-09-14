@@ -59,6 +59,13 @@ export default function DashboardPage({
     setDetailOpen(true);
   };
 
+  const handleCardKeyDown = (e: React.KeyboardEvent, page: Page) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onNavigate?.(page);
+    }
+  };
+
   // Counts & Metrics
   const totalOrders = transactions.length;
   const receivedCount = transactions.filter((t) => t.status === "Received").length;
