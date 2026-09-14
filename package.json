@@ -75,6 +75,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.10.2",
     "@next/eslint-plugin-next": "15.5.18",
     "@playwright/test": "^1.60.0",
     "@tailwindcss/postcss": "^4.2.0",

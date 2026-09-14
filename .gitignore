@@ -30,6 +30,9 @@ ts_error.log
 output/
 coverage/
 .playwright-cli/
+playwright-report/
+test-results/
+blob-report/
 
 # IDE & AI Agent folders
 .vscode/
