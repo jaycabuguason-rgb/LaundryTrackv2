@@ -357,7 +357,11 @@ function AuditLogsView({ onTabChange }: { onTabChange?: (tab: "staff" | "audit")
             </div>
             <div>
               <p className="text-xs text-muted-foreground font-medium">Total Entries</p>
-              <h3 className="text-xl font-bold text-foreground">{totalEntries}</h3>
+              {loading && auditLogs.length === 0 ? (
+                <div className="mt-1 h-6 w-14 rounded bg-muted animate-pulse" />
+              ) : (
+                <h3 className="text-xl font-bold text-foreground">{totalEntries}</h3>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -370,7 +374,11 @@ function AuditLogsView({ onTabChange }: { onTabChange?: (tab: "staff" | "audit")
             </div>
             <div>
               <p className="text-xs text-muted-foreground font-medium">Warning Events</p>
-              <h3 className="text-xl font-bold text-foreground">{warningEvents}</h3>
+              {loading && auditLogs.length === 0 ? (
+                <div className="mt-1 h-6 w-14 rounded bg-muted animate-pulse" />
+              ) : (
+                <h3 className="text-xl font-bold text-foreground">{warningEvents}</h3>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -383,7 +391,11 @@ function AuditLogsView({ onTabChange }: { onTabChange?: (tab: "staff" | "audit")
             </div>
             <div>
               <p className="text-xs text-muted-foreground font-medium">System Actions</p>
-              <h3 className="text-xl font-bold text-foreground">{systemActions}</h3>
+              {loading && auditLogs.length === 0 ? (
+                <div className="mt-1 h-6 w-14 rounded bg-muted animate-pulse" />
+              ) : (
+                <h3 className="text-xl font-bold text-foreground">{systemActions}</h3>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -469,12 +481,34 @@ function AuditLogsView({ onTabChange }: { onTabChange?: (tab: "staff" | "audit")
             </thead>
             <tbody className="divide-y divide-border/60">
               {loading && auditLogs.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-xs text-muted-foreground">
-                    <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-muted-foreground/40" />
-                    Loading audit logs...
-                  </td>
-                </tr>
+                Array.from({ length: 6 }).map((_, index) => (
+                  <tr key={index} className="border-b border-border/60">
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center gap-2">
+                        <div className="h-3.5 w-3.5 rounded bg-muted animate-pulse shrink-0" />
+                        <div className="h-3.5 w-24 rounded bg-muted animate-pulse" />
+                      </div>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <div className="space-y-1">
+                        <div className="h-3.5 w-24 rounded bg-muted animate-pulse" />
+                        <div className="h-2.5 w-12 rounded bg-muted animate-pulse" />
+                      </div>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <div className="h-5 w-20 rounded bg-muted animate-pulse" />
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <div className="h-3.5 w-32 rounded bg-muted animate-pulse" />
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <div className="h-3.5 w-48 rounded bg-muted animate-pulse" />
+                    </td>
+                    <td className="px-4 py-3.5 text-right">
+                      <div className="ml-auto h-3.5 w-16 rounded bg-muted animate-pulse" />
+                    </td>
+                  </tr>
+                ))
               ) : filteredLogs.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-12 text-center text-xs text-muted-foreground">

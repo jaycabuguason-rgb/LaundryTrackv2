@@ -644,14 +644,41 @@ export default function StaffManagementPage({
             </thead>
             <tbody>
               {loading ? (
-                <tr>
-                  <td colSpan={7} className="py-16 text-center">
-                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                      <Loader2 className="h-10 w-10 min-h-[44px] min-w-[44px] animate-spin" />
-                      <p className="text-sm">Loading staff accounts...</p>
-                    </div>
-                  </td>
-                </tr>
+                Array.from({ length: 5 }).map((_, index) => (
+                  <tr key={index} className="border-b border-border transition-colors last:border-0">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 shrink-0 rounded-full bg-muted animate-pulse" />
+                        <div className="space-y-1.5">
+                          <div className="h-3.5 w-28 rounded bg-muted animate-pulse" />
+                          <div className="h-3 w-36 rounded bg-muted animate-pulse" />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-3 py-3">
+                      <div className="h-3.5 w-20 rounded bg-muted animate-pulse" />
+                    </td>
+                    <td className="px-3 py-3">
+                      <div className="h-5 w-16 rounded-full bg-muted animate-pulse" />
+                    </td>
+                    <td className="px-3 py-3">
+                      <div className="h-5 w-16 rounded-full bg-muted animate-pulse" />
+                    </td>
+                    <td className="px-3 py-3">
+                      <div className="h-3.5 w-24 rounded bg-muted animate-pulse" />
+                    </td>
+                    <td className="px-3 py-3">
+                      <div className="h-5 w-14 rounded-full bg-muted animate-pulse" />
+                    </td>
+                    <td className="px-3 py-3 pr-4">
+                      <div className="flex items-center gap-1.5">
+                        <div className="h-8 w-14 rounded bg-muted animate-pulse" />
+                        <div className="h-8 w-16 rounded bg-muted animate-pulse" />
+                        <div className="h-8 w-20 rounded bg-muted animate-pulse" />
+                      </div>
+                    </td>
+                  </tr>
+                ))
               ) : filteredStaff.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-16 text-center">
@@ -744,10 +771,26 @@ export default function StaffManagementPage({
         {/* Mobile Cards */}
         <div className="divide-y divide-border md:hidden">
           {loading ? (
-            <div className="flex flex-col items-center justify-center gap-2 py-16 text-muted-foreground">
-              <Loader2 className="h-10 w-10 min-h-[44px] min-w-[44px] animate-spin" />
-              <p className="text-sm">Loading staff accounts...</p>
-            </div>
+            Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="space-y-3 p-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 shrink-0 rounded-full bg-muted animate-pulse" />
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <div className="h-3.5 w-32 rounded bg-muted animate-pulse" />
+                    <div className="h-3 w-44 rounded bg-muted animate-pulse" />
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <div className="h-5 w-16 rounded-full bg-muted animate-pulse" />
+                  <div className="h-5 w-16 rounded-full bg-muted animate-pulse" />
+                </div>
+                <div className="flex items-center gap-1.5 pt-1">
+                  <div className="h-9 flex-1 rounded bg-muted animate-pulse" />
+                  <div className="h-9 flex-1 rounded bg-muted animate-pulse" />
+                  <div className="h-9 flex-1 rounded bg-muted animate-pulse" />
+                </div>
+              </div>
+            ))
           ) : filteredStaff.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-2 py-16">
               <Users className="h-10 w-10 min-h-[44px] min-w-[44px] text-muted-foreground/20" />
