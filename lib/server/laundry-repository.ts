@@ -143,6 +143,7 @@ function mapRowToTransaction(row: TransactionRow): Transaction {
     publicTrackingToken: row.public_tracking_token ?? undefined,
     updatedAt: row.updated_at ?? row.created_at ?? undefined,
     eta: row.eta ?? undefined,
+    voidReason: row.void_reason ?? undefined,
   };
 }
 

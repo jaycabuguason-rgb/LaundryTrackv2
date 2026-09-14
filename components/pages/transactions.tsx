@@ -1174,7 +1174,7 @@ export default function TransactionsPage({
   const [filterPayment, setFilterPayment] = useState("all");
   const [filterDate, setFilterDate] = useState<Date | undefined>(undefined);
   const [sortBy, setSortBy] = useState<"smart" | "newest" | "oldest" | "unpaid-first" | "ready-first" | "status-az">("smart");
-  const [activeTab, setActiveTab] = useState<"transactions" | "claimed">("transactions");
+  const [activeTab, setActiveTab] = useState<"transactions" | "all" | "claimed" | "voided">("transactions");
 
   const serviceOptions = useMemo(() => Array.from(new Set(txns.map((t) => t.washType).filter(Boolean))), [txns]);
 
@@ -1454,7 +1454,14 @@ export default function TransactionsPage({
   // ── Derived ──────────────────────────────────────────────────────────────
   const filtered = (() => {
     const base = txns.filter((t) => {
-      const matchTab = activeTab === "claimed" ? t.status === "Claimed" : t.status !== "Claimed";
+      const matchTab =
+        activeTab === "all"
+          ? true
+          : activeTab === "claimed"
+          ? t.status === "Claimed"
+          : activeTab === "voided"
+          ? t.status === "Voided"
+          : t.status === "Received" || t.status === "Washing" || t.status === "Ready";
       const matchSearch =
         t.customerName.toLowerCase().includes(search.toLowerCase()) ||
         t.ticketId.toLowerCase().includes(search.toLowerCase());
@@ -1503,8 +1510,13 @@ export default function TransactionsPage({
   const totalFilteredRevenue = filtered.reduce((acc, t) => acc + (t.status === "Voided" ? 0 : t.fee), 0);
   const totalFilteredWeight = filtered.reduce((acc, t) => acc + (t.status === "Voided" ? 0 : (t.weight || 0)), 0);
 
-  const activeOrdersCount = useMemo(() => txns.filter((t) => t.status !== "Claimed").length, [txns]);
+  const activeOrdersCount = useMemo(
+    () => txns.filter((t) => t.status === "Received" || t.status === "Washing" || t.status === "Ready").length,
+    [txns]
+  );
+  const allOrdersCount = txns.length;
   const claimedOrdersCount = useMemo(() => txns.filter((t) => t.status === "Claimed").length, [txns]);
+  const voidedOrdersCount = useMemo(() => txns.filter((t) => t.status === "Voided").length, [txns]);
 
   const hasActiveFilters = Boolean(
     search.trim() ||
@@ -1552,9 +1564,9 @@ export default function TransactionsPage({
         </Button>
       </div>
 
-      {/* Tabs — Active Orders vs Claimed */}
-      <div className="flex items-center justify-between border-b border-border">
-        <div className="flex gap-1 sm:gap-2">
+      {/* Tabs — Active Orders, All Transactions, Claimed, Voided */}
+      <div className="flex items-center justify-between border-b border-border overflow-x-auto">
+        <div className="flex gap-1 sm:gap-2 min-w-max">
           <button
             onClick={() => setActiveTab("transactions")}
             className={cn(
@@ -1577,6 +1589,27 @@ export default function TransactionsPage({
             </span>
           </button>
           <button
+            onClick={() => setActiveTab("all")}
+            className={cn(
+              "flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-medium border-b-2 transition-all cursor-pointer -mb-[1px]",
+              activeTab === "all"
+                ? "border-primary text-primary font-semibold"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <span>All Transactions</span>
+            <span
+              className={cn(
+                "rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums",
+                activeTab === "all"
+                  ? "bg-primary/10 text-primary"
+                  : "bg-muted text-muted-foreground"
+              )}
+            >
+              {allOrdersCount}
+            </span>
+          </button>
+          <button
             onClick={() => setActiveTab("claimed")}
             className={cn(
               "flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-medium border-b-2 transition-all cursor-pointer -mb-[1px]",
@@ -1595,6 +1628,30 @@ export default function TransactionsPage({
               )}
             >
               {claimedOrdersCount}
+            </span>
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab("voided");
+              setFilterStatus("all");
+            }}
+            className={cn(
+              "flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-medium border-b-2 transition-all cursor-pointer -mb-[1px]",
+              activeTab === "voided"
+                ? "border-destructive text-destructive font-semibold"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <span>Voided</span>
+            <span
+              className={cn(
+                "rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums",
+                activeTab === "voided"
+                  ? "bg-destructive/10 text-destructive font-bold"
+                  : "bg-muted text-muted-foreground"
+              )}
+            >
+              {voidedOrdersCount}
             </span>
           </button>
         </div>
@@ -1628,7 +1685,7 @@ export default function TransactionsPage({
 
             {/* Filter Dropdowns */}
             <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-              {activeTab === "transactions" && (
+              {(activeTab === "transactions" || activeTab === "all") && (
                 <Select value={filterStatus} onValueChange={setFilterStatus}>
                   <SelectTrigger className="w-full sm:w-[130px] h-10 md:h-9 text-sm">
                     <SelectValue placeholder="All Status" />
@@ -1638,7 +1695,12 @@ export default function TransactionsPage({
                     {statusOrder.map((s) => (
                       <SelectItem key={s} value={s}>{s}</SelectItem>
                     ))}
-                    <SelectItem value="Voided">Voided</SelectItem>
+                    {activeTab === "all" && (
+                      <>
+                        <SelectItem value="Claimed">Claimed</SelectItem>
+                        <SelectItem value="Voided">Voided</SelectItem>
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
               )}
@@ -1794,6 +1856,11 @@ export default function TransactionsPage({
                       {txn.washType}{txn.weight ? ` · ${txn.weight} kg` : ""}
                       {txn.addOns && txn.addOns.length > 0 ? ` · ${txn.addOns.join(", ")}` : ""}
                     </p>
+                    {isVoided && txn.voidReason && (
+                      <p className="text-[11px] text-destructive/80 font-medium mt-1 truncate">
+                        Reason: {txn.voidReason}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -1862,20 +1929,23 @@ export default function TransactionsPage({
                         <DropdownMenuItem onClick={() => void handleDownloadQr(txn)}>
                           <Download className="w-3.5 h-3.5 mr-2 text-primary" /> Download QR Code
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem disabled={isVoided} onClick={() => openEdit(txn)}>
-                          <Edit className="w-3.5 h-3.5 mr-2" /> Edit Order
-                        </DropdownMenuItem>
-                        <DropdownMenuItem disabled={isVoided} onClick={() => setMobileStatusTxn(txn)}>
-                          <RefreshCw className="w-3.5 h-3.5 mr-2" /> Change Status
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          disabled={isVoided}
-                          onClick={() => { setVoidTxn(txn); setVoidReason(""); }}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Ban className="w-3.5 h-3.5 mr-2" /> Void Order
-                        </DropdownMenuItem>
+                        {!isVoided && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => openEdit(txn)}>
+                              <Edit className="w-3.5 h-3.5 mr-2" /> Edit Order
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setMobileStatusTxn(txn)}>
+                              <RefreshCw className="w-3.5 h-3.5 mr-2" /> Change Status
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => { setVoidTxn(txn); setVoidReason(""); }}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Ban className="w-3.5 h-3.5 mr-2" /> Void Order
+                            </DropdownMenuItem>
+                          </>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -1902,7 +1972,15 @@ export default function TransactionsPage({
                     <Inbox />
                   </EmptyMedia>
                   <EmptyTitle className="text-sm">
-                    {loading ? "Loading transactions..." : "No transactions found."}
+                    {loading
+                      ? "Loading transactions..."
+                      : activeTab === "voided"
+                      ? "No voided transactions found."
+                      : activeTab === "claimed"
+                      ? "No claimed transactions found."
+                      : activeTab === "all"
+                      ? "No transactions found."
+                      : "No active orders found."}
                   </EmptyTitle>
                   {loading ? null : (
                     <EmptyDescription className="flex flex-col items-center gap-2">
@@ -1969,36 +2047,45 @@ export default function TransactionsPage({
                     <p className="font-medium text-foreground text-xs mt-0.5">{viewTxn.washInstructions}</p>
                   </div>
                 )}
+                {/* Void reason read-only */}
+                {viewTxn.status === "Voided" && (
+                  <div className="col-span-2 bg-destructive/10 border border-destructive/20 rounded-md p-2.5">
+                    <p className="text-xs font-semibold text-destructive">Void Reason</p>
+                    <p className="font-medium text-destructive text-xs mt-0.5">{viewTxn.voidReason || "No specific reason provided."}</p>
+                  </div>
+                )}
               </div>
 
               {/* Status stepper — read-only */}
-              <div>
-                <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider">Status Progress</p>
-                <div className="flex items-center">
-                  {statusOrder.map((step, idx) => {
-                    const stepIdx = statusOrder.indexOf(viewTxn.status as (typeof statusOrder)[number]);
-                    const isCompleted = idx < stepIdx;
-                    const isCurrent = idx === stepIdx;
-                    const isLast = idx === statusOrder.length - 1;
-                    return (
-                      <div key={step} className="flex items-center flex-1 last:flex-none">
-                        <div className="flex flex-col items-center">
-                          <div className={cn(
-                            "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border-2",
-                            isCompleted || isCurrent ? "bg-primary border-primary text-primary-foreground" : "bg-background border-border text-muted-foreground"
-                          )}>
-                            {isCompleted ? "✓" : idx + 1}
+              {viewTxn.status !== "Voided" && (
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider">Status Progress</p>
+                  <div className="flex items-center">
+                    {statusOrder.map((step, idx) => {
+                      const stepIdx = statusOrder.indexOf(viewTxn.status as (typeof statusOrder)[number]);
+                      const isCompleted = idx < stepIdx;
+                      const isCurrent = idx === stepIdx;
+                      const isLast = idx === statusOrder.length - 1;
+                      return (
+                        <div key={step} className="flex items-center flex-1 last:flex-none">
+                          <div className="flex flex-col items-center">
+                            <div className={cn(
+                              "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border-2",
+                              isCompleted || isCurrent ? "bg-primary border-primary text-primary-foreground" : "bg-background border-border text-muted-foreground"
+                            )}>
+                              {isCompleted ? "✓" : idx + 1}
+                            </div>
+                            <span className={cn("text-xs mt-1 text-center w-10 md:w-12 leading-tight", isCurrent ? "text-primary font-semibold" : "text-muted-foreground")}>
+                              {step}
+                            </span>
                           </div>
-                          <span className={cn("text-xs mt-1 text-center w-10 md:w-12 leading-tight", isCurrent ? "text-primary font-semibold" : "text-muted-foreground")}>
-                            {step}
-                          </span>
+                          {!isLast && <div className={cn("flex-1 h-0.5 mb-4 mx-0.5", isCompleted ? "bg-primary" : "bg-border")} />}
                         </div>
-                        {!isLast && <div className={cn("flex-1 h-0.5 mb-4 mx-0.5", isCompleted ? "bg-primary" : "bg-border")} />}
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* QR Code */}
               <div className="flex flex-col items-center gap-2 py-2 bg-muted/30 rounded-lg">

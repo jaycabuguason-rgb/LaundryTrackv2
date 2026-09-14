@@ -19,6 +19,7 @@ export interface Transaction {
   publicTrackingToken?: string;
   updatedAt?: string;
   eta?: string | null;
+  voidReason?: string | null;
 }
 
 export interface LoyaltyMember {
