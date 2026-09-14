@@ -19,6 +19,10 @@ import {
   ExternalLink,
   History,
   Calendar,
+  Inbox,
+  RotateCw,
+  ShoppingBag,
+  type LucideIcon,
 } from "lucide-react";
 
 import { formatReadableDateTime } from "@/lib/date-format";
@@ -54,10 +58,32 @@ function StampDots({ count, max = 7 }: { count: number; max?: number }) {
   );
 }
 
-const TRACKING_STEPS = [
-  { id: "Received", label: "Received" },
-  { id: "Washed", label: "Washed" },
-  { id: "Ready", label: "Ready" },
+interface TrackingStep {
+  id: "Received" | "Washed" | "Ready";
+  label: string;
+  icon: LucideIcon;
+  description: string;
+}
+
+const TRACKING_STEPS: readonly TrackingStep[] = [
+  {
+    id: "Received",
+    label: "Received",
+    icon: Inbox,
+    description: "Clothes logged & queued",
+  },
+  {
+    id: "Washed",
+    label: "Washed",
+    icon: RotateCw,
+    description: "Washing & drying cycle",
+  },
+  {
+    id: "Ready",
+    label: "Ready",
+    icon: ShoppingBag,
+    description: "Packed & ready for pickup",
+  },
 ] as const;
 
 function getTrackingProgressIndex(status: string): number {
@@ -79,43 +105,82 @@ function StatusStepper({ status }: { status: string }) {
   }
 
   return (
-    <div className="flex items-start justify-between gap-2 overflow-x-auto pb-1">
+    <div className="flex items-start justify-between gap-1 sm:gap-2 overflow-x-auto pb-1 pt-1">
       {TRACKING_STEPS.map((step, index) => {
         const completed = index < activeIndex || status === "Claimed";
         const current = index === activeIndex && status !== "Claimed";
+        const StepIcon = step.icon;
+
         return (
-          <div key={step.id} className="flex min-w-[80px] flex-1 items-start">
+          <div key={step.id} className="flex min-w-[90px] flex-1 items-start">
             <div className="flex w-full flex-col items-center gap-2">
-              <div
-                className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold transition-colors",
-                  completed || current
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-background text-muted-foreground",
+              <div className="relative">
+                {/* Active glow/ping ring for current stage */}
+                {current && (
+                  <span
+                    className="absolute -inset-1.5 rounded-full bg-primary/25 animate-ping opacity-60 pointer-events-none"
+                    aria-hidden="true"
+                  />
                 )}
-              >
-                {completed ? <CheckCircle2 className="h-4 w-4" /> : index + 1}
+                <div
+                  className={cn(
+                    "relative flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-300",
+                    completed
+                      ? "border-primary bg-primary text-primary-foreground shadow-sm shadow-primary/25"
+                      : current
+                        ? "border-primary bg-primary text-primary-foreground ring-4 ring-primary/20 shadow-md shadow-primary/30 scale-105"
+                        : "border-border bg-background text-muted-foreground",
+                  )}
+                  aria-label={`${step.label} stage: ${completed ? "completed" : current ? "in progress" : "pending"}`}
+                >
+                  {completed ? (
+                    <CheckCircle2 className="h-5 w-5 animate-in zoom-in-75 duration-200" />
+                  ) : (
+                    <StepIcon
+                      className={cn(
+                        "h-5 w-5 transition-transform duration-300",
+                        current && step.id === "Received" && "animate-stage-bounce",
+                        current && step.id === "Washed" && "animate-stage-spin",
+                        current && step.id === "Ready" && "animate-stage-sparkle text-amber-300",
+                      )}
+                    />
+                  )}
+                </div>
               </div>
-              <span
-                className={cn(
-                  "text-center text-xs leading-tight",
-                  current
-                    ? "font-semibold text-primary"
-                    : completed
-                      ? "font-medium text-foreground"
-                      : "text-muted-foreground",
+
+              <div className="flex flex-col items-center text-center">
+                <span
+                  className={cn(
+                    "text-xs leading-tight font-medium",
+                    current
+                      ? "font-bold text-primary"
+                      : completed
+                        ? "font-semibold text-foreground"
+                        : "text-muted-foreground",
+                  )}
+                >
+                  {step.label}
+                </span>
+                {current && (
+                  <span className="mt-0.5 inline-flex items-center rounded-full bg-primary/10 px-1.5 py-0.2 text-[10px] font-semibold text-primary animate-pulse">
+                    In Progress
+                  </span>
                 )}
-              >
-                {step.label}
-              </span>
+              </div>
             </div>
             {index < TRACKING_STEPS.length - 1 && (
-              <div
-                className={cn(
-                  "mt-4 h-0.5 flex-1 transition-colors",
-                  index < activeIndex || status === "Claimed" ? "bg-primary" : "bg-border",
-                )}
-              />
+              <div className="relative mt-5 h-1 flex-1 mx-1 rounded-full bg-border overflow-hidden">
+                <div
+                  className={cn(
+                    "h-full rounded-full transition-all duration-500",
+                    index < activeIndex || status === "Claimed"
+                      ? "w-full bg-primary"
+                      : index === activeIndex
+                        ? "w-1/2 bg-primary/70 animate-pulse"
+                        : "w-0",
+                  )}
+                />
+              </div>
             )}
           </div>
         );

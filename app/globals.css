@@ -162,3 +162,45 @@
   border-color: hsl(255 15% 18%) !important; /* matches --border in dark mode */
   color: hsl(255 15% 90%) !important; /* matches --foreground in dark mode */
 }
+
+/* Tracking Stepper Custom Animations */
+@keyframes stage-spin-slow {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes stage-gentle-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes stage-sparkle-pulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 2px rgba(16, 185, 129, 0.4));
+  }
+  50% {
+    transform: scale(1.15);
+    filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.8));
+  }
+}
+
+.animate-stage-spin {
+  animation: stage-spin-slow 2.8s linear infinite;
+}
+
+.animate-stage-bounce {
+  animation: stage-gentle-bounce 1.8s ease-in-out infinite;
+}
+
+.animate-stage-sparkle {
+  animation: stage-sparkle-pulse 2s ease-in-out infinite;
+}
