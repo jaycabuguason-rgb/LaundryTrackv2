@@ -265,8 +265,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\print-receipt-modal.tsx": {
-    "mtime": 1789367604.0091114,
-    "ast_hash": "0c3464c00008f19e6cf36a023b11b1ba",
+    "mtime": 1789368147.6156607,
+    "ast_hash": "dfc2ec685637a58903341cfa6adf93d4",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pwa-init.tsx": {
@@ -1595,13 +1595,23 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\receipt-pdf.tsx": {
-    "mtime": 1789367525.0158584,
-    "ast_hash": "ffdc2062e00fd52d02084a869d63d854",
+    "mtime": 1789368171.9421296,
+    "ast_hash": "cbd95328e3bd76da9744c1bffc8b374e",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\qr-ticket.ts": {
     "mtime": 1789367536.184215,
     "ast_hash": "c63bbdd9300a465a46bff6267f85c01c",
+    "semantic_hash": ""
+  },
+  "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\receipt-breakdown.ts": {
+    "mtime": 1789367846.830119,
+    "ast_hash": "824a572b236a8ce3ca36d23dbd88ab2e",
+    "semantic_hash": ""
+  },
+  "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\__tests__\\receipt-breakdown.test.ts": {
+    "mtime": 1789368284.331439,
+    "ast_hash": "f1c96448d8eae15de8c67f03f1824138",
     "semantic_hash": ""
   }
 }

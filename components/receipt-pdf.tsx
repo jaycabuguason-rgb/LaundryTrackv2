@@ -12,6 +12,7 @@ import {
 import type { Transaction } from "@/lib/data";
 import type { BusinessProfile } from "@/lib/settings-store";
 import { formatReadableDateTime } from "@/lib/date-format";
+import { getReceiptCostBreakdown } from "@/lib/receipt-breakdown";
 
 const S = StyleSheet.create({
   page: {
@@ -74,6 +75,20 @@ const S = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#f3f4f6",
     paddingBottom: 6,
+  },
+  sectionTitle: {
+    fontSize: 7.5,
+    fontFamily: "Helvetica-Bold",
+    color: "#4b5563",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  subDetail: {
+    fontSize: 7.5,
+    color: "#6b7280",
+    marginBottom: 3,
+    paddingLeft: 4,
   },
   row: {
     flexDirection: "row",
@@ -184,10 +199,11 @@ interface ReceiptDocumentProps {
 
 export function ReceiptDocument({ transaction, profile, qrUrl }: ReceiptDocumentProps) {
   const isPaid = transaction.paymentStatus === "paid";
+  const breakdown = getReceiptCostBreakdown(transaction);
 
   return (
     <Document title={`Receipt #${transaction.ticketId}`}>
-      <Page size={[226.77, 560]} style={S.page}>
+      <Page size={[226.77, 650]} style={S.page}>
         {/* Header */}
         <View style={S.header}>
           {profile.logoDataUrl ? (
@@ -255,10 +271,28 @@ export function ReceiptDocument({ transaction, profile, qrUrl }: ReceiptDocument
           ) : null}
         </View>
 
+        {/* Cost Breakdown */}
+        <View style={S.section}>
+          <Text style={S.sectionTitle}>Cost Breakdown</Text>
+          <View style={S.row}>
+            <Text style={S.label}>{breakdown.serviceName}</Text>
+            <Text style={S.boldValue}>PHP {breakdown.serviceAmount.toFixed(2)}</Text>
+          </View>
+          {breakdown.serviceDetail ? (
+            <Text style={S.subDetail}>({breakdown.serviceDetail})</Text>
+          ) : null}
+          {breakdown.addOns.map((addon) => (
+            <View key={addon.name} style={S.row}>
+              <Text style={S.label}>+ Add-on: {addon.name}</Text>
+              <Text style={S.value}>PHP {addon.rate.toFixed(2)}</Text>
+            </View>
+          ))}
+        </View>
+
         {/* Total & Payment */}
         <View style={S.totalBand}>
           <Text style={S.totalLabel}>TOTAL AMOUNT</Text>
-          <Text style={S.totalAmount}>PHP {transaction.fee}</Text>
+          <Text style={S.totalAmount}>PHP {transaction.fee.toFixed(2)}</Text>
         </View>
 
         <View style={S.row}>

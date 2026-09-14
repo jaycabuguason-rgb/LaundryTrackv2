@@ -8,6 +8,7 @@ import { type Transaction } from "@/lib/data";
 import { formatReadableDateTime } from "@/lib/date-format";
 import { loadBusinessProfile, type BusinessProfile } from "@/lib/settings-store";
 import { downloadQrCodeImage, printQrTicketOnly } from "@/lib/qr-ticket";
+import { getReceiptCostBreakdown } from "@/lib/receipt-breakdown";
 
 interface PrintReceiptModalProps {
   open: boolean;
@@ -57,7 +58,7 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
 
   if (!transaction) return null;
 
-  const baseFee = transaction.fee;
+  const breakdown = getReceiptCostBreakdown(transaction);
   const origin = typeof window !== "undefined" ? window.location.origin : "https://laundrytrack.ph";
   const trackingPath = transaction.publicTrackingToken
     ? `/track/${transaction.publicTrackingToken}`
@@ -137,15 +138,23 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
 
         <!-- Pricing Breakdown -->
         <div class="row">
-          <span class="label">Base Service Fee</span>
-          <span class="value">&#8369;${baseFee.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          <span class="label bold">COST BREAKDOWN</span>
         </div>
-        ${transaction.addOns && transaction.addOns.length > 0 ? `
-          <div class="row">
-            <span class="label">+ Add-ons</span>
-            <span class="value">Included</span>
+        <div class="row">
+          <span class="label">${breakdown.serviceName}</span>
+          <span class="value">&#8369;${breakdown.serviceAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        </div>
+        ${breakdown.serviceDetail ? `
+          <div class="row" style="font-size: 9.5px; color: #333; padding-left: 4px; margin-top: -2px;">
+            <span>(${breakdown.serviceDetail})</span>
           </div>
         ` : ""}
+        ${breakdown.addOns.map((addon) => `
+          <div class="row">
+            <span class="label">+ Add-on: ${addon.name}</span>
+            <span class="value">&#8369;${addon.rate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          </div>
+        `).join("")}
         <div class="divider-solid"></div>
         <div class="row row-total">
           <span class="bold">TOTAL AMOUNT:</span>
@@ -705,16 +714,22 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
             <div className="border-t border-dashed border-black my-1.5" />
 
             {/* Fee Breakdown */}
+            <div className="text-[10px] font-bold text-neutral-800 uppercase tracking-wider mb-1">Cost Breakdown</div>
             <div className="flex justify-between text-[11px] my-0.5">
-              <span>Base Service Fee</span>
-              <span>&#8369;{baseFee.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span>{breakdown.serviceName}</span>
+              <span>&#8369;{breakdown.serviceAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
-            {transaction.addOns && transaction.addOns.length > 0 && (
-              <div className="flex justify-between text-[10px] text-neutral-700 my-0.5">
-                <span>+ Add-ons</span>
-                <span>Included</span>
+            {breakdown.serviceDetail && (
+              <div className="text-[9.5px] text-neutral-500 pl-1 -mt-0.5 mb-1">
+                ({breakdown.serviceDetail})
               </div>
             )}
+            {breakdown.addOns.map((addon) => (
+              <div key={addon.name} className="flex justify-between text-[10px] text-neutral-700 my-0.5">
+                <span>+ Add-on: {addon.name}</span>
+                <span>&#8369;{addon.rate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              </div>
+            ))}
             <div className="border-t border-black my-1" />
             <div className={`flex justify-between font-bold ${is58 ? "text-xs" : "text-sm"} my-1`}>
               <span>TOTAL AMOUNT:</span>
