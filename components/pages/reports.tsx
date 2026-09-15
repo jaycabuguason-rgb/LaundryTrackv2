@@ -3,8 +3,11 @@
 import { useMemo, useState } from "react";
 import {
   CalendarIcon,
+  Clock,
+  CloudRain,
   Download,
   FileText,
+  Lightbulb,
   PieChart as PieChartIcon,
   TrendingUp,
 } from "lucide-react";
@@ -15,6 +18,8 @@ import {
   CartesianGrid,
   Cell,
   Legend,
+  Line,
+  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -28,15 +33,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Transaction } from "@/lib/data";
 import { statusColors } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
 type ExportSection = "transactions" | "analytics" | "customers";
+type ForecastRange = "7d" | "30d" | "3m" | "6m" | "custom";
 
 type ReportsPageProps = {
   transactions: Transaction[];
+  shopName?: string;
 };
 
 type ServiceRevenueRow = {
@@ -52,6 +60,19 @@ const exportOptions: Array<{ id: ExportSection; label: string }> = [
 ];
 
 const PIE_COLORS = ["#2563eb", "#0f766e", "#f59e0b", "#dc2626", "#7c3aed", "#475569"];
+const BUSY_BAR = "#1e3a8a";
+const NORMAL_BAR = "#93c5fd";
+const MUTED_BAR = "#cbd5e1";
+const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const ORDERED_DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const FORECAST_HOURS = Array.from({ length: 16 }, (_, index) => index + 6);
+const forecastRangeOptions: Array<{ value: ForecastRange; label: string }> = [
+  { value: "7d", label: "Last 7 days" },
+  { value: "30d", label: "Last 30 days" },
+  { value: "3m", label: "Last 3 months" },
+  { value: "6m", label: "Last 6 months" },
+  { value: "custom", label: "Custom range" },
+];
 
 function formatCurrency(value: number) {
   return `₱${value.toLocaleString()}`;
@@ -70,6 +91,195 @@ function getHourLabel(transaction: Transaction) {
 
 function getDateKey(transaction: Transaction) {
   return transaction.dropOffDate;
+}
+
+function getDateOnly(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function toDateKey(date: Date) {
+  return format(date, "yyyy-MM-dd");
+}
+
+function parseDateKey(dateKey: string) {
+  return new Date(`${dateKey}T00:00:00`);
+}
+
+function addDays(date: Date, days: number) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function subMonthsLocal(date: Date, months: number) {
+  const next = new Date(date);
+  next.setMonth(next.getMonth() - months);
+  return next;
+}
+
+function getForecastRangeDates(range: ForecastRange, customFrom: Date, customTo: Date) {
+  const today = getDateOnly(new Date());
+  if (range === "custom") {
+    const from = getDateOnly(customFrom);
+    const to = getDateOnly(customTo);
+    return from <= to ? { from, to } : { from: to, to: from };
+  }
+
+  if (range === "7d") return { from: subDays(today, 6), to: today };
+  if (range === "30d") return { from: subDays(today, 29), to: today };
+  if (range === "3m") return { from: subMonthsLocal(today, 3), to: today };
+  return { from: subMonthsLocal(today, 6), to: today };
+}
+
+function getInclusiveDayCount(from: Date, to: Date) {
+  return Math.max(1, Math.floor((getDateOnly(to).getTime() - getDateOnly(from).getTime()) / 86400000) + 1);
+}
+
+function getDayOccurrences(from: Date, to: Date) {
+  const counts = new Map<string, number>(DAY_LABELS.map((label) => [label, 0]));
+  for (let day = getDateOnly(from); day <= to; day = addDays(day, 1)) {
+    const label = DAY_LABELS[day.getDay()];
+    counts.set(label, (counts.get(label) ?? 0) + 1);
+  }
+  return counts;
+}
+
+function getArrivalHour(transaction: Transaction) {
+  const match = transaction.arrivalDateTime.match(/\b(\d{1,2}):(\d{2})\b/);
+  if (!match) return null;
+  const hour = Number(match[1]);
+  return Number.isInteger(hour) && hour >= 0 && hour <= 23 ? hour : null;
+}
+
+function formatHour(hour: number) {
+  const suffix = hour >= 12 ? "PM" : "AM";
+  const normalizedHour = hour % 12 === 0 ? 12 : hour % 12;
+  return `${normalizedHour}${suffix}`;
+}
+
+function getWeekOfMonth(date: Date) {
+  return Math.min(4, Math.floor((date.getDate() - 1) / 7) + 1);
+}
+
+function formatWindow(startHour: number, endHour: number) {
+  return `${formatHour(startHour)} - ${formatHour(endHour)}`;
+}
+
+function getPeakWindows(hourData: Array<{ hour: number; count: number }>) {
+  const max = Math.max(...hourData.map((item) => item.count), 0);
+  if (max === 0) return { peak: "-", secondPeak: "-" };
+
+  const threshold = Math.max(1, Math.ceil(max * 0.75));
+  const peakHours = new Set(hourData.filter((item) => item.count >= threshold).map((item) => item.hour));
+  const windows: Array<{ start: number; end: number; total: number }> = [];
+
+  for (const item of hourData) {
+    if (!peakHours.has(item.hour)) continue;
+    const previous = windows[windows.length - 1];
+    if (previous && previous.end + 1 === item.hour) {
+      previous.end = item.hour;
+      previous.total += item.count;
+    } else {
+      windows.push({ start: item.hour, end: item.hour, total: item.count });
+    }
+  }
+
+  const ranked = windows.sort((a, b) => b.total - a.total);
+  const fallback = [...hourData].sort((a, b) => b.count - a.count);
+  const peak = ranked[0] ? formatWindow(ranked[0].start, ranked[0].end + 1) : formatWindow(fallback[0].hour, fallback[0].hour + 1);
+  const secondPeak = ranked[1]
+    ? formatWindow(ranked[1].start, ranked[1].end + 1)
+    : fallback.find((item) => !ranked[0] || Math.abs(item.hour - ranked[0].start) > 1)?.hour;
+
+  return {
+    peak,
+    secondPeak: typeof secondPeak === "number" ? formatWindow(secondPeak, secondPeak + 1) : secondPeak || "-",
+  };
+}
+
+function buildForecastMetrics(transactions: Transaction[], from: Date, to: Date) {
+  const fromKey = toDateKey(from);
+  const toKey = toDateKey(to);
+  const rangeTransactions = transactions.filter((transaction) => {
+    const dateKey = getDateKey(transaction);
+    return dateKey >= fromKey && dateKey <= toKey;
+  });
+  const totalDays = getInclusiveDayCount(from, to);
+  const dayOccurrences = getDayOccurrences(from, to);
+  const dayCounts = new Map<string, number>(DAY_LABELS.map((label) => [label, 0]));
+  const hourCounts = new Map<number, number>(FORECAST_HOURS.map((hour) => [hour, 0]));
+  const weekCounts = new Map<number, number>([1, 2, 3, 4].map((week) => [week, 0]));
+
+  for (const transaction of rangeTransactions) {
+    const transactionDate = parseDateKey(transaction.dropOffDate);
+    const dayLabel = DAY_LABELS[transactionDate.getDay()];
+    dayCounts.set(dayLabel, (dayCounts.get(dayLabel) ?? 0) + 1);
+    weekCounts.set(getWeekOfMonth(transactionDate), (weekCounts.get(getWeekOfMonth(transactionDate)) ?? 0) + 1);
+
+    const hour = getArrivalHour(transaction);
+    if (hour !== null && hourCounts.has(hour)) {
+      hourCounts.set(hour, (hourCounts.get(hour) ?? 0) + 1);
+    }
+  }
+
+  const busyDays = ORDERED_DAY_LABELS.map((label) => ({
+    label,
+    customers: Math.round((dayCounts.get(label) ?? 0) / Math.max(dayOccurrences.get(label) ?? 1, 1)),
+    total: dayCounts.get(label) ?? 0,
+  }));
+  const rankedDays = [...busyDays].sort((a, b) => b.customers - a.customers || b.total - a.total);
+  const slowestDays = [...busyDays].sort((a, b) => a.customers - b.customers || a.total - b.total);
+  const busiestDay = rankedDays[0]?.label ?? "-";
+  const slowestDay = slowestDays[0]?.label ?? "-";
+  const busiestTotal = rankedDays[0]?.total ?? 0;
+  const averageDayTotal = rangeTransactions.length / Math.max(ORDERED_DAY_LABELS.length, 1);
+  const staffLift = averageDayTotal > 0 ? Math.round(((busiestTotal - averageDayTotal) / averageDayTotal) * 100) : 0;
+
+  const busyHours = FORECAST_HOURS.map((hour) => ({
+    hour,
+    label: formatHour(hour),
+    customers: Math.round((hourCounts.get(hour) ?? 0) / totalDays),
+    count: hourCounts.get(hour) ?? 0,
+  }));
+  const { peak, secondPeak } = getPeakWindows(busyHours);
+
+  const monthlyTrend = Array.from({ length: 6 }, (_, index) => {
+    const monthDate = subMonthsLocal(new Date(to.getFullYear(), to.getMonth(), 1), 5 - index);
+    const month = `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, "0")}`;
+    return { month, label: format(monthDate, "MMM"), transactions: 0 };
+  });
+  const monthMap = new Map(monthlyTrend.map((item) => [item.month, item]));
+  for (const transaction of rangeTransactions) {
+    const month = transaction.dropOffDate.slice(0, 7);
+    const current = monthMap.get(month);
+    if (current) current.transactions += 1;
+  }
+  const currentMonth = monthlyTrend[monthlyTrend.length - 1]?.transactions ?? 0;
+  const previousMonth = monthlyTrend[monthlyTrend.length - 2]?.transactions ?? 0;
+  const trendPercent = previousMonth > 0 ? Math.round(((currentMonth - previousMonth) / previousMonth) * 100) : currentMonth > 0 ? 100 : 0;
+
+  const rankedWeeks = [...weekCounts.entries()].sort((a, b) => b[1] - a[1]);
+  const busiestWeek = rankedWeeks[0]?.[1] ? rankedWeeks[0][0] : 0;
+  const insight = rangeTransactions.length === 0
+    ? "There is not enough transaction history in this date range to produce a reliable forecast. Add more transactions or widen the date range to reveal customer patterns."
+    : `Based on ${rangeTransactions.length} transactions from ${fromKey} to ${toKey}, your shop is busiest on ${busiestDay}, especially around ${peak}. ${busiestWeek ? `Week ${busiestWeek} of the month is currently the strongest staffing period. ` : ""}Consider adding coverage during these windows to keep drop-offs moving quickly.`;
+
+  return {
+    fromKey,
+    toKey,
+    rangeTransactions,
+    busyDays,
+    busyHours,
+    monthlyTrend,
+    busiestDay,
+    slowestDay,
+    peak,
+    secondPeak,
+    busiestWeek,
+    staffLift,
+    trendPercent,
+    insight,
+  };
 }
 
 function getCustomerSummaryRows(transactions: Transaction[]) {
@@ -92,17 +302,29 @@ function getCustomerSummaryRows(transactions: Transaction[]) {
   return [...customerMap.values()].sort((a, b) => b.spent - a.spent);
 }
 
-export default function ReportsPage({ transactions }: ReportsPageProps) {
+export default function ReportsPage({ transactions, shopName = "LaundryTrack" }: ReportsPageProps) {
   const [summaryDate, setSummaryDate] = useState<Date>(new Date());
   const [exportFromDate, setExportFromDate] = useState<Date>(subDays(new Date(), 30));
   const [exportToDate, setExportToDate] = useState<Date>(new Date());
+  const [forecastRange, setForecastRange] = useState<ForecastRange>("30d");
+  const [forecastFromDate, setForecastFromDate] = useState<Date>(subDays(new Date(), 29));
+  const [forecastToDate, setForecastToDate] = useState<Date>(new Date());
   const [selectedExports, setSelectedExports] = useState<ExportSection[]>(["transactions", "analytics"]);
   const [exportFormat, setExportFormat] = useState<"pdf" | "csv">("pdf");
   const [pdfGenerating, setPdfGenerating] = useState(false);
+  const [forecastPdfGenerating, setForecastPdfGenerating] = useState(false);
 
   const summaryDateKey = format(summaryDate, "yyyy-MM-dd");
   const exportFrom = format(exportFromDate, "yyyy-MM-dd");
   const exportTo = format(exportToDate, "yyyy-MM-dd");
+  const forecastDates = useMemo(
+    () => getForecastRangeDates(forecastRange, forecastFromDate, forecastToDate),
+    [forecastFromDate, forecastRange, forecastToDate],
+  );
+  const forecastMetrics = useMemo(
+    () => buildForecastMetrics(transactions, forecastDates.from, forecastDates.to),
+    [forecastDates.from, forecastDates.to, transactions],
+  );
 
   const filteredTransactions = useMemo(
     () => transactions.filter((transaction) => {
@@ -299,6 +521,36 @@ export default function ReportsPage({ transactions }: ReportsPageProps) {
     }
   };
 
+  const handleForecastPdfExport = async () => {
+    if (forecastPdfGenerating) return;
+
+    setForecastPdfGenerating(true);
+    try {
+      const { downloadForecastReportPdf } = await import("@/components/report-pdf");
+      await downloadForecastReportPdf({
+        shopName,
+        exportFrom: forecastMetrics.fromKey,
+        exportTo: forecastMetrics.toKey,
+        metrics: {
+          busyDays: forecastMetrics.busyDays,
+          busyHours: forecastMetrics.busyHours,
+          monthlyTrend: forecastMetrics.monthlyTrend,
+          busiestDay: forecastMetrics.busiestDay,
+          slowestDay: forecastMetrics.slowestDay,
+          peak: forecastMetrics.peak,
+          secondPeak: forecastMetrics.secondPeak,
+          busiestWeek: forecastMetrics.busiestWeek,
+          staffLift: forecastMetrics.staffLift,
+          trendPercent: forecastMetrics.trendPercent,
+          insight: forecastMetrics.insight,
+          transactionCount: forecastMetrics.rangeTransactions.length,
+        },
+      });
+    } finally {
+      setForecastPdfGenerating(false);
+    }
+  };
+
   return (
     <div className="min-h-[60vh] space-y-4">
       <div className="flex items-center justify-between">
@@ -317,6 +569,7 @@ export default function ReportsPage({ transactions }: ReportsPageProps) {
         <TabsList className="grid h-auto w-full grid-cols-2 gap-1 bg-muted/40 p-1 sm:flex sm:h-9">
           <TabsTrigger value="overview" className="min-h-[40px] text-xs sm:min-h-0">Daily Summary</TabsTrigger>
           <TabsTrigger value="analytics" className="min-h-[40px] text-xs sm:min-h-0">Sales Analytics</TabsTrigger>
+          <TabsTrigger value="forecast" className="min-h-[40px] text-xs sm:min-h-0">Forecast</TabsTrigger>
           <TabsTrigger value="unclaimed" className="min-h-[40px] text-xs sm:min-h-0">Unclaimed Items</TabsTrigger>
           <TabsTrigger value="export" className="min-h-[40px] text-xs sm:min-h-0">Export</TabsTrigger>
         </TabsList>
@@ -646,6 +899,214 @@ export default function ReportsPage({ transactions }: ReportsPageProps) {
                   )}
                 </tbody>
               </table>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="forecast" className="space-y-4">
+        <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3 shadow-none sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">Customer Forecast</h3>
+            <p className="text-xs text-muted-foreground">
+              {forecastMetrics.rangeTransactions.length} transactions from {forecastMetrics.fromKey} to {forecastMetrics.toKey}
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Select value={forecastRange} onValueChange={(value) => setForecastRange(value as ForecastRange)}>
+              <SelectTrigger className="h-9 w-full text-xs sm:w-[170px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {forecastRangeOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              className="h-9 gap-1.5 text-xs"
+              disabled={forecastPdfGenerating}
+              onClick={handleForecastPdfExport}
+            >
+              <FileText className="h-3.5 w-3.5" />
+              {forecastPdfGenerating ? "Exporting..." : "Export Forecast Report"}
+            </Button>
+          </div>
+        </div>
+
+        {forecastRange === "custom" && (
+          <Card className="border border-border shadow-none">
+            <CardContent className="grid gap-3 p-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-foreground">Start Date</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="h-9 w-full justify-start gap-2 text-xs font-normal">
+                      <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                      {format(forecastDates.from, "MMM d, yyyy")}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={forecastDates.from} onSelect={(date) => date && setForecastFromDate(date)} initialFocus />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-foreground">End Date</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="h-9 w-full justify-start gap-2 text-xs font-normal">
+                      <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                      {format(forecastDates.to, "MMM d, yyyy")}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={forecastDates.to} onSelect={(date) => date && setForecastToDate(date)} initialFocus />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <Card className="border border-border shadow-none">
+            <CardContent className="p-4">
+              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <CalendarIcon className="h-3.5 w-3.5" />
+                Best Day to Staff Up
+              </p>
+              <p className="mt-1 text-xl font-bold text-foreground">{forecastMetrics.busiestDay}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {forecastMetrics.staffLift > 0 ? `Expect ${forecastMetrics.staffLift}% more customers` : "No lift detected yet"}
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="border border-border shadow-none">
+            <CardContent className="p-4">
+              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Clock className="h-3.5 w-3.5" />
+                Peak Drop-off Time
+              </p>
+              <p className="mt-1 text-xl font-bold text-foreground">{forecastMetrics.peak}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">Highest volume window</p>
+            </CardContent>
+          </Card>
+          <Card className="border border-border shadow-none">
+            <CardContent className="p-4">
+              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <TrendingUp className="h-3.5 w-3.5" />
+                Busiest Week
+              </p>
+              <p className="mt-1 text-xl font-bold text-foreground">
+                {forecastMetrics.busiestWeek ? `Week ${forecastMetrics.busiestWeek}` : "-"}
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">Strongest monthly pattern</p>
+            </CardContent>
+          </Card>
+          <Card className="border border-border shadow-none">
+            <CardContent className="p-4">
+              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <CloudRain className="h-3.5 w-3.5" />
+                Weather Impact
+              </p>
+              <p className="mt-1 text-xl font-bold text-foreground">Not connected</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">Weather data unavailable</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <Card className="border border-border shadow-none">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold">Predicted Busy Days</CardTitle>
+              <p className="text-xs text-muted-foreground">Based on historical transaction patterns</p>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="h-[260px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={forecastMetrics.busyDays}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                    <XAxis dataKey="label" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                    <Tooltip formatter={(value: number) => [value, "Predicted customers"]} />
+                    <Bar dataKey="customers" radius={[6, 6, 0, 0]}>
+                      {forecastMetrics.busyDays.map((entry) => (
+                        <Cell key={entry.label} fill={entry.label === forecastMetrics.busiestDay ? BUSY_BAR : NORMAL_BAR} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
+                <div className="rounded-md bg-muted/30 p-2.5">Busiest Day: <span className="font-semibold text-foreground">{forecastMetrics.busiestDay}</span></div>
+                <div className="rounded-md bg-muted/30 p-2.5">Slowest Day: <span className="font-semibold text-foreground">{forecastMetrics.slowestDay}</span></div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-border shadow-none">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold">Predicted Peak Hours</CardTitle>
+              <p className="text-xs text-muted-foreground">When most customers drop off laundry</p>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="h-[260px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={forecastMetrics.busyHours} layout="vertical" margin={{ left: 8 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
+                    <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                    <YAxis type="category" dataKey="label" width={42} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                    <Tooltip formatter={(value: number) => [value, "Predicted customers"]} />
+                    <Bar dataKey="customers" radius={[0, 6, 6, 0]}>
+                      {forecastMetrics.busyHours.map((entry) => (
+                        <Cell key={entry.label} fill={forecastMetrics.peak.includes(entry.label) ? BUSY_BAR : MUTED_BAR} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
+                <div className="rounded-md bg-muted/30 p-2.5">Peak Hours: <span className="font-semibold text-foreground">{forecastMetrics.peak}</span></div>
+                <div className="rounded-md bg-muted/30 p-2.5">Second Peak: <span className="font-semibold text-foreground">{forecastMetrics.secondPeak}</span></div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="border border-border shadow-none">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold">Monthly Customer Trend</CardTitle>
+            <p className="text-xs text-muted-foreground">Transaction volume over the past months</p>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="h-[280px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={forecastMetrics.monthlyTrend}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                  <Tooltip formatter={(value: number) => [value, "Transactions"]} />
+                  <Line type="monotone" dataKey="transactions" stroke="#1d4ed8" strokeWidth={2.5} dot={{ r: 4, fill: "#1d4ed8" }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+            <p className={cn("text-sm font-semibold", forecastMetrics.trendPercent >= 0 ? "text-green-600" : "text-red-600")}>
+              {forecastMetrics.trendPercent >= 0 ? "Up" : "Down"} {Math.abs(forecastMetrics.trendPercent)}% vs last month
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border border-blue-100 bg-blue-50 shadow-none">
+          <CardContent className="flex gap-3 p-4">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white">
+              <Lightbulb className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-blue-950">Forecast insight</p>
+              <p className="mt-1 text-sm leading-6 text-blue-900">{forecastMetrics.insight}</p>
             </div>
           </CardContent>
         </Card>
