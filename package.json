@@ -102,11 +102,6 @@
     "vitest": "5.0.0",
     "vitest-axe": "0.1.0"
   },
-  "pnpm": {
-    "overrides": {
-      "postcss": ">=8.5.10"
-    }
-  },
   "overrides": {
     "postcss": "^8.5.14"
   }
