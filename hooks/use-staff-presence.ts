@@ -2,10 +2,11 @@
 
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import type { UserProfile } from "@/lib/auth";
 
 // Shared module-level singleton state to prevent duplicate channels and "cannot add presence callbacks after subscribe()" errors
-let sharedChannel: any = null;
+let sharedChannel: RealtimeChannel | null = null;
 let subscriberCount = 0;
 let currentOnlineKeys = new Set<string>();
 const listeners = new Set<(keys: Set<string>) => void>();
@@ -16,7 +17,7 @@ function notifyListeners() {
   listeners.forEach((listener) => listener(copy));
 }
 
-function updatePresenceFromState(channel: any) {
+function updatePresenceFromState(channel: RealtimeChannel | null) {
   if (!channel || typeof channel.presenceState !== "function") {
     return;
   }
@@ -92,7 +93,7 @@ export function useStaffPresence(currentProfile?: UserProfile | null) {
       if (typeof supabase.getChannels === "function") {
         const existing = supabase
           .getChannels()
-          .find((c: any) => c.topic === "realtime:laundrytrack-staff-presence");
+          .find((c: RealtimeChannel) => c.topic === "realtime:laundrytrack-staff-presence");
         if (existing && typeof supabase.removeChannel === "function") {
           void supabase.removeChannel(existing);
         }
@@ -159,7 +160,7 @@ export function useStaffPresence(currentProfile?: UserProfile | null) {
         }
       }
     };
-  }, [supabase, currentProfile?.id, currentProfile?.username, currentProfile?.email]);
+  }, [supabase, currentProfile]);
 
   const isStaffOnline = useCallback(
     (staff: { id?: string; username?: string; email?: string; isActive?: boolean }): boolean => {
