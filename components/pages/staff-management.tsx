@@ -216,7 +216,7 @@ export default function StaffManagementPage({
 }) {
   const [activeTab, setActiveTab] = useState<"staff" | "audit">(initialTab);
   const { toast } = useToast();
-  const presence = useStaffPresence(currentProfile);
+  const presence = useStaffPresence(isStaffOnlineProp ? undefined : currentProfile);
   const isStaffOnline = isStaffOnlineProp || presence.isStaffOnline;
 
   const {

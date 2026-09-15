@@ -41,6 +41,7 @@ const mockSupabaseClient = {
     };
     return ch;
   }),
+  getChannels: vi.fn(() => []),
   removeChannel: vi.fn(),
 };
 
