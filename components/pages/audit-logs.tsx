@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import type { AuditActionType, AuditLogEntry } from "@/lib/audit-log-contracts";
+import type { UserProfile } from "@/lib/auth";
 import { useAuditLogs } from "@/hooks/use-audit-logs";
 import { Skeleton } from "boneyard-js/react";
 import { cn } from "@/lib/utils";
@@ -531,12 +532,27 @@ function AuditLogsView({ onTabChange }: { onTabChange?: (tab: "staff" | "audit")
   );
 }
 
-export default function AuditLogsPage({ initialTab = "staff" }: { initialTab?: "staff" | "audit" }) {
+export default function AuditLogsPage({
+  initialTab = "staff",
+  currentProfile,
+  isStaffOnline,
+}: {
+  initialTab?: "staff" | "audit";
+  currentProfile?: UserProfile;
+  isStaffOnline?: (staff: { id?: string; username?: string; email?: string; isActive?: boolean }) => boolean;
+}) {
   const [activeTab, setActiveTab] = useState<"staff" | "audit">(initialTab);
 
   if (activeTab === "staff") {
     const StaffManagementPage = require("@/components/pages/staff-management").default;
-    return <StaffManagementPage initialTab="staff" onTabChange={setActiveTab} />;
+    return (
+      <StaffManagementPage
+        initialTab="staff"
+        onTabChange={setActiveTab}
+        currentProfile={currentProfile}
+        isStaffOnline={isStaffOnline}
+      />
+    );
   }
 
   return <AuditLogsView onTabChange={setActiveTab} />;

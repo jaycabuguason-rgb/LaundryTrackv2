@@ -15,6 +15,7 @@ import { toast } from "@/hooks/use-toast";
 import { processSettingsQueue } from "@/lib/offline-settings-sync";
 import { getBrowserAccessToken } from "@/lib/supabase/browser-session";
 import { isOnline, subscribeNetworkStatus } from "@/lib/network-status";
+import { useStaffPresence } from "@/hooks/use-staff-presence";
 
 function PageLoadingFallback() {
   return (
@@ -98,6 +99,7 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
   const [businessProfile, setBusinessProfile] = useState<BusinessProfile>(() => loadBusinessProfile());
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [noticeDismissed, setNoticeDismissed] = useState(false);
+  const { isStaffOnline } = useStaffPresence(adminProfile);
   const {
     transactions: txns,
     loading: transactionsLoading,
@@ -247,7 +249,14 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
         return <SettingsPage page={activePage} loyaltyEnabled={loyaltyEnabled} onLoyaltyEnabledChange={setLoyaltyEnabled} onNavigate={handleNavigate} role={adminProfile.role} />;
       case "staff-management":
       case "audit-logs":
-        return <AuditLogsPage key={activePage} initialTab={activePage === "audit-logs" ? "audit" : "staff"} />;
+        return (
+          <AuditLogsPage
+            key={activePage}
+            initialTab={activePage === "audit-logs" ? "audit" : "staff"}
+            currentProfile={adminProfile}
+            isStaffOnline={isStaffOnline}
+          />
+        );
       case "loyalty":
         if (!loyaltyEnabled) {
           return <DashboardPage transactions={txns} loyaltyEnabled={loyaltyEnabled} onNavigate={handleNavigate} />;

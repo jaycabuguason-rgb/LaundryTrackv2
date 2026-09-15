@@ -17,22 +17,35 @@ vi.mock("next/navigation", () => ({
 }));
 
 // Mock @supabase/ssr browser client
-vi.mock("@/lib/supabase/client", () => ({
-  getSupabaseBrowserClient: vi.fn(() => ({
-    auth: {
-      getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
-      signInWithPassword: vi.fn(),
-      signOut: vi.fn(),
-    },
-    from: vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      insert: vi.fn().mockReturnThis(),
-      update: vi.fn().mockReturnThis(),
-      delete: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ data: null, error: null }),
-    })),
+const mockSupabaseClient = {
+  auth: {
+    getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
+    signInWithPassword: vi.fn(),
+    signOut: vi.fn(),
+  },
+  from: vi.fn(() => ({
+    select: vi.fn().mockReturnThis(),
+    insert: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
+    delete: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    single: vi.fn().mockResolvedValue({ data: null, error: null }),
   })),
+  channel: vi.fn(() => {
+    const ch: Record<string, any> = {
+      on: vi.fn(() => ch),
+      subscribe: vi.fn(() => ch),
+      track: vi.fn().mockResolvedValue("ok"),
+      untrack: vi.fn().mockResolvedValue("ok"),
+      presenceState: vi.fn().mockReturnValue({}),
+    };
+    return ch;
+  }),
+  removeChannel: vi.fn(),
+};
+
+vi.mock("@/lib/supabase/client", () => ({
+  getSupabaseBrowserClient: vi.fn(() => mockSupabaseClient),
 }));
 
 // Suppress console.error for expected error boundaries in tests

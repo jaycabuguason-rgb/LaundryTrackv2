@@ -31,6 +31,7 @@ function mapSupabaseUserToProfile(user: User, profile: ProfileRow | null): UserP
   const fallbackName = email.split("@")[0] || "Admin";
 
   return {
+    id: user.id,
     name:
       profile?.full_name
       ?? (typeof user.user_metadata.full_name === "string" ? user.user_metadata.full_name : null)

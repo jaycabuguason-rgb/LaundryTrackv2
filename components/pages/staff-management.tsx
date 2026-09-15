@@ -52,8 +52,10 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useStaffAccounts } from "@/hooks/use-staff-accounts";
+import { useStaffPresence } from "@/hooks/use-staff-presence";
 import { Skeleton } from "boneyard-js/react";
 import type { CreateStaffAccountInput, StaffAccountSummary } from "@/lib/staff-contracts";
+import type { UserProfile } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 function PasswordField({
@@ -167,13 +169,7 @@ export function RoleBadge({ role = "Staff" }: { role?: string }) {
       </Badge>
     );
   }
-  if (normalized === "cashier") {
-    return (
-      <Badge className="border-blue-200 bg-blue-100 text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-300 font-medium px-2 py-0.5 text-xs border">
-        Cashier
-      </Badge>
-    );
-  }
+  // Staff and Cashier are treated as one (Staff)
   return (
     <Badge className="border-teal-200 bg-teal-100 text-teal-700 dark:border-teal-800 dark:bg-teal-900/30 dark:text-teal-300 font-medium px-2 py-0.5 text-xs border">
       Staff
@@ -182,7 +178,7 @@ export function RoleBadge({ role = "Staff" }: { role?: string }) {
 }
 
 export function ShiftStatusBadge({ status }: { status?: string }) {
-  const normalized = (status || "On Shift").toLowerCase();
+  const normalized = (status || "Off Duty").toLowerCase();
   if (normalized.includes("break")) {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
@@ -191,7 +187,7 @@ export function ShiftStatusBadge({ status }: { status?: string }) {
       </span>
     );
   }
-  if (normalized.includes("off")) {
+  if (normalized.includes("off") || normalized.includes("inactive")) {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
         <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />
@@ -210,12 +206,19 @@ export function ShiftStatusBadge({ status }: { status?: string }) {
 export default function StaffManagementPage({
   initialTab = "staff",
   onTabChange,
+  currentProfile,
+  isStaffOnline: isStaffOnlineProp,
 }: {
   initialTab?: "staff" | "audit";
   onTabChange?: (tab: "staff" | "audit") => void;
+  currentProfile?: UserProfile;
+  isStaffOnline?: (staff: { id?: string; username?: string; email?: string; isActive?: boolean }) => boolean;
 }) {
   const [activeTab, setActiveTab] = useState<"staff" | "audit">(initialTab);
   const { toast } = useToast();
+  const presence = useStaffPresence(currentProfile);
+  const isStaffOnline = isStaffOnlineProp || presence.isStaffOnline;
+
   const {
     staff,
     loading,
@@ -235,7 +238,6 @@ export default function StaffManagementPage({
   const [addPhone, setAddPhone] = useState("");
   const [addEmail, setAddEmail] = useState("");
   const [addRole, setAddRole] = useState<string>("Staff");
-  const [addShiftStatus, setAddShiftStatus] = useState<string>("On Shift");
   const [addPassword, setAddPassword] = useState("");
   const [addConfirmPassword, setAddConfirmPassword] = useState("");
   const [addErrors, setAddErrors] = useState<Record<string, string>>({});
@@ -248,7 +250,6 @@ export default function StaffManagementPage({
   const [editPhone, setEditPhone] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editRole, setEditRole] = useState<string>("Staff");
-  const [editShiftStatus, setEditShiftStatus] = useState<string>("On Shift");
   const [editActive, setEditActive] = useState(true);
   const [editError, setEditError] = useState<string | null>(null);
   const [editSubmitting, setEditSubmitting] = useState(false);
@@ -263,34 +264,30 @@ export default function StaffManagementPage({
   const [deactivateTarget, setDeactivateTarget] = useState<StaffAccountSummary | null>(null);
   const [deactivateSubmitting, setDeactivateSubmitting] = useState(false);
 
-  // Maintain local metadata overrides for role and shift status per staff member ID
-  const [staffMeta, setStaffMeta] = useState<Record<string, { role?: string; shiftStatus?: string }>>({});
+  // Maintain local metadata overrides for role per staff member ID
+  const [staffMeta, setStaffMeta] = useState<Record<string, { role?: string }>>({});
 
   const getStaffRole = useCallback((staffAccount: StaffAccountSummary): string => {
     if (staffMeta[staffAccount.id]?.role) {
-      return staffMeta[staffAccount.id].role!;
+      const r = staffMeta[staffAccount.id].role!;
+      return r.toLowerCase() === "cashier" ? "Staff" : r;
     }
     if (staffAccount.role) {
-      return staffAccount.role;
+      return staffAccount.role.toLowerCase() === "cashier" ? "Staff" : staffAccount.role;
     }
     if (staffAccount.username.toLowerCase().includes("admin") || staffAccount.email.toLowerCase().includes("admin")) {
       return "Admin";
     }
-    if (staffAccount.username.toLowerCase().includes("cashier")) {
-      return "Cashier";
-    }
     return "Staff";
   }, [staffMeta]);
 
-  const getStaffShiftStatus = useCallback((staffAccount: StaffAccountSummary): string => {
-    if (staffMeta[staffAccount.id]?.shiftStatus) {
-      return staffMeta[staffAccount.id].shiftStatus!;
+  const getStaffShiftStatus = useCallback((staffAccount: StaffAccountSummary): "On Shift" | "Off Duty" => {
+    if (!staffAccount.isActive) {
+      return "Off Duty";
     }
-    if (staffAccount.shiftStatus) {
-      return staffAccount.shiftStatus;
-    }
-    return staffAccount.isActive ? "On Shift" : "Off Duty";
-  }, [staffMeta]);
+    // Only seen as active ("On Shift") if the staff member is online and active in real-time
+    return isStaffOnline(staffAccount) ? "On Shift" : "Off Duty";
+  }, [isStaffOnline]);
 
   const handleTabSwitch = (tab: "staff" | "audit") => {
     setActiveTab(tab);
@@ -321,7 +318,6 @@ export default function StaffManagementPage({
     setAddPhone("");
     setAddEmail("");
     setAddRole("Staff");
-    setAddShiftStatus("On Shift");
     setAddPassword("");
     setAddConfirmPassword("");
     setAddErrors({});
@@ -379,7 +375,7 @@ export default function StaffManagementPage({
       const staffAccount = await createStaff(payload);
       setStaffMeta((prev) => ({
         ...prev,
-        [staffAccount.id]: { role: addRole, shiftStatus: addShiftStatus },
+        [staffAccount.id]: { role: addRole },
       }));
       setAddOpen(false);
       resetAddForm();
@@ -402,7 +398,6 @@ export default function StaffManagementPage({
     setEditPhone(staffAccount.phoneNumber);
     setEditEmail(staffAccount.email);
     setEditRole(getStaffRole(staffAccount));
-    setEditShiftStatus(getStaffShiftStatus(staffAccount));
     setEditActive(staffAccount.isActive);
     setEditError(null);
     setEditOpen(true);
@@ -439,7 +434,7 @@ export default function StaffManagementPage({
       });
       setStaffMeta((prev) => ({
         ...prev,
-        [editTarget.id]: { role: editRole, shiftStatus: editShiftStatus },
+        [editTarget.id]: { role: editRole },
       }));
       setEditOpen(false);
       setEditTarget(null);
@@ -508,12 +503,6 @@ export default function StaffManagementPage({
         email: deactivateTarget.email,
         isActive: !deactivateTarget.isActive,
       });
-      if (!updated.isActive) {
-        setStaffMeta((prev) => ({
-          ...prev,
-          [deactivateTarget.id]: { ...prev[deactivateTarget.id], shiftStatus: "Off Duty" },
-        }));
-      }
       setDeactivateTarget(null);
       toast({
         title: updated.isActive ? "Staff account reactivated" : "Staff account deactivated",
@@ -900,23 +889,16 @@ export default function StaffManagementPage({
                   <SelectContent>
                     <SelectItem value="Admin">Admin (Purple)</SelectItem>
                     <SelectItem value="Staff">Staff (Teal)</SelectItem>
-                    <SelectItem value="Cashier">Cashier (Blue)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
                 <Label className="mb-1.5 block text-xs font-medium">Shift Status</Label>
-                <Select value={addShiftStatus} onValueChange={setAddShiftStatus}>
-                  <SelectTrigger className="h-9 text-sm">
-                    <SelectValue placeholder="Select shift status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="On Shift">On Shift (Green)</SelectItem>
-                    <SelectItem value="On Break">On Break (Amber)</SelectItem>
-                    <SelectItem value="Off Duty">Off Duty (Gray)</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex h-9 items-center justify-between rounded-md border border-input bg-muted/40 px-3 text-xs">
+                  <ShiftStatusBadge status="Off Duty" />
+                  <span className="text-[11px] text-muted-foreground">Real-time</span>
+                </div>
               </div>
             </div>
 
@@ -965,7 +947,7 @@ export default function StaffManagementPage({
             <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-3.5 py-2.5">
               <div className="flex items-center gap-2">
                 <RoleBadge role={addRole} />
-                <ShiftStatusBadge status={addShiftStatus} />
+                <ShiftStatusBadge status="Off Duty" />
               </div>
               <span className="text-xs text-muted-foreground">Badge Preview</span>
             </div>
@@ -1018,23 +1000,18 @@ export default function StaffManagementPage({
                   <SelectContent>
                     <SelectItem value="Admin">Admin (Purple)</SelectItem>
                     <SelectItem value="Staff">Staff (Teal)</SelectItem>
-                    <SelectItem value="Cashier">Cashier (Blue)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
                 <Label className="mb-1.5 block text-xs font-medium">Shift Status</Label>
-                <Select value={editShiftStatus} onValueChange={setEditShiftStatus}>
-                  <SelectTrigger className="h-9 text-sm">
-                    <SelectValue placeholder="Select shift status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="On Shift">On Shift (Green)</SelectItem>
-                    <SelectItem value="On Break">On Break (Amber)</SelectItem>
-                    <SelectItem value="Off Duty">Off Duty (Gray)</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex h-9 items-center justify-between rounded-md border border-input bg-muted/40 px-3 text-xs">
+                  <ShiftStatusBadge status={editTarget ? getStaffShiftStatus(editTarget) : "Off Duty"} />
+                  <span className="text-[11px] text-muted-foreground">
+                    {editTarget && isStaffOnline(editTarget) ? "Active Now" : "Offline"}
+                  </span>
+                </div>
               </div>
             </div>
 

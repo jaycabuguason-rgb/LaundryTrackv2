@@ -245,8 +245,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\app-shell.tsx": {
-    "mtime": 1789427708.3398361,
-    "ast_hash": "d488e130527ec2d693914f96d9672ef6",
+    "mtime": 1789430471.2461033,
+    "ast_hash": "99cd5c6d5904b23b4386274c915dc1dc",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\mobile-bottom-nav.tsx": {
@@ -320,8 +320,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pages\\audit-logs.tsx": {
-    "mtime": 1789428085.0568814,
-    "ast_hash": "e07b98e6c3efc54afa78be57f53222c8",
+    "mtime": 1789430451.3162231,
+    "ast_hash": "564715c7e45250cf65c243650d14bd33",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pages\\claim-verification.tsx": {
@@ -380,8 +380,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pages\\staff-management.tsx": {
-    "mtime": 1789428085.0588782,
-    "ast_hash": "fb1361a99bba71a15404e52eae1c0d5a",
+    "mtime": 1789430432.5960734,
+    "ast_hash": "b9f628151f6e5fd4af31207d1b584fa8",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pages\\transactions.tsx": {
@@ -710,8 +710,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\admin-auth.ts": {
-    "mtime": 1779652981.0,
-    "ast_hash": "e1e00422f75344a687ccd74f153cc914",
+    "mtime": 1789430516.4639928,
+    "ast_hash": "3da727d08c840eee1e07e0d8524c625b",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\audit-log-contracts.ts": {
@@ -720,8 +720,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\auth.ts": {
-    "mtime": 1779652981.0,
-    "ast_hash": "de60a9856cc18f9fef987804e457df56",
+    "mtime": 1789430508.6270547,
+    "ast_hash": "76181db07e94639a14f4433f6bcc1fa6",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\business-profile.ts": {
@@ -770,8 +770,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\staff-contracts.ts": {
-    "mtime": 1788313066.8209646,
-    "ast_hash": "142d4b5d113248947ebed660886f832c",
+    "mtime": 1789430192.9494817,
+    "ast_hash": "a7d1239e2395ff0b5b6ddaae06f722b7",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\supabase.ts": {
@@ -1495,8 +1495,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\vitest.setup.ts": {
-    "mtime": 1788946090.6030977,
-    "ast_hash": "1f915e917dc0a5a8fe4a7a1dd5b07290",
+    "mtime": 1789437288.013409,
+    "ast_hash": "fc07fb667632d391988717c07864645e",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\__tests__\\status-badge.test.tsx": {
@@ -1632,6 +1632,16 @@
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\__tests__\\transactions-click.test.tsx": {
     "mtime": 1789427708.3498356,
     "ast_hash": "9fbc3b2e81ec1f0eefb677aba2115569",
+    "semantic_hash": ""
+  },
+  "E:\\sample project\\LaundryTrackv2-pr-11\\components\\__tests__\\staff-roles-presence.test.tsx": {
+    "mtime": 1789431643.4501019,
+    "ast_hash": "d7bbfc21e0aa8c197e44593f2c7ef12c",
+    "semantic_hash": ""
+  },
+  "E:\\sample project\\LaundryTrackv2-pr-11\\hooks\\use-staff-presence.ts": {
+    "mtime": 1789437279.2823784,
+    "ast_hash": "0c1ef681b179ee581d04d9c35f544f73",
     "semantic_hash": ""
   }
 }
