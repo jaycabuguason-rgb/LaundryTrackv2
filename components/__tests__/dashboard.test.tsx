@@ -95,5 +95,35 @@ describe("Dashboard Accessibility & Responsiveness", () => {
     const tabularElements = container.querySelectorAll(".tabular-nums");
     expect(tabularElements.length).toBeGreaterThanOrEqual(5);
   });
+
+  it("renders mobile view components including quick actions and mobile order cards", () => {
+    const onNavigate = vi.fn();
+    render(<DashboardPage transactions={mockTransactions} onNavigate={onNavigate} />);
+
+    // Mobile header indicators
+    expect(screen.getByText("Today at a glance")).toBeInTheDocument();
+    expect(screen.getByText("Live Sync")).toBeInTheDocument();
+    expect(screen.getByText(/operational metrics/i)).toBeInTheDocument();
+
+    // Mobile quick action buttons
+    const scanBtn = screen.getByRole("button", { name: /scan qr/i });
+    const intakeBtn = screen.getByRole("button", { name: /intake order/i });
+    expect(scanBtn).toBeInTheDocument();
+    expect(intakeBtn).toBeInTheDocument();
+
+    fireEvent.click(scanBtn);
+    expect(onNavigate).toHaveBeenCalledWith("claim-verification");
+
+    fireEvent.click(intakeBtn);
+    expect(onNavigate).toHaveBeenCalledWith("new-transaction");
+
+    // Mobile order card accessibility and interaction
+    const mobileCard = screen.getByLabelText(/order #1001 details for alice santos/i);
+    expect(mobileCard).toHaveAttribute("role", "button");
+    expect(mobileCard).toHaveAttribute("tabIndex", "0");
+
+    fireEvent.click(mobileCard);
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
 });
 

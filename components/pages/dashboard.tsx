@@ -16,6 +16,8 @@ import {
   Inbox,
   RotateCw,
   Wind,
+  QrCode,
+  Layers,
 } from "lucide-react";
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -102,222 +104,223 @@ export default function DashboardPage({
 
   return (
     <div className="space-y-5 max-w-7xl mx-auto pb-10">
-      {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-xs font-semibold text-primary">{businessProfile.shopName || "Sunshine Laundry Shop"}</p>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground mt-0.5">Dashboard</h1>
-          <p className="text-xs text-muted-foreground mt-1">
-            Today at a glance — {businessProfile.shopName || "Sunshine Laundry Shop"}
-          </p>
+      {/* ─────────────────────────────────────────────────────────────────────── */}
+      {/* HEADER: Responsive (Mobile Concept & Desktop) */}
+      {/* ─────────────────────────────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-3">
+        {/* Desktop Header */}
+        <div className="hidden sm:flex sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold text-primary">{businessProfile.shopName || "Sunshine Laundry Shop"}</p>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground mt-0.5">Dashboard</h1>
+            <p className="text-xs text-muted-foreground mt-1">
+              Today at a glance — {businessProfile.shopName || "Sunshine Laundry Shop"}
+            </p>
+          </div>
+          {onNavigate && (
+            <Button
+              onClick={() => onNavigate("new-transaction")}
+              className="gap-2 shrink-0 shadow-xs cursor-pointer"
+            >
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              New order
+            </Button>
+          )}
         </div>
+
+        {/* Mobile Header (matches mobile concept reference) */}
+        <div className="flex items-center justify-between sm:hidden">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xl font-bold tracking-tight text-foreground">Today at a glance</span>
+              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-secondary text-secondary-foreground text-xs font-bold" aria-hidden="true">
+                ✨
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground truncate mt-0.5">
+              Live operational summary for {businessProfile.shopName || "Sunshine Laundry"}
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5 bg-muted/60 dark:bg-muted/30 px-2.5 py-1 rounded-full shadow-xs shrink-0">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[11px] font-semibold text-foreground">Live Sync</span>
+          </div>
+        </div>
+
+        {/* Mobile Quick Action Buttons: Scan QR + Intake Order */}
         {onNavigate && (
-          <Button
-            onClick={() => onNavigate("new-transaction")}
-            className="gap-2 shrink-0 w-full sm:w-auto shadow-xs cursor-pointer"
-          >
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            New order
-          </Button>
+          <div className="grid grid-cols-2 gap-2.5 sm:hidden mt-0.5">
+            <button
+              type="button"
+              onClick={() => onNavigate("claim-verification")}
+              className="flex items-center gap-2.5 p-3 rounded-2xl bg-card border border-border/70 shadow-xs active:scale-[0.98] transition-transform text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <div className="w-9 h-9 rounded-xl bg-secondary text-secondary-foreground flex items-center justify-center shrink-0">
+                <QrCode className="w-5 h-5" aria-hidden="true" />
+              </div>
+              <div className="min-w-0">
+                <span className="block text-xs font-bold text-foreground truncate">Scan QR</span>
+                <span className="block text-[10px] text-muted-foreground truncate">Instant pickup</span>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => onNavigate("new-transaction")}
+              className="flex items-center gap-2.5 p-3 rounded-2xl bg-primary text-primary-foreground shadow-xs active:scale-[0.98] transition-transform text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <div className="w-9 h-9 rounded-xl bg-white/20 text-white flex items-center justify-center shrink-0">
+                <Plus className="w-5 h-5" aria-hidden="true" />
+              </div>
+              <div className="min-w-0">
+                <span className="block text-xs font-bold text-primary-foreground truncate">Intake Order</span>
+                <span className="block text-[10px] text-primary-foreground/80 truncate">Fast counter</span>
+              </div>
+            </button>
+          </div>
         )}
       </div>
 
       {/* ─────────────────────────────────────────────────────────────────────── */}
-      {/* TOP STAT CARDS (Original Info with FreshSpin Color Scheme & Icons) */}
+      {/* OPERATIONAL METRICS: Swipeable Carousel on Mobile, Responsive Grid on Desktop */}
       {/* ─────────────────────────────────────────────────────────────────────── */}
-      <div className={cn(
-        "grid grid-cols-1 sm:grid-cols-2 gap-3.5",
-        isLoyaltyOn ? "md:grid-cols-3 lg:grid-cols-5" : "md:grid-cols-2 lg:grid-cols-4"
-      )}>
-        {/* 1. Today's Orders */}
-        <Card className="border border-border/70 rounded-2xl shadow-xs bg-card">
-          <CardContent className="p-4 sm:p-5">
-            <div className="flex items-start justify-between gap-2">
-              <div className="space-y-0.5 min-w-0">
-                <p className="text-xs font-semibold text-muted-foreground">
-                  Today&apos;s Orders
-                </p>
-                <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
-                  {totalOrders}
-                </p>
-                <p className="text-xs text-muted-foreground">orders this cycle</p>
-              </div>
-              <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0">
-                <Receipt className="w-5 h-5" aria-hidden="true" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="space-y-2">
+        <div className="flex items-center justify-between sm:hidden px-0.5">
+          <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+            Operational Metrics
+          </span>
+          <span className="text-xs text-primary font-medium">
+            Swipe for more →
+          </span>
+        </div>
 
-        {/* 2. In Progress */}
-        <Card className="border border-border/70 rounded-2xl shadow-xs bg-card">
-          <CardContent className="p-4 sm:p-5">
-            <div className="flex items-start justify-between gap-2">
-              <div className="space-y-0.5 min-w-0">
-                <p className="text-xs font-semibold text-muted-foreground">
-                  In Progress
-                </p>
-                <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
-                  {washingCount}
-                </p>
-                <p className="text-xs text-muted-foreground">currently washing</p>
-              </div>
-              <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0">
-                <Droplet className="w-5 h-5" aria-hidden="true" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 3. Ready for Pickup */}
-        <Card className="border border-border/70 rounded-2xl shadow-xs bg-card">
-          <CardContent className="p-4 sm:p-5">
-            <div className="flex items-start justify-between gap-2">
-              <div className="space-y-0.5 min-w-0">
-                <p className="text-xs font-semibold text-muted-foreground">
-                  Ready for Pickup
-                </p>
-                <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
-                  {readyCount}
-                </p>
-                <p className="text-xs text-muted-foreground">waiting for customers</p>
-              </div>
-              <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0">
-                <Sparkles className="w-5 h-5" aria-hidden="true" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 4. Revenue */}
-        <Card className="border border-border/70 rounded-2xl shadow-xs bg-card">
-          <CardContent className="p-4 sm:p-5">
-            <div className="flex items-start justify-between gap-2">
-              <div className="space-y-0.5 min-w-0">
-                <p className="text-xs font-semibold text-muted-foreground">
-                  Revenue
-                </p>
-                <p className="text-2xl font-bold tracking-tight text-foreground font-mono tabular-nums">
-                  ₱{paidRevenue.toLocaleString()}
-                </p>
-                <p className="text-xs text-muted-foreground">paid transactions</p>
-              </div>
-              <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0">
-                <Banknote className="w-5 h-5" aria-hidden="true" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 5. Loyalty Members — Only rendered when loyalty is enabled */}
-        {isLoyaltyOn && (
-          <Card className="border border-border/70 rounded-2xl shadow-xs bg-card">
+        <div className={cn(
+          "flex sm:grid overflow-x-auto sm:overflow-visible no-scrollbar snap-x snap-mandatory gap-3 pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0",
+          isLoyaltyOn ? "sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5" : "sm:grid-cols-2 lg:grid-cols-4"
+        )}>
+          {/* 1. Today's Orders */}
+          <Card className="snap-start shrink-0 w-[164px] sm:w-auto border border-border/70 rounded-2xl shadow-xs bg-card">
             <CardContent className="p-4 sm:p-5">
               <div className="flex items-start justify-between gap-2">
                 <div className="space-y-0.5 min-w-0">
                   <p className="text-xs font-semibold text-muted-foreground">
-                    Loyalty Members
+                    Today&apos;s Orders
                   </p>
                   <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
-                    {totalMembers}
+                    {totalOrders}
                   </p>
-                  <p className="text-xs text-muted-foreground">registered members</p>
+                  <p className="text-xs text-muted-foreground">orders this cycle</p>
                 </div>
                 <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0">
-                  <Users className="w-5 h-5" aria-hidden="true" />
+                  <Receipt className="w-5 h-5" aria-hidden="true" />
                 </div>
               </div>
             </CardContent>
           </Card>
-        )}
-      </div>
 
-
-      {/* ─────────────────────────────────────────────────────────────────────── */}
-      {/* MAIN TWO COLUMNS: Recent Orders (2 cols) & Orders by Stage (1 col) */}
-      {/* ─────────────────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Left Column: Recent Orders Table */}
-        <div className="lg:col-span-2">
-          <Card className="border border-border shadow-none h-full flex flex-col">
-            <CardHeader className="p-4 sm:p-5 flex flex-row items-center justify-between pb-3">
-              <h2 className="text-sm font-semibold text-foreground">Recent Orders</h2>
-              {onNavigate && (
-                <button
-                  type="button"
-                  onClick={() => onNavigate("processing")}
-                  className="text-xs font-medium text-primary hover:underline rounded-md px-2 py-1 -my-1 -mr-2 min-h-[44px] inline-flex items-center gap-1 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
-                >
-                  View board <ArrowRight className="w-3 h-3" aria-hidden="true" />
-                </button>
-              )}
-            </CardHeader>
-            <CardContent className="p-0 flex-1 overflow-x-auto">
-              <table className="w-full text-xs min-w-[500px]">
-                <thead>
-                  <tr className="border-y border-border bg-muted/30 text-muted-foreground uppercase tracking-wider font-semibold">
-                    <th scope="col" className="text-left px-4 py-3">Ticket</th>
-                    <th scope="col" className="text-left px-3 py-3">Customer</th>
-                    <th scope="col" className="text-left px-3 py-3">Service</th>
-                    <th scope="col" className="text-left px-3 py-3">Status</th>
-                    <th scope="col" className="text-right px-4 py-3">Total</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {transactions.slice(0, 6).map((txn) => (
-                    <tr
-                      key={txn.id}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => openDetail(txn)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          openDetail(txn);
-                        }
-                      }}
-                      className="hover:bg-muted/20 focus-visible:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary transition-colors cursor-pointer group"
-                      aria-label={`View order #${txn.ticketId} for ${txn.customerName}`}
-                    >
-                      <td className="px-4 py-3.5 font-medium text-primary group-hover:underline tabular-nums">
-                        #{txn.ticketId}
-                      </td>
-                      <td className="px-3 py-3.5 font-medium text-foreground max-w-[140px] sm:max-w-[200px] truncate">
-                        {txn.customerName}
-                      </td>
-                      <td className="px-3 py-3.5 text-muted-foreground truncate">
-                        {txn.washType || "Regular"}
-                      </td>
-                      <td className="px-3 py-3.5">
-                        <StatusBadge status={txn.status} />
-                      </td>
-                      <td className="px-4 py-3.5 text-right font-medium text-foreground tabular-nums">
-                        ₱{txn.fee.toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-                  {transactions.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="py-8 text-center text-muted-foreground">
-                        No orders recorded yet today.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+          {/* 2. In Progress */}
+          <Card className="snap-start shrink-0 w-[164px] sm:w-auto border border-border/70 rounded-2xl shadow-xs bg-card">
+            <CardContent className="p-4 sm:p-5">
+              <div className="flex items-start justify-between gap-2">
+                <div className="space-y-0.5 min-w-0">
+                  <p className="text-xs font-semibold text-muted-foreground">
+                    In Progress
+                  </p>
+                  <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
+                    {washingCount}
+                  </p>
+                  <p className="text-xs text-muted-foreground">currently washing</p>
+                </div>
+                <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0">
+                  <Droplet className="w-5 h-5" aria-hidden="true" />
+                </div>
+              </div>
             </CardContent>
           </Card>
-        </div>
 
-        {/* Right Column: Orders by Stage Donut Chart */}
-        <div>
-          <Card className="border border-border shadow-none h-full flex flex-col justify-between p-4 sm:p-5 gap-3 sm:gap-4">
+          {/* 3. Ready for Pickup */}
+          <Card className="snap-start shrink-0 w-[164px] sm:w-auto border border-border/70 rounded-2xl shadow-xs bg-card">
+            <CardContent className="p-4 sm:p-5">
+              <div className="flex items-start justify-between gap-2">
+                <div className="space-y-0.5 min-w-0">
+                  <p className="text-xs font-semibold text-muted-foreground">
+                    Ready for Pickup
+                  </p>
+                  <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
+                    {readyCount}
+                  </p>
+                  <p className="text-xs text-muted-foreground">waiting for customers</p>
+                </div>
+                <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0">
+                  <Sparkles className="w-5 h-5" aria-hidden="true" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 4. Revenue */}
+          <Card className="snap-start shrink-0 w-[164px] sm:w-auto border border-border/70 rounded-2xl shadow-xs bg-card">
+            <CardContent className="p-4 sm:p-5">
+              <div className="flex items-start justify-between gap-2">
+                <div className="space-y-0.5 min-w-0">
+                  <p className="text-xs font-semibold text-muted-foreground">
+                    Revenue
+                  </p>
+                  <p className="text-2xl font-bold tracking-tight text-foreground font-mono tabular-nums">
+                    ₱{paidRevenue.toLocaleString()}
+                  </p>
+                  <p className="text-xs text-muted-foreground">paid transactions</p>
+                </div>
+                <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0">
+                  <Banknote className="w-5 h-5" aria-hidden="true" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 5. Loyalty Members — Only rendered when loyalty is enabled */}
+          {isLoyaltyOn && (
+            <Card className="snap-start shrink-0 w-[164px] sm:w-auto border border-border/70 rounded-2xl shadow-xs bg-card">
+              <CardContent className="p-4 sm:p-5">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="space-y-0.5 min-w-0">
+                    <p className="text-xs font-semibold text-muted-foreground">
+                      Loyalty Members
+                    </p>
+                    <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
+                      {totalMembers}
+                    </p>
+                    <p className="text-xs text-muted-foreground">registered members</p>
+                  </div>
+                  <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0">
+                    <Users className="w-5 h-5" aria-hidden="true" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      {/* ─────────────────────────────────────────────────────────────────────── */}
+      {/* MAIN CONTENT: Orders by Stage & Recent Orders */}
+      {/* On mobile: Orders by Stage is on top (order-1), Recent Orders below (order-2) */}
+      {/* On desktop: Recent Orders 2 cols (lg:order-1), Orders by Stage 1 col (lg:order-2) */}
+      {/* ─────────────────────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Orders by Stage Card */}
+        <div className="order-1 lg:order-2">
+          <Card className="border border-border/70 rounded-2xl shadow-xs h-full flex flex-col justify-between p-4 sm:p-5 gap-3 sm:gap-4 bg-card">
             <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-sm font-semibold text-foreground">Orders by Stage</h2>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Where today&apos;s laundry sits right now
-                </p>
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-purple-100/80 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 flex items-center justify-center shrink-0">
+                  <Layers className="w-5 h-5" aria-hidden="true" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-semibold text-foreground">Orders by Stage</h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {activeOrdersCount} Active in wash line
+                  </p>
+                </div>
               </div>
               {onNavigate && (
                 <Button
@@ -331,191 +334,329 @@ export default function DashboardPage({
               )}
             </div>
 
-            {/* Donut graphic */}
-            <div className="relative my-2 flex items-center justify-center">
-              <svg
-                className="w-36 h-36 -rotate-90"
-                viewBox="0 0 100 100"
-                role="img"
-                aria-label={`Order distribution: ${receivedCount} received, ${washingCount} washing, ${dryingCount} drying, ${readyCount} ready`}
-              >
-                {/* Background Track */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  r={radius}
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="10"
-                  className="text-muted/20"
-                />
-                {/* Received Segment (Purple) */}
-                {receivedCount > 0 && (
+            {/* Donut graphic + Stage Summary (Responsive layout) */}
+            <div className="flex flex-col sm:flex-col items-center justify-center gap-4 my-1">
+              {/* Donut graphic */}
+              <div className="relative flex items-center justify-center shrink-0">
+                <svg
+                  className="w-36 h-36 -rotate-90"
+                  viewBox="0 0 100 100"
+                  role="img"
+                  aria-label={`Order distribution: ${receivedCount} received, ${washingCount} washing, ${dryingCount} drying, ${readyCount} ready`}
+                >
+                  {/* Background Track */}
                   <circle
                     cx="50"
                     cy="50"
                     r={radius}
                     fill="none"
-                    stroke="#8b5cf6"
+                    stroke="currentColor"
                     strokeWidth="10"
-                    strokeDasharray={`${strokeReceived} ${circumference}`}
-                    strokeDashoffset={offsetReceived}
-                    strokeLinecap="round"
+                    className="text-muted/20"
                   />
-                )}
-                {/* Washing Segment (Blue) */}
-                {washingCount > 0 && (
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r={radius}
-                    fill="none"
-                    stroke="#3b82f6"
-                    strokeWidth="10"
-                    strokeDasharray={`${strokeWashing} ${circumference}`}
-                    strokeDashoffset={offsetWashing}
-                    strokeLinecap="round"
-                  />
-                )}
-                {/* Drying Segment (Amber) */}
-                {dryingCount > 0 && (
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r={radius}
-                    fill="none"
-                    stroke="#f59e0b"
-                    strokeWidth="10"
-                    strokeDasharray={`${strokeDrying} ${circumference}`}
-                    strokeDashoffset={offsetDrying}
-                    strokeLinecap="round"
-                  />
-                )}
-                {/* Ready Segment (Emerald) */}
-                {readyCount > 0 && (
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r={radius}
-                    fill="none"
-                    stroke="#10b981"
-                    strokeWidth="10"
-                    strokeDasharray={`${strokeReady} ${circumference}`}
-                    strokeDashoffset={offsetReady}
-                    strokeLinecap="round"
-                  />
-                )}
-              </svg>
+                  {/* Received Segment (Purple) */}
+                  {receivedCount > 0 && (
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r={radius}
+                      fill="none"
+                      stroke="#8b5cf6"
+                      strokeWidth="10"
+                      strokeDasharray={`${strokeReceived} ${circumference}`}
+                      strokeDashoffset={offsetReceived}
+                      strokeLinecap="round"
+                    />
+                  )}
+                  {/* Washing Segment (Blue) */}
+                  {washingCount > 0 && (
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r={radius}
+                      fill="none"
+                      stroke="#3b82f6"
+                      strokeWidth="10"
+                      strokeDasharray={`${strokeWashing} ${circumference}`}
+                      strokeDashoffset={offsetWashing}
+                      strokeLinecap="round"
+                    />
+                  )}
+                  {/* Drying Segment (Amber) */}
+                  {dryingCount > 0 && (
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r={radius}
+                      fill="none"
+                      stroke="#f59e0b"
+                      strokeWidth="10"
+                      strokeDasharray={`${strokeDrying} ${circumference}`}
+                      strokeDashoffset={offsetDrying}
+                      strokeLinecap="round"
+                    />
+                  )}
+                  {/* Ready Segment (Emerald) */}
+                  {readyCount > 0 && (
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r={radius}
+                      fill="none"
+                      stroke="#10b981"
+                      strokeWidth="10"
+                      strokeDasharray={`${strokeReady} ${circumference}`}
+                      strokeDashoffset={offsetReady}
+                      strokeLinecap="round"
+                    />
+                  )}
+                </svg>
 
-              {/* Center text */}
-              <div className="absolute flex flex-col items-center justify-center text-center">
-                <span className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
-                  {activeOrdersCount}
-                </span>
-                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  In Pipeline
-                </span>
+                {/* Center text */}
+                <div className="absolute flex flex-col items-center justify-center text-center">
+                  <span className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
+                    {activeOrdersCount}
+                  </span>
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    In Pipeline
+                  </span>
+                </div>
+              </div>
+
+              {/* Stage Summary 2x2 Grid */}
+              <div className="grid grid-cols-2 gap-2.5 w-full">
+                {/* Received */}
+                <div
+                  role={onNavigate ? "button" : undefined}
+                  tabIndex={onNavigate ? 0 : undefined}
+                  onClick={() => onNavigate?.("processing")}
+                  onKeyDown={(e) => onNavigate && handleCardKeyDown(e, "processing")}
+                  className="group rounded-xl border border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 p-2.5 transition-all cursor-pointer flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-7 h-7 rounded-lg bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                      <Inbox className="w-3.5 h-3.5" aria-hidden="true" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-xs text-foreground font-semibold block truncate">Received</span>
+                      <span className="text-[11px] text-muted-foreground font-medium">
+                        {activeOrdersCount > 0 ? `${Math.round(receivedPct)}%` : "0%"}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-base font-bold text-foreground tabular-nums shrink-0 ml-1">
+                    {receivedCount}
+                  </span>
+                </div>
+
+                {/* Washing */}
+                <div
+                  role={onNavigate ? "button" : undefined}
+                  tabIndex={onNavigate ? 0 : undefined}
+                  onClick={() => onNavigate?.("processing")}
+                  onKeyDown={(e) => onNavigate && handleCardKeyDown(e, "processing")}
+                  className="group rounded-xl border border-blue-500/20 bg-blue-500/5 hover:bg-blue-500/10 p-2.5 transition-all cursor-pointer flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-7 h-7 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                      <RotateCw className="w-3.5 h-3.5" aria-hidden="true" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-xs text-foreground font-semibold block truncate">Washing</span>
+                      <span className="text-[11px] text-muted-foreground font-medium">
+                        {activeOrdersCount > 0 ? `${Math.round(washingPct)}%` : "0%"}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-base font-bold text-foreground tabular-nums shrink-0 ml-1">
+                    {washingCount}
+                  </span>
+                </div>
+
+                {/* Drying */}
+                <div
+                  role={onNavigate ? "button" : undefined}
+                  tabIndex={onNavigate ? 0 : undefined}
+                  onClick={() => onNavigate?.("processing")}
+                  onKeyDown={(e) => onNavigate && handleCardKeyDown(e, "processing")}
+                  className="group rounded-xl border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 p-2.5 transition-all cursor-pointer flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-7 h-7 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                      <Wind className="w-3.5 h-3.5" aria-hidden="true" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-xs text-foreground font-semibold block truncate">Drying</span>
+                      <span className="text-[11px] text-muted-foreground font-medium">
+                        {activeOrdersCount > 0 ? `${Math.round(dryingPct)}%` : "0%"}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-base font-bold text-foreground tabular-nums shrink-0 ml-1">
+                    {dryingCount}
+                  </span>
+                </div>
+
+                {/* Ready */}
+                <div
+                  role={onNavigate ? "button" : undefined}
+                  tabIndex={onNavigate ? 0 : undefined}
+                  onClick={() => onNavigate?.("processing")}
+                  onKeyDown={(e) => onNavigate && handleCardKeyDown(e, "processing")}
+                  className="group rounded-xl border border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 p-2.5 transition-all cursor-pointer flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                      <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-xs text-foreground font-semibold block truncate">Ready</span>
+                      <span className="text-[11px] text-muted-foreground font-medium">
+                        {activeOrdersCount > 0 ? `${Math.round(readyPct)}%` : "0%"}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-base font-bold text-foreground tabular-nums shrink-0 ml-1">
+                    {readyCount}
+                  </span>
+                </div>
               </div>
             </div>
+          </Card>
+        </div>
 
-            {/* Stage Summary 2x2 Grid */}
-            <div className="grid grid-cols-2 gap-2.5">
-              {/* Received */}
-              <div
-                role={onNavigate ? "button" : undefined}
-                tabIndex={onNavigate ? 0 : undefined}
-                onClick={() => onNavigate?.("processing")}
-                onKeyDown={(e) => onNavigate && handleCardKeyDown(e, "processing")}
-                className="group rounded-xl border border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 p-2.5 transition-all cursor-pointer flex items-center justify-between"
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-7 h-7 rounded-lg bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
-                    <Inbox className="w-3.5 h-3.5" aria-hidden="true" />
+        {/* Recent Orders: 2 cols on desktop, Mobile cards on mobile */}
+        <div className="lg:col-span-2 order-2 lg:order-1">
+          <Card className="border border-border/70 rounded-2xl shadow-xs h-full flex flex-col bg-card">
+            <CardHeader className="p-4 sm:p-5 flex flex-row items-center justify-between pb-3">
+              <div>
+                <h2 className="text-sm font-semibold text-foreground">Recent Orders</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Latest intake &amp; dispatch queue
+                </p>
+              </div>
+              {onNavigate && (
+                <button
+                  type="button"
+                  onClick={() => onNavigate("processing")}
+                  className="text-xs font-medium text-primary hover:underline rounded-md px-2 py-1 -my-1 -mr-2 min-h-[44px] inline-flex items-center gap-1 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                >
+                  View all <ArrowRight className="w-3 h-3" aria-hidden="true" />
+                </button>
+              )}
+            </CardHeader>
+            <CardContent className="p-4 sm:p-0 flex-1">
+              {/* Mobile View: High-touch Card List matching reference */}
+              <div className="sm:hidden space-y-2.5">
+                {transactions.slice(0, 6).map((txn) => (
+                  <div
+                    key={`mobile-${txn.id}`}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => openDetail(txn)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        openDetail(txn);
+                      }
+                    }}
+                    className="flex items-center justify-between gap-3 p-3 rounded-2xl bg-card border border-border/70 hover:bg-muted/20 active:scale-[0.99] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary shadow-xs"
+                    aria-label={`Order #${txn.ticketId} details for ${txn.customerName}`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-11 h-11 rounded-xl bg-[#F6F1F9] dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 flex flex-col items-center justify-center shrink-0 border border-purple-100/80 dark:border-purple-900/30">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">TKT</span>
+                        <span className="text-xs font-bold leading-tight tabular-nums">#{txn.ticketId}</span>
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-xs font-semibold text-foreground truncate">{txn.customerName}</span>
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">
+                            {txn.washType || "Regular"}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 text-[11px] text-muted-foreground mt-0.5">
+                          <span className="truncate">{txn.arrivalDateTime || txn.dropOffDate}</span>
+                          {typeof txn.weight === "number" && txn.weight > 0 && (
+                            <>
+                              <span>•</span>
+                              <span className="tabular-nums">{txn.weight} kg</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      <StatusBadge status={txn.status} />
+                      <span className="text-xs font-bold text-foreground tabular-nums">
+                        ₱{txn.fee.toLocaleString()}
+                      </span>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <span className="text-xs text-foreground font-semibold block truncate">Received</span>
-                    <span className="text-[11px] text-muted-foreground font-medium">
-                      {activeOrdersCount > 0 ? `${Math.round(receivedPct)}%` : "0%"}
-                    </span>
+                ))}
+                {transactions.length === 0 && (
+                  <div className="py-8 text-center text-xs text-muted-foreground bg-muted/10 rounded-xl border border-dashed border-border/70">
+                    No orders recorded yet today.
                   </div>
-                </div>
-                <span className="text-base font-bold text-foreground tabular-nums shrink-0 ml-1">
-                  {receivedCount}
-                </span>
+                )}
               </div>
 
-              {/* Washing */}
-              <div
-                role={onNavigate ? "button" : undefined}
-                tabIndex={onNavigate ? 0 : undefined}
-                onClick={() => onNavigate?.("processing")}
-                onKeyDown={(e) => onNavigate && handleCardKeyDown(e, "processing")}
-                className="group rounded-xl border border-blue-500/20 bg-blue-500/5 hover:bg-blue-500/10 p-2.5 transition-all cursor-pointer flex items-center justify-between"
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-7 h-7 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-                    <RotateCw className="w-3.5 h-3.5" aria-hidden="true" />
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-xs text-foreground font-semibold block truncate">Washing</span>
-                    <span className="text-[11px] text-muted-foreground font-medium">
-                      {activeOrdersCount > 0 ? `${Math.round(washingPct)}%` : "0%"}
-                    </span>
-                  </div>
-                </div>
-                <span className="text-base font-bold text-foreground tabular-nums shrink-0 ml-1">
-                  {washingCount}
-                </span>
+              {/* Desktop View: Full Semantic Table */}
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-xs min-w-[500px]">
+                  <thead>
+                    <tr className="border-y border-border bg-muted/30 text-muted-foreground uppercase tracking-wider font-semibold">
+                      <th scope="col" className="text-left px-4 py-3">Ticket</th>
+                      <th scope="col" className="text-left px-3 py-3">Customer</th>
+                      <th scope="col" className="text-left px-3 py-3">Service</th>
+                      <th scope="col" className="text-left px-3 py-3">Status</th>
+                      <th scope="col" className="text-right px-4 py-3">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {transactions.slice(0, 6).map((txn) => (
+                      <tr
+                        key={txn.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => openDetail(txn)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            openDetail(txn);
+                          }
+                        }}
+                        className="hover:bg-muted/20 focus-visible:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary transition-colors cursor-pointer group"
+                        aria-label={`View order #${txn.ticketId} for ${txn.customerName}`}
+                      >
+                        <td className="px-4 py-3.5 font-medium text-primary group-hover:underline tabular-nums">
+                          #{txn.ticketId}
+                        </td>
+                        <td className="px-3 py-3.5 font-medium text-foreground max-w-[140px] sm:max-w-[200px] truncate">
+                          {txn.customerName}
+                        </td>
+                        <td className="px-3 py-3.5 text-muted-foreground truncate">
+                          {txn.washType || "Regular"}
+                        </td>
+                        <td className="px-3 py-3.5">
+                          <StatusBadge status={txn.status} />
+                        </td>
+                        <td className="px-4 py-3.5 text-right font-medium text-foreground tabular-nums">
+                          ₱{txn.fee.toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                    {transactions.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="py-8 text-center text-muted-foreground">
+                          No orders recorded yet today.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
-
-              {/* Drying */}
-              <div
-                role={onNavigate ? "button" : undefined}
-                tabIndex={onNavigate ? 0 : undefined}
-                onClick={() => onNavigate?.("processing")}
-                onKeyDown={(e) => onNavigate && handleCardKeyDown(e, "processing")}
-                className="group rounded-xl border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 p-2.5 transition-all cursor-pointer flex items-center justify-between"
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-7 h-7 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                    <Wind className="w-3.5 h-3.5" aria-hidden="true" />
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-xs text-foreground font-semibold block truncate">Drying</span>
-                    <span className="text-[11px] text-muted-foreground font-medium">
-                      {activeOrdersCount > 0 ? `${Math.round(dryingPct)}%` : "0%"}
-                    </span>
-                  </div>
-                </div>
-                <span className="text-base font-bold text-foreground tabular-nums shrink-0 ml-1">
-                  {dryingCount}
-                </span>
-              </div>
-
-              {/* Ready */}
-              <div
-                role={onNavigate ? "button" : undefined}
-                tabIndex={onNavigate ? 0 : undefined}
-                onClick={() => onNavigate?.("processing")}
-                onKeyDown={(e) => onNavigate && handleCardKeyDown(e, "processing")}
-                className="group rounded-xl border border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 p-2.5 transition-all cursor-pointer flex items-center justify-between"
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                    <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-xs text-foreground font-semibold block truncate">Ready</span>
-                    <span className="text-[11px] text-muted-foreground font-medium">
-                      {activeOrdersCount > 0 ? `${Math.round(readyPct)}%` : "0%"}
-                    </span>
-                  </div>
-                </div>
-                <span className="text-base font-bold text-foreground tabular-nums shrink-0 ml-1">
-                  {readyCount}
-                </span>
-              </div>
-            </div>
+            </CardContent>
           </Card>
         </div>
       </div>
