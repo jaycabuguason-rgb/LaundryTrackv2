@@ -96,4 +96,30 @@ describe("ProcessingPage Single-Click Action Buttons", () => {
     expect(screen.queryByRole("button", { name: /claim order/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^claim$/i })).not.toBeInTheDocument();
   });
+
+  it("renders mobile pipeline header, segmented tabs, and mobile card info", () => {
+    render(<ProcessingPage transactions={mockTransactions} />);
+
+    // Mobile header
+    expect(screen.getByRole("heading", { level: 1, name: /processing pipeline/i })).toBeInTheDocument();
+    expect(screen.getByText(/total ongoing transactions:/i)).toBeInTheDocument();
+
+    // Mobile segmented tabs
+    const tabs = screen.getAllByRole("tab");
+    expect(tabs.length).toBe(3);
+    expect(tabs[0]).toHaveTextContent(/received/i);
+    expect(tabs[1]).toHaveTextContent(/washing/i);
+    expect(tabs[2]).toHaveTextContent(/ready/i);
+
+    // Mobile card fields
+    expect(screen.getByText("#TKT-0030")).toBeInTheDocument();
+    expect(screen.getAllByText("ryyfd").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("1 kg").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("₱40").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/select all in stage/i).length).toBeGreaterThanOrEqual(1);
+
+    // Tab click switches stage
+    fireEvent.click(tabs[1]); // Click Washing tab
+    expect(tabs[1]).toHaveAttribute("aria-selected", "true");
+  });
 });
