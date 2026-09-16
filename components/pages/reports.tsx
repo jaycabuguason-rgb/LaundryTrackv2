@@ -20,6 +20,8 @@ import {
   Scale,
   SlidersHorizontal,
   RotateCw,
+  ShoppingBag,
+  Zap,
 } from "lucide-react";
 import { addDays, addMonths, format, subDays } from "date-fns";
 import {
@@ -515,6 +517,11 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
     return [...salesMap.values()];
   }, [rangePreset, exportFromDate, exportToDate, filteredTransactions]);
 
+  const highestPeakDay = useMemo(() => {
+    if (salesTrendData.length === 0) return null;
+    return [...salesTrendData].sort((a, b) => b.revenue - a.revenue)[0];
+  }, [salesTrendData]);
+
   const peakHourData = useMemo(() => {
     const hourMap = new Map<string, number>();
 
@@ -1009,178 +1016,236 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
         </TabsContent>
 
       <TabsContent value="analytics" className="space-y-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-medium text-muted-foreground">Period:</span>
-          {(["day", "week", "month", "year", "custom"] as const).map((preset) => (
-            <Button
-              key={preset}
-              size="sm"
-              variant={rangePreset === preset ? "default" : "outline"}
-              className="h-8 text-xs capitalize"
-              onClick={() => applyPreset(preset)}
-            >
-              {preset}
-            </Button>
-          ))}
-
-          {rangePreset === "custom" && (
-            <div className="flex flex-wrap items-center gap-2 ml-1 sm:ml-2 pl-2 border-l border-border">
-              {/* From Date Picker */}
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 font-normal">
-                    <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground" />
-                    <span>From: {format(exportFromDate, "MMM dd, yyyy")}</span>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={exportFromDate}
-                    onSelect={(d) => {
-                      if (d) {
-                        setExportFromDate(d);
-                        if (d > exportToDate) setExportToDate(d);
-                      }
-                    }}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-
-              <span className="text-xs text-muted-foreground">to</span>
-
-              {/* To Date Picker */}
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 font-normal">
-                    <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground" />
-                    <span>To: {format(exportToDate, "MMM dd, yyyy")}</span>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={exportToDate}
-                    onSelect={(d) => {
-                      if (d) {
-                        setExportToDate(d);
-                        if (d < exportFromDate) setExportFromDate(d);
-                      }
-                    }}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <Card className="border border-border shadow-none">
-            <CardContent className="p-5">
-              <p className="text-xs text-muted-foreground">Sales in Range</p>
-              <p className="mt-1 text-2xl font-bold text-foreground">{formatCurrency(totalFilteredRevenue)}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">{exportFrom} to {exportTo}</p>
-            </CardContent>
-          </Card>
-          <Card className="border border-border shadow-none">
-            <CardContent className="p-5">
-              <p className="text-xs text-muted-foreground">Orders in Range</p>
-              <p className="mt-1 text-2xl font-bold text-foreground">{totalFilteredTransactions}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">Realtime transactions</p>
-            </CardContent>
-          </Card>
-          <Card className="border border-border shadow-none">
-            <CardContent className="p-5">
-              <p className="text-xs text-muted-foreground">Average Order Value</p>
-              <p className="mt-1 text-2xl font-bold text-foreground">{formatCurrency(Math.round(averageOrderValue))}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">Per transaction</p>
-            </CardContent>
-          </Card>
-          <Card className="border border-border shadow-none">
-            <CardContent className="p-5">
-              <p className="text-xs text-muted-foreground">Peak Claim Window</p>
-              <p className="mt-1 text-2xl font-bold text-foreground">{peakHourData[0]?.label ?? "-"}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">{peakHourData[0]?.count ?? 0} transactions</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.4fr_1fr]">
-          <Card className="border border-border shadow-none">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold">Sales Trend</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[280px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={salesTrendData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(33 18% 82%)" vertical={false} />
-                    <XAxis dataKey="label" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                    <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                    <Tooltip formatter={(value: number) => [formatCurrency(value), "Revenue"]} />
-                    <Bar dataKey="revenue" radius={[6, 6, 0, 0]} fill="hsl(257 58% 49%)" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border border-border shadow-none">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-                <PieChartIcon className="h-4 w-4 text-primary" />
-                Market and Sales Mix
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="h-[200px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={serviceMixData} dataKey="value" nameKey="name" outerRadius={80} innerRadius={45}>
-                      {serviceMixData.map((entry, index) => (
-                        <Cell key={entry.name} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value: number) => [formatCurrency(value), "Revenue"]} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* Icon Legend for Services */}
-              <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 pt-1">
-                {serviceMixData.map((entry) => (
-                  <div key={entry.name} className="flex items-center gap-1.5 text-xs text-foreground font-medium">
-                    <span className="p-0.5 rounded-md bg-muted/60">
-                      {getServiceIcon(entry.name)}
-                    </span>
-                    <span>{entry.name}</span>
-                  </div>
+        {/* Mobile Concept View */}
+        <div className="space-y-4 md:hidden">
+          {/* Mobile Period Selector & Custom Date Pickers */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between bg-card rounded-2xl p-1.5 border border-border/80 shadow-sm">
+              <span className="text-xs font-bold text-muted-foreground pl-2">Period</span>
+              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+                {(["day", "week", "month", "year", "custom"] as const).map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => applyPreset(preset)}
+                    className={cn(
+                      "px-2.5 py-1 text-xs font-semibold rounded-xl capitalize transition-all whitespace-nowrap",
+                      rangePreset === preset
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {preset}
+                  </button>
                 ))}
               </div>
+            </div>
 
-              <div className="rounded-xl border border-border bg-muted/20 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Top Service</p>
-                <p className="mt-1 text-lg font-bold text-foreground">{serviceRevenue[0]?.service ?? "-"}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {serviceRevenue[0] ? `${serviceRevenue[0].count} transactions · ${formatCurrency(serviceRevenue[0].revenue)}` : "No service data yet."}
-                </p>
+            {rangePreset === "custom" && (
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                {/* From Date Picker */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 rounded-xl font-normal justify-start truncate">
+                      <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                      <span className="truncate">{format(exportFromDate, "MMM dd")}</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={exportFromDate}
+                      onSelect={(d) => {
+                        if (d) {
+                          setExportFromDate(d);
+                          if (d > exportToDate) setExportToDate(d);
+                        }
+                      }}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+
+                {/* To Date Picker */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 rounded-xl font-normal justify-start truncate">
+                      <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                      <span className="truncate">{format(exportToDate, "MMM dd")}</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="end">
+                    <Calendar
+                      mode="single"
+                      selected={exportToDate}
+                      onSelect={(d) => {
+                        if (d) {
+                          setExportToDate(d);
+                          if (d < exportFromDate) setExportFromDate(d);
+                        }
+                      }}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            )}
+          </div>
 
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-          <Card className="border border-border shadow-none">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold">Payment Split</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="h-[200px]">
+          {/* Mobile 2x2 Metric Summary Grid */}
+          <div className="grid grid-cols-2 gap-2.5">
+            {/* Card 1: Sales in Range */}
+            <div className="rounded-2xl border border-border/70 bg-card p-3.5 shadow-sm flex flex-col justify-between relative overflow-hidden">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-medium text-muted-foreground">Sales in Range</span>
+                <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
+                  ₱
+                </div>
+              </div>
+              <div>
+                <div className="text-2xl font-extrabold text-foreground tracking-tight">{formatCurrency(totalFilteredRevenue)}</div>
+                <p className="text-[10px] text-muted-foreground truncate mt-0.5">{exportFrom} to {exportTo}</p>
+              </div>
+            </div>
+
+            {/* Card 2: Orders in Range */}
+            <div className="rounded-2xl border border-border/70 bg-card p-3.5 shadow-sm flex flex-col justify-between relative overflow-hidden">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-medium text-muted-foreground">Orders in Range</span>
+                <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                  <ShoppingBag className="w-3.5 h-3.5" />
+                </div>
+              </div>
+              <div>
+                <div className="text-2xl font-extrabold text-foreground tracking-tight">{totalFilteredTransactions}</div>
+                <div className="flex items-center gap-1 mt-0.5 text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                  <span>Realtime</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3: Avg Order Value */}
+            <div className="rounded-2xl border border-border/70 bg-card p-3.5 shadow-sm flex flex-col justify-between relative overflow-hidden">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-medium text-muted-foreground">Avg. Order Value</span>
+                <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                  <TrendingUp className="w-3.5 h-3.5" />
+                </div>
+              </div>
+              <div>
+                <div className="text-2xl font-extrabold text-foreground tracking-tight">{formatCurrency(Math.round(averageOrderValue))}</div>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Per transaction</p>
+              </div>
+            </div>
+
+            {/* Card 4: Peak Claim Window */}
+            <div className="rounded-2xl border border-border/70 bg-card p-3.5 shadow-sm flex flex-col justify-between relative overflow-hidden">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-medium text-muted-foreground">Peak Claim Window</span>
+                <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                  <Clock className="w-3.5 h-3.5" />
+                </div>
+              </div>
+              <div>
+                <div className="text-2xl font-extrabold text-foreground tracking-tight">{peakHourData[0]?.label ?? "-"}</div>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{peakHourData[0]?.count ?? 0} transactions</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Sales Trend Card */}
+          <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-foreground">Sales Trend</h3>
+                <p className="text-[11px] text-muted-foreground">Daily revenue performance</p>
+              </div>
+              <span className="text-[11px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-lg border border-primary/20 capitalize">
+                {rangePreset === "custom" ? "Custom" : `Last ${rangePreset}`}
+              </span>
+            </div>
+            <div className="h-[240px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={salesTrendData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(33 18% 82%)" vertical={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                  <YAxis tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                  <Tooltip formatter={(value: number) => [formatCurrency(value), "Revenue"]} />
+                  <Bar dataKey="revenue" radius={[6, 6, 0, 0]} fill="hsl(257 58% 49%)" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            {highestPeakDay && highestPeakDay.revenue > 0 && (
+              <div className="pt-2 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-primary" />
+                  <span>Highest peak day</span>
+                </span>
+                <span className="font-bold text-foreground">{highestPeakDay.label} ({formatCurrency(highestPeakDay.revenue)})</span>
+              </div>
+            )}
+          </div>
+
+          {/* Mobile Market & Sales Mix */}
+          <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                  <PieChartIcon className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">Market &amp; Sales Mix</h3>
+                  <p className="text-[11px] text-muted-foreground">Load demand distribution</p>
+                </div>
+              </div>
+              <span className="text-xs font-semibold text-muted-foreground">{totalFilteredTransactions} Orders</span>
+            </div>
+
+            <div className="h-[200px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={serviceMixData} dataKey="value" nameKey="name" outerRadius={75} innerRadius={42}>
+                    {serviceMixData.map((entry, index) => (
+                      <Cell key={entry.name} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value: number) => [formatCurrency(value), "Revenue"]} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 pt-1">
+              {serviceMixData.map((entry) => (
+                <div key={entry.name} className="flex items-center gap-1 text-[11px] text-foreground font-medium">
+                  <span className="p-0.5 rounded bg-muted/60">
+                    {getServiceIcon(entry.name)}
+                  </span>
+                  <span>{entry.name} ({entry.count})</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-xl border border-border/70 bg-muted/20 p-3 flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Top Service</p>
+                <p className="text-sm font-bold text-foreground mt-0.5">{serviceRevenue[0]?.service ?? "-"}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs font-bold text-primary">{serviceRevenue[0] ? formatCurrency(serviceRevenue[0].revenue) : "-"}</p>
+                <p className="text-[10px] text-muted-foreground">{serviceRevenue[0]?.count ?? 0} txns</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Payment & Status Split Grid */}
+          <div className="grid grid-cols-1 gap-3">
+            <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm space-y-2">
+              <h4 className="text-xs font-bold text-foreground">Payment Split</h4>
+              <div className="h-[170px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={paymentMixData} dataKey="value" nameKey="name" outerRadius={78}>
+                    <Pie data={paymentMixData} dataKey="value" nameKey="name" outerRadius={68}>
                       <Cell fill="hsl(142 71% 45%)" />
                       <Cell fill="hsl(0 84% 60%)" />
                     </Pie>
@@ -1188,32 +1253,26 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-
-              {/* Icon Legend for Payment Split */}
-              <div className="flex flex-wrap items-center justify-center gap-4 pt-1">
+              <div className="flex items-center justify-center gap-4 text-xs font-semibold">
                 {paymentMixData.map((item) => (
-                  <div key={item.name} className="flex items-center gap-1.5 text-xs text-foreground font-medium">
+                  <div key={item.name} className="flex items-center gap-1.5">
                     {item.name === "Paid" ? (
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                     ) : (
                       <AlertCircle className="w-3.5 h-3.5 text-red-500 dark:text-red-400 shrink-0" />
                     )}
-                    <span>{item.name}</span>
+                    <span>{item.name}: {formatCurrency(item.value)}</span>
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          <Card className="border border-border shadow-none">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold">Status Distribution</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="h-[200px]">
+            <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm space-y-2">
+              <h4 className="text-xs font-bold text-foreground">Status Distribution</h4>
+              <div className="h-[170px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={statusMixData} dataKey="value" nameKey="name" outerRadius={78}>
+                    <Pie data={statusMixData} dataKey="value" nameKey="name" outerRadius={68}>
                       {statusMixData.map((entry, index) => (
                         <Cell key={entry.name} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                       ))}
@@ -1222,319 +1281,784 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-
-              {/* Icon Legend for Status Distribution */}
-              <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 pt-1">
+              <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs">
                 {statusMixData.map((entry) => (
-                  <div key={entry.name} className="flex items-center gap-1.5 text-xs text-foreground font-medium">
+                  <div key={entry.name} className="flex items-center gap-1 text-muted-foreground font-medium">
                     {getStatusIconComponent(entry.name)}
-                    <span>{entry.name}</span>
+                    <span>{entry.name} ({entry.value})</span>
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
+
+          {/* Mobile Service Revenue Cards */}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between px-0.5">
+              <span className="text-xs font-bold text-foreground">Service Revenue</span>
+              <span className="text-[11px] text-muted-foreground">{serviceRevenue.length} services</span>
+            </div>
+            {serviceRevenue.map((row) => (
+              <div key={row.service} className="rounded-2xl border border-border/70 bg-card p-3.5 shadow-sm space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-bold text-foreground">{row.service}</p>
+                    <p className="text-[11px] text-muted-foreground">{row.count} orders</p>
+                  </div>
+                  <p className="text-xs font-bold text-primary shrink-0">{formatCurrency(row.revenue)}</p>
+                </div>
+                <div className="flex items-center justify-between pt-1 border-t border-border/40 text-[10px] text-muted-foreground">
+                  <span>Avg. per order</span>
+                  <span className="font-semibold text-foreground">{formatCurrency(Math.round(row.revenue / Math.max(row.count, 1)))}</span>
+                </div>
+              </div>
+            ))}
+            {serviceRevenue.length === 0 && (
+              <div className="px-4 py-8 text-center text-xs text-muted-foreground border border-dashed rounded-2xl">
+                No analytics data available for the selected range.
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Desktop View (Unchanged) */}
+        <div className="hidden md:block space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">Period:</span>
+            {(["day", "week", "month", "year", "custom"] as const).map((preset) => (
+              <Button
+                key={preset}
+                size="sm"
+                variant={rangePreset === preset ? "default" : "outline"}
+                className="h-8 text-xs capitalize"
+                onClick={() => applyPreset(preset)}
+              >
+                {preset}
+              </Button>
+            ))}
+
+            {rangePreset === "custom" && (
+              <div className="flex flex-wrap items-center gap-2 ml-1 sm:ml-2 pl-2 border-l border-border">
+                {/* From Date Picker */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 font-normal">
+                      <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span>From: {format(exportFromDate, "MMM dd, yyyy")}</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={exportFromDate}
+                      onSelect={(d) => {
+                        if (d) {
+                          setExportFromDate(d);
+                          if (d > exportToDate) setExportToDate(d);
+                        }
+                      }}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+
+                <span className="text-xs text-muted-foreground">to</span>
+
+                {/* To Date Picker */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 font-normal">
+                      <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span>To: {format(exportToDate, "MMM dd, yyyy")}</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={exportToDate}
+                      onSelect={(d) => {
+                        if (d) {
+                          setExportToDate(d);
+                          if (d < exportFromDate) setExportFromDate(d);
+                        }
+                      }}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <Card className="border border-border shadow-none">
+              <CardContent className="p-5">
+                <p className="text-xs text-muted-foreground">Sales in Range</p>
+                <p className="mt-1 text-2xl font-bold text-foreground">{formatCurrency(totalFilteredRevenue)}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{exportFrom} to {exportTo}</p>
+              </CardContent>
+            </Card>
+            <Card className="border border-border shadow-none">
+              <CardContent className="p-5">
+                <p className="text-xs text-muted-foreground">Orders in Range</p>
+                <p className="mt-1 text-2xl font-bold text-foreground">{totalFilteredTransactions}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">Realtime transactions</p>
+              </CardContent>
+            </Card>
+            <Card className="border border-border shadow-none">
+              <CardContent className="p-5">
+                <p className="text-xs text-muted-foreground">Average Order Value</p>
+                <p className="mt-1 text-2xl font-bold text-foreground">{formatCurrency(Math.round(averageOrderValue))}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">Per transaction</p>
+              </CardContent>
+            </Card>
+            <Card className="border border-border shadow-none">
+              <CardContent className="p-5">
+                <p className="text-xs text-muted-foreground">Peak Claim Window</p>
+                <p className="mt-1 text-2xl font-bold text-foreground">{peakHourData[0]?.label ?? "-"}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{peakHourData[0]?.count ?? 0} transactions</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.4fr_1fr]">
+            <Card className="border border-border shadow-none">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold">Sales Trend</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[280px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={salesTrendData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(33 18% 82%)" vertical={false} />
+                      <XAxis dataKey="label" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                      <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                      <Tooltip formatter={(value: number) => [formatCurrency(value), "Revenue"]} />
+                      <Bar dataKey="revenue" radius={[6, 6, 0, 0]} fill="hsl(257 58% 49%)" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border border-border shadow-none">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                  <PieChartIcon className="h-4 w-4 text-primary" />
+                  Market and Sales Mix
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="h-[200px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={serviceMixData} dataKey="value" nameKey="name" outerRadius={80} innerRadius={45}>
+                        {serviceMixData.map((entry, index) => (
+                          <Cell key={entry.name} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value: number) => [formatCurrency(value), "Revenue"]} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Icon Legend for Services */}
+                <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 pt-1">
+                  {serviceMixData.map((entry) => (
+                    <div key={entry.name} className="flex items-center gap-1.5 text-xs text-foreground font-medium">
+                      <span className="p-0.5 rounded-md bg-muted/60">
+                        {getServiceIcon(entry.name)}
+                      </span>
+                      <span>{entry.name}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="rounded-xl border border-border bg-muted/20 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Top Service</p>
+                  <p className="mt-1 text-lg font-bold text-foreground">{serviceRevenue[0]?.service ?? "-"}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {serviceRevenue[0] ? `${serviceRevenue[0].count} transactions · ${formatCurrency(serviceRevenue[0].revenue)}` : "No service data yet."}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+            <Card className="border border-border shadow-none">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold">Payment Split</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="h-[200px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={paymentMixData} dataKey="value" nameKey="name" outerRadius={78}>
+                        <Cell fill="hsl(142 71% 45%)" />
+                        <Cell fill="hsl(0 84% 60%)" />
+                      </Pie>
+                      <Tooltip formatter={(value: number) => [formatCurrency(value), "Revenue"]} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Icon Legend for Payment Split */}
+                <div className="flex flex-wrap items-center justify-center gap-4 pt-1">
+                  {paymentMixData.map((item) => (
+                    <div key={item.name} className="flex items-center gap-1.5 text-xs text-foreground font-medium">
+                      {item.name === "Paid" ? (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      ) : (
+                        <AlertCircle className="w-3.5 h-3.5 text-red-500 dark:text-red-400 shrink-0" />
+                      )}
+                      <span>{item.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border border-border shadow-none">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold">Status Distribution</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="h-[200px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={statusMixData} dataKey="value" nameKey="name" outerRadius={78}>
+                        {statusMixData.map((entry, index) => (
+                          <Cell key={entry.name} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Icon Legend for Status Distribution */}
+                <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 pt-1">
+                  {statusMixData.map((entry) => (
+                    <div key={entry.name} className="flex items-center gap-1.5 text-xs text-foreground font-medium">
+                      {getStatusIconComponent(entry.name)}
+                      <span>{entry.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border border-border shadow-none">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold">Peak Analysis</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {peakHourData.map((entry, index) => (
+                  <div key={entry.label} className="rounded-xl border border-border bg-muted/20 p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Peak Window #{index + 1}</p>
+                        <p className="text-sm font-semibold text-foreground">{entry.label}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-foreground">{entry.count}</p>
+                        <p className="text-xs text-muted-foreground">orders</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {peakHourData.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No peak data available yet.</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
 
           <Card className="border border-border shadow-none">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold">Peak Analysis</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                <TrendingUp className="h-4 w-4 text-primary" />
+                Service Revenue Table
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {peakHourData.map((entry, index) => (
-                <div key={entry.label} className="rounded-xl border border-border bg-muted/20 p-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Peak Window #{index + 1}</p>
-                      <p className="text-sm font-semibold text-foreground">{entry.label}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-foreground">{entry.count}</p>
-                      <p className="text-xs text-muted-foreground">orders</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {peakHourData.length === 0 && (
-                <p className="text-sm text-muted-foreground">No peak data available yet.</p>
-              )}
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[560px] text-sm">
+                  <thead>
+                    <tr className="border-y border-border bg-muted/40">
+                      {["Service", "Transactions", "Revenue", "Average per Order"].map((header) => (
+                        <th key={header} className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground">
+                          {header}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {serviceRevenue.map((row) => (
+                      <tr key={row.service} className="border-b border-border last:border-0 hover:bg-muted/20">
+                        <td className="px-4 py-3 text-xs font-medium text-foreground">{row.service}</td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground">{row.count}</td>
+                        <td className="px-4 py-3 text-xs font-semibold text-foreground">{formatCurrency(row.revenue)}</td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground">
+                          {formatCurrency(Math.round(row.revenue / Math.max(row.count, 1)))}
+                        </td>
+                      </tr>
+                    ))}
+                    {serviceRevenue.length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="px-4 py-10 text-center text-sm text-muted-foreground">
+                          No analytics data available for the selected range.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </CardContent>
           </Card>
         </div>
-
-        <Card className="border border-border shadow-none">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-              <TrendingUp className="h-4 w-4 text-primary" />
-              Service Revenue Table
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y divide-border md:hidden">
-              {serviceRevenue.map((row) => (
-                <div key={row.service} className="space-y-3 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-foreground">{row.service}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">{row.count} transactions</p>
-                    </div>
-                    <p className="shrink-0 text-sm font-bold text-foreground">{formatCurrency(row.revenue)}</p>
-                  </div>
-                  <div className="rounded-md bg-muted/30 p-2.5">
-                    <p className="text-[10px] text-muted-foreground">Average per order</p>
-                    <p className="mt-0.5 text-xs font-medium text-foreground">
-                      {formatCurrency(Math.round(row.revenue / Math.max(row.count, 1)))}
-                    </p>
-                  </div>
-                </div>
-              ))}
-              {serviceRevenue.length === 0 && (
-                <div className="px-4 py-10 text-center text-sm text-muted-foreground">
-                  No analytics data available for the selected range.
-                </div>
-              )}
-            </div>
-            <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[560px] text-sm">
-                <thead>
-                  <tr className="border-y border-border bg-muted/40">
-                    {["Service", "Transactions", "Revenue", "Average per Order"].map((header) => (
-                      <th key={header} className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground">
-                        {header}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {serviceRevenue.map((row) => (
-                    <tr key={row.service} className="border-b border-border last:border-0 hover:bg-muted/20">
-                      <td className="px-4 py-3 text-xs font-medium text-foreground">{row.service}</td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">{row.count}</td>
-                      <td className="px-4 py-3 text-xs font-semibold text-foreground">{formatCurrency(row.revenue)}</td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">
-                        {formatCurrency(Math.round(row.revenue / Math.max(row.count, 1)))}
-                      </td>
-                    </tr>
-                  ))}
-                  {serviceRevenue.length === 0 && (
-                    <tr>
-                      <td colSpan={4} className="px-4 py-10 text-center text-sm text-muted-foreground">
-                        No analytics data available for the selected range.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
       </TabsContent>
 
       <TabsContent value="forecast" className="space-y-4">
-        <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3 shadow-none sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h3 className="text-sm font-semibold text-foreground">Customer Forecast</h3>
-            <p className="text-xs text-muted-foreground">
-              {forecastMetrics.rangeTransactions.length} transactions from {forecastMetrics.fromKey} to {forecastMetrics.toKey}
-            </p>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <Select value={forecastRange} onValueChange={(value) => setForecastRange(value as ForecastRange)}>
-              <SelectTrigger className="h-9 w-full text-xs sm:w-[170px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {forecastRangeOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              className="h-9 gap-1.5 text-xs"
-              disabled={forecastPdfGenerating}
-              onClick={handleForecastPdfExport}
-            >
-              <FileText className="h-3.5 w-3.5" />
-              {forecastPdfGenerating ? "Exporting..." : "Export Forecast Report"}
-            </Button>
-          </div>
-        </div>
+        {/* Mobile Concept View */}
+        <div className="space-y-4 md:hidden">
+          {/* Mobile Date Range & Filter Banner */}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-3 shadow-sm">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                  <CalendarIcon className="w-4 h-4" />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xs font-bold text-foreground truncate">
+                    {format(forecastDates.from, "MMM d")} – {format(forecastDates.to, "MMM d, yyyy")}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">{forecastMetrics.rangeTransactions.length} transactions</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Select value={forecastRange} onValueChange={(value) => setForecastRange(value as ForecastRange)}>
+                  <SelectTrigger className="h-8 w-[115px] text-[11px] rounded-xl font-semibold">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {forecastRangeOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value} className="text-xs">
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 w-8 p-0 rounded-xl shrink-0"
+                  disabled={forecastPdfGenerating}
+                  onClick={handleForecastPdfExport}
+                  title="Export Forecast Report"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            </div>
 
-        {forecastRange === "custom" && (
-          <Card className="border border-border shadow-none">
-            <CardContent className="grid gap-3 p-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-foreground">Start Date</label>
+            {forecastRange === "custom" && (
+              <div className="grid grid-cols-2 gap-2 pt-1">
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="h-9 w-full justify-start gap-2 text-xs font-normal">
-                      <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                      {format(forecastDates.from, "MMM d, yyyy")}
+                    <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 rounded-xl font-normal justify-start truncate">
+                      <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                      <span className="truncate">{format(forecastDates.from, "MMM dd")}</span>
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar mode="single" selected={forecastDates.from} onSelect={(date) => date && setForecastFromDate(date)} initialFocus />
                   </PopoverContent>
                 </Popover>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-foreground">End Date</label>
+
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="h-9 w-full justify-start gap-2 text-xs font-normal">
-                      <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                      {format(forecastDates.to, "MMM d, yyyy")}
+                    <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 rounded-xl font-normal justify-start truncate">
+                      <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                      <span className="truncate">{format(forecastDates.to, "MMM dd")}</span>
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
+                  <PopoverContent className="w-auto p-0" align="end">
                     <Calendar mode="single" selected={forecastDates.to} onSelect={(date) => date && setForecastToDate(date)} initialFocus />
                   </PopoverContent>
                 </Popover>
               </div>
-            </CardContent>
-          </Card>
-        )}
+            )}
+          </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <Card className="border border-border shadow-none">
-            <CardContent className="p-4">
-              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <CalendarIcon className="h-3.5 w-3.5" />
-                Best Day to Staff Up
-              </p>
-              <p className="mt-1 text-xl font-bold text-foreground">{forecastMetrics.busiestDay}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {forecastMetrics.staffLift > 0 ? `Expect ${forecastMetrics.staffLift}% more customers` : "No lift detected yet"}
-              </p>
-            </CardContent>
-          </Card>
-          <Card className="border border-border shadow-none">
-            <CardContent className="p-4">
-              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Clock className="h-3.5 w-3.5" />
-                Peak Drop-off Time
-              </p>
-              <p className="mt-1 text-xl font-bold text-foreground">{forecastMetrics.peak}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">Highest volume window</p>
-            </CardContent>
-          </Card>
-          <Card className="border border-border shadow-none">
-            <CardContent className="p-4">
-              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <TrendingUp className="h-3.5 w-3.5" />
-                Busiest Week
-              </p>
-              <p className="mt-1 text-xl font-bold text-foreground">
-                {forecastMetrics.busiestWeek ? `Week ${forecastMetrics.busiestWeek}` : "-"}
-              </p>
-              <p className="mt-0.5 text-xs text-muted-foreground">Strongest monthly pattern</p>
-            </CardContent>
-          </Card>
-          <Card className="border border-border shadow-none">
-            <CardContent className="p-4">
-              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <CloudRain className="h-3.5 w-3.5" />
-                Weather Impact
-              </p>
-              <p className="mt-1 text-xl font-bold text-foreground">Not connected</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">Weather data unavailable</p>
-            </CardContent>
-          </Card>
-        </div>
+          {/* Mobile 4 Key Predictive Indicators (2x2 Grid) */}
+          <div className="grid grid-cols-2 gap-2.5">
+            {/* KPI 1: Best Day to Staff Up */}
+            <div className="rounded-2xl border border-border/70 bg-card p-3.5 shadow-sm flex flex-col justify-between relative overflow-hidden">
+              <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-2">
+                <CalendarIcon className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-[11px] font-semibold text-muted-foreground block leading-tight">Best Day to Staff Up</span>
+                <h3 className="text-xl font-extrabold text-foreground mt-1 tracking-tight">{forecastMetrics.busiestDay}</h3>
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1 flex items-center leading-tight">
+                  <TrendingUp className="w-3 h-3 mr-0.5 inline shrink-0" />
+                  {forecastMetrics.staffLift > 0 ? `Expect +${forecastMetrics.staffLift}% load` : "Normal load"}
+                </p>
+              </div>
+            </div>
 
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-          <Card className="border border-border shadow-none">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold">Predicted Busy Days</CardTitle>
-              <p className="text-xs text-muted-foreground">Based on historical transaction patterns</p>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="h-[260px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={forecastMetrics.busyDays}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(33 18% 82%)" vertical={false} />
-                    <XAxis dataKey="label" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                    <YAxis allowDecimals={false} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                    <Tooltip formatter={(value: number) => [value, "Predicted customers"]} />
-                    <Bar dataKey="customers" radius={[6, 6, 0, 0]}>
-                      {forecastMetrics.busyDays.map((entry) => (
-                        <Cell key={entry.label} fill={entry.label === forecastMetrics.busiestDay ? BUSY_BAR : NORMAL_BAR} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+            {/* KPI 2: Peak Drop-off Time */}
+            <div className="rounded-2xl border border-border/70 bg-card p-3.5 shadow-sm flex flex-col justify-between relative overflow-hidden">
+              <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-2">
+                <Clock className="w-4 h-4" />
               </div>
-              <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
-                <div className="rounded-md bg-muted/30 p-2.5">Busiest Day: <span className="font-semibold text-foreground">{forecastMetrics.busiestDay}</span></div>
-                <div className="rounded-md bg-muted/30 p-2.5">Slowest Day: <span className="font-semibold text-foreground">{forecastMetrics.slowestDay}</span></div>
+              <div>
+                <span className="text-[11px] font-semibold text-muted-foreground block leading-tight">Peak Drop-off Time</span>
+                <h3 className="text-sm font-extrabold text-foreground mt-1 tracking-tight">{forecastMetrics.peak}</h3>
+                <p className="text-[10px] text-muted-foreground mt-1 leading-tight">Highest volume window</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          <Card className="border border-border shadow-none">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold">Predicted Peak Hours</CardTitle>
-              <p className="text-xs text-muted-foreground">When most customers drop off laundry</p>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="h-[260px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={forecastMetrics.busyHours} layout="vertical" margin={{ left: 8 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(33 18% 82%)" horizontal={false} />
-                    <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                    <YAxis type="category" dataKey="label" width={42} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                    <Tooltip formatter={(value: number) => [value, "Predicted customers"]} />
-                    <Bar dataKey="customers" radius={[0, 6, 6, 0]}>
-                      {forecastMetrics.busyHours.map((entry) => (
-                        <Cell key={entry.label} fill={forecastMetrics.peak.includes(entry.label) ? BUSY_BAR : MUTED_BAR} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+            {/* KPI 3: Busiest Week */}
+            <div className="rounded-2xl border border-border/70 bg-card p-3.5 shadow-sm flex flex-col justify-between relative overflow-hidden">
+              <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-2">
+                <TrendingUp className="w-4 h-4" />
               </div>
-              <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
-                <div className="rounded-md bg-muted/30 p-2.5">Peak Hours: <span className="font-semibold text-foreground">{forecastMetrics.peak}</span></div>
-                <div className="rounded-md bg-muted/30 p-2.5">Second Peak: <span className="font-semibold text-foreground">{forecastMetrics.secondPeak}</span></div>
+              <div>
+                <span className="text-[11px] font-semibold text-muted-foreground block leading-tight">Busiest Week</span>
+                <h3 className="text-xl font-extrabold text-foreground mt-1 tracking-tight">
+                  {forecastMetrics.busiestWeek ? `Week ${forecastMetrics.busiestWeek}` : "-"}
+                </h3>
+                <p className="text-[10px] text-muted-foreground mt-1 leading-tight">Strongest monthly trend</p>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
 
-        <Card className="border border-border shadow-none">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold">Monthly Customer Trend</CardTitle>
-            <p className="text-xs text-muted-foreground">Transaction volume over the past months</p>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="h-[280px]">
+            {/* KPI 4: Weather Impact */}
+            <div className="rounded-2xl border border-border/70 bg-card p-3.5 shadow-sm flex flex-col justify-between relative overflow-hidden">
+              <div className="w-8 h-8 rounded-xl bg-muted text-muted-foreground flex items-center justify-center mb-2">
+                <CloudRain className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-[11px] font-semibold text-muted-foreground block leading-tight">Weather Impact</span>
+                <h3 className="text-sm font-extrabold text-foreground mt-1 tracking-tight">Not connected</h3>
+                <p className="text-[10px] text-muted-foreground mt-1 leading-tight">Weather data unavailable</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Staffing Recommendation Alert */}
+          <div className="bg-gradient-to-r from-purple-50 to-indigo-50/60 dark:from-purple-950/20 dark:to-indigo-950/20 p-3.5 rounded-2xl border border-primary/30 shadow-sm flex items-start gap-3">
+            <div className="w-8 h-8 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+              <Zap className="w-4 h-4" />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-foreground tracking-wide uppercase">Staffing Recommendation</h4>
+              <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                {forecastMetrics.insight}
+              </p>
+            </div>
+          </div>
+
+          {/* Mobile Predicted Busy Days Chart */}
+          <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-foreground">Predicted Busy Days</h3>
+                <p className="text-[11px] text-muted-foreground">Based on historical transaction patterns</p>
+              </div>
+              <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">
+                Weekly
+              </span>
+            </div>
+            <div className="h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={forecastMetrics.busyDays}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(33 18% 82%)" vertical={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                  <Tooltip formatter={(value: number) => [value, "Predicted customers"]} />
+                  <Bar dataKey="customers" radius={[6, 6, 0, 0]}>
+                    {forecastMetrics.busyDays.map((entry) => (
+                      <Cell key={entry.label} fill={entry.label === forecastMetrics.busiestDay ? BUSY_BAR : NORMAL_BAR} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground pt-1 border-t border-border/40">
+              <div className="rounded-xl bg-muted/40 p-2">Busiest Day: <span className="font-bold text-foreground">{forecastMetrics.busiestDay}</span></div>
+              <div className="rounded-xl bg-muted/40 p-2">Slowest Day: <span className="font-bold text-foreground">{forecastMetrics.slowestDay}</span></div>
+            </div>
+          </div>
+
+          {/* Mobile Predicted Peak Hours Chart */}
+          <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-foreground">Predicted Peak Hours</h3>
+                <p className="text-[11px] text-muted-foreground">When most customers drop off laundry</p>
+              </div>
+              <div className="flex items-center gap-1.5 text-[10px] font-bold text-primary bg-primary/10 px-2 py-1 rounded-lg">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                <span>Rush Window</span>
+              </div>
+            </div>
+            <div className="h-[230px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={forecastMetrics.busyHours} layout="vertical" margin={{ left: 4 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(33 18% 82%)" horizontal={false} />
+                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                  <YAxis type="category" dataKey="label" width={42} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                  <Tooltip formatter={(value: number) => [value, "Predicted customers"]} />
+                  <Bar dataKey="customers" radius={[0, 6, 6, 0]}>
+                    {forecastMetrics.busyHours.map((entry) => (
+                      <Cell key={entry.label} fill={forecastMetrics.peak.includes(entry.label) ? BUSY_BAR : MUTED_BAR} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground pt-1 border-t border-border/40">
+              <div className="rounded-xl bg-muted/40 p-2">Peak Hours: <span className="font-bold text-foreground">{forecastMetrics.peak}</span></div>
+              <div className="rounded-xl bg-muted/40 p-2">Second Peak: <span className="font-bold text-foreground">{forecastMetrics.secondPeak}</span></div>
+            </div>
+          </div>
+
+          {/* Mobile Monthly Customer Trend */}
+          <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-foreground">Monthly Customer Trend</h3>
+                <p className="text-[11px] text-muted-foreground">Transaction volume over past months</p>
+              </div>
+              <p className={cn("text-xs font-bold", forecastMetrics.trendPercent >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive")}>
+                {forecastMetrics.trendPercent >= 0 ? "↑" : "↓"} {Math.abs(forecastMetrics.trendPercent)}%
+              </p>
+            </div>
+            <div className="h-[220px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={forecastMetrics.monthlyTrend}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(33 18% 82%)" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
                   <Tooltip formatter={(value: number) => [value, "Transactions"]} />
                   <Line type="monotone" dataKey="transactions" stroke="hsl(257 58% 49%)" strokeWidth={2.5} dot={{ r: 4, fill: "hsl(257 58% 49%)" }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
-            <p className={cn("text-sm font-semibold", forecastMetrics.trendPercent >= 0 ? "text-emerald-600" : "text-destructive")}>
-              {forecastMetrics.trendPercent >= 0 ? "Up" : "Down"} {Math.abs(forecastMetrics.trendPercent)}% vs last month
-            </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card className="border border-border shadow-none">
-          <CardContent className="flex gap-3 p-4">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <Lightbulb className="h-4 w-4" />
-            </div>
+        {/* Desktop View (Unchanged) */}
+        <div className="hidden md:block space-y-4">
+          <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3 shadow-none sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-semibold text-foreground">Forecast insight</p>
-              <p className="mt-1 text-sm leading-6 text-foreground">{forecastMetrics.insight}</p>
+              <h3 className="text-sm font-semibold text-foreground">Customer Forecast</h3>
+              <p className="text-xs text-muted-foreground">
+                {forecastMetrics.rangeTransactions.length} transactions from {forecastMetrics.fromKey} to {forecastMetrics.toKey}
+              </p>
             </div>
-          </CardContent>
-        </Card>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Select value={forecastRange} onValueChange={(value) => setForecastRange(value as ForecastRange)}>
+                <SelectTrigger className="h-9 w-full text-xs sm:w-[170px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {forecastRangeOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                className="h-9 gap-1.5 text-xs"
+                disabled={forecastPdfGenerating}
+                onClick={handleForecastPdfExport}
+              >
+                <FileText className="h-3.5 w-3.5" />
+                {forecastPdfGenerating ? "Exporting..." : "Export Forecast Report"}
+              </Button>
+            </div>
+          </div>
+
+          {forecastRange === "custom" && (
+            <Card className="border border-border shadow-none">
+              <CardContent className="grid gap-3 p-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-foreground">Start Date</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="h-9 w-full justify-start gap-2 text-xs font-normal">
+                        <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                        {format(forecastDates.from, "MMM d, yyyy")}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar mode="single" selected={forecastDates.from} onSelect={(date) => date && setForecastFromDate(date)} initialFocus />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-foreground">End Date</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="h-9 w-full justify-start gap-2 text-xs font-normal">
+                        <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                        {format(forecastDates.to, "MMM d, yyyy")}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar mode="single" selected={forecastDates.to} onSelect={(date) => date && setForecastToDate(date)} initialFocus />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <Card className="border border-border shadow-none">
+              <CardContent className="p-4">
+                <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <CalendarIcon className="h-3.5 w-3.5" />
+                  Best Day to Staff Up
+                </p>
+                <p className="mt-1 text-xl font-bold text-foreground">{forecastMetrics.busiestDay}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {forecastMetrics.staffLift > 0 ? `Expect ${forecastMetrics.staffLift}% more customers` : "No lift detected yet"}
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="border border-border shadow-none">
+              <CardContent className="p-4">
+                <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Clock className="h-3.5 w-3.5" />
+                  Peak Drop-off Time
+                </p>
+                <p className="mt-1 text-xl font-bold text-foreground">{forecastMetrics.peak}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">Highest volume window</p>
+              </CardContent>
+            </Card>
+            <Card className="border border-border shadow-none">
+              <CardContent className="p-4">
+                <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <TrendingUp className="h-3.5 w-3.5" />
+                  Busiest Week
+                </p>
+                <p className="mt-1 text-xl font-bold text-foreground">
+                  {forecastMetrics.busiestWeek ? `Week ${forecastMetrics.busiestWeek}` : "-"}
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">Strongest monthly pattern</p>
+              </CardContent>
+            </Card>
+            <Card className="border border-border shadow-none">
+              <CardContent className="p-4">
+                <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <CloudRain className="h-3.5 w-3.5" />
+                  Weather Impact
+                </p>
+                <p className="mt-1 text-xl font-bold text-foreground">Not connected</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">Weather data unavailable</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            <Card className="border border-border shadow-none">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold">Predicted Busy Days</CardTitle>
+                <p className="text-xs text-muted-foreground">Based on historical transaction patterns</p>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="h-[260px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={forecastMetrics.busyDays}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(33 18% 82%)" vertical={false} />
+                      <XAxis dataKey="label" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                      <Tooltip formatter={(value: number) => [value, "Predicted customers"]} />
+                      <Bar dataKey="customers" radius={[6, 6, 0, 0]}>
+                        {forecastMetrics.busyDays.map((entry) => (
+                          <Cell key={entry.label} fill={entry.label === forecastMetrics.busiestDay ? BUSY_BAR : NORMAL_BAR} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
+                  <div className="rounded-md bg-muted/30 p-2.5">Busiest Day: <span className="font-semibold text-foreground">{forecastMetrics.busiestDay}</span></div>
+                  <div className="rounded-md bg-muted/30 p-2.5">Slowest Day: <span className="font-semibold text-foreground">{forecastMetrics.slowestDay}</span></div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border border-border shadow-none">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold">Predicted Peak Hours</CardTitle>
+                <p className="text-xs text-muted-foreground">When most customers drop off laundry</p>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="h-[260px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={forecastMetrics.busyHours} layout="vertical" margin={{ left: 8 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(33 18% 82%)" horizontal={false} />
+                      <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                      <YAxis type="category" dataKey="label" width={42} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                      <Tooltip formatter={(value: number) => [value, "Predicted customers"]} />
+                      <Bar dataKey="customers" radius={[0, 6, 6, 0]}>
+                        {forecastMetrics.busyHours.map((entry) => (
+                          <Cell key={entry.label} fill={forecastMetrics.peak.includes(entry.label) ? BUSY_BAR : MUTED_BAR} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
+                  <div className="rounded-md bg-muted/30 p-2.5">Peak Hours: <span className="font-semibold text-foreground">{forecastMetrics.peak}</span></div>
+                  <div className="rounded-md bg-muted/30 p-2.5">Second Peak: <span className="font-semibold text-foreground">{forecastMetrics.secondPeak}</span></div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="border border-border shadow-none">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold">Monthly Customer Trend</CardTitle>
+              <p className="text-xs text-muted-foreground">Transaction volume over the past months</p>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="h-[280px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={forecastMetrics.monthlyTrend}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(33 18% 82%)" vertical={false} />
+                    <XAxis dataKey="label" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                    <Tooltip formatter={(value: number) => [value, "Transactions"]} />
+                    <Line type="monotone" dataKey="transactions" stroke="hsl(257 58% 49%)" strokeWidth={2.5} dot={{ r: 4, fill: "hsl(257 58% 49%)" }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+              <p className={cn("text-sm font-semibold", forecastMetrics.trendPercent >= 0 ? "text-emerald-600" : "text-destructive")}>
+                {forecastMetrics.trendPercent >= 0 ? "Up" : "Down"} {Math.abs(forecastMetrics.trendPercent)}% vs last month
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-border shadow-none">
+            <CardContent className="flex gap-3 p-4">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                <Lightbulb className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">Forecast insight</p>
+                <p className="mt-1 text-sm leading-6 text-foreground">{forecastMetrics.insight}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </TabsContent>
 
       <TabsContent value="unclaimed">

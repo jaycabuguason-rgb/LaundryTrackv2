@@ -105,8 +105,20 @@ describe("ReportsPage Responsiveness and Mobile Concept Layout", () => {
     if (analyticsTab) {
       fireEvent.click(analyticsTab);
       expect(screen.getAllByText("Sales Analytics").length).toBeGreaterThanOrEqual(1);
-      expect(screen.getByText("Sales Trend")).toBeInTheDocument();
-      expect(screen.getByText("Market and Sales Mix")).toBeInTheDocument();
+      expect(screen.getAllByText("Sales Trend").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText(/Market (and|&) Sales Mix/).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText("Orders in Range").length).toBeGreaterThanOrEqual(1);
+    }
+
+    // Click Customer Forecast tab
+    const forecastTab = tabs.find((tab) => tab.textContent?.includes("Forecast"));
+    expect(forecastTab).toBeDefined();
+    if (forecastTab) {
+      fireEvent.click(forecastTab);
+      expect(screen.getAllByText("Customer Forecast").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText("Best Day to Staff Up").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText("Peak Drop-off Time").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText("Staffing Recommendation").length).toBeGreaterThanOrEqual(1);
     }
 
     // Click Unclaimed tab
