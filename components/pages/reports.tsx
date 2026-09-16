@@ -15,6 +15,11 @@ import {
   CheckCircle2,
   AlertCircle,
   Sparkles,
+  Receipt,
+  Banknote,
+  Scale,
+  SlidersHorizontal,
+  RotateCw,
 } from "lucide-react";
 import { addDays, addMonths, format, subDays } from "date-fns";
 import {
@@ -313,6 +318,8 @@ function getCustomerSummaryRows(transactions: Transaction[]) {
 }
 
 export default function ReportsPage({ transactions, shopName = "LaundryTrack" }: ReportsPageProps) {
+  const [activeTab, setActiveTab] = useState<string>("overview");
+  const [mobileStatusFilter, setMobileStatusFilter] = useState<string>("all");
   const [summaryDate, setSummaryDate] = useState<Date>(new Date());
   const [exportFromDate, setExportFromDate] = useState<Date>(subDays(new Date(), 30));
   const [exportToDate, setExportToDate] = useState<Date>(new Date());
@@ -360,23 +367,65 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
     [exportFrom, exportTo, transactions],
   );
 
-  const summaryCards = useMemo(() => {
-    const readyCount = transactions.filter((transaction) => transaction.status === "Ready").length;
-    const totalRevenue = transactions.reduce((sum, transaction) => sum + transaction.fee, 0);
-    const totalWeight = transactions.reduce((sum, transaction) => sum + (transaction.weight || 0), 0);
+  const readyCount = useMemo(
+    () => transactions.filter((transaction) => transaction.status === "Ready").length,
+    [transactions],
+  );
+  const washingCount = useMemo(
+    () => transactions.filter((transaction) => transaction.status === "Washing" || transaction.status === "Drying").length,
+    [transactions],
+  );
+  const receivedCount = useMemo(
+    () => transactions.filter((transaction) => transaction.status === "Received").length,
+    [transactions],
+  );
+  const totalRevenue = useMemo(
+    () => transactions.reduce((sum, transaction) => sum + transaction.fee, 0),
+    [transactions],
+  );
+  const totalWeight = useMemo(
+    () => transactions.reduce((sum, transaction) => sum + (transaction.weight || 0), 0),
+    [transactions],
+  );
 
+  const activeOrdersCount = readyCount + washingCount + receivedCount;
+  const readyPct = activeOrdersCount > 0 ? Math.round((readyCount / activeOrdersCount) * 100) : 0;
+  const washingPct = activeOrdersCount > 0 ? Math.round((washingCount / activeOrdersCount) * 100) : 0;
+  const receivedPct = activeOrdersCount > 0 ? Math.max(0, 100 - readyPct - washingPct) : 0;
+
+  const summaryCards = useMemo(() => {
     return [
       { label: "Total Transactions", value: transactions.length.toLocaleString(), sub: "Realtime" },
       { label: "Total Revenue", value: formatCurrency(totalRevenue), sub: "Realtime" },
       { label: "Total Weight", value: `${totalWeight.toFixed(1)} kg`, sub: "Processed" },
       { label: "Ready for Pickup", value: readyCount.toLocaleString(), sub: "Current queue" },
     ];
-  }, [transactions]);
+  }, [readyCount, totalRevenue, totalWeight, transactions.length]);
 
   const dailyTransactions = useMemo(
     () => transactions.filter((transaction) => transaction.dropOffDate === summaryDateKey),
     [summaryDateKey, transactions],
   );
+
+  const dailyReadyCount = useMemo(
+    () => dailyTransactions.filter((t) => t.status === "Ready").length,
+    [dailyTransactions],
+  );
+  const dailyWashingCount = useMemo(
+    () => dailyTransactions.filter((t) => t.status === "Washing" || t.status === "Drying").length,
+    [dailyTransactions],
+  );
+  const dailyReceivedCount = useMemo(
+    () => dailyTransactions.filter((t) => t.status === "Received").length,
+    [dailyTransactions],
+  );
+  const displayedDailyTransactions = useMemo(() => {
+    if (mobileStatusFilter === "all") return dailyTransactions;
+    if (mobileStatusFilter === "Washing") {
+      return dailyTransactions.filter((t) => t.status === "Washing" || t.status === "Drying");
+    }
+    return dailyTransactions.filter((t) => t.status === mobileStatusFilter);
+  }, [dailyTransactions, mobileStatusFilter]);
 
   const serviceRevenue = useMemo<ServiceRevenueRow[]>(() => {
     const serviceMap = new Map<string, ServiceRevenueRow>();
@@ -601,10 +650,27 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
 
   return (
     <div className="min-h-[60vh] space-y-4">
-      <div className="flex items-center justify-between">
+      {/* Desktop Header */}
+      <div className="hidden md:flex items-center justify-between">
         <h2 className="text-base font-semibold text-foreground">Reports</h2>
         <p className="text-xs text-muted-foreground">{transactions.length} total transactions</p>
       </div>
+
+      {/* Mobile Concept Header */}
+      <div className="flex items-end justify-between gap-2 pt-1 pb-0.5 md:hidden">
+        <div className="flex flex-col min-w-0">
+          <div className="flex items-center gap-1.5">
+            <h1 className="text-xl font-bold tracking-tight text-foreground">Reports</h1>
+            <span className="w-2 h-2 rounded-full bg-primary animate-pulse inline-block" />
+          </div>
+          <p className="text-xs text-muted-foreground truncate">Business analytics & daily laundry summaries</p>
+        </div>
+        <div className="flex items-center gap-1.5 bg-muted/60 text-foreground px-2.5 py-1 rounded-full text-xs font-semibold shrink-0">
+          <RotateCw className="w-3 h-3 text-primary animate-spin" style={{ animationDuration: '4s' }} />
+          <span>{transactions.length} total</span>
+        </div>
+      </div>
+
       {transactions.length === 0 && (
         <Card className="border border-border shadow-none">
           <CardContent className="p-6 text-sm text-muted-foreground">
@@ -612,41 +678,173 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
           </CardContent>
         </Card>
       )}
-    <Tabs defaultValue="overview" className="space-y-4">
-      <div>
-        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 bg-muted/40 p-1 sm:flex sm:h-9">
-          <TabsTrigger value="overview" className="min-h-[40px] text-xs sm:min-h-0">Daily Summary</TabsTrigger>
-          <TabsTrigger value="analytics" className="min-h-[40px] text-xs sm:min-h-0">Sales Analytics</TabsTrigger>
-          <TabsTrigger value="forecast" className="min-h-[40px] text-xs sm:min-h-0">Forecast</TabsTrigger>
-          <TabsTrigger value="unclaimed" className="min-h-[40px] text-xs sm:min-h-0">Unclaimed Items</TabsTrigger>
-          <TabsTrigger value="export" className="min-h-[40px] text-xs sm:min-h-0">Export</TabsTrigger>
-        </TabsList>
-      </div>
 
-      <TabsContent value="overview" className="space-y-4">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {summaryCards.map((card) => (
-            <Card key={card.label} className="border border-border shadow-none">
-              <CardContent className="p-5">
-                <p className="text-xs text-muted-foreground">{card.label}</p>
-                <p className="mt-1 text-2xl font-bold text-foreground">{card.value}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">{card.sub}</p>
-              </CardContent>
-            </Card>
-          ))}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        {/* Mobile Horizontal Pill Navigation Bar */}
+        <div className="w-full overflow-x-auto no-scrollbar py-0.5 flex items-center gap-1.5 md:hidden">
+          {[
+            { id: "overview", label: "Daily Summary", icon: FileText },
+            { id: "analytics", label: "Sales Analytics", icon: TrendingUp },
+            { id: "forecast", label: "Forecast", icon: Lightbulb },
+            { id: "unclaimed", label: "Unclaimed", icon: PackageCheck },
+            { id: "export", label: "Export", icon: Download },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap transition-all active:scale-95",
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-muted/60 text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Icon className="w-3.5 h-3.5 shrink-0" />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
 
-        <Card className="border border-border shadow-none">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between gap-3">
-              <CardTitle className="text-sm font-semibold">
-                Transactions - {format(summaryDate, "MMMM d, yyyy")}
-              </CardTitle>
+        {/* Desktop TabsList */}
+        <div className="hidden md:block">
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 bg-muted/40 p-1 sm:flex sm:h-9">
+            <TabsTrigger value="overview" className="min-h-[40px] text-xs sm:min-h-0">Daily Summary</TabsTrigger>
+            <TabsTrigger value="analytics" className="min-h-[40px] text-xs sm:min-h-0">Sales Analytics</TabsTrigger>
+            <TabsTrigger value="forecast" className="min-h-[40px] text-xs sm:min-h-0">Forecast</TabsTrigger>
+            <TabsTrigger value="unclaimed" className="min-h-[40px] text-xs sm:min-h-0">Unclaimed Items</TabsTrigger>
+            <TabsTrigger value="export" className="min-h-[40px] text-xs sm:min-h-0">Export</TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="overview" className="space-y-4">
+          {/* Mobile 2x2 Metric Summary Grid */}
+          <div className="grid grid-cols-2 gap-2.5 md:hidden">
+            {/* Card 1: Transactions */}
+            <div className="rounded-2xl border border-border/70 bg-card p-3.5 shadow-sm flex flex-col justify-between relative overflow-hidden">
+              <div className="flex items-start justify-between">
+                <span className="text-xs font-medium text-muted-foreground">Transactions</span>
+                <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                  <Receipt className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="mt-2.5">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl font-extrabold text-foreground tracking-tight">{transactions.length}</span>
+                </div>
+                <div className="flex items-center gap-1 mt-0.5 text-[11px] text-muted-foreground">
+                  <TrendingUp className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">Realtime</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 2: Total Revenue */}
+            <div className="rounded-2xl border border-border/70 bg-card p-3.5 shadow-sm flex flex-col justify-between relative overflow-hidden">
+              <div className="flex items-start justify-between">
+                <span className="text-xs font-medium text-muted-foreground">Total Revenue</span>
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                  <Banknote className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="mt-2.5">
+                <span className="text-2xl font-extrabold text-primary tracking-tight">{formatCurrency(totalRevenue)}</span>
+                <div className="flex items-center gap-1 mt-0.5 text-[11px] text-muted-foreground">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                  <span>Realtime</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3: Total Weight */}
+            <div className="rounded-2xl border border-border/70 bg-card p-3.5 shadow-sm flex flex-col justify-between relative overflow-hidden">
+              <div className="flex items-start justify-between">
+                <span className="text-xs font-medium text-muted-foreground">Total Weight</span>
+                <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                  <Scale className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="mt-2.5">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl font-extrabold text-foreground tracking-tight">{totalWeight.toFixed(1)}</span>
+                  <span className="text-xs font-semibold text-foreground">kg</span>
+                </div>
+                <div className="flex items-center gap-1 mt-0.5 text-[11px] text-muted-foreground">
+                  <span>Processed</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 4: Ready Pickup */}
+            <div className="rounded-2xl border border-border/70 bg-card p-3.5 shadow-sm flex flex-col justify-between relative overflow-hidden">
+              <div className="flex items-start justify-between">
+                <span className="text-xs font-medium text-muted-foreground">Ready Pickup</span>
+                <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                  <PackageCheck className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="mt-2.5">
+                <span className="text-2xl font-extrabold text-foreground tracking-tight">{readyCount}</span>
+                <div className="flex items-center gap-1 mt-0.5 text-[11px] text-muted-foreground">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                  <span>Current queue</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Operational Flow Progress Visualizer */}
+          <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm space-y-2 md:hidden">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-foreground">Daily Capacity & Wash Cycles</span>
+              <span className="text-[11px] font-bold text-primary">
+                {activeOrdersCount > 0 ? `${Math.round((readyCount / activeOrdersCount) * 100)}% Ready` : "Idle"}
+              </span>
+            </div>
+            <div className="w-full h-2.5 bg-muted/60 rounded-full overflow-hidden flex">
+              <div className="bg-emerald-500 transition-all duration-500" style={{ width: `${readyPct}%` }} title={`Ready: ${readyCount}`} />
+              <div className="bg-blue-500 transition-all duration-500" style={{ width: `${washingPct}%` }} title={`Washing: ${washingCount}`} />
+              <div className="bg-violet-500 transition-all duration-500" style={{ width: `${receivedPct}%` }} title={`Received: ${receivedCount}`} />
+            </div>
+            <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-0.5">
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                <span>Ready ({readyCount})</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                <span>Wash ({washingCount})</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-violet-500 shrink-0" />
+                <span>Received ({receivedCount})</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Date Selection Banner & Quick Filter Chips */}
+          <div className="flex flex-col gap-2 md:hidden">
+            <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-3 shadow-sm">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                  <CalendarIcon className="w-4 h-4" />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xs font-bold text-foreground truncate">{format(summaryDate, "MMM d, yyyy")}</span>
+                  <span className="text-[10px] text-muted-foreground truncate">{format(summaryDate, "EEEE")} • Daily Summary</span>
+                </div>
+              </div>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="h-8 gap-1.5 px-2.5 text-xs">
-                    <CalendarIcon className="h-3 w-3 text-muted-foreground" />
-                    {format(summaryDate, "MMM d, yyyy")}
+                  <Button variant="outline" size="sm" className="h-8 gap-1 rounded-xl px-2.5 text-xs font-semibold">
+                    <SlidersHorizontal className="w-3 h-3 text-muted-foreground" />
+                    <span>Date</span>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="end">
@@ -654,93 +852,161 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
                 </PopoverContent>
               </Popover>
             </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y divide-border md:hidden">
-              {dailyTransactions.map((transaction) => (
-                <div key={transaction.id} className="space-y-3 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-mono text-xs font-semibold text-primary">{transaction.ticketId}</p>
-                      <p className="mt-0.5 truncate text-sm font-medium text-foreground">{transaction.customerName}</p>
-                      <p className="mt-0.5 text-[11px] text-muted-foreground">{transaction.arrivalDateTime}</p>
-                    </div>
-                    <StatusBadge status={transaction.status} className="shrink-0" />
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/30 p-2.5">
-                    <div>
-                      <p className="text-[10px] text-muted-foreground">Service</p>
-                      <p className="truncate text-xs font-medium text-foreground">{transaction.washType}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-muted-foreground">Weight</p>
-                      <p className="text-xs font-medium text-foreground">{transaction.weight} kg</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-muted-foreground">Fee</p>
-                      <p className="text-xs font-semibold text-foreground">{formatCurrency(transaction.fee)}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {dailyTransactions.length === 0 && (
-                <Empty className="px-4 py-10">
-                  <EmptyHeader>
-                    <EmptyMedia variant="icon">
-                      <Inbox />
-                    </EmptyMedia>
-                    <EmptyTitle className="text-sm">No transactions found for this date.</EmptyTitle>
-                    <EmptyDescription>Pick a different date or add transactions for this day.</EmptyDescription>
-                  </EmptyHeader>
-                </Empty>
-              )}
-            </div>
-            <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[720px] text-sm">
-                <thead>
-                  <tr className="border-y border-border bg-muted/40">
-                    {["Ticket ID", "Customer", "Arrival", "Service", "Weight", "Fee", "Status"].map((header) => (
-                      <th key={header} className="whitespace-nowrap px-4 py-2.5 text-left text-xs font-medium text-muted-foreground">
-                        {header}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {dailyTransactions.map((transaction) => (
-                    <tr key={transaction.id} className="border-b border-border last:border-0 hover:bg-muted/20">
-                      <td className="px-4 py-3 text-xs font-mono text-primary">{transaction.ticketId}</td>
-                      <td className="px-4 py-3 text-xs font-medium text-foreground">{transaction.customerName}</td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">{transaction.arrivalDateTime}</td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">{transaction.washType}</td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">{transaction.weight} kg</td>
-                      <td className="px-4 py-3 text-xs font-semibold text-foreground">{formatCurrency(transaction.fee)}</td>
-                      <td className="px-4 py-3">
-                        <StatusBadge status={transaction.status} />
-                      </td>
-                    </tr>
-                  ))}
-                  {dailyTransactions.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="px-4 py-10">
-                        <Empty>
-                          <EmptyHeader>
-                            <EmptyMedia variant="icon">
-                              <Inbox />
-                            </EmptyMedia>
-                            <EmptyTitle className="text-sm">No transactions found for this date.</EmptyTitle>
-                            <EmptyDescription>Pick a different date or add transactions for this day.</EmptyDescription>
-                          </EmptyHeader>
-                        </Empty>
-                      </td>
-                    </tr>
+
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+              {[
+                { id: "all", label: `All (${dailyTransactions.length})` },
+                { id: "Ready", label: `Ready (${dailyReadyCount})` },
+                { id: "Washing", label: `Washing (${dailyWashingCount})` },
+                { id: "Received", label: `Received (${dailyReceivedCount})` },
+              ].map((pill) => (
+                <button
+                  key={pill.id}
+                  type="button"
+                  onClick={() => setMobileStatusFilter(pill.id)}
+                  className={cn(
+                    "rounded-full px-3 py-1 text-[11px] font-semibold whitespace-nowrap transition-all",
+                    mobileStatusFilter === pill.id
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "bg-muted/60 text-muted-foreground hover:text-foreground hover:bg-muted"
                   )}
-                </tbody>
-              </table>
+                >
+                  {pill.label}
+                </button>
+              ))}
             </div>
-          </CardContent>
-        </Card>
-      </TabsContent>
+          </div>
+
+          {/* Mobile Daily Transactions Card List */}
+          <div className="space-y-2.5 md:hidden">
+            <div className="flex items-center justify-between px-0.5">
+              <span className="text-xs font-bold text-foreground">Recent Logs</span>
+              <span className="text-[11px] text-muted-foreground">
+                Showing {displayedDailyTransactions.length} of {dailyTransactions.length}
+              </span>
+            </div>
+            {displayedDailyTransactions.map((transaction) => (
+              <div
+                key={transaction.id}
+                className="rounded-2xl border border-border/70 bg-card p-3.5 shadow-sm space-y-2.5 transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="font-mono text-xs font-bold text-primary">#{transaction.ticketId}</span>
+                    <span className="w-1 h-1 rounded-full bg-muted-foreground/40 shrink-0" />
+                    <span className="text-xs font-bold text-foreground truncate">{transaction.customerName}</span>
+                  </div>
+                  <StatusBadge status={transaction.status} className="shrink-0" />
+                </div>
+                <div className="flex items-center justify-between pt-1 border-t border-border/40 text-[11px] text-muted-foreground">
+                  <div className="flex items-center gap-2.5 truncate">
+                    <span className="flex items-center gap-1 shrink-0">
+                      <Clock className="w-3 h-3 text-muted-foreground/70" />
+                      <span>{transaction.arrivalDateTime.match(/\d{1,2}:\d{2}(\s?[AP]M)?/i)?.[0] || transaction.arrivalDateTime}</span>
+                    </span>
+                    <span className="flex items-center gap-1 truncate">
+                      <Sparkles className="w-3 h-3 text-primary/70 shrink-0" />
+                      <span className="truncate">{transaction.washType} ({transaction.weight} kg)</span>
+                    </span>
+                  </div>
+                  <span className="font-bold text-foreground shrink-0 text-xs">{formatCurrency(transaction.fee)}</span>
+                </div>
+              </div>
+            ))}
+            {displayedDailyTransactions.length === 0 && (
+              <Empty className="px-4 py-8 border border-dashed rounded-2xl">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <Inbox />
+                  </EmptyMedia>
+                  <EmptyTitle className="text-sm">No transactions found for this date.</EmptyTitle>
+                  <EmptyDescription>Pick a different date or add transactions for this day.</EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            )}
+          </div>
+
+          {/* Desktop Overview Section */}
+          <div className="hidden md:block space-y-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {summaryCards.map((card) => (
+                <Card key={card.label} className="border border-border shadow-none">
+                  <CardContent className="p-5">
+                    <p className="text-xs text-muted-foreground">{card.label}</p>
+                    <p className="mt-1 text-2xl font-bold text-foreground">{card.value}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{card.sub}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <Card className="border border-border shadow-none">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between gap-3">
+                  <CardTitle className="text-sm font-semibold">
+                    Transactions - {format(summaryDate, "MMMM d, yyyy")}
+                  </CardTitle>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="h-8 gap-1.5 px-2.5 text-xs">
+                        <CalendarIcon className="h-3 w-3 text-muted-foreground" />
+                        {format(summaryDate, "MMM d, yyyy")}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <Calendar mode="single" selected={summaryDate} onSelect={(date) => date && setSummaryDate(date)} initialFocus />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[720px] text-sm">
+                    <thead>
+                      <tr className="border-y border-border bg-muted/40">
+                        {["Ticket ID", "Customer", "Arrival", "Service", "Weight", "Fee", "Status"].map((header) => (
+                          <th key={header} className="whitespace-nowrap px-4 py-2.5 text-left text-xs font-medium text-muted-foreground">
+                            {header}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dailyTransactions.map((transaction) => (
+                        <tr key={transaction.id} className="border-b border-border last:border-0 hover:bg-muted/20">
+                          <td className="px-4 py-3 text-xs font-mono text-primary">{transaction.ticketId}</td>
+                          <td className="px-4 py-3 text-xs font-medium text-foreground">{transaction.customerName}</td>
+                          <td className="px-4 py-3 text-xs text-muted-foreground">{transaction.arrivalDateTime}</td>
+                          <td className="px-4 py-3 text-xs text-muted-foreground">{transaction.washType}</td>
+                          <td className="px-4 py-3 text-xs text-muted-foreground">{transaction.weight} kg</td>
+                          <td className="px-4 py-3 text-xs font-semibold text-foreground">{formatCurrency(transaction.fee)}</td>
+                          <td className="px-4 py-3">
+                            <StatusBadge status={transaction.status} />
+                          </td>
+                        </tr>
+                      ))}
+                      {dailyTransactions.length === 0 && (
+                        <tr>
+                          <td colSpan={7} className="px-4 py-10">
+                            <Empty>
+                              <EmptyHeader>
+                                <EmptyMedia variant="icon">
+                                  <Inbox />
+                                </EmptyMedia>
+                                <EmptyTitle className="text-sm">No transactions found for this date.</EmptyTitle>
+                                <EmptyDescription>Pick a different date or add transactions for this day.</EmptyDescription>
+                              </EmptyHeader>
+                            </Empty>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
       <TabsContent value="analytics" className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
@@ -1277,35 +1543,34 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
             <CardTitle className="text-sm font-semibold">Ready but Unclaimed Items ({unclaimedItems.length})</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="divide-y divide-border md:hidden">
+            <div className="space-y-2.5 p-3 md:hidden">
               {unclaimedItems.map((transaction) => (
-                <div key={transaction.id} className="space-y-3 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-mono text-xs font-semibold text-primary">{transaction.ticketId}</p>
-                      <p className="mt-0.5 truncate text-sm font-medium text-foreground">{transaction.customerName}</p>
-                      <p className="mt-0.5 text-[11px] text-muted-foreground">{transaction.phone || "-"}</p>
+                <div key={transaction.id} className="rounded-2xl border border-border/70 bg-card p-3.5 shadow-sm space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="font-mono text-xs font-bold text-primary">#{transaction.ticketId}</span>
+                      <span className="w-1 h-1 rounded-full bg-muted-foreground/40 shrink-0" />
+                      <span className="text-xs font-bold text-foreground truncate">{transaction.customerName}</span>
                     </div>
                     <PaymentBadge paymentStatus={transaction.paymentStatus} className="shrink-0 font-bold uppercase" />
                   </div>
-                  <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/30 p-2.5">
-                    <div>
-                      <p className="text-[10px] text-muted-foreground">Arrival</p>
-                      <p className="truncate text-xs font-medium text-foreground">{transaction.arrivalDateTime}</p>
+                  <div className="flex items-center justify-between pt-1 border-t border-border/40 text-[11px] text-muted-foreground">
+                    <div className="flex items-center gap-2.5 truncate">
+                      <span className="flex items-center gap-1 shrink-0">
+                        <Clock className="w-3 h-3 text-muted-foreground/70" />
+                        <span>{transaction.arrivalDateTime.match(/\d{1,2}:\d{2}(\s?[AP]M)?/i)?.[0] || transaction.arrivalDateTime}</span>
+                      </span>
+                      <span className="flex items-center gap-1 truncate">
+                        <Sparkles className="w-3 h-3 text-primary/70 shrink-0" />
+                        <span className="truncate">{transaction.washType} ({transaction.weight} kg)</span>
+                      </span>
                     </div>
-                    <div>
-                      <p className="text-[10px] text-muted-foreground">Service</p>
-                      <p className="truncate text-xs font-medium text-foreground">{transaction.washType}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-muted-foreground">Fee</p>
-                      <p className="text-xs font-semibold text-foreground">{formatCurrency(transaction.fee)}</p>
-                    </div>
+                    <span className="font-bold text-foreground shrink-0 text-xs">{formatCurrency(transaction.fee)}</span>
                   </div>
                 </div>
               ))}
               {unclaimedItems.length === 0 && (
-                <Empty className="px-4 py-10">
+                <Empty className="px-4 py-8 border border-dashed rounded-2xl">
                   <EmptyHeader>
                     <EmptyMedia variant="icon">
                       <PackageCheck />
