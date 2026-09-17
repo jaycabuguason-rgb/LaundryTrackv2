@@ -102,7 +102,132 @@ export default async function PublicTrackingPage(
           pickupQrUrl={pickupQrUrl}
         />
 
-        {/* Loyalty & Rewards Section */}
+        {/* Laundry Details Card */}
+        <section className="rounded-3xl border border-border bg-background p-5 shadow-sm">
+          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+            <Package className="h-4 w-4 text-primary" />
+            Laundry Details
+          </div>
+          <dl className="mt-4 space-y-3 text-sm">
+            {record.customerName && (
+              <div className="flex items-start justify-between gap-4 rounded-lg bg-muted/30 px-3 py-2">
+                <dt className="text-muted-foreground">Recipient</dt>
+                <dd className="text-right font-medium text-foreground">{record.customerName}</dd>
+              </div>
+            )}
+            <div className="flex items-start justify-between gap-4 rounded-lg bg-muted/30 px-3 py-2">
+              <dt className="text-muted-foreground">Weight</dt>
+              <dd className="text-right font-medium tabular-nums">{record.weight} kg</dd>
+            </div>
+            <div className="flex items-start justify-between gap-4 rounded-lg bg-muted/30 px-3 py-2">
+              <dt className="text-muted-foreground">Wash Type</dt>
+              <dd className="text-right font-medium">{record.washType}</dd>
+            </div>
+            {record.addOns && record.addOns.length > 0 && (
+              <div className="flex items-start justify-between gap-4 rounded-lg bg-muted/30 px-3 py-2">
+                <dt className="text-muted-foreground">Add-ons</dt>
+                <dd className="text-right font-medium">{record.addOns.join(", ")}</dd>
+              </div>
+            )}
+            {record.washInstructions && (
+              <div className="rounded-lg bg-muted/30 px-3 py-2">
+                <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Special Instructions</dt>
+                <dd className="mt-1 text-sm font-medium">{record.washInstructions}</dd>
+              </div>
+            )}
+          </dl>
+        </section>
+
+        {/* Payment Card */}
+        <section className="rounded-3xl border border-border bg-background p-5 shadow-sm">
+          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+            <Shirt className="h-4 w-4 text-primary" />
+            Payment
+          </div>
+          <div className="mt-4 rounded-2xl border border-border bg-muted/20 p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Status
+              </p>
+              <span
+                className={cn(
+                  "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold",
+                  record.paymentStatus === "paid"
+                    ? "bg-green-50 text-green-700 border border-green-200"
+                    : "bg-red-50 text-red-600 border border-red-200"
+                )}
+              >
+                {record.paymentStatus === "paid" ? "Paid" : "Unpaid"}
+              </span>
+            </div>
+            <div className="mt-4 flex items-baseline gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Balance Due
+              </p>
+              <p className="text-2xl font-bold text-primary tabular-nums">
+                ₱{record.balanceDue.toLocaleString()}
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 rounded-lg border border-purple-200 bg-purple-50 dark:border-purple-800/40 dark:bg-purple-950/30 px-3 py-2.5 text-xs text-purple-900 dark:text-purple-200">
+            Online payment is not available here. Please settle any unpaid balance at the shop during pickup.
+          </div>
+        </section>
+
+        {/* Pickup Instructions Card */}
+        <section className="rounded-3xl border border-border bg-background p-5 shadow-sm">
+          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+            <ShieldCheck className="h-4 w-4 text-primary" />
+            Pickup Instructions
+          </div>
+          <div className="mt-4 space-y-4">
+            {/* Shop Contact Info */}
+            <div className="rounded-2xl border border-border bg-muted/20 p-4">
+              <p className="text-sm font-semibold text-foreground">{record.shopProfile.shopName}</p>
+              <div className="mt-3 space-y-2.5 text-sm">
+                <div className="flex items-start gap-2.5">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <span className="text-muted-foreground">{record.shopProfile.address}</span>
+                </div>
+                {record.shopProfile.contactNumber && (
+                  <div className="flex items-center gap-2.5">
+                    <Phone className="h-4 w-4 shrink-0 text-primary" />
+                    <a href={`tel:${record.shopProfile.contactNumber}`} className="text-muted-foreground hover:text-primary">
+                      {record.shopProfile.contactNumber}
+                    </a>
+                  </div>
+                )}
+                {record.shopProfile.email && (
+                  <div className="flex items-center gap-2.5">
+                    <Mail className="h-4 w-4 shrink-0 text-primary" />
+                    <a href={`mailto:${record.shopProfile.email}`} className="text-muted-foreground hover:text-primary">
+                      {record.shopProfile.email}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Before Pickup */}
+            <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+              <p className="text-sm font-semibold text-foreground">Before Pickup</p>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                {record.shopProfile.pickupInstructions}
+              </p>
+            </div>
+
+            {/* Footer Message */}
+            {record.shopProfile.receiptFooter && (
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground">
+                  {record.shopProfile.receiptFooter}
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Loyalty & Rewards Section (Shown at bottom for members) */}
         {isLoyaltyEnabled && loyaltyRecord && (
           <section className="rounded-3xl border border-primary/25 bg-background p-5 sm:p-6 shadow-sm space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/70 pb-4">
@@ -294,132 +419,6 @@ export default async function PublicTrackingPage(
             )}
           </section>
         )}
-
-        {/* Laundry Details Card */}
-        <section className="rounded-3xl border border-border bg-background p-5 shadow-sm">
-          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <Package className="h-4 w-4 text-primary" />
-            Laundry Details
-          </div>
-          <dl className="mt-4 space-y-3 text-sm">
-            {record.customerName && (
-              <div className="flex items-start justify-between gap-4 rounded-lg bg-muted/30 px-3 py-2">
-                <dt className="text-muted-foreground">Recipient</dt>
-                <dd className="text-right font-medium text-foreground">{record.customerName}</dd>
-              </div>
-            )}
-            <div className="flex items-start justify-between gap-4 rounded-lg bg-muted/30 px-3 py-2">
-              <dt className="text-muted-foreground">Weight</dt>
-              <dd className="text-right font-medium tabular-nums">{record.weight} kg</dd>
-            </div>
-            <div className="flex items-start justify-between gap-4 rounded-lg bg-muted/30 px-3 py-2">
-              <dt className="text-muted-foreground">Wash Type</dt>
-              <dd className="text-right font-medium">{record.washType}</dd>
-            </div>
-            {record.addOns && record.addOns.length > 0 && (
-              <div className="flex items-start justify-between gap-4 rounded-lg bg-muted/30 px-3 py-2">
-                <dt className="text-muted-foreground">Add-ons</dt>
-                <dd className="text-right font-medium">{record.addOns.join(", ")}</dd>
-              </div>
-            )}
-            {record.washInstructions && (
-              <div className="rounded-lg bg-muted/30 px-3 py-2">
-                <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Special Instructions</dt>
-                <dd className="mt-1 text-sm font-medium">{record.washInstructions}</dd>
-              </div>
-            )}
-          </dl>
-        </section>
-
-        {/* Payment Card */}
-        <section className="rounded-3xl border border-border bg-background p-5 shadow-sm">
-          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <Shirt className="h-4 w-4 text-primary" />
-            Payment
-          </div>
-          <div className="mt-4 rounded-2xl border border-border bg-muted/20 p-4">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Status
-              </p>
-              <span
-                className={cn(
-                  "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold",
-                  record.paymentStatus === "paid"
-                    ? "bg-green-50 text-green-700 border border-green-200"
-                    : "bg-red-50 text-red-600 border border-red-200"
-                )}
-              >
-                {record.paymentStatus === "paid" ? "Paid" : "Unpaid"}
-              </span>
-            </div>
-            <div className="mt-4 flex items-baseline gap-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Balance Due
-              </p>
-              <p className="text-2xl font-bold text-primary tabular-nums">
-                ₱{record.balanceDue.toLocaleString()}
-              </p>
-            </div>
-          </div>
-          <div className="mt-4 rounded-lg border border-purple-200 bg-purple-50 dark:border-purple-800/40 dark:bg-purple-950/30 px-3 py-2.5 text-xs text-purple-900 dark:text-purple-200">
-            Online payment is not available here. Please settle any unpaid balance at the shop during pickup.
-          </div>
-        </section>
-
-        {/* Pickup Instructions Card */}
-        <section className="rounded-3xl border border-border bg-background p-5 shadow-sm">
-          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <ShieldCheck className="h-4 w-4 text-primary" />
-            Pickup Instructions
-          </div>
-          <div className="mt-4 space-y-4">
-            {/* Shop Contact Info */}
-            <div className="rounded-2xl border border-border bg-muted/20 p-4">
-              <p className="text-sm font-semibold text-foreground">{record.shopProfile.shopName}</p>
-              <div className="mt-3 space-y-2.5 text-sm">
-                <div className="flex items-start gap-2.5">
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                  <span className="text-muted-foreground">{record.shopProfile.address}</span>
-                </div>
-                {record.shopProfile.contactNumber && (
-                  <div className="flex items-center gap-2.5">
-                    <Phone className="h-4 w-4 shrink-0 text-primary" />
-                    <a href={`tel:${record.shopProfile.contactNumber}`} className="text-muted-foreground hover:text-primary">
-                      {record.shopProfile.contactNumber}
-                    </a>
-                  </div>
-                )}
-                {record.shopProfile.email && (
-                  <div className="flex items-center gap-2.5">
-                    <Mail className="h-4 w-4 shrink-0 text-primary" />
-                    <a href={`mailto:${record.shopProfile.email}`} className="text-muted-foreground hover:text-primary">
-                      {record.shopProfile.email}
-                    </a>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Before Pickup */}
-            <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
-              <p className="text-sm font-semibold text-foreground">Before Pickup</p>
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                {record.shopProfile.pickupInstructions}
-              </p>
-            </div>
-
-            {/* Footer Message */}
-            {record.shopProfile.receiptFooter && (
-              <div className="text-center">
-                <p className="text-xs text-muted-foreground">
-                  {record.shopProfile.receiptFooter}
-                </p>
-              </div>
-            )}
-          </div>
-        </section>
-
 
         {/* Promotional Loyalty Program Banner (Shown at bottom for non-members) */}
         {isLoyaltyEnabled && !loyaltyRecord && (
