@@ -2,7 +2,11 @@ const LAUNDRY_TIMEZONE = "Asia/Manila";
 
 function toDate(value: string | null | undefined): Date | null {
   if (!value) return null;
-  const date = new Date(value);
+  let normalized = value;
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(:\d{2})?$/.test(value)) {
+    normalized = value.replace(" ", "T");
+  }
+  const date = new Date(normalized);
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
@@ -62,6 +66,32 @@ export function formatReadableDateTime(value: string | null | undefined): string
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
+    hour12: true,
+  }).format(date);
+}
+
+export function formatReadableTime(value: string | Date | null | undefined): string {
+  if (!value) return "";
+  const date = typeof value === "string" ? toDate(value) : value;
+  if (!date || Number.isNaN(date.getTime())) {
+    if (typeof value === "string") {
+      const match = value.match(/(\d{1,2}):(\d{2})/);
+      if (match) {
+        let hour = parseInt(match[1], 10);
+        const min = match[2];
+        const ampm = hour >= 12 ? "PM" : "AM";
+        hour = hour % 12 || 12;
+        return `${hour}:${min} ${ampm}`;
+      }
+    }
+    return typeof value === "string" ? value : "";
+  }
+
+  return new Intl.DateTimeFormat("en-PH", {
+    timeZone: LAUNDRY_TIMEZONE,
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
   }).format(date);
 }
 

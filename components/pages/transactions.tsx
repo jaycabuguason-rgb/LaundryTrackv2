@@ -966,7 +966,7 @@ function NewTransactionWizard({
             {[
               { label: "Customer", value: form.customerName },
               { label: "Phone", value: form.phone || "—" },
-              { label: "Arrival", value: form.arrivalDateTime },
+              { label: "Arrival", value: formatReadableDateTime(form.arrivalDateTime) || form.arrivalDateTime },
               effectiveMode === "per-load"
                 ? { label: "Load Size", value: selectedTier ? `${selectedTier.name} (${selectedTier.range})` : "—" }
                 : { label: "Wash Type", value: form.washType || "Per Kilogram" },
@@ -2995,7 +2995,7 @@ export default function TransactionsPage({
                 {[
                   { label: "Ticket ID", value: viewTxn.ticketId, span: false },
                   { label: "Customer Name", value: viewTxn.customerName, span: false },
-                  { label: "Arrival Date & Time", value: viewTxn.arrivalDateTime, span: true },
+                  { label: "Arrival Date & Time", value: formatReadableDateTime(viewTxn.arrivalDateTime) || viewTxn.arrivalDateTime, span: true },
                   { label: "Weight (kg)", value: `${viewTxn.weight} kg`, span: false },
                   { label: "Wash Type", value: viewTxn.washType, span: false },
                   { label: "Add-ons", value: viewTxn.addOns.length ? viewTxn.addOns.join(", ") : "None", span: false },

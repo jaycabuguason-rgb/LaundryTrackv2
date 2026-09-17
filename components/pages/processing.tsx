@@ -42,6 +42,7 @@ import {
 } from "@/lib/data";
 import { StatusUpdateSheet } from "@/components/status-update-sheet";
 import { STATUS_ICONS, StatusBadge } from "@/components/status-badge";
+import { formatReadableDateTime } from "@/lib/date-format";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -630,7 +631,7 @@ export default function ProcessingPage({
                         <span className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
                           <span>{txn.weight > 0 ? `${txn.weight} kg` : "—"}</span>
                           <span>•</span>
-                          <span className="truncate">{txn.arrivalDateTime || txn.dropOffDate}</span>
+                          <span className="truncate">{formatReadableDateTime(txn.arrivalDateTime) || txn.arrivalDateTime || txn.dropOffDate}</span>
                         </span>
                       </div>
                       <div className="flex flex-col items-end shrink-0">
@@ -771,14 +772,14 @@ export default function ProcessingPage({
                           )}
                         </td>
                         <td className="px-3 py-3 text-xs font-medium text-foreground">{txn.customerName}</td>
-                        <td className="px-3 py-3 text-xs text-muted-foreground whitespace-nowrap">{txn.arrivalDateTime}</td>
+                        <td className="px-3 py-3 text-xs text-muted-foreground whitespace-nowrap">{formatReadableDateTime(txn.arrivalDateTime) || txn.arrivalDateTime}</td>
                         <td className="px-3 py-3 text-xs text-muted-foreground">{txn.washType}</td>
                         <td className="px-3 py-3 text-xs text-muted-foreground">{txn.weight > 0 ? `${txn.weight} kg` : "—"}</td>
                         <td className="px-3 py-3 text-xs text-muted-foreground">₱{txn.fee.toLocaleString()}</td>
                         <td className="px-3 py-3">
                           <span
                             className={cn("text-xs", getTimeInStageColor(txn.arrivalDateTime))}
-                            title={`Drop-off: ${txn.arrivalDateTime}`}
+                            title={`Drop-off: ${formatReadableDateTime(txn.arrivalDateTime) || txn.arrivalDateTime}`}
                           >
                             {formatTimeInStage(txn.arrivalDateTime)}
                           </span>

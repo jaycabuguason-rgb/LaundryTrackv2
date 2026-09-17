@@ -48,6 +48,7 @@ import { useLoyaltyMembers } from "@/hooks/use-loyalty-members";
 import { Skeleton } from "boneyard-js/react";
 import { cn } from "@/lib/utils";
 import { type LoyaltyMember, type Transaction, transactions as seedTransactions } from "@/lib/data";
+import { formatReadableDateTime } from "@/lib/date-format";
 import { toast } from "@/hooks/use-toast";
 import { getBrowserAccessToken, refreshBrowserSession } from "@/lib/supabase/browser-session";
 import {
@@ -844,11 +845,11 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
                       const isReward = t.fee === 0 || (t.washInstructions || "").toLowerCase().includes("reward");
                       return (
                         <tr key={t.ticketId || i} className="hover:bg-muted/30 transition-colors">
-                          <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">{t.arrivalDateTime || t.dropOffDate}</td>
+                          <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">{formatReadableDateTime(t.arrivalDateTime) || t.arrivalDateTime || t.dropOffDate}</td>
                           <td className="px-4 py-2.5 whitespace-nowrap">
                             {t.status === "Claimed" ? (
                               <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
-                                <CheckCircle2 className="w-3 h-3" /> {t.claimedAt || t.updatedAt || t.arrivalDateTime}
+                                <CheckCircle2 className="w-3 h-3" /> {formatReadableDateTime(t.claimedAt || t.updatedAt || t.arrivalDateTime) || t.claimedAt || t.updatedAt || t.arrivalDateTime}
                               </span>
                             ) : t.status === "Ready" ? (
                               <span className="text-emerald-600 dark:text-emerald-400 font-medium">Ready</span>

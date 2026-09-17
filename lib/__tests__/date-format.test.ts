@@ -4,6 +4,7 @@ import {
   formatCompactDateTime,
   formatReadableDate,
   formatReadableDateTime,
+  formatReadableTime,
 } from "@/lib/date-format";
 
 describe("date-format (Asia/Manila)", () => {
@@ -39,11 +40,27 @@ describe("date-format (Asia/Manila)", () => {
     expect(formatReadableDate(null)).toBe("");
   });
 
-  it("formatReadableDateTime returns localized datetime", () => {
+  it("formatReadableDateTime returns localized datetime in 12-hour format with AM/PM", () => {
     const result = formatReadableDateTime(iso);
     expect(result).toContain("2026");
-    expect(result.length).toBeGreaterThan(10);
+    expect(result).toContain("Apr");
+    expect(result).toMatch(/\b(AM|PM)\b/i);
+    expect(result).toContain("4:14");
     expect(formatReadableDateTime(undefined)).toBe("");
+  });
+
+  it("formatReadableDateTime parses space-separated strings in 12-hour format", () => {
+    const result = formatReadableDateTime("2026-04-05 14:10");
+    expect(result).toContain("2026");
+    expect(result).toMatch(/\b(AM|PM)\b/i);
+  });
+
+  it("formatReadableTime returns 12-hour format", () => {
+    expect(formatReadableTime(iso)).toMatch(/\b(AM|PM)\b/i);
+    expect(formatReadableTime("14:30")).toBe("2:30 PM");
+    expect(formatReadableTime("09:05")).toBe("9:05 AM");
+    expect(formatReadableTime("2026-04-05 08:14")).toMatch(/8:14\s?AM/i);
+    expect(formatReadableTime(null)).toBe("");
   });
 
   it("handles edge: midnight crossing due to TZ", () => {

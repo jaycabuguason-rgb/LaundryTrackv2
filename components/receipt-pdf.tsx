@@ -221,7 +221,7 @@ export function ReceiptDocument({ transaction, profile, qrUrl }: ReceiptDocument
         {/* Ticket Header */}
         <View style={S.ticketBand}>
           <Text style={S.ticketId}>#{transaction.ticketId}</Text>
-          <Text style={S.ticketDate}>{transaction.arrivalDateTime}</Text>
+          <Text style={S.ticketDate}>{formatReadableDateTime(transaction.arrivalDateTime) || transaction.arrivalDateTime}</Text>
         </View>
 
         {/* Customer Info */}

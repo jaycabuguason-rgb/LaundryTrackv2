@@ -96,7 +96,7 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
         <div class="center bold ticket-id">#${transaction.ticketId}</div>
         <div class="row">
           <span class="label">Date/Time:</span>
-          <span class="value">${transaction.arrivalDateTime}</span>
+          <span class="value">${formatReadableDateTime(transaction.arrivalDateTime) || transaction.arrivalDateTime}</span>
         </div>
 
         <div class="divider-dashed"></div>
@@ -600,7 +600,7 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
               </div>
               <div className="flex justify-between text-[11px] my-0.5">
                 <span className="text-neutral-700">Date/Time:</span>
-                <span className="font-semibold">{transaction.arrivalDateTime}</span>
+                <span className="font-semibold">{formatReadableDateTime(transaction.arrivalDateTime) || transaction.arrivalDateTime}</span>
               </div>
 
               <div className="border-t border-dashed border-black my-1.5" />

@@ -7,6 +7,7 @@ import { type Transaction, type TransactionStatus } from "@/lib/data";
 import { StatusBadge, PaymentBadge } from "@/components/status-badge";
 import { CheckCircle2, Circle, CircleDot, Edit, Sparkles } from "lucide-react";
 import { useLoyaltyMembers } from "@/hooks/use-loyalty-members";
+import { formatReadableDateTime } from "@/lib/date-format";
 
 interface TransactionDetailModalProps {
   open: boolean;
@@ -84,7 +85,7 @@ export function TransactionDetailModal({ open, onOpenChange, transaction, onEdit
             </div>
             <div>
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Drop-off Date &amp; Time</p>
-              <p className="text-sm text-foreground">{transaction.arrivalDateTime}</p>
+              <p className="text-sm text-foreground">{formatReadableDateTime(transaction.arrivalDateTime) || transaction.arrivalDateTime}</p>
             </div>
             <div>
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Wash Type</p>

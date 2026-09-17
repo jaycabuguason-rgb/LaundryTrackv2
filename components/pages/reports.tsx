@@ -24,6 +24,7 @@ import {
   Zap,
 } from "lucide-react";
 import { addDays, addMonths, format, subDays } from "date-fns";
+import { formatReadableDateTime, formatReadableTime } from "@/lib/date-format";
 import {
   Bar,
   BarChart,
@@ -909,7 +910,7 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
                   <div className="flex items-center gap-2.5 truncate">
                     <span className="flex items-center gap-1 shrink-0">
                       <Clock className="w-3 h-3 text-muted-foreground/70" />
-                      <span>{transaction.arrivalDateTime.match(/\d{1,2}:\d{2}(\s?[AP]M)?/i)?.[0] || transaction.arrivalDateTime}</span>
+                      <span>{formatReadableTime(transaction.arrivalDateTime) || transaction.arrivalDateTime}</span>
                     </span>
                     <span className="flex items-center gap-1 truncate">
                       <Sparkles className="w-3 h-3 text-primary/70 shrink-0" />
@@ -983,7 +984,7 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
                         <tr key={transaction.id} className="border-b border-border last:border-0 hover:bg-muted/20">
                           <td className="px-4 py-3 text-xs font-mono text-primary">{transaction.ticketId}</td>
                           <td className="px-4 py-3 text-xs font-medium text-foreground">{transaction.customerName}</td>
-                          <td className="px-4 py-3 text-xs text-muted-foreground">{transaction.arrivalDateTime}</td>
+                          <td className="px-4 py-3 text-xs text-muted-foreground">{formatReadableDateTime(transaction.arrivalDateTime) || transaction.arrivalDateTime}</td>
                           <td className="px-4 py-3 text-xs text-muted-foreground">{transaction.washType}</td>
                           <td className="px-4 py-3 text-xs text-muted-foreground">{transaction.weight} kg</td>
                           <td className="px-4 py-3 text-xs font-semibold text-foreground">{formatCurrency(transaction.fee)}</td>
@@ -2082,7 +2083,7 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
                     <div className="flex items-center gap-2.5 truncate">
                       <span className="flex items-center gap-1 shrink-0">
                         <Clock className="w-3 h-3 text-muted-foreground/70" />
-                        <span>{transaction.arrivalDateTime.match(/\d{1,2}:\d{2}(\s?[AP]M)?/i)?.[0] || transaction.arrivalDateTime}</span>
+                        <span>{formatReadableTime(transaction.arrivalDateTime) || transaction.arrivalDateTime}</span>
                       </span>
                       <span className="flex items-center gap-1 truncate">
                         <Sparkles className="w-3 h-3 text-primary/70 shrink-0" />
@@ -2122,7 +2123,7 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
                       <td className="px-4 py-3 text-xs font-mono text-primary">{transaction.ticketId}</td>
                       <td className="px-4 py-3 text-xs font-medium text-foreground">{transaction.customerName}</td>
                       <td className="px-4 py-3 text-xs text-muted-foreground">{transaction.phone || "-"}</td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">{transaction.arrivalDateTime}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">{formatReadableDateTime(transaction.arrivalDateTime) || transaction.arrivalDateTime}</td>
                       <td className="px-4 py-3 text-xs text-muted-foreground">{transaction.washType}</td>
                       <td className="px-4 py-3 text-xs font-semibold text-foreground">{formatCurrency(transaction.fee)}</td>
                       <td className="px-4 py-3">

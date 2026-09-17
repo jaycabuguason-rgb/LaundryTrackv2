@@ -329,7 +329,7 @@ export function CustomerTrackingView({
               <span>Live tracking active</span>
               <span className="text-muted-foreground/40">•</span>
               <span className="tabular-nums text-[11px]">
-                Synced {lastSynced.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                Synced {lastSynced.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}
               </span>
             </div>
           ) : (

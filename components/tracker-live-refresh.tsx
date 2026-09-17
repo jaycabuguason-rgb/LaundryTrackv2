@@ -41,7 +41,7 @@ export function TrackerLiveRefresh({ status }: TrackerLiveRefreshProps) {
       <span>Live tracking active</span>
       <span className="text-muted-foreground/40">•</span>
       <span className="tabular-nums text-[11px]">
-        Updated {lastRefreshed.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+        Updated {lastRefreshed.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}
       </span>
       {isRefreshing && (
         <RefreshCw className="w-3 h-3 animate-spin text-primary ml-0.5" aria-label="Refreshing status…" />

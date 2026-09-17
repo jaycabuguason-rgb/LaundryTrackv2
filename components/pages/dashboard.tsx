@@ -33,6 +33,7 @@ import { useLoyaltyMembers } from "@/hooks/use-loyalty-members";
 import { loadBusinessProfile, loadLoyaltySettings } from "@/lib/settings-store";
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/status-badge";
+import { formatReadableDateTime } from "@/lib/date-format";
 
 interface DashboardPageProps {
   transactions?: Transaction[];
@@ -576,7 +577,7 @@ export default function DashboardPage({
                           </span>
                         </div>
                         <div className="flex items-center gap-1 text-[11px] text-muted-foreground mt-0.5">
-                          <span className="truncate">{txn.arrivalDateTime || txn.dropOffDate}</span>
+                          <span className="truncate">{formatReadableDateTime(txn.arrivalDateTime) || txn.arrivalDateTime || txn.dropOffDate}</span>
                           {typeof txn.weight === "number" && txn.weight > 0 && (
                             <>
                               <span>•</span>

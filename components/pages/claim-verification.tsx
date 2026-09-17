@@ -11,6 +11,7 @@ import { PrintReceiptModal } from "@/components/print-receipt-modal";
 import { auditLogs as initialLogs, type AuditLog, type Transaction, type PaymentStatus } from "@/lib/data";
 import { StatusBadge, PaymentBadge } from "@/components/status-badge";
 import { CategoryBadge, SeverityBadge } from "@/components/pages/audit-logs";
+import { formatReadableDateTime } from "@/lib/date-format";
 import type { UpdateTransactionInput } from "@/lib/transaction-contracts";
 import { cn } from "@/lib/utils";
 import { playScanSuccessFeedback } from "@/lib/scanner-feedback";
@@ -77,7 +78,7 @@ export default function ClaimVerificationPage({
   ) => {
     const newLog: AuditLog = {
       id: String(Date.now()),
-      dateTime: new Date().toLocaleString("en-PH", { dateStyle: "short", timeStyle: "short" }),
+      dateTime: new Date().toLocaleString("en-PH", { dateStyle: "short", timeStyle: "short", hour12: true }),
       ticketId,
       action,
       staff: "Admin",
@@ -335,7 +336,7 @@ export default function ClaimVerificationPage({
                   <div className="rounded-lg bg-background p-2.5 border border-border/60">
                     <p className="text-xs font-medium text-muted-foreground">ETA</p>
                     <p className="mt-0.5 text-xs font-semibold text-foreground">
-                      {result.eta ?? "Awaiting estimate"}
+                      {result.eta ? formatReadableDateTime(result.eta) : "Awaiting estimate"}
                     </p>
                   </div>
                 </div>
@@ -492,7 +493,7 @@ export default function ClaimVerificationPage({
                       {log.ticketId}
                     </span>
                     <p className="truncate text-sm font-medium text-foreground">{log.customerName || "-"}</p>
-                    <p className="text-xs text-muted-foreground">{log.dateTime}</p>
+                    <p className="text-xs text-muted-foreground">{formatReadableDateTime(log.dateTime) || log.dateTime}</p>
                   </div>
                   <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium", actionBadgeColor(log.action))}>
                     {log.action}
@@ -534,7 +535,7 @@ export default function ClaimVerificationPage({
               <tbody className="divide-y divide-border/60">
                 {logs.map((log) => (
                   <tr key={log.id} className="border-b border-border/80 hover:bg-muted/40 transition-colors">
-                    <td className="whitespace-nowrap px-4 py-3.5 text-xs text-muted-foreground">{log.dateTime}</td>
+                    <td className="whitespace-nowrap px-4 py-3.5 text-xs text-muted-foreground">{formatReadableDateTime(log.dateTime) || log.dateTime}</td>
                     <td className="px-4 py-3.5 whitespace-nowrap">
                       <span className="font-semibold text-xs text-foreground">{log.staff}</span>
                     </td>
