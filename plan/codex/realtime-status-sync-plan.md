@@ -8,13 +8,15 @@ Do not change `hooks/usePeakHours.ts`. The active Reports page derives all of it
 
 ## Goals
 
-- A staff status change is visible immediately in the initiating browser.
+- A Processing-stage change is visible immediately in the initiating browser.
 - A status change made from another tab or staff device appears without manual reload.
 - Report totals, status counts, charts, and transaction lists all use the same current transaction data.
 - Offline and failed requests remain recoverable without losing the existing optimistic UI behavior.
 - Rapid repeated status actions cannot create conflicting requests for one ticket.
 
 ## Scope
+
+The Processing workflow covered here is **Received -> Washing (including Drying) -> Ready**. `Claimed` is handled through Claim Verification/Transactions and is not a Processing-stage transition. `Voided` is likewise outside the normal Processing flow.
 
 ### Files to modify
 
@@ -51,13 +53,14 @@ Fallbacks
 
 Implement in this order. Each step reduces risk for the next one.
 
-1. **Verify the live Supabase prerequisite first.** Confirm the deployed `public.transactions` table is published to Realtime and that two authenticated staff sessions can subscribe. If this is not working, code changes cannot deliver cross-device updates.
-2. **Add the Realtime row mapper and direct reconciliation in `use-transactions.ts`.** This is the shared data foundation for Processing, Dashboard, and Reports. Include cache persistence and the malformed-event refresh fallback.
-3. **Write and run the transaction-hook tests.** Cover INSERT, UPDATE, DELETE, malformed payloads, and cache persistence before modifying the Processing UI.
-4. **Test two-browser synchronization manually.** Confirm a status change in one session changes the other session's transaction list and report metrics without a reload.
-5. **Refine Processing optimistic feedback.** Keep the per-ticket mutation guard; replace only the disruptive spinner/disabled presentation with a subtle pending state after the shared synchronization behavior is proven.
-6. **Add recovery behavior.** Add debounced focus/visibility refresh if needed, then test offline queue recovery and reconnect synchronization.
-7. **Run the full regression suite and acceptance checks.** Run `pnpm test`, then complete the manual checks below.
+1. **Fix the stale-refresh overwrite race first.** Add a pending-mutation record per ticket in `use-transactions.ts`. While a PATCH is outstanding, a list refresh or Realtime event must not replace that ticket with an older server version. Add the deterministic regression test: optimistic `Received` -> delayed stale refresh containing `Washing` -> successful PATCH returning `Received`; the ticket must never return to `Washing`.
+2. **Verify the live Supabase prerequisite.** Confirm the deployed `public.transactions` table is published to Realtime and that two authenticated staff sessions can subscribe. If this is not working, code changes cannot deliver cross-device updates.
+3. **Complete direct Realtime reconciliation in `use-transactions.ts`.** This is the shared data foundation for Processing, Dashboard, and Reports. Include cache persistence and the malformed-event refresh fallback.
+4. **Write and run the transaction-hook tests.** Cover INSERT, UPDATE, DELETE, malformed payloads, cache persistence, and the stale-refresh race before modifying the Processing UI.
+5. **Test two-browser synchronization manually.** Confirm a status change in one session changes the other session's transaction list and report metrics without a reload.
+6. **Refine Processing optimistic feedback.** Keep the per-ticket mutation guard; replace only the disruptive spinner/disabled presentation with a subtle pending state after the shared synchronization behavior is proven.
+7. **Add recovery behavior.** Add debounced focus/visibility refresh if needed, then test offline queue recovery and reconnect synchronization.
+8. **Run the full regression suite and acceptance checks.** Run `pnpm test`, then complete the manual checks below.
 
 Do not start with UI changes or per-second polling. Those can mask a broken Realtime configuration and do not make reports reliably correct.
 
@@ -68,6 +71,25 @@ In `hooks/use-transactions.ts`, introduce a small mapper for a Supabase `transac
 It must map snake_case fields such as `ticket_id`, `customer_name`, `arrival_time`, `weight_kg`, and `payment_status`; preserve optional fields including `eta`, `void_reason`, `public_tracking_token`, `updated_at`, and `claimed_at`; and normalize values consistently with the API's returned transaction shape.
 
 Keep this mapper local to the hook unless another active client consumer actually needs it. Do not extract or reuse the mapper in `usePeakHours.ts`.
+
+### 1a. Prevent an in-flight mutation from being overwritten
+
+This is the first implementation change because it fixes the observed visual jump:
+
+```text
+optimistic update: Washing -> Received
+stale full-list refresh: Washing       <- must be ignored for this ticket
+PATCH response: Received               <- authoritative update; clear pending state
+```
+
+Track a unique mutation version or timestamp for each ticket when `updateTransaction()` begins. While that ticket is pending:
+
+- A `refresh()` result must merge into current state and retain the pending local version of that ticket.
+- A Realtime event must not overwrite it unless it is known to be the corresponding/newer server version.
+- On PATCH success, replace the optimistic version with the API response and clear the pending marker.
+- On PATCH failure, roll back only that mutation's version and clear the marker.
+
+Do not resolve this with frequent polling or a page reload; both make the race more likely and make the interface feel worse.
 
 ### 2. Reconcile Realtime events directly
 
@@ -99,7 +121,7 @@ In `components/pages/processing.tsx`:
 - Ensure the optimistic update happens before any server wait (the hook already provides this).
 - Replace the visually heavy blocking treatment with a compact “Saving…” or pending indicator, if needed.
 - Keep success/error messages accurate: status movement can be acknowledged immediately, but loyalty/reward messages must wait for the server response.
-- Keep the confirmation dialog for irreversible statuses.
+- Keep the existing confirmation dialog behavior for actions that are outside the normal Processing flow; do not add `Claimed` as a Processing-stage action.
 - Keep bulk update behavior separate; concurrent updates are acceptable across different tickets, but each ticket must have only one active mutation.
 
 ### 5. Recovery refreshes

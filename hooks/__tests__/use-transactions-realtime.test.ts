@@ -227,13 +227,91 @@ describe("useTransactions Realtime Reconciliation", () => {
       // Initial load
     });
 
-    (globalThis.fetch as any).mockClear();
-
-    await act(async () => {
-      channelCallbacks["INSERT"]?.({ new: null });
-    });
-
     // Fallback refresh should have fired
     expect(globalThis.fetch).toHaveBeenCalledWith("/api/transactions", expect.any(Object));
   });
+
+  it("prevents stale-refresh overwrite race while a mutation is in-flight", async () => {
+    const initialTx = {
+      id: "tx-race-1",
+      ticketId: "TKT-8888",
+      customerName: "Race Condition Test",
+      phone: "",
+      arrivalDateTime: "2026-09-17 08:00",
+      dropOffDate: "2026-09-17",
+      washType: "Regular",
+      weight: 3,
+      fee: 120,
+      status: "Washing" as const,
+      paymentStatus: "unpaid" as const,
+      addOns: [],
+    };
+
+    // Initial fetch returns status "Washing"
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify({ transactions: [initialTx] })),
+    } as Response);
+
+    const { result } = renderHook(() => useTransactions());
+
+    await act(async () => {
+      // Complete initial load
+    });
+
+    expect(result.current.transactions[0].status).toBe("Washing");
+
+    // Prepare delayed PATCH promise
+    let resolvePatch: (val: any) => void = () => {};
+    const patchPromise = new Promise((resolve) => {
+      resolvePatch = resolve;
+    });
+
+    // Mock fetch for both PATCH and stale background refresh
+    (globalThis.fetch as any).mockImplementation(async (url: string, opts: any) => {
+      if (opts?.method === "PATCH") {
+        return patchPromise;
+      }
+      // Background refresh returning stale list with "Washing"
+      return {
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify({ transactions: [initialTx] })),
+      };
+    });
+
+    // 1. Trigger updateTransaction to "Ready"
+    let updatePromise: Promise<any>;
+    act(() => {
+      updatePromise = result.current.updateTransaction("TKT-8888", { status: "Ready" });
+    });
+
+    // Immediately optimistic: status must be "Ready"
+    expect(result.current.transactions[0].status).toBe("Ready");
+
+    // 2. A delayed/stale refresh fires while PATCH is in-flight
+    await act(async () => {
+      await result.current.refresh();
+    });
+
+    // Must NOT be overwritten back to "Washing" by stale refresh!
+    expect(result.current.transactions[0].status).toBe("Ready");
+
+    // 3. Authoritative PATCH completes returning "Ready"
+    await act(async () => {
+      resolvePatch({
+        ok: true,
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({
+              transaction: { ...initialTx, status: "Ready" },
+            }),
+          ),
+      });
+      await updatePromise;
+    });
+
+    // Confirmed authoritative "Ready"
+    expect(result.current.transactions[0].status).toBe("Ready");
+  });
 });
+

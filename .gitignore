@@ -39,3 +39,4 @@ blob-report/
 .agents/
 .claude/
 .codex/
+.pnpm-store/

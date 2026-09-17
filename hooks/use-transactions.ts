@@ -138,6 +138,7 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 
 export function useTransactions() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const transactionsRef = useRef<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [syncStatus, setSyncStatus] = useState<"online" | "offline" | "syncing" | "error">(
@@ -147,11 +148,15 @@ export function useTransactions() {
   const [lastSyncError, setLastSyncError] = useState<string | null>(null);
   const queueSyncInFlightRef = useRef(false);
   const hydratedRef = useRef(false);
+  // Map of ticketId -> { version: number, optimisticTx: Transaction } to protect in-flight mutations against stale server overwrites
+  const pendingMutationsRef = useRef<Map<string, { version: number; optimisticTx: Transaction }>>(new Map());
+  const mutationVersionCounterRef = useRef(0);
   // P0-E: stable refs to avoid realtime channel re-subscribe on refresh identity change (caching)
   const refreshRef = useRef<(() => Promise<void>) | null>(null);
   const processQueueRef = useRef<(() => Promise<void>) | null>(null);
 
   const persistTransactions = useCallback(async (next: Transaction[]) => {
+    transactionsRef.current = next;
     setTransactions(next);
     await writeCachedTransactions(next);
   }, []);
@@ -159,6 +164,7 @@ export function useTransactions() {
   const updateTransactions = useCallback((updater: (current: Transaction[]) => Transaction[]) => {
     setTransactions((current) => {
       const next = updater(current);
+      transactionsRef.current = next;
       void writeCachedTransactions(next);
       return next;
     });
@@ -167,6 +173,7 @@ export function useTransactions() {
   const hydrateOfflineState = useCallback(async () => {
     const [cached, queue] = await Promise.all([readCachedTransactions(), readOfflineQueue()]);
     if (cached.length > 0) {
+      transactionsRef.current = cached;
       setTransactions(cached);
       setError(null);
     }
@@ -211,7 +218,16 @@ export function useTransactions() {
       });
       const data = await readJson<TransactionsResponse>(response);
       if (queue.length === 0) {
-        await persistTransactions(data.transactions);
+        // Merge server transactions while preserving any in-flight optimistic mutations
+        const pending = pendingMutationsRef.current;
+        let mergedTransactions = data.transactions;
+        if (pending.size > 0) {
+          mergedTransactions = data.transactions.map((serverTx) => {
+            const pendingEntry = pending.get(serverTx.ticketId);
+            return pendingEntry ? pendingEntry.optimisticTx : serverTx;
+          });
+        }
+        await persistTransactions(mergedTransactions);
       } else {
         // Keep local optimistic view until queued items are acknowledged.
         const localData = await readCachedTransactions();
@@ -381,11 +397,15 @@ export function useTransactions() {
             return;
           }
           updateTransactions((current) => {
-            const exists = current.some((t) => t.id === mapped.id || t.ticketId === mapped.ticketId);
+            // If this ticket currently has an active in-flight mutation, do not let an older Realtime event overwrite it
+            const pendingEntry = pendingMutationsRef.current.get(mapped.ticketId);
+            const target = pendingEntry ? pendingEntry.optimisticTx : mapped;
+
+            const exists = current.some((t) => t.id === target.id || t.ticketId === target.ticketId);
             if (exists) {
-              return current.map((t) => (t.id === mapped.id || t.ticketId === mapped.ticketId ? mapped : t));
+              return current.map((t) => (t.id === target.id || t.ticketId === target.ticketId ? target : t));
             }
-            return [mapped, ...current];
+            return [target, ...current];
           });
         },
       )
@@ -496,14 +516,23 @@ export function useTransactions() {
     }
 
     // Apply optimistic update immediately for instant single-click UI responsiveness
-    let originalTxn: Transaction | undefined;
-    updateTransactions((current) => {
-      const found = current.find((t) => t.ticketId === ticketId);
-      if (found) originalTxn = found;
-      return current.map((transaction) =>
-        transaction.ticketId === ticketId ? ({ ...transaction, ...updates } as Transaction) : transaction,
-      );
+    const currentVersion = ++mutationVersionCounterRef.current;
+    const found = transactionsRef.current.find((t) => t.ticketId === ticketId);
+    const originalTxn = found;
+    const optimisticTxn: Transaction = found
+      ? ({ ...found, ...updates } as Transaction)
+      : ({ ticketId, ...updates } as unknown as Transaction);
+
+    pendingMutationsRef.current.set(ticketId, {
+      version: currentVersion,
+      optimisticTx: optimisticTxn,
     });
+
+    updateTransactions((current) =>
+      current.map((transaction) =>
+        transaction.ticketId === ticketId ? optimisticTxn : transaction,
+      ),
+    );
 
     try {
       const headers = await getAuthHeaders();
@@ -517,6 +546,12 @@ export function useTransactions() {
       });
 
       const data = await readJson<TransactionResponse>(response);
+      // Clear pending mutation marker on authoritative server response
+      const pendingEntry = pendingMutationsRef.current.get(ticketId);
+      if (pendingEntry && pendingEntry.version === currentVersion) {
+        pendingMutationsRef.current.delete(ticketId);
+      }
+
       updateTransactions((current) =>
         current.map((transaction) =>
           transaction.ticketId === data.transaction.ticketId ? data.transaction : transaction,
@@ -524,12 +559,17 @@ export function useTransactions() {
       );
       return { transaction: data.transaction, loyaltyResult: data.loyaltyResult };
     } catch (err) {
-      if (originalTxn) {
-        updateTransactions((current) =>
-          current.map((transaction) =>
-            transaction.ticketId === ticketId ? originalTxn! : transaction,
-          ),
-        );
+      // Clear pending mutation marker on failure and revert if our version is still active
+      const pendingEntry = pendingMutationsRef.current.get(ticketId);
+      if (pendingEntry && pendingEntry.version === currentVersion) {
+        pendingMutationsRef.current.delete(ticketId);
+        if (originalTxn) {
+          updateTransactions((current) =>
+            current.map((transaction) =>
+              transaction.ticketId === ticketId ? originalTxn! : transaction,
+            ),
+          );
+        }
       }
       throw err;
     }
