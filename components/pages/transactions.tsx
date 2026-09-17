@@ -515,18 +515,19 @@ function NewTransactionWizard({
             </label>
             <Input
               type="tel"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={11}
               placeholder="e.g. 09123456789"
               value={form.phone}
               onChange={(e) => {
-                const value = e.target.value.replace(/[^0-9+]/g, '');
-                if (value.length <= 11 || (value.startsWith('+') && value.length <= 13)) {
-                  setForm((f) => ({ ...f, phone: value }));
-                }
+                const value = e.target.value.replace(/\D/g, '').slice(0, 11);
+                setForm((f) => ({ ...f, phone: value }));
               }}
               className={cn("h-9 text-sm", form.phone && form.phone.length > 0 && form.phone.length < 11 && "border-red-500")}
             />
             {form.phone && form.phone.length > 0 && form.phone.length < 11 && (
-              <p className="text-xs text-destructive mt-1">Please enter a valid 11-digit phone number</p>
+              <p className="text-xs text-destructive mt-1">Please enter a valid 11-digit phone number ({form.phone.length}/11 digits)</p>
             )}
           </div>
           <div>

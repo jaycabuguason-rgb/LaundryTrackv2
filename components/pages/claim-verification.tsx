@@ -41,6 +41,7 @@ export default function ClaimVerificationPage({
   const [reprintModalOpen, setReprintModalOpen] = useState(false);
   const [reprintTransaction, setReprintTransaction] = useState<Transaction | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [claimedNotice, setClaimedNotice] = useState<string | null>(null);
 
   const isAutoLookupQuery = useCallback((value: string) => {
     const trimmed = value.trim();
@@ -51,8 +52,12 @@ export default function ClaimVerificationPage({
     if (result) {
       const updated = transactions.find((transaction) => transaction.ticketId === result.ticketId);
       if (updated) {
-        setResult(updated);
-        setPaymentToggle(updated.paymentStatus);
+        if (updated.status === "Claimed") {
+          setResult(null);
+        } else {
+          setResult(updated);
+          setPaymentToggle(updated.paymentStatus);
+        }
       }
     }
   }, [transactions, result]);
@@ -109,6 +114,13 @@ export default function ClaimVerificationPage({
         );
 
         if (resolved) {
+          if (resolved.status === "Claimed") {
+            setResult(null);
+            setNotFound(false);
+            setClaimedNotice(resolved.ticketId);
+            return;
+          }
+          setClaimedNotice(null);
           selectTransaction(resolved, notes);
           return;
         }
@@ -125,10 +137,18 @@ export default function ClaimVerificationPage({
     );
 
     if (found) {
+      if (found.status === "Claimed") {
+        setResult(null);
+        setNotFound(false);
+        setClaimedNotice(found.ticketId);
+        return;
+      }
+      setClaimedNotice(null);
       selectTransaction(found, notes);
       return;
     }
 
+    setClaimedNotice(null);
     setResult(null);
     setNotFound(true);
   }, [onResolveScannedValue, transactions]);
@@ -149,9 +169,13 @@ export default function ClaimVerificationPage({
     return () => window.clearTimeout(timeout);
   }, [isAutoLookupQuery, lookupTransaction, query]);
 
-  const handleClaim = async (overridePayment?: PaymentStatus) => {
+  const handleClaim = async () => {
     if (!result) return;
-    const finalPayment = overridePayment ?? paymentToggle;
+    if (paymentToggle === "unpaid") {
+      setSuccessMessage("Mark payment as Paid first before claiming this ticket.");
+      return;
+    }
+    const finalPayment: PaymentStatus = "paid";
 
     setSubmitting(true);
     try {
@@ -163,15 +187,15 @@ export default function ClaimVerificationPage({
       setPaymentToggle(finalPayment);
       addLog(updated.ticketId, "Claimed", "Via Claim Verification", finalPayment, updated.customerName);
       setSuccessMessage(
-        `${updated.ticketId} claimed. Payment marked as ${finalPayment === "paid" ? "Paid" : "Unpaid"}.`,
+        `Ticket #${updated.ticketId} for ${updated.customerName} has been successfully claimed and released.`,
       );
-      setResult(updated);
+      setResult(null);
+      setQuery("");
+      setClaimedNotice(null);
 
       setTimeout(() => {
-        setResult(null);
-        setQuery("");
         setSuccessMessage("");
-      }, 3000);
+      }, 5000);
     } catch {
       setSuccessMessage("Unable to save the claim right now. Please try again.");
     } finally {
@@ -222,6 +246,7 @@ export default function ClaimVerificationPage({
 
   const isAlreadyClaimed = result?.status === "Claimed";
   const isNotReady = result && result.status !== "Ready" && result.status !== "Claimed";
+  const isUnpaid = result && paymentToggle === "unpaid";
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -272,6 +297,16 @@ export default function ClaimVerificationPage({
             <p className="text-xs text-muted-foreground">
               Paste the customer claim code or tracking QR token here and the matching transaction will open automatically.
             </p>
+
+            {claimedNotice && (
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-center text-sm text-amber-900 dark:text-amber-200">
+                <AlertTriangle className="mx-auto mb-1 h-5 w-5 text-amber-600 dark:text-amber-400" />
+                <p className="font-semibold">Ticket Already Claimed &amp; Disposed</p>
+                <p className="mt-0.5 text-xs text-amber-800/90 dark:text-amber-300/90">
+                  Ticket #{claimedNotice} has already been claimed and released. It is disposed from active verification but remains in your records and Claimed History below.
+                </p>
+              </div>
+            )}
 
             {notFound && (
               <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-center text-sm text-destructive">
@@ -364,47 +399,34 @@ export default function ClaimVerificationPage({
                   </div>
                 )}
 
+                {isUnpaid && !isAlreadyClaimed && (
+                  <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-900 dark:text-amber-200">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                    <div>
+                      <p className="font-semibold">Payment Required</p>
+                      <p className="mt-0.5 text-xs text-amber-800/90 dark:text-amber-300/90">Mark payment as Paid first before claiming this ticket.</p>
+                    </div>
+                  </div>
+                )}
+
                 {!denyMode ? (
                   <div className="space-y-2 pt-1">
                     <div className="flex flex-wrap gap-2">
-                      {!isAlreadyClaimed && (
-                        paymentToggle === "unpaid" ? (
-                          <>
-                            <Button
-                              size="sm"
-                              className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 font-bold sm:min-h-0 sm:flex-none bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 shadow-xs cursor-pointer"
-                              onClick={() => void handleClaim("paid")}
-                              disabled={submitting}
-                            >
-                              <CheckCircle className="h-3.5 w-3.5" />
-                              Collect ₱{result.fee.toLocaleString()} & Claim
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="flex min-h-[44px] items-center justify-center gap-1.5 font-medium sm:min-h-0 cursor-pointer"
-                              onClick={() => void handleClaim("unpaid")}
-                              disabled={submitting}
-                            >
-                              Claim as Unpaid
-                            </Button>
-                          </>
-                        ) : (
-                          <Button
-                            size="sm"
-                            className={cn(
-                              "flex min-h-[44px] flex-1 items-center justify-center gap-1.5 font-medium sm:min-h-0 sm:flex-none transition-colors cursor-pointer",
-                              isNotReady
-                                ? "bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-700 dark:hover:bg-amber-600"
-                                : "bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600",
-                            )}
-                            onClick={() => void handleClaim()}
-                            disabled={submitting}
-                          >
-                            {isNotReady ? <AlertTriangle className="h-3.5 w-3.5" /> : <CheckCircle className="h-3.5 w-3.5" />}
-                            {isNotReady ? "Claim Anyway" : "Confirm Claim & Release"}
-                          </Button>
-                        )
+                      {!isAlreadyClaimed && !isUnpaid && (
+                        <Button
+                          size="sm"
+                          className={cn(
+                            "flex min-h-[44px] flex-1 items-center justify-center gap-1.5 font-medium sm:min-h-0 sm:flex-none transition-colors cursor-pointer",
+                            isNotReady
+                              ? "bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-700 dark:hover:bg-amber-600"
+                              : "bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600",
+                          )}
+                          onClick={() => void handleClaim()}
+                          disabled={submitting}
+                        >
+                          {isNotReady ? <AlertTriangle className="h-3.5 w-3.5" /> : <CheckCircle className="h-3.5 w-3.5" />}
+                          {isNotReady ? "Claim Anyway" : "Confirm Claim & Release"}
+                        </Button>
                       )}
                       <Button
                         size="sm"

@@ -179,7 +179,8 @@ export default function NewOrderPage({
   const liveTotal = basePrice + extrasPrice;
 
   // Validation
-  const step1Valid = customerName.trim().length > 0;
+  const phoneValid = !phone || phone.length === 11;
+  const step1Valid = customerName.trim().length > 0 && phoneValid;
   const step2Valid = billBy === "per-kg" ? numWeight > 0 : numLoads > 0 && !!selectedTierId;
 
   async function handleCreateOrder() {
@@ -379,16 +380,21 @@ export default function NewOrderPage({
                 id="customer-phone"
                 name="phone"
                 type="tel"
-                inputMode="tel"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={11}
                 autoComplete="tel"
                 placeholder="Phone number (e.g. 09171234567)"
                 value={phone}
                 onChange={(e) => {
-                  const val = e.target.value.replace(/[^0-9+]/g, "");
+                  const val = e.target.value.replace(/\D/g, "").slice(0, 11);
                   setPhone(val);
                 }}
-                className="h-10 text-sm"
+                className={cn("h-10 text-sm", phone && phone.length > 0 && phone.length < 11 && "border-amber-500 focus-visible:ring-amber-500")}
               />
+              {phone && phone.length > 0 && phone.length < 11 && (
+                <p className="text-xs text-amber-600 dark:text-amber-400">Please enter a valid 11-digit phone number ({phone.length}/11 digits)</p>
+              )}
             </div>
 
             {/* Arrival Date & Time */}

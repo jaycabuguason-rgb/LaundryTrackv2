@@ -340,8 +340,15 @@ export default function ProfilePage({
                 </Label>
                 <Input
                   id="profile-phone"
+                  type="tel"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={11}
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, "").slice(0, 11);
+                    setPhone(val);
+                  }}
                   placeholder="e.g. 09171234567"
                   disabled={isStaff || saving}
                   className="h-9 text-sm"
