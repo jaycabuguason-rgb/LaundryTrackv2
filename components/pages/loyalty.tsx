@@ -23,6 +23,10 @@ import {
   Copy,
   ExternalLink,
   Package,
+  Users,
+  UserPlus,
+  History,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +46,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useLoyaltyMembers } from "@/hooks/use-loyalty-members";
 import { Skeleton } from "boneyard-js/react";
+import { cn } from "@/lib/utils";
 import { type LoyaltyMember, type Transaction, transactions as seedTransactions } from "@/lib/data";
 import { toast } from "@/hooks/use-toast";
 import { getBrowserAccessToken, refreshBrowserSession } from "@/lib/supabase/browser-session";
@@ -87,6 +92,171 @@ function StampDots({ count, max = 7 }: { count: number; max?: number }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Mobile Tactile Member Card
+// ─────────────────────────────────────────────────────────────────────────────
+function MobileLoyaltyMemberCard({
+  member,
+  washesPerReward,
+  rewardName,
+  saving,
+  onSelect,
+  onEdit,
+  onDelete,
+  onQr,
+  onAddStamp,
+}: {
+  member: LoyaltyMember;
+  washesPerReward: number;
+  rewardName: string;
+  saving: boolean;
+  onSelect: (m: LoyaltyMember) => void;
+  onEdit: (m: LoyaltyMember) => void;
+  onDelete: (m: LoyaltyMember) => void;
+  onQr: (m: LoyaltyMember) => void;
+  onAddStamp: (m: LoyaltyMember, count: number) => void;
+}) {
+  const currentStamps = member.stampCount % washesPerReward;
+  const stampsUntilReward = washesPerReward - currentStamps;
+  const pct = Math.min(100, (currentStamps / washesPerReward) * 100);
+  const isFrequent = member.stampCount >= Math.ceil(washesPerReward / 2);
+
+  return (
+    <div
+      className="bg-card rounded-2xl p-4 border border-border/70 shadow-xs flex flex-col gap-3 transition-all"
+      data-name={member.name}
+      data-phone={member.phone || ""}
+    >
+      {/* Top row: Avatar, Name + Frequent tag, Phone, Edit & Delete */}
+      <div className="flex items-start justify-between gap-3">
+        <div
+          className="flex items-center gap-3 min-w-0 cursor-pointer flex-1"
+          onClick={() => onSelect(member)}
+        >
+          <div className="w-11 h-11 rounded-full bg-primary/10 text-primary border border-primary/20 font-bold flex items-center justify-center text-sm shrink-0 shadow-xs">
+            {getInitials(member.name)}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="font-bold text-sm text-foreground truncate">
+                {member.name}
+              </span>
+              {isFrequent && (
+                <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold text-[10px] tracking-wide uppercase">
+                  Frequent
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+              <Phone className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">{member.phone || "No phone"}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            type="button"
+            aria-label={`Edit ${member.name}`}
+            onClick={() => onEdit(member)}
+            className="w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors flex items-center justify-center cursor-pointer"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            aria-label={`Delete ${member.name}`}
+            onClick={() => onDelete(member)}
+            className="w-8 h-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors flex items-center justify-center cursor-pointer"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Stamp Progress Section */}
+      <div
+        className="bg-muted/40 rounded-xl p-3 space-y-2 cursor-pointer hover:bg-muted/60 transition-colors"
+        onClick={() => onSelect(member)}
+      >
+        <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center gap-1 text-primary font-bold">
+            <Star className="w-3.5 h-3.5 fill-current text-primary" />
+            <span>
+              {currentStamps} / {washesPerReward} Stamps
+            </span>
+          </div>
+          <span className="text-muted-foreground font-medium text-[11px]">
+            {member.rewardsRedeemed} Rewards Claimed
+          </span>
+        </div>
+
+        {/* Progress track */}
+        <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+          <div
+            className="h-full bg-primary rounded-full transition-all duration-300"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+
+        <div className="flex justify-between items-center text-[11px] text-muted-foreground">
+          <span>
+            {stampsUntilReward <= 0
+              ? "Reward Unlocked! 🎉"
+              : currentStamps >= Math.ceil(washesPerReward / 2)
+              ? "Halfway to next perk!"
+              : currentStamps > 0
+              ? "Started journey"
+              : "Fresh enrollment"}
+          </span>
+          <span>
+            {stampsUntilReward <= 0
+              ? "Ready to claim"
+              : `${stampsUntilReward} more to ${rewardName.toLowerCase()}`}
+          </span>
+        </div>
+      </div>
+
+      {/* Quick Action Buttons (3-button strip) */}
+      <div className="flex items-center gap-1.5 pt-0.5">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          aria-label={`View QR status for ${member.name}`}
+          onClick={() => onQr(member)}
+          className="h-9 px-3 text-xs rounded-xl gap-1 shrink-0"
+        >
+          <QrCode className="w-3.5 h-3.5 text-primary" />
+          <span>QR</span>
+        </Button>
+
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => onSelect(member)}
+          className="h-9 flex-1 text-xs rounded-xl gap-1"
+        >
+          <History className="w-3.5 h-3.5 text-muted-foreground" />
+          <span>View Details</span>
+        </Button>
+
+        <Button
+          type="button"
+          size="sm"
+          onClick={() => onAddStamp(member, 1)}
+          disabled={saving}
+          className="h-9 px-3 text-xs bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-xl gap-1 shrink-0 cursor-pointer"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          <span>Add Stamp</span>
+        </Button>
+      </div>
     </div>
   );
 }
@@ -782,386 +952,730 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
   return (
     <Skeleton name="loyalty-members" loading={loading}>
       <div className="space-y-5">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">Members & Rewards</h1>
-          <p className="text-xs text-muted-foreground sm:text-sm mt-0.5">Manage customer loyalty points, rewards, and program rules</p>
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* MOBILE CONCEPT VIEW (< md)                                          */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      <div className="space-y-4 md:hidden">
+        {/* Header & Add Member Button */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex flex-col min-w-0">
+            <h1 className="text-xl font-bold tracking-tight text-foreground">Members & Rewards</h1>
+            <p className="text-xs text-muted-foreground mt-0.5">Manage customer loyalty points, rewards, and program rules</p>
+          </div>
+          {activeTab === "members" && (
+            <Button
+              size="sm"
+              onClick={() => setAddModal(true)}
+              className="h-9 px-3.5 rounded-full bg-primary text-primary-foreground font-semibold text-xs shadow-xs gap-1.5 shrink-0 hover:bg-primary/90 cursor-pointer"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Add Member</span>
+            </Button>
+          )}
         </div>
-        {activeTab === "members" && (
-          <Button
-            size="sm"
-            onClick={() => setAddModal(true)}
-            className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs cursor-pointer"
+
+        {/* Segmented Navigation Tabs */}
+        <div className="grid grid-cols-2 gap-1 rounded-xl bg-muted/50 p-1 border border-border">
+          <button
+            type="button"
+            onClick={() => setActiveTab("members")}
+            className={cn(
+              "flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition-all cursor-pointer",
+              activeTab === "members"
+                ? "bg-card text-foreground shadow-xs border border-border/50"
+                : "text-muted-foreground hover:text-foreground"
+            )}
           >
-            <Plus className="w-4 h-4" /> Add Member
-          </Button>
-        )}
-      </div>
+            <Star className={cn("w-3.5 h-3.5", activeTab === "members" ? "fill-primary text-primary" : "")} />
+            <span>Members</span>
+            <span className="ml-1 rounded-full bg-primary/10 px-1.5 py-0.2 text-[10px] font-bold text-primary">
+              {totalMembers}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("rewards")}
+            className={cn(
+              "flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition-all cursor-pointer",
+              activeTab === "rewards"
+                ? "bg-card text-foreground shadow-xs border border-border/50"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Award className="w-3.5 h-3.5 text-primary" />
+            <span>Rewards & Rules</span>
+          </button>
+        </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-border gap-1">
-        <button
-          onClick={() => setActiveTab("members")}
-          className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors cursor-pointer ${
-            activeTab === "members"
-              ? "border-primary text-primary"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Members
-        </button>
-        <button
-          onClick={() => setActiveTab("rewards")}
-          className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors cursor-pointer ${
-            activeTab === "rewards"
-              ? "border-primary text-primary"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Rewards & Rules
-        </button>
-      </div>
-
-      {/* Top 3 Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-        <Card className="border border-border shadow-xs bg-card">
-          <CardContent className="p-4 flex items-center gap-3.5">
-            <div className="h-10 w-10 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 flex items-center justify-center shrink-0">
-              <Award className="h-5 w-5" />
+        {/* 3 Key Metrics Cards */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+          {/* Total Members */}
+          <div className="rounded-xl border border-border bg-card p-3 shadow-xs flex flex-col justify-between">
+            <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-1.5">
+              <Users className="w-4 h-4" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground font-medium">Total Members</p>
-              <h3 className="text-xl font-bold text-foreground">{totalMembers}</h3>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-border shadow-xs bg-card">
-          <CardContent className="p-4 flex items-center gap-3.5">
-            <div className="h-10 w-10 rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400 flex items-center justify-center shrink-0">
-              <Star className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground font-medium">Stamps Issued</p>
-              <h3 className="text-xl font-bold text-foreground">{totalStampsIssued}</h3>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-border shadow-xs bg-card">
-          <CardContent className="p-4 flex items-center gap-3.5">
-            <div className="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400 flex items-center justify-center shrink-0">
-              <Gift className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground font-medium">Rewards Claimed</p>
-              <h3 className="text-xl font-bold text-foreground">{totalRewardsRedeemed}</h3>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {activeTab === "members" ? (
-        <div className="space-y-4">
-          {/* Filter Bar */}
-          <div className="bg-card border border-border rounded-xl p-3 md:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
-            <div className="relative w-full sm:max-w-xs">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search member name or phone…"
-                aria-label="Search member name or phone"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 h-9 text-xs w-full"
-              />
-            </div>
-            <div className="flex items-center gap-1 border border-border rounded-lg p-0.5 bg-muted/30 shrink-0">
-              <Button
-                variant={viewMode === "cards" ? "secondary" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("cards")}
-                className="h-8 px-2.5 text-xs gap-1.5"
-              >
-                <LayoutGrid className="w-3.5 h-3.5" /> Cards
-              </Button>
-              <Button
-                variant={viewMode === "table" ? "secondary" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("table")}
-                className="h-8 px-2.5 text-xs gap-1.5"
-              >
-                <TableIcon className="w-3.5 h-3.5" /> Table
-              </Button>
+              <span className="text-xl font-extrabold text-foreground block">{totalMembers}</span>
+              <span className="text-[11px] text-muted-foreground font-medium truncate block">Total Members</span>
             </div>
           </div>
 
-          {/* Members Grid or Table */}
-          {loading ? (
-            <div className="py-16 text-center text-xs text-muted-foreground">Loading members...</div>
-          ) : filteredMembers.length === 0 ? (
-            <Card className="p-12 text-center border-dashed">
-              <Award className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-              <p className="text-sm font-semibold text-foreground">No loyalty members found</p>
-              <p className="text-xs text-muted-foreground mt-1">Add your first member to begin tracking stamps!</p>
-            </Card>
-          ) : viewMode === "cards" ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-              {filteredMembers.map((member) => {
-                const currentStamps = member.stampCount % washesPerReward;
-                const pct = Math.min(100, (currentStamps / washesPerReward) * 100);
-
-                return (
-                  <Card
-                    key={member.id}
-                    className="border border-border/80 hover:border-primary/50 transition-all bg-card shadow-xs group"
-                  >
-                    <CardContent className="p-4 space-y-3.5">
-                      <div className="flex items-start justify-between gap-3">
-                        <div
-                          className="flex items-center gap-3 min-w-0 cursor-pointer"
-                          onClick={() => setSelected(member)}
-                        >
-                          <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground font-bold flex items-center justify-center text-sm shrink-0 shadow-xs">
-                            {getInitials(member.name)}
-                          </div>
-                          <div className="min-w-0">
-                            <h3 className="font-bold text-sm text-foreground truncate group-hover:text-primary transition-colors">
-                              {member.name}
-                            </h3>
-                            <p className="text-xs text-muted-foreground truncate">{member.phone || "No phone"}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label={`Edit ${member.name}`}
-                            className="h-8 w-8 min-h-[32px] min-w-[32px] text-muted-foreground hover:text-foreground cursor-pointer"
-                            onClick={() => setEditModal(member)}
-                          >
-                            <Edit className="w-3.5 h-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label={`Delete ${member.name}`}
-                            className="h-8 w-8 min-h-[32px] min-w-[32px] text-muted-foreground hover:text-destructive cursor-pointer"
-                            onClick={() => setDeleteModal(member)}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        </div>
-                      </div>
-
-                      {/* Progress Bar & Details */}
-                      <div className="space-y-1.5 cursor-pointer" onClick={() => setSelected(member)}>
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-semibold text-primary">{currentStamps}/{washesPerReward} Stamps</span>
-                          <span className="text-muted-foreground text-[11px]">{member.rewardsRedeemed} Rewards</span>
-                        </div>
-                        <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
-                          <div
-                            className="bg-primary h-full transition-all duration-300 rounded-full"
-                            style={{ width: `${pct}%` }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex items-center gap-1.5 pt-1">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          aria-label={`View QR status for ${member.name}`}
-                          onClick={() => setQrModal(member)}
-                          className="h-8 text-xs px-2.5 cursor-pointer gap-1"
-                          title="View Member QR Status & Public Link"
-                        >
-                          <QrCode className="w-3.5 h-3.5 text-primary" /> QR
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setSelected(member)}
-                          className="flex-1 text-xs h-8 cursor-pointer"
-                        >
-                          View Details
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => handleDirectAddStamp(member, 1)}
-                          disabled={saving}
-                          className="h-8 text-xs bg-primary text-primary-foreground hover:bg-primary/90 px-3 cursor-pointer"
-                        >
-                          + Add Stamp
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+          {/* Stamps Issued */}
+          <div className="rounded-xl border border-border bg-card p-3 shadow-xs flex flex-col justify-between">
+            <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-1.5">
+              <Star className="w-4 h-4" />
             </div>
-          ) : (
-            <Card className="overflow-hidden border border-border shadow-xs bg-card">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead>
-                    <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold">
-                      <th className="px-4 py-3">Member Name</th>
-                      <th className="px-4 py-3">Phone</th>
-                      <th className="px-4 py-3">Current Cycle</th>
-                      <th className="px-4 py-3">Total Stamps</th>
-                      <th className="px-4 py-3">Rewards</th>
-                      <th className="px-4 py-3 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/60">
-                    {filteredMembers.map((member) => (
-                      <tr key={member.id} className="hover:bg-muted/30 transition-colors">
-                        <td className="px-4 py-3 font-semibold text-foreground cursor-pointer" onClick={() => setSelected(member)}>
-                          {member.name}
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground">{member.phone || "—"}</td>
-                        <td className="px-4 py-3 font-medium text-primary">
-                          {member.stampCount % washesPerReward}/{washesPerReward}
-                        </td>
-                        <td className="px-4 py-3 text-foreground">{member.stampCount}</td>
-                        <td className="px-4 py-3 text-foreground">{member.rewardsRedeemed}</td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              aria-label={`View QR status for ${member.name}`}
-                              className="h-7 text-xs px-2"
-                              onClick={() => setQrModal(member)}
-                              title="View Member QR Status"
-                            >
-                              <QrCode className="w-3 h-3 text-primary" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-7 text-xs px-2.5"
-                              onClick={() => setSelected(member)}
-                            >
-                              View
-                            </Button>
-                            <Button
-                              size="sm"
-                              className="h-7 text-xs bg-primary text-primary-foreground px-2.5"
-                              onClick={() => handleDirectAddStamp(member, 1)}
-                              disabled={saving}
-                            >
-                              + Stamp
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </Card>
-          )}
+            <div>
+              <span className="text-xl font-extrabold text-foreground block">{totalStampsIssued}</span>
+              <span className="text-[11px] text-muted-foreground font-medium truncate block">Stamps Issued</span>
+            </div>
+          </div>
+
+          {/* Claimed */}
+          <div className="rounded-xl border border-border bg-card p-3 shadow-xs flex flex-col justify-between">
+            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-1.5">
+              <Gift className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="text-xl font-extrabold text-foreground block">{totalRewardsRedeemed}</span>
+              <span className="text-[11px] text-muted-foreground font-medium truncate block">Claimed</span>
+            </div>
+          </div>
         </div>
-      ) : (
-        /* Rewards & Rules Tab */
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {/* Rules Configuration */}
-          <Card className="border border-border shadow-xs bg-card">
-            <CardHeader className="pb-3 border-b border-border/60">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-primary" /> Loyalty Program Configuration
-              </CardTitle>
-              <CardDescription className="text-xs mt-0.5">
-                Configure how customers earn stamps and unlock rewards
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-5 space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="washesPerReward" className="text-xs">Stamps Required for Reward</Label>
+
+        {activeTab === "members" ? (
+          <div className="space-y-3">
+            {/* Filter & View Controls */}
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  id="washesPerReward"
-                  type="number"
-                  min="1"
-                  max="50"
-                  value={loyaltyConfig.washesPerReward}
-                  onChange={(e) => setLoyaltyConfig({ ...loyaltyConfig, washesPerReward: e.target.value })}
-                  className="h-9 text-xs"
+                  placeholder="Search member name or phone..."
+                  aria-label="Search member name or phone"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9 pr-8 h-10 text-xs rounded-xl bg-card border-border w-full"
                 />
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => setSearch("")}
+                    aria-label="Clear search"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-muted-foreground hover:text-foreground cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="rewardDescription" className="text-xs">Reward Description</Label>
-                <Input
-                  id="rewardDescription"
-                  type="text"
-                  value={loyaltyConfig.rewardDescription}
-                  onChange={(e) => setLoyaltyConfig({ ...loyaltyConfig, rewardDescription: e.target.value })}
-                  className="h-9 text-xs"
-                />
+              <div className="flex items-center gap-0.5 border border-border rounded-xl p-0.5 bg-card shrink-0">
+                <button
+                  type="button"
+                  aria-label="Card View"
+                  onClick={() => setViewMode("cards")}
+                  className={cn(
+                    "h-9 w-9 rounded-lg flex items-center justify-center transition-all cursor-pointer",
+                    viewMode === "cards" ? "bg-muted text-primary font-semibold" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Table View"
+                  onClick={() => setViewMode("table")}
+                  className={cn(
+                    "h-9 w-9 rounded-lg flex items-center justify-center transition-all cursor-pointer",
+                    viewMode === "table" ? "bg-muted text-primary font-semibold" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <TableIcon className="w-4 h-4" />
+                </button>
               </div>
+            </div>
 
-              <Button
-                size="sm"
-                onClick={() => handleSaveLoyaltyConfig(loyaltyConfig)}
-                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 text-xs h-9 cursor-pointer"
-              >
-                Save Configuration
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Reward Catalog Preview */}
-          <Card className="border border-border shadow-xs bg-card">
-            <CardHeader className="pb-3 border-b border-border/60">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Gift className="w-4 h-4 text-primary" /> Active Reward Perks
-              </CardTitle>
-              <CardDescription className="text-xs mt-0.5">
-                Perks automatically rewarded upon cycle completion
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-5 space-y-3">
-              <div className="border border-border rounded-xl p-3.5 bg-muted/20 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                    <Gift className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-xs text-foreground">{loyaltyConfig.rewardDescription || "Free Wash"}</h4>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">Unlocked after {washesPerReward} verified stamps</p>
-                  </div>
+            {/* Active Shop Campaign Micro-Banner */}
+            <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-primary text-white rounded-2xl p-3.5 shadow-xs relative overflow-hidden flex items-center justify-between">
+              <div className="relative z-10 pr-2 space-y-0.5">
+                <div className="flex items-center gap-1.5 text-purple-200 text-[10px] font-bold uppercase tracking-wider">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Active Shop Campaign</span>
                 </div>
+                <h4 className="font-bold text-sm leading-tight text-white">
+                  {washesPerReward} Stamps = 1 {rewardName}
+                </h4>
+                <p className="text-[11px] text-purple-100/90 leading-tight">
+                  Auto-redeemed at checkout on standard cycles
+                </p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center shrink-0 border border-white/20">
+                <Award className="w-5 h-5 text-white" />
+              </div>
+            </div>
+
+            {/* Members List */}
+            {loading ? (
+              <div className="py-12 text-center text-xs text-muted-foreground">Loading members...</div>
+            ) : filteredMembers.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border/80 bg-card p-8 text-center">
+                <Award className="w-10 h-10 text-muted-foreground/40 mx-auto mb-2" />
+                <p className="text-xs font-semibold text-foreground">No loyalty members found</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Try searching for another name/phone or add a new member
+                </p>
+              </div>
+            ) : viewMode === "cards" ? (
+              <div className="space-y-3">
+                {filteredMembers.map((member) => (
+                  <MobileLoyaltyMemberCard
+                    key={member.id}
+                    member={member}
+                    washesPerReward={washesPerReward}
+                    rewardName={rewardName}
+                    saving={saving}
+                    onSelect={setSelected}
+                    onEdit={setEditModal}
+                    onDelete={setDeleteModal}
+                    onQr={setQrModal}
+                    onAddStamp={handleDirectAddStamp}
+                  />
+                ))}
+              </div>
+            ) : (
+              <Card className="overflow-hidden border border-border shadow-xs bg-card">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold">
+                        <th className="px-3 py-2.5">Member</th>
+                        <th className="px-3 py-2.5">Phone</th>
+                        <th className="px-3 py-2.5">Stamps</th>
+                        <th className="px-3 py-2.5 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/60">
+                      {filteredMembers.map((member) => (
+                        <tr key={member.id} className="hover:bg-muted/30 transition-colors">
+                          <td
+                            className="px-3 py-2.5 font-semibold text-foreground cursor-pointer"
+                            onClick={() => setSelected(member)}
+                          >
+                            {member.name}
+                          </td>
+                          <td className="px-3 py-2.5 text-muted-foreground">{member.phone || "—"}</td>
+                          <td className="px-3 py-2.5 font-medium text-primary">
+                            {member.stampCount % washesPerReward}/{washesPerReward}
+                          </td>
+                          <td className="px-3 py-2.5 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 text-xs px-2"
+                                onClick={() => setSelected(member)}
+                              >
+                                View
+                              </Button>
+                              <Button
+                                size="sm"
+                                className="h-7 text-xs bg-primary text-primary-foreground px-2"
+                                onClick={() => handleDirectAddStamp(member, 1)}
+                                disabled={saving}
+                              >
+                                +1
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+            )}
+          </div>
+        ) : (
+          /* Mobile Rewards & Rules Tab */
+          <div className="space-y-4">
+            {/* Rules Configuration */}
+            <Card className="border border-border shadow-xs bg-card">
+              <CardHeader className="pb-3 border-b border-border/60">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" /> Loyalty Program Configuration
+                </CardTitle>
+                <CardDescription className="text-xs mt-0.5">
+                  Configure how customers earn stamps and unlock rewards
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-4 space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="mobile-washesPerReward" className="text-xs">Stamps Required for Reward</Label>
+                  <Input
+                    id="mobile-washesPerReward"
+                    type="number"
+                    min="1"
+                    max="50"
+                    value={loyaltyConfig.washesPerReward}
+                    onChange={(e) => setLoyaltyConfig({ ...loyaltyConfig, washesPerReward: e.target.value })}
+                    className="h-9 text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="mobile-rewardDescription" className="text-xs">Reward Description</Label>
+                  <Input
+                    id="mobile-rewardDescription"
+                    type="text"
+                    value={loyaltyConfig.rewardDescription}
+                    onChange={(e) => setLoyaltyConfig({ ...loyaltyConfig, rewardDescription: e.target.value })}
+                    className="h-9 text-xs"
+                  />
+                </div>
+
                 <Button
                   size="sm"
-                  variant="outline"
-                  onClick={() => handleRedeemReward(loyaltyConfig.rewardDescription || "Free Wash")}
-                  className="text-xs h-8"
+                  onClick={() => handleSaveLoyaltyConfig(loyaltyConfig)}
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 text-xs h-9 cursor-pointer"
                 >
-                  Simulate Redeem
+                  Save Configuration
                 </Button>
-              </div>
+              </CardContent>
+            </Card>
 
-              {redeemedRewards.length > 0 && (
-                <div className="pt-2">
-                  <p className="text-xs font-semibold text-foreground mb-2">Recent Redemptions</p>
-                  <div className="space-y-1.5 max-h-40 overflow-y-auto">
-                    {redeemedRewards.map((r) => (
-                      <div key={r.id} className="text-[11px] flex items-center justify-between border-b border-border/50 pb-1.5 text-muted-foreground">
-                        <span>{r.name} ({r.memberName})</span>
-                        <span className="font-mono">{r.date}</span>
-                      </div>
-                    ))}
+            {/* Active Reward Perks */}
+            <Card className="border border-border shadow-xs bg-card">
+              <CardHeader className="pb-3 border-b border-border/60">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Gift className="w-4 h-4 text-primary" /> Active Reward Perks
+                </CardTitle>
+                <CardDescription className="text-xs mt-0.5">
+                  Perks automatically rewarded upon cycle completion
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-4 space-y-3">
+                <div className="border border-border rounded-xl p-3 bg-muted/20 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                      <Gift className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-xs text-foreground">{loyaltyConfig.rewardDescription || "Free Wash"}</h4>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Unlocked after {washesPerReward} verified stamps</p>
+                    </div>
                   </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleRedeemReward(loyaltyConfig.rewardDescription || "Free Wash")}
+                    className="text-xs h-8 px-2.5"
+                  >
+                    Simulate
+                  </Button>
                 </div>
-              )}
+
+                {redeemedRewards.length > 0 && (
+                  <div className="pt-2">
+                    <p className="text-xs font-semibold text-foreground mb-1.5">Recent Redemptions</p>
+                    <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                      {redeemedRewards.map((r) => (
+                        <div key={r.id} className="text-[11px] flex items-center justify-between border-b border-border/50 pb-1 text-muted-foreground">
+                          <span className="truncate">{r.name} ({r.memberName})</span>
+                          <span className="font-mono text-[10px] shrink-0">{r.date}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
+
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* DESKTOP VIEW (>= md)                                                */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      <div className="hidden md:block space-y-5">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">Members & Rewards</h1>
+            <p className="text-xs text-muted-foreground sm:text-sm mt-0.5">Manage customer loyalty points, rewards, and program rules</p>
+          </div>
+          {activeTab === "members" && (
+            <Button
+              size="sm"
+              onClick={() => setAddModal(true)}
+              className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs cursor-pointer"
+            >
+              <Plus className="w-4 h-4" /> Add Member
+            </Button>
+          )}
+        </div>
+
+        {/* Tabs */}
+        <div className="flex border-b border-border gap-1">
+          <button
+            onClick={() => setActiveTab("members")}
+            className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors cursor-pointer ${
+              activeTab === "members"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Members
+          </button>
+          <button
+            onClick={() => setActiveTab("rewards")}
+            className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors cursor-pointer ${
+              activeTab === "rewards"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Rewards & Rules
+          </button>
+        </div>
+
+        {/* Top 3 Stat Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+          <Card className="border border-border shadow-xs bg-card">
+            <CardContent className="p-4 flex items-center gap-3.5">
+              <div className="h-10 w-10 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 flex items-center justify-center shrink-0">
+                <Award className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground font-medium">Total Members</p>
+                <h3 className="text-xl font-bold text-foreground">{totalMembers}</h3>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-border shadow-xs bg-card">
+            <CardContent className="p-4 flex items-center gap-3.5">
+              <div className="h-10 w-10 rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400 flex items-center justify-center shrink-0">
+                <Star className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground font-medium">Stamps Issued</p>
+                <h3 className="text-xl font-bold text-foreground">{totalStampsIssued}</h3>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-border shadow-xs bg-card">
+            <CardContent className="p-4 flex items-center gap-3.5">
+              <div className="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <Gift className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground font-medium">Rewards Claimed</p>
+                <h3 className="text-xl font-bold text-foreground">{totalRewardsRedeemed}</h3>
+              </div>
             </CardContent>
           </Card>
         </div>
-      )}
+
+        {activeTab === "members" ? (
+          <div className="space-y-4">
+            {/* Filter Bar */}
+            <div className="bg-card border border-border rounded-xl p-3 md:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+              <div className="relative w-full sm:max-w-xs">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search member name or phone…"
+                  aria-label="Search member name or phone"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9 h-9 text-xs w-full"
+                />
+              </div>
+              <div className="flex items-center gap-1 border border-border rounded-lg p-0.5 bg-muted/30 shrink-0">
+                <Button
+                  variant={viewMode === "cards" ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("cards")}
+                  className="h-8 px-2.5 text-xs gap-1.5"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" /> Cards
+                </Button>
+                <Button
+                  variant={viewMode === "table" ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("table")}
+                  className="h-8 px-2.5 text-xs gap-1.5"
+                >
+                  <TableIcon className="w-3.5 h-3.5" /> Table
+                </Button>
+              </div>
+            </div>
+
+            {/* Members Grid or Table */}
+            {loading ? (
+              <div className="py-16 text-center text-xs text-muted-foreground">Loading members...</div>
+            ) : filteredMembers.length === 0 ? (
+              <Card className="p-12 text-center border-dashed">
+                <Award className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="text-sm font-semibold text-foreground">No loyalty members found</p>
+                <p className="text-xs text-muted-foreground mt-1">Add your first member to begin tracking stamps!</p>
+              </Card>
+            ) : viewMode === "cards" ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                {filteredMembers.map((member) => {
+                  const currentStamps = member.stampCount % washesPerReward;
+                  const pct = Math.min(100, (currentStamps / washesPerReward) * 100);
+
+                  return (
+                    <Card
+                      key={member.id}
+                      className="border border-border/80 hover:border-primary/50 transition-all bg-card shadow-xs group"
+                    >
+                      <CardContent className="p-4 space-y-3.5">
+                        <div className="flex items-start justify-between gap-3">
+                          <div
+                            className="flex items-center gap-3 min-w-0 cursor-pointer"
+                            onClick={() => setSelected(member)}
+                          >
+                            <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground font-bold flex items-center justify-center text-sm shrink-0 shadow-xs">
+                              {getInitials(member.name)}
+                            </div>
+                            <div className="min-w-0">
+                              <h3 className="font-bold text-sm text-foreground truncate group-hover:text-primary transition-colors">
+                                {member.name}
+                              </h3>
+                              <p className="text-xs text-muted-foreground truncate">{member.phone || "No phone"}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`Edit ${member.name}`}
+                              className="h-8 w-8 min-h-[32px] min-w-[32px] text-muted-foreground hover:text-foreground cursor-pointer"
+                              onClick={() => setEditModal(member)}
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`Delete ${member.name}`}
+                              className="h-8 w-8 min-h-[32px] min-w-[32px] text-muted-foreground hover:text-destructive cursor-pointer"
+                              onClick={() => setDeleteModal(member)}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Progress Bar & Details */}
+                        <div className="space-y-1.5 cursor-pointer" onClick={() => setSelected(member)}>
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-semibold text-primary">{currentStamps}/{washesPerReward} Stamps</span>
+                            <span className="text-muted-foreground text-[11px]">{member.rewardsRedeemed} Rewards</span>
+                          </div>
+                          <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+                            <div
+                              className="bg-primary h-full transition-all duration-300 rounded-full"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center gap-1.5 pt-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            aria-label={`View QR status for ${member.name}`}
+                            onClick={() => setQrModal(member)}
+                            className="h-8 text-xs px-2.5 cursor-pointer gap-1"
+                            title="View Member QR Status & Public Link"
+                          >
+                            <QrCode className="w-3.5 h-3.5 text-primary" /> QR
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setSelected(member)}
+                            className="flex-1 text-xs h-8 cursor-pointer"
+                          >
+                            View Details
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => handleDirectAddStamp(member, 1)}
+                            disabled={saving}
+                            className="h-8 text-xs bg-primary text-primary-foreground hover:bg-primary/90 px-3 cursor-pointer"
+                          >
+                            + Add Stamp
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            ) : (
+              <Card className="overflow-hidden border border-border shadow-xs bg-card">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold">
+                        <th className="px-4 py-3">Member Name</th>
+                        <th className="px-4 py-3">Phone</th>
+                        <th className="px-4 py-3">Current Cycle</th>
+                        <th className="px-4 py-3">Total Stamps</th>
+                        <th className="px-4 py-3">Rewards</th>
+                        <th className="px-4 py-3 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/60">
+                      {filteredMembers.map((member) => (
+                        <tr key={member.id} className="hover:bg-muted/30 transition-colors">
+                          <td className="px-4 py-3 font-semibold text-foreground cursor-pointer" onClick={() => setSelected(member)}>
+                            {member.name}
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground">{member.phone || "—"}</td>
+                          <td className="px-4 py-3 font-medium text-primary">
+                            {member.stampCount % washesPerReward}/{washesPerReward}
+                          </td>
+                          <td className="px-4 py-3 text-foreground">{member.stampCount}</td>
+                          <td className="px-4 py-3 text-foreground">{member.rewardsRedeemed}</td>
+                          <td className="px-4 py-3 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                aria-label={`View QR status for ${member.name}`}
+                                className="h-7 text-xs px-2"
+                                onClick={() => setQrModal(member)}
+                                title="View Member QR Status"
+                              >
+                                <QrCode className="w-3 h-3 text-primary" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 text-xs px-2.5"
+                                onClick={() => setSelected(member)}
+                              >
+                                View
+                              </Button>
+                              <Button
+                                size="sm"
+                                className="h-7 text-xs bg-primary text-primary-foreground px-2.5"
+                                onClick={() => handleDirectAddStamp(member, 1)}
+                                disabled={saving}
+                              >
+                                + Stamp
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+            )}
+          </div>
+        ) : (
+          /* Rewards & Rules Tab */
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* Rules Configuration */}
+            <Card className="border border-border shadow-xs bg-card">
+              <CardHeader className="pb-3 border-b border-border/60">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" /> Loyalty Program Configuration
+                </CardTitle>
+                <CardDescription className="text-xs mt-0.5">
+                  Configure how customers earn stamps and unlock rewards
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-4 sm:p-5 space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="washesPerReward" className="text-xs">Stamps Required for Reward</Label>
+                  <Input
+                    id="washesPerReward"
+                    type="number"
+                    min="1"
+                    max="50"
+                    value={loyaltyConfig.washesPerReward}
+                    onChange={(e) => setLoyaltyConfig({ ...loyaltyConfig, washesPerReward: e.target.value })}
+                    className="h-9 text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="rewardDescription" className="text-xs">Reward Description</Label>
+                  <Input
+                    id="rewardDescription"
+                    type="text"
+                    value={loyaltyConfig.rewardDescription}
+                    onChange={(e) => setLoyaltyConfig({ ...loyaltyConfig, rewardDescription: e.target.value })}
+                    className="h-9 text-xs"
+                  />
+                </div>
+
+                <Button
+                  size="sm"
+                  onClick={() => handleSaveLoyaltyConfig(loyaltyConfig)}
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 text-xs h-9 cursor-pointer"
+                >
+                  Save Configuration
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Reward Catalog Preview */}
+            <Card className="border border-border shadow-xs bg-card">
+              <CardHeader className="pb-3 border-b border-border/60">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Gift className="w-4 h-4 text-primary" /> Active Reward Perks
+                </CardTitle>
+                <CardDescription className="text-xs mt-0.5">
+                  Perks automatically rewarded upon cycle completion
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-4 sm:p-5 space-y-3">
+                <div className="border border-border rounded-xl p-3.5 bg-muted/20 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                      <Gift className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-xs text-foreground">{loyaltyConfig.rewardDescription || "Free Wash"}</h4>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">Unlocked after {washesPerReward} verified stamps</p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleRedeemReward(loyaltyConfig.rewardDescription || "Free Wash")}
+                    className="text-xs h-8"
+                  >
+                    Simulate Redeem
+                  </Button>
+                </div>
+
+                {redeemedRewards.length > 0 && (
+                  <div className="pt-2">
+                    <p className="text-xs font-semibold text-foreground mb-2">Recent Redemptions</p>
+                    <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                      {redeemedRewards.map((r) => (
+                        <div key={r.id} className="text-[11px] flex items-center justify-between border-b border-border/50 pb-1.5 text-muted-foreground">
+                          <span>{r.name} ({r.memberName})</span>
+                          <span className="font-mono">{r.date}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
 
       {/* Add Member Modal */}
       <Dialog open={addModal} onOpenChange={setAddModal}>
