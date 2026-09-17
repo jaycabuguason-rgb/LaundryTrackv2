@@ -18,6 +18,8 @@ Do not change `hooks/usePeakHours.ts`. The active Reports page derives all of it
 
 The Processing workflow covered here is **Received -> Washing (including Drying) -> Ready**. `Claimed` is handled through Claim Verification/Transactions and is not a Processing-stage transition. `Voided` is likewise outside the normal Processing flow.
 
+However, a claim completed in Claim Verification is a shared transaction update: once confirmed, the ticket must disappear from Processing immediately because Processing displays only active, non-claimed orders. It must not briefly reappear because of a stale refresh or delayed Realtime event.
+
 ### Files to modify
 
 - `hooks/use-transactions.ts`
@@ -153,6 +155,7 @@ Add or update tests to cover:
 5. Optimistic status change is visible before the PATCH resolves.
 6. Failed PATCH rolls the status back and reports an error.
 7. A second status click on the same ticket is prevented while its first mutation is pending.
+8. Claim a Ready ticket through Claim Verification; verify it disappears from Processing immediately and does not return after refresh or Realtime synchronization.
 8. Reports receive the changed `transactions` prop and update their counts and derived metrics.
 
 Run `pnpm test` after implementation.
@@ -165,8 +168,9 @@ Run `pnpm test` after implementation.
 4. Confirm session B reflects the change within about a second.
 5. Open Reports in session B and confirm the Ready/Processing counts and related views change automatically.
 6. Create and void orders in session A; confirm session B reconciles insert, update, and delete-like effects correctly.
-7. Simulate a failed request and confirm the initiating session rolls back safely.
-8. Disconnect and reconnect; confirm the queued changes synchronize and an authoritative refresh occurs.
+7. Claim a Ready ticket through Claim Verification; confirm it disappears from Processing in both sessions and remains absent.
+8. Simulate a failed request and confirm the initiating session rolls back safely.
+9. Disconnect and reconnect; confirm the queued changes synchronize and an authoritative refresh occurs.
 
 ## Completion Criteria
 

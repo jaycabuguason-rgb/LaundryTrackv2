@@ -6,6 +6,7 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
+  Droplet,
   Inbox,
   Loader2,
   PackageCheck,
