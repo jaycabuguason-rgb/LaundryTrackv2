@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import {
   Eye,
   EyeOff,
@@ -57,6 +58,11 @@ import { Skeleton } from "boneyard-js/react";
 import type { CreateStaffAccountInput, StaffAccountSummary } from "@/lib/staff-contracts";
 import type { UserProfile } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+
+const AuditLogsView = dynamic(
+  () => import("@/components/pages/audit-logs").then((mod) => mod.AuditLogsView),
+  { ssr: false }
+);
 
 function PasswordField({
   id,
@@ -215,6 +221,10 @@ export default function StaffManagementPage({
   isStaffOnline?: (staff: { id?: string; username?: string; email?: string; isActive?: boolean }) => boolean;
 }) {
   const [activeTab, setActiveTab] = useState<"staff" | "audit">(initialTab);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
   const { toast } = useToast();
   const presence = useStaffPresence(isStaffOnlineProp ? undefined : currentProfile);
   const isStaffOnline = isStaffOnlineProp || presence.isStaffOnline;
@@ -290,8 +300,11 @@ export default function StaffManagementPage({
   }, [isStaffOnline]);
 
   const handleTabSwitch = (tab: "staff" | "audit") => {
+    if (onTabChange) {
+      onTabChange(tab);
+      return;
+    }
     setActiveTab(tab);
-    onTabChange?.(tab);
   };
 
   const filteredStaff = useMemo(() => {
@@ -520,31 +533,66 @@ export default function StaffManagementPage({
   };
 
   if (activeTab === "audit") {
-    const AuditLogsView = require("@/components/pages/audit-logs").AuditLogsView;
-    return <AuditLogsView onTabChange={handleTabSwitch} />;
+    return <AuditLogsView onTabChange={handleTabSwitch} currentProfile={currentProfile} />;
   }
 
-  return (
-    <Skeleton name="staff-management" loading={loading}>
-      <div className="w-full max-w-5xl space-y-5">
+  const content = (
+    <div className="w-full max-w-5xl space-y-5">
       {/* Header & Tab Switcher */}
       <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        {/* Header & Live Admin Badge (Mobile < md) */}
+        <div className="flex items-center justify-between gap-2 md:hidden">
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">Staff & Audit Logs</h1>
-            <p className="text-xs text-muted-foreground sm:text-sm">Team management and system activity</p>
+            <h1 className="text-xl font-bold tracking-tight text-foreground">Staff & Audit Logs</h1>
+            <p className="text-xs text-muted-foreground">Team management and system activity</p>
+          </div>
+          <div className="flex items-center gap-2 rounded-full border border-border bg-card px-2.5 py-1 text-xs shadow-xs">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="font-semibold text-foreground truncate max-w-[90px]">
+              {currentProfile?.name || currentProfile?.username || "Admin"}
+            </span>
+            <Badge variant="outline" className="text-[10px] px-1 py-0 uppercase border-muted-foreground/30 font-medium">
+              {currentProfile?.role || "ADMIN"}
+            </Badge>
           </div>
         </div>
 
-        {/* Tab Switcher */}
-        <div className="flex items-center gap-6 border-b border-border">
+        {/* Desktop Header & Subtitle (>= md) */}
+        <div className="hidden md:block">
+          <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">Staff & Audit Logs</h1>
+          <p className="text-xs text-muted-foreground sm:text-sm mt-0.5">Team management and system activity</p>
+        </div>
+
+        {/* Mobile Segmented Navigation Tabs (< md) */}
+        <div className="grid grid-cols-2 gap-1 rounded-xl bg-muted/50 p-1 border border-border md:hidden">
           <button
             type="button"
             onClick={() => handleTabSwitch("staff")}
-            className={cn(
-              "flex items-center gap-2 pb-2.5 text-sm font-medium transition-colors border-b-2",
-              "border-primary text-primary font-semibold"
-            )}
+            className="flex items-center justify-center gap-2 rounded-lg bg-card py-2 text-xs font-semibold text-foreground shadow-xs transition-colors cursor-pointer border border-border/50"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+            <Users className="h-4 w-4 text-primary" />
+            <span>Staff Management</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleTabSwitch("audit")}
+            className="flex items-center justify-center gap-2 rounded-lg py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          >
+            <ScrollText className="h-4 w-4" />
+            <span>Audit Logs</span>
+          </button>
+        </div>
+
+        {/* Desktop Tab Switcher (>= md) */}
+        <div className="hidden md:flex items-center gap-6 border-b border-border">
+          <button
+            type="button"
+            onClick={() => handleTabSwitch("staff")}
+            className="flex items-center gap-2 pb-2.5 text-sm font-semibold transition-colors border-b-2 border-primary text-primary cursor-pointer"
           >
             <Users className="h-4 w-4" />
             Staff Management
@@ -552,10 +600,7 @@ export default function StaffManagementPage({
           <button
             type="button"
             onClick={() => handleTabSwitch("audit")}
-            className={cn(
-              "flex items-center gap-2 pb-2.5 text-sm font-medium transition-colors border-b-2",
-              "border-transparent text-muted-foreground hover:text-foreground"
-            )}
+            className="flex items-center gap-2 pb-2.5 text-sm font-medium transition-colors border-b-2 border-transparent text-muted-foreground hover:text-foreground cursor-pointer"
           >
             <ScrollText className="h-4 w-4" />
             Audit Logs
@@ -1135,6 +1180,11 @@ export default function StaffManagementPage({
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+
+  return (
+    <Skeleton name="staff-management" loading={loading} fallback={content}>
+      {content}
     </Skeleton>
   );
 }

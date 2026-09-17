@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Search,
   ChevronDown,
@@ -349,7 +349,7 @@ function AuditMobileCard({ entry }: { entry: AuditLogEntry }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Main Audit Logs View
 // ─────────────────────────────────────────────────────────────────────────────
-function AuditLogsView({
+export function AuditLogsView({
   onTabChange,
   currentProfile,
 }: {
@@ -428,8 +428,7 @@ function AuditLogsView({
     URL.revokeObjectURL(url);
   };
 
-  return (
-    <Skeleton name="audit-logs" loading={loading}>
+  const content = (
       <div className="w-full space-y-5">
         {!usingSupabase && (
           <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-800 dark:border-blue-900/40 dark:bg-blue-950/40 dark:text-blue-300">
@@ -851,6 +850,11 @@ function AuditLogsView({
           </p>
         </div>
       </div>
+  );
+
+  return (
+    <Skeleton name="audit-logs" loading={loading} fallback={content}>
+      {content}
     </Skeleton>
   );
 }
@@ -865,6 +869,10 @@ export default function AuditLogsPage({
   isStaffOnline?: (staff: { id?: string; username?: string; email?: string; isActive?: boolean }) => boolean;
 }) {
   const [activeTab, setActiveTab] = useState<"staff" | "audit">(initialTab);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
 
   if (activeTab === "staff") {
     return (
