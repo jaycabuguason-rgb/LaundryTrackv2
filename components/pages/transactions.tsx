@@ -4,7 +4,8 @@ import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import {
   Search, EyeOff, Edit, Ban, Printer, ChevronRight, X, QrCode, CalendarIcon,
   AlertTriangle, Plus, User, Star, Camera,
-  ChevronLeft, Check, RefreshCw, Inbox, MoreHorizontal, Download, Sparkles
+  ChevronLeft, Check, RefreshCw, Inbox, MoreHorizontal, Download, Sparkles,
+  Receipt, Scale, Clock, CheckCircle2, PackageCheck, Eye, ArrowRight
 } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
@@ -25,6 +26,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+} from "@/components/ui/drawer";
 import {
   Select,
   SelectContent,
@@ -1228,6 +1236,8 @@ export default function TransactionsPage({
   const [printPostCreate, setPrintPostCreate] = useState(false);
   const [mobileStatusTxn, setMobileStatusTxn] = useState<Transaction | null>(null);
   const [mobileStatusBusyTicket, setMobileStatusBusyTicket] = useState<string | null>(null);
+  const [mobileActionTxn, setMobileActionTxn] = useState<Transaction | null>(null);
+  const [mobileShowScanner, setMobileShowScanner] = useState(false);
   const [busy, setBusy] = useState(false);
 
   // Toast
@@ -1409,6 +1419,38 @@ export default function TransactionsPage({
     }
   };
 
+  const handleQuickSettlePayment = async (txn: Transaction) => {
+    try {
+      await onUpdateTransaction(txn.ticketId, {
+        status: txn.status,
+        paymentStatus: "paid",
+      });
+      showToast(`Payment settled for #${txn.ticketId} (₱${txn.fee.toLocaleString()})`);
+      setMobileActionTxn(null);
+    } catch {
+      showToast("Unable to update payment status right now");
+    }
+  };
+
+  const handleQuickClaim = async (txn: Transaction) => {
+    if (txn.paymentStatus === "unpaid") {
+      showToast("Mark payment as Paid first before claiming this ticket.");
+      return;
+    }
+    try {
+      const res = await onUpdateTransaction(txn.ticketId, {
+        status: "Claimed",
+        paymentStatus: txn.paymentStatus,
+      });
+      showToast(`Ticket #${txn.ticketId} marked as Claimed`);
+      if (loyaltyEnabled && res.loyaltyResult?.stamped && res.loyaltyResult.rewarded) {
+        showToast(`Reward Unlocked! 🎉 Customer earned a free wash!`);
+      }
+    } catch {
+      showToast("Unable to claim ticket right now");
+    }
+  };
+
   // Auto-open Edit modal directly when editTicketId is provided (e.g. from notification "View" button)
   const handledEditTicketRef = useRef<string | null>(null);
   useEffect(() => {
@@ -1569,6 +1611,586 @@ export default function TransactionsPage({
         </div>
       )}
 
+      {/* ── MOBILE CONCEPT VIEW (md:hidden) ─────────────────────────────────── */}
+      <div className="space-y-3.5 md:hidden">
+        {/* Mobile Header & Quick Actions */}
+        <div className="flex items-center justify-between gap-2 pt-0.5">
+          <div className="flex flex-col min-w-0">
+            <h1 className="text-xl font-bold tracking-tight text-foreground">Transactions</h1>
+            <p className="text-xs text-muted-foreground truncate">
+              Monitor laundry orders, stage progress & payments
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="w-9 h-9 rounded-full bg-secondary/10 border-border text-foreground hover:bg-secondary/20 shadow-xs"
+              onClick={() => setMobileShowScanner((prev) => !prev)}
+              aria-label="Quick Scan QR / Barcode"
+              title="Quick Scan QR / Barcode"
+            >
+              <QrCode className="w-4 h-4" />
+            </Button>
+            <Button
+              size="sm"
+              className="h-9 px-3 rounded-full text-xs font-semibold gap-1.5 shadow-xs shrink-0"
+              onClick={() => (onNavigate ? onNavigate("new-transaction") : setShowWizard(true))}
+              disabled={busy || loading}
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>New Order</span>
+            </Button>
+          </div>
+        </div>
+
+        {/* Mobile Scanner Dropdown if active */}
+        {mobileShowScanner && (
+          <div className="p-3 bg-muted/30 border border-border rounded-2xl animate-in fade-in-50">
+            <InlineQRScanner
+              onScan={(scanned) => {
+                setSearch(scanned);
+                setMobileShowScanner(false);
+                showToast(`Scanned: ${scanned}`);
+              }}
+              onClose={() => setMobileShowScanner(false)}
+            />
+          </div>
+        )}
+
+        {/* Mobile Segmented Navigation Tabs */}
+        <div className="p-1 bg-muted/60 rounded-xl flex items-center gap-1 shadow-inner">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "transactions"}
+            onClick={() => {
+              setActiveTab("transactions");
+              setFilterStatus("all");
+            }}
+            className={cn(
+              "flex-1 py-1.5 px-1.5 rounded-lg font-semibold text-xs flex items-center justify-center gap-1 transition-all active:scale-95",
+              activeTab === "transactions"
+                ? "bg-primary text-primary-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <span className="truncate">Active</span>
+            <span
+              className={cn(
+                "px-1.5 py-0.2 rounded-full text-[10px] font-bold tabular-nums",
+                activeTab === "transactions"
+                  ? "bg-white/20 text-primary-foreground"
+                  : "bg-muted text-muted-foreground"
+              )}
+            >
+              {activeOrdersCount}
+            </span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "claimed"}
+            onClick={() => {
+              setActiveTab("claimed");
+              setFilterStatus("all");
+            }}
+            className={cn(
+              "flex-1 py-1.5 px-1.5 rounded-lg font-semibold text-xs flex items-center justify-center gap-1 transition-all active:scale-95",
+              activeTab === "claimed"
+                ? "bg-primary text-primary-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <span className="truncate">Claimed</span>
+            <span
+              className={cn(
+                "px-1.5 py-0.2 rounded-full text-[10px] font-bold tabular-nums",
+                activeTab === "claimed"
+                  ? "bg-white/20 text-primary-foreground"
+                  : "bg-muted text-muted-foreground"
+              )}
+            >
+              {claimedOrdersCount}
+            </span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "all"}
+            onClick={() => {
+              setActiveTab("all");
+              setFilterStatus("all");
+            }}
+            className={cn(
+              "flex-1 py-1.5 px-1.5 rounded-lg font-semibold text-xs flex items-center justify-center gap-1 transition-all active:scale-95",
+              activeTab === "all"
+                ? "bg-primary text-primary-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <span className="truncate">All</span>
+            <span
+              className={cn(
+                "px-1.5 py-0.2 rounded-full text-[10px] font-bold tabular-nums",
+                activeTab === "all"
+                  ? "bg-white/20 text-primary-foreground"
+                  : "bg-muted text-muted-foreground"
+              )}
+            >
+              {allOrdersCount}
+            </span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "voided"}
+            onClick={() => {
+              setActiveTab("voided");
+              setFilterStatus("all");
+            }}
+            className={cn(
+              "flex-1 py-1.5 px-1.5 rounded-lg font-semibold text-xs flex items-center justify-center gap-1 transition-all active:scale-95",
+              activeTab === "voided"
+                ? "bg-destructive text-destructive-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <span className="truncate">Voided</span>
+            <span
+              className={cn(
+                "px-1.5 py-0.2 rounded-full text-[10px] font-bold tabular-nums",
+                activeTab === "voided"
+                  ? "bg-white/20 text-destructive-foreground"
+                  : "bg-muted text-muted-foreground"
+              )}
+            >
+              {voidedOrdersCount}
+            </span>
+          </button>
+        </div>
+
+        {/* Live Aggregated Metrics Strip */}
+        <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-card border border-border/70 shadow-xs text-xs font-medium">
+          <div className="flex items-center gap-1.5">
+            <Receipt className="w-3.5 h-3.5 text-primary shrink-0" />
+            <span className="font-bold text-foreground">{totalFilteredOrders}</span>
+            <span className="text-muted-foreground">orders</span>
+          </div>
+          <span className="w-1 h-1 rounded-full bg-border" />
+          <div className="flex items-center gap-1">
+            <span className="font-bold text-primary">₱{totalFilteredRevenue.toLocaleString()}</span>
+            <span className="text-muted-foreground">total</span>
+          </div>
+          <span className="w-1 h-1 rounded-full bg-border" />
+          <div className="flex items-center gap-1">
+            <Scale className="w-3.5 h-3.5 text-sky-500 shrink-0" />
+            <span className="font-bold text-foreground">{totalFilteredWeight.toFixed(1)}</span>
+            <span className="text-muted-foreground">kg</span>
+          </div>
+        </div>
+
+        {/* Mobile Search & Filter Carousel */}
+        <div className="flex flex-col gap-2 pt-0.5">
+          {/* Search bar */}
+          <div className="relative flex items-center w-full">
+            <Search className="absolute left-3 w-4 h-4 text-muted-foreground pointer-events-none" />
+            <Input
+              placeholder="Search customer name or ticket ID…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 pr-8 h-10 rounded-xl text-xs bg-card"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="absolute right-2.5 text-muted-foreground hover:text-foreground transition-colors p-1"
+                aria-label="Clear search"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Horizontal Scrolling Filter Chips */}
+          <div className="flex items-center gap-1.5 overflow-x-auto py-1 no-scrollbar -mx-1 px-1">
+            {/* Status Chip */}
+            {(activeTab === "transactions" || activeTab === "all") && (
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className={cn(
+                  "h-8 px-2.5 rounded-full text-xs font-semibold shrink-0 gap-1 shadow-xs border",
+                  filterStatus !== "all"
+                    ? "bg-primary/10 border-primary/30 text-primary"
+                    : "bg-card border-border/80 text-foreground"
+                )}>
+                  <span className={cn(
+                    "w-2 h-2 rounded-full shrink-0",
+                    filterStatus === "all" ? "bg-primary" :
+                    filterStatus === "Ready" ? "bg-emerald-500" :
+                    filterStatus === "Washing" ? "bg-sky-500" : "bg-purple-500"
+                  )} />
+                  <SelectValue placeholder="All Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="Received">Received</SelectItem>
+                  <SelectItem value="Washing">Washing</SelectItem>
+                  <SelectItem value="Ready">Ready</SelectItem>
+                  {activeTab === "all" && (
+                    <>
+                      <SelectItem value="Claimed">Claimed</SelectItem>
+                      <SelectItem value="Voided">Voided</SelectItem>
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
+            )}
+
+            {/* Service Chip */}
+            <Select value={filterService} onValueChange={setFilterService}>
+              <SelectTrigger className={cn(
+                "h-8 px-2.5 rounded-full text-xs font-semibold shrink-0 gap-1 shadow-xs border",
+                filterService !== "all"
+                  ? "bg-primary/10 border-primary/30 text-primary"
+                  : "bg-card border-border/80 text-foreground"
+              )}>
+                <SelectValue placeholder="All Services" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Services</SelectItem>
+                {serviceOptions.map((srv: string) => (
+                  <SelectItem key={srv} value={srv}>{srv}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Payment Chip */}
+            <Select value={filterPayment} onValueChange={setFilterPayment}>
+              <SelectTrigger className={cn(
+                "h-8 px-2.5 rounded-full text-xs font-semibold shrink-0 gap-1 shadow-xs border",
+                filterPayment !== "all"
+                  ? "bg-primary/10 border-primary/30 text-primary"
+                  : "bg-card border-border/80 text-foreground"
+              )}>
+                <SelectValue placeholder="All Payments" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Payments</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+                <SelectItem value="unpaid">Unpaid</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Sort Chip */}
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
+              <SelectTrigger className={cn(
+                "h-8 px-2.5 rounded-full text-xs font-semibold shrink-0 gap-1 shadow-xs border",
+                sortBy !== "smart"
+                  ? "bg-secondary/15 border-secondary/30 text-foreground"
+                  : "bg-card border-border/80 text-foreground"
+              )}>
+                <SelectValue placeholder="Sort" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="smart">Smart Priority</SelectItem>
+                <SelectItem value="newest">Newest First</SelectItem>
+                <SelectItem value="oldest">Oldest First</SelectItem>
+                <SelectItem value="unpaid-first">Unpaid First</SelectItem>
+                <SelectItem value="ready-first">Ready First</SelectItem>
+                <SelectItem value="status-az">Status (A-Z)</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Date Chip */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className={cn(
+                    "h-8 px-2.5 rounded-full text-xs font-semibold shrink-0 flex items-center gap-1 shadow-xs border transition-colors",
+                    filterDate
+                      ? "bg-primary/10 border-primary/30 text-primary"
+                      : "bg-card border-border/80 text-foreground"
+                  )}
+                >
+                  <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span>{filterDate ? format(filterDate, "MMM d") : "All Dates"}</span>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={filterDate}
+                  onSelect={(d) => setFilterDate(d ?? undefined)}
+                  initialFocus
+                />
+                {filterDate && (
+                  <div className="p-2 border-t border-border">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full text-xs h-7"
+                      onClick={() => setFilterDate(undefined)}
+                    >
+                      Clear date filter
+                    </Button>
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
+
+            {/* Clear All Filters Chip */}
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={clearAllFilters}
+                className="h-8 px-2.5 rounded-full text-xs font-semibold shrink-0 flex items-center gap-1 bg-destructive/10 text-destructive border border-destructive/20 active:scale-95 transition-all"
+              >
+                <X className="w-3 h-3" />
+                <span>Reset</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Mobile Interactive Orders Stream */}
+        <div className="space-y-3 pt-1">
+          {filtered.map((txn) => {
+            const isVoided = txn.status === "Voided";
+            const isClaimed = txn.status === "Claimed";
+            const isReady = txn.status === "Ready";
+            const isWashing = txn.status === "Washing" || txn.status === "Drying";
+
+            // Status stripe color
+            const accentColor = isVoided
+              ? "bg-destructive"
+              : isClaimed
+              ? "bg-muted-foreground/40"
+              : isReady
+              ? "bg-emerald-500"
+              : isWashing
+              ? "bg-sky-500"
+              : "bg-primary";
+
+            return (
+              <div
+                key={`mobile-${txn.id}`}
+                role="button"
+                tabIndex={0}
+                onClick={() => setViewTxn(txn)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    const target = e.target as HTMLElement;
+                    if (target.closest("button, a, input, select, textarea, [role='menuitem']")) return;
+                    e.preventDefault();
+                    setViewTxn(txn);
+                  }
+                }}
+                className={cn(
+                  "relative overflow-hidden rounded-2xl bg-card border border-border/80 shadow-xs flex flex-col transition-all active:scale-[0.99] cursor-pointer",
+                  isVoided && "opacity-60 bg-muted/20",
+                  isClaimed && "bg-muted/10"
+                )}
+                aria-label={`Ticket #${txn.ticketId} — ${txn.customerName}`}
+              >
+                {/* Left Colored Accent Status Edge */}
+                <div className={cn("absolute left-0 top-0 bottom-0 w-1.5", accentColor)} />
+
+                <div className="p-3.5 pl-4 flex flex-col gap-2">
+                  {/* Card Top Bar: Ticket Pill, Date, Price */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className={cn(
+                        "px-2 py-0.5 rounded-lg font-mono text-xs font-bold tracking-tight",
+                        isVoided
+                          ? "bg-muted text-muted-foreground line-through"
+                          : "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-foreground"
+                      )}>
+                        #{txn.ticketId}
+                      </span>
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-muted-foreground/70" />
+                        {formatDateDisplay(txn.arrivalDateTime || txn.dropOffDate)}
+                      </span>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className={cn(
+                        "text-base font-extrabold text-foreground leading-none tabular-nums",
+                        isVoided && "line-through text-muted-foreground"
+                      )}>
+                        ₱{txn.fee.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Customer & Service Details Line */}
+                  <div className="flex items-start justify-between gap-2 pt-0.5">
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className={cn(
+                          "font-bold text-sm text-foreground truncate",
+                          isVoided && "line-through text-muted-foreground"
+                        )}>
+                          {txn.customerName}
+                        </span>
+                        {loyaltyEnabled && Boolean(getLoyaltyMemberForTxn(txn)) && (
+                          <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 px-1.5 py-0.2 text-[10px] font-semibold shrink-0">
+                            <Sparkles className="w-2.5 h-2.5 text-amber-500 fill-amber-500" />
+                            Loyalty
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground truncate mt-0.5">
+                        <span>{txn.washType}</span>
+                        {txn.weight ? (
+                          <>
+                            <span>•</span>
+                            <span className="font-medium text-foreground">{txn.weight} kg</span>
+                          </>
+                        ) : null}
+                        {txn.addOns && txn.addOns.length > 0 ? (
+                          <>
+                            <span>•</span>
+                            <span className="text-muted-foreground font-medium">{txn.addOns.join(", ")}</span>
+                          </>
+                        ) : null}
+                        {txn.machineNumber ? (
+                          <>
+                            <span>•</span>
+                            <span className="text-primary font-medium">Machine #{txn.machineNumber}</span>
+                          </>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    {/* Status Indicators Pill Column */}
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      <StatusBadge status={txn.status} />
+                      <PaymentBadge paymentStatus={txn.paymentStatus} />
+                    </div>
+                  </div>
+
+                  {/* Action Tray */}
+                  <div className="mt-1 pt-2 border-t border-border/40 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="h-7 px-2.5 text-xs font-semibold rounded-lg hover:bg-secondary/80 cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setViewTxn(txn);
+                        }}
+                      >
+                        <Eye className="w-3.5 h-3.5 mr-1" />
+                        <span>View</span>
+                      </Button>
+                      <a
+                        href={`${origin}${txn.publicTrackingToken ? `/track/${txn.publicTrackingToken}` : `/ticket/${txn.ticketId}`}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className={cn(
+                          buttonVariants({ variant: "default", size: "sm" }),
+                          "h-7 px-2.5 text-xs font-semibold rounded-lg shadow-xs cursor-pointer inline-flex items-center"
+                        )}
+                      >
+                        Track
+                      </a>
+                      {isReady && txn.paymentStatus === "paid" && (
+                        <Button
+                          size="sm"
+                          className="h-7 px-2.5 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void handleQuickClaim(txn);
+                          }}
+                        >
+                          <PackageCheck className="w-3.5 h-3.5 mr-1" />
+                          <span>Claim</span>
+                        </Button>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground"
+                        aria-label={`Print receipt for ticket ${txn.ticketId}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPrintTxn(txn);
+                          setPrintPostCreate(false);
+                        }}
+                      >
+                        <Printer className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground"
+                        aria-label="More options"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setMobileActionTxn(txn);
+                        }}
+                      >
+                        <MoreHorizontal className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+          {filtered.length === 0 && (
+            <div className="bg-card border border-border rounded-2xl p-8 text-center">
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <Inbox className="w-6 h-6 text-muted-foreground" />
+                  </EmptyMedia>
+                  <EmptyTitle className="text-sm font-semibold">
+                    {loading
+                      ? "Loading transactions..."
+                      : search || hasActiveFilters
+                      ? "No matching orders found"
+                      : activeTab === "transactions"
+                      ? "No active orders right now"
+                      : activeTab === "claimed"
+                      ? "No claimed orders found"
+                      : activeTab === "voided"
+                      ? "No voided orders found"
+                      : "No transactions yet"}
+                  </EmptyTitle>
+                  <EmptyDescription className="text-xs text-muted-foreground mt-1">
+                    {search || hasActiveFilters
+                      ? "Try tweaking or resetting your search filters."
+                      : "New counter orders will appear here in real-time."}
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            </div>
+          )}
+
+          {/* End of list indicator */}
+          {filtered.length > 0 && (
+            <div className="py-4 flex flex-col items-center justify-center gap-1 text-center">
+              <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                <CheckCircle2 className="w-4 h-4" />
+              </div>
+              <span className="text-xs font-semibold text-foreground">All orders synced in real-time</span>
+              <span className="text-[11px] text-muted-foreground">Sunshine Laundry POS</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── DESKTOP VIEW (hidden md:block) ─────────────────────────────────── */}
+      <div className="hidden md:block space-y-5">
       {/* Page Header with Title, Description, and Primary CTA */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -2077,6 +2699,286 @@ export default function TransactionsPage({
           )}
         </div>
       </div>
+      </div>
+
+      {/* ── MOBILE TRANSACTION QUICK MENU DRAWER (matches mobile_transaction_actions_menu) ── */}
+      <Drawer
+        open={Boolean(mobileActionTxn)}
+        onOpenChange={(open) => !open && setMobileActionTxn(null)}
+      >
+        <DrawerContent className="bg-card border-t border-border text-foreground shadow-2xl max-w-lg mx-auto">
+          <DrawerHeader className="sr-only">
+            <DrawerTitle>Transaction Quick Menu</DrawerTitle>
+            <DrawerDescription>Manage ticket #{mobileActionTxn?.ticketId}</DrawerDescription>
+          </DrawerHeader>
+          <div className="mx-auto mt-2.5 h-1.5 w-12 rounded-full bg-muted-foreground/30" />
+          {mobileActionTxn && (
+            <div className="p-4 space-y-4 max-h-[80vh] overflow-y-auto">
+              {/* Header & Ticket Identity */}
+              <div className="flex items-start justify-between gap-3 pb-3 border-b border-border/50">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-mono text-base font-bold text-primary">
+                      #{mobileActionTxn.ticketId}
+                    </span>
+                    <StatusBadge status={mobileActionTxn.status} />
+                    <PaymentBadge paymentStatus={mobileActionTxn.paymentStatus} />
+                  </div>
+                  <p className="text-sm font-semibold text-foreground truncate mt-1">
+                    {mobileActionTxn.customerName}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {mobileActionTxn.washType} {mobileActionTxn.weight ? `• ${mobileActionTxn.weight} kg` : ""}
+                  </p>
+                </div>
+                <div className="text-right shrink-0">
+                  <span className="text-lg font-black text-foreground tabular-nums">
+                    ₱{mobileActionTxn.fee.toLocaleString()}
+                  </span>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    {formatDateDisplay(mobileActionTxn.arrivalDateTime || mobileActionTxn.dropOffDate)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Group 1: Slips & QR Outputs */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                    Slips & QR Outputs
+                  </span>
+                  <span className="text-[11px] font-semibold text-primary">POS Thermal</span>
+                </div>
+                <div className="bg-muted/40 rounded-xl p-1 space-y-0.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPrintTxn(mobileActionTxn);
+                      setPrintPostCreate(false);
+                      setMobileActionTxn(null);
+                    }}
+                    className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-card active:bg-card transition-colors text-left"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-card text-foreground flex items-center justify-center shadow-xs">
+                        <Printer className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-foreground">Print Receipt</p>
+                        <p className="text-[11px] text-muted-foreground truncate">Full 80mm thermal counter receipt</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const t = mobileActionTxn;
+                      setMobileActionTxn(null);
+                      void handleDownloadReceipt(t);
+                    }}
+                    className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-card active:bg-card transition-colors text-left"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-card text-foreground flex items-center justify-center shadow-xs">
+                        <Download className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-foreground">Download Receipt</p>
+                        <p className="text-[11px] text-muted-foreground truncate">Export customer e-slip (.PDF)</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReprintTxn(mobileActionTxn);
+                      setMobileActionTxn(null);
+                    }}
+                    className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-card active:bg-card transition-colors text-left"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-card text-primary flex items-center justify-center shadow-xs">
+                        <QrCode className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-foreground">QR Code Ticket</p>
+                        <p className="text-[11px] text-muted-foreground truncate">Open standalone customer tracking QR</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const t = mobileActionTxn;
+                      setMobileActionTxn(null);
+                      void handlePrintQrTicket(t);
+                    }}
+                    className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-card active:bg-card transition-colors text-left"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-card text-primary flex items-center justify-center shadow-xs">
+                        <Printer className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-foreground">Print QR Bag Tag Only</p>
+                        <p className="text-[11px] text-muted-foreground truncate">Adhesive basket & bundle barcode label</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const t = mobileActionTxn;
+                      setMobileActionTxn(null);
+                      void handleDownloadQr(t);
+                    }}
+                    className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-card active:bg-card transition-colors text-left"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-card text-foreground flex items-center justify-center shadow-xs">
+                        <Download className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-foreground">Download QR Code</p>
+                        <p className="text-[11px] text-muted-foreground truncate">Save high-res PNG image</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Group 2: Workflow & Ledger */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                    Workflow & Ledger
+                  </span>
+                  <span className="text-[11px] font-medium text-muted-foreground">Stage Actions</span>
+                </div>
+                <div className="bg-muted/40 rounded-xl p-1 space-y-0.5">
+                  {mobileActionTxn.paymentStatus === "unpaid" && mobileActionTxn.status !== "Voided" && (
+                    <button
+                      type="button"
+                      onClick={() => void handleQuickSettlePayment(mobileActionTxn)}
+                      className="w-full flex items-center justify-between p-2.5 rounded-lg bg-primary/10 hover:bg-primary/15 transition-colors text-left"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shadow-xs">
+                          <Receipt className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-primary">
+                            Settle Payment (₱{mobileActionTxn.fee.toLocaleString()})
+                          </p>
+                          <p className="text-[11px] text-muted-foreground truncate">Receive cash or e-wallet payment</p>
+                        </div>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-primary" />
+                    </button>
+                  )}
+
+                  {mobileActionTxn.status !== "Voided" && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const t = mobileActionTxn;
+                          setMobileActionTxn(null);
+                          openEdit(t);
+                        }}
+                        className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-card active:bg-card transition-colors text-left"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-8 h-8 rounded-lg bg-card text-foreground flex items-center justify-center shadow-xs">
+                            <Edit className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-foreground">Edit Order</p>
+                            <p className="text-[11px] text-muted-foreground truncate">Update kg, wash specifics, notes</p>
+                          </div>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const t = mobileActionTxn;
+                          setMobileActionTxn(null);
+                          setMobileStatusTxn(t);
+                        }}
+                        className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-card active:bg-card transition-colors text-left"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-8 h-8 rounded-lg bg-card text-foreground flex items-center justify-center shadow-xs">
+                            <RefreshCw className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-foreground">Change Status</p>
+                            <p className="text-[11px] text-muted-foreground truncate">
+                              Move from Washing → Drying → Ready
+                            </p>
+                          </div>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Group 3: Void Order */}
+              {mobileActionTxn.status !== "Voided" && (
+                <div className="space-y-1.5">
+                  <div className="bg-destructive/10 rounded-xl p-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const t = mobileActionTxn;
+                        setMobileActionTxn(null);
+                        setVoidTxn(t);
+                        setVoidReason("");
+                      }}
+                      className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-destructive/20 active:bg-destructive/25 transition-colors text-left text-destructive"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-destructive text-destructive-foreground flex items-center justify-center shadow-xs">
+                          <Ban className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-destructive">Void Order</p>
+                          <p className="text-[11px] text-destructive/80 truncate">Cancel ticket and mark invalid</p>
+                        </div>
+                      </div>
+                      <AlertTriangle className="w-4 h-4 text-destructive" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Dismiss */}
+              <div className="pt-2">
+                <Button
+                  variant="outline"
+                  className="w-full h-10 rounded-xl font-semibold text-xs cursor-pointer"
+                  onClick={() => setMobileActionTxn(null)}
+                >
+                  Dismiss Menu
+                </Button>
+              </div>
+            </div>
+          )}
+        </DrawerContent>
+      </Drawer>
 
       {/* ── VIEW MODAL (read-only) ──────────────────────────────────────────── */}
       <Dialog open={!!viewTxn} onOpenChange={(open) => { if (!open) { setViewTxn(null); onEditComplete?.(); } }}>
