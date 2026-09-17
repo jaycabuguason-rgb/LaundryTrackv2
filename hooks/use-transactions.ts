@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import type { Transaction } from "@/lib/data";
+import { formatCompactDate, formatCompactDateTime } from "@/lib/date-format";
+import type { Transaction, TransactionStatus } from "@/lib/data";
 import {
   enqueueOfflineMutation,
   readCachedTransactions,
@@ -28,6 +29,73 @@ interface TransactionResponse {
 
 interface ResolveResponse {
   ticketId: string | null;
+}
+
+function isValidTransactionStatus(value: unknown): value is TransactionStatus {
+  return typeof value === "string" && ["Received", "Washing", "Drying", "Ready", "Claimed", "Voided"].includes(value);
+}
+
+function normalizeStatus(value: unknown): TransactionStatus {
+  if (value === "Drying") return "Washing";
+  return isValidTransactionStatus(value) ? value : "Received";
+}
+
+function normalizePaymentStatus(value: unknown): Transaction["paymentStatus"] {
+  return value === "paid" ? "paid" : "unpaid";
+}
+
+export function mapRealtimeRow(row: unknown): Transaction | null {
+  if (!row || typeof row !== "object") {
+    return null;
+  }
+  const r = row as Record<string, unknown>;
+
+  const id = typeof r.id === "string" ? r.id : String(r.id ?? "");
+  const ticketId = typeof r.ticket_id === "string" ? r.ticket_id : (typeof r.ticketId === "string" ? r.ticketId : "");
+  if (!id && !ticketId) {
+    return null;
+  }
+
+  const customerName = typeof r.customer_name === "string" ? r.customer_name : (typeof r.customerName === "string" ? r.customerName : "");
+  const phone = typeof r.phone_number === "string" ? r.phone_number : (typeof r.phone === "string" ? r.phone : "");
+  const arrivalTimeRaw = (typeof r.arrival_time === "string" ? r.arrival_time : (typeof r.created_at === "string" ? r.created_at : (typeof r.arrivalDateTime === "string" ? r.arrivalDateTime : null)));
+  const arrivalDateTime = formatCompactDateTime(arrivalTimeRaw) || (typeof r.arrivalDateTime === "string" ? r.arrivalDateTime : "");
+  const dropOffDate = formatCompactDate(arrivalTimeRaw) || (typeof r.dropOffDate === "string" ? r.dropOffDate : arrivalDateTime.split(" ")[0] || "");
+  const status = normalizeStatus(r.status);
+  const claimedTimeRaw = (typeof r.claimed_at === "string" ? r.claimed_at : (typeof r.claimedAt === "string" ? r.claimedAt : null)) ?? (status === "Claimed" ? ((typeof r.updated_at === "string" ? r.updated_at : null) ?? arrivalTimeRaw) : null);
+  const claimedAt = claimedTimeRaw ? formatCompactDateTime(claimedTimeRaw) || undefined : undefined;
+
+  const washType = typeof r.wash_type === "string" ? r.wash_type : (typeof r.washType === "string" ? r.washType : "Regular");
+  const weight = typeof r.weight_kg === "number" ? r.weight_kg : (Number(r.weight_kg ?? r.weight ?? 0) || 0);
+  const fee = typeof r.fee === "number" ? r.fee : (Number(r.fee ?? 0) || 0);
+  const paymentStatus = normalizePaymentStatus(r.payment_status ?? r.paymentStatus);
+  const addOns = Array.isArray(r.addons) ? r.addons.map(String) : (Array.isArray(r.addOns) ? r.addOns.map(String) : []);
+  const washInstructions = typeof r.special_instructions === "string" ? r.special_instructions : (typeof r.washInstructions === "string" ? r.washInstructions : undefined);
+  const publicTrackingToken = typeof r.public_tracking_token === "string" ? r.public_tracking_token : (typeof r.publicTrackingToken === "string" ? r.publicTrackingToken : undefined);
+  const updatedAt = typeof r.updated_at === "string" ? r.updated_at : (typeof r.updatedAt === "string" ? r.updatedAt : undefined);
+  const eta = typeof r.eta === "string" ? r.eta : (r.eta === null ? null : undefined);
+  const voidReason = typeof r.void_reason === "string" ? r.void_reason : (typeof r.voidReason === "string" ? r.voidReason : undefined);
+
+  return {
+    id: id || ticketId,
+    ticketId: ticketId || id,
+    customerName,
+    phone,
+    arrivalDateTime,
+    dropOffDate,
+    claimedAt,
+    washType,
+    weight,
+    fee,
+    status,
+    paymentStatus,
+    addOns,
+    washInstructions,
+    publicTrackingToken,
+    updatedAt,
+    eta,
+    voidReason,
+  };
 }
 
 async function readJson<T>(response: Response): Promise<T> {
@@ -280,18 +348,92 @@ export function useTransactions() {
       .on(
         "postgres_changes",
         {
-          event: "*",
+          event: "INSERT",
           schema: "public",
           table: "transactions",
         },
-        () => {
-          void refreshRef.current?.();
+        (payload) => {
+          const mapped = mapRealtimeRow(payload.new);
+          if (!mapped) {
+            void refreshRef.current?.();
+            return;
+          }
+          updateTransactions((current) => {
+            const exists = current.some((t) => t.id === mapped.id || t.ticketId === mapped.ticketId);
+            if (exists) {
+              return current.map((t) => (t.id === mapped.id || t.ticketId === mapped.ticketId ? mapped : t));
+            }
+            return [mapped, ...current];
+          });
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "transactions",
+        },
+        (payload) => {
+          const mapped = mapRealtimeRow(payload.new);
+          if (!mapped) {
+            void refreshRef.current?.();
+            return;
+          }
+          updateTransactions((current) => {
+            const exists = current.some((t) => t.id === mapped.id || t.ticketId === mapped.ticketId);
+            if (exists) {
+              return current.map((t) => (t.id === mapped.id || t.ticketId === mapped.ticketId ? mapped : t));
+            }
+            return [mapped, ...current];
+          });
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "transactions",
+        },
+        (payload) => {
+          const oldRecord = payload.old as Record<string, unknown> | null;
+          const targetId = typeof oldRecord?.id === "string" ? oldRecord.id : null;
+          const targetTicketId = typeof oldRecord?.ticket_id === "string" ? oldRecord.ticket_id : null;
+          if (!targetId && !targetTicketId) {
+            void refreshRef.current?.();
+            return;
+          }
+          updateTransactions((current) =>
+            current.filter((t) => (targetId ? t.id !== targetId : true) && (targetTicketId ? t.ticketId !== targetTicketId : true)),
+          );
         },
       )
       .subscribe();
 
     return () => {
       void supabase.removeChannel(channel);
+    };
+  }, [updateTransactions]);
+
+  // Window visibility & focus recovery refresh
+  useEffect(() => {
+    let focusTimeout: ReturnType<typeof setTimeout> | null = null;
+    const handleRecheck = () => {
+      if (document.visibilityState === "hidden") return;
+      if (focusTimeout) clearTimeout(focusTimeout);
+      focusTimeout = setTimeout(() => {
+        void refreshRef.current?.();
+      }, 300);
+    };
+
+    window.addEventListener("focus", handleRecheck);
+    document.addEventListener("visibilitychange", handleRecheck);
+
+    return () => {
+      if (focusTimeout) clearTimeout(focusTimeout);
+      window.removeEventListener("focus", handleRecheck);
+      document.removeEventListener("visibilitychange", handleRecheck);
     };
   }, []);
 

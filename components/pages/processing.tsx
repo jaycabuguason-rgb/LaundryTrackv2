@@ -436,7 +436,10 @@ export default function ProcessingPage({
   // Core update – called after any confirmation / immediate click
   const applyStatusUpdate = async (txn: Transaction, newStatus: TransactionStatus) => {
     if (!onUpdateTransaction) return;
+    if (updatingTicket === txn.ticketId) return; // Prevent duplicate in-flight requests for same ticket
     setUpdatingTicket(txn.ticketId);
+    setSheetTxn(null);
+
     try {
       const res = await onUpdateTransaction(txn.ticketId, { status: newStatus });
       setLastUpdated(new Date());
@@ -446,10 +449,9 @@ export default function ProcessingPage({
       } else if (res.loyaltyResult?.stamped) {
         pushToast(`Stamp Added! Customer now has ${res.loyaltyResult.newStampCount} stamps.`);
       }
-      setSheetTxn(null);
       return true;
     } catch {
-      pushToast("Unable to update the ticket status right now");
+      pushToast("Unable to update the ticket status right now — reverted.");
       return false;
     } finally {
       setUpdatingTicket(null);
@@ -675,7 +677,14 @@ export default function ProcessingPage({
                               handleStatusSelect(txn, nextAction.nextStatus);
                             }}
                           >
-                            <span>{nextAction.label}</span>
+                            {isUpdating ? (
+                              <>
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                                <span>Saving…</span>
+                              </>
+                            ) : (
+                              <span>{nextAction.label}</span>
+                            )}
                           </Button>
                         )}
                       </div>
@@ -786,7 +795,14 @@ export default function ProcessingPage({
                                   handleStatusSelect(txn, nextAction.nextStatus);
                                 }}
                               >
-                                {isUpdating ? "Updating…" : nextAction.label}
+                                {isUpdating ? (
+                                  <>
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                    <span>Saving…</span>
+                                  </>
+                                ) : (
+                                  nextAction.label
+                                )}
                               </Button>
                             )}
 

@@ -122,4 +122,38 @@ describe("ProcessingPage Single-Click Action Buttons", () => {
     fireEvent.click(tabs[1]); // Click Washing tab
     expect(tabs[1]).toHaveAttribute("aria-selected", "true");
   });
+
+  it("prevents duplicate concurrent status clicks on the same ticket while saving", async () => {
+    let resolvePromise: (value: any) => void = () => {};
+    const pendingPromise = new Promise((resolve) => {
+      resolvePromise = resolve;
+    });
+
+    const onUpdateTransaction = vi.fn().mockReturnValue(pendingPromise);
+
+    render(
+      <ProcessingPage
+        transactions={mockTransactions}
+        onUpdateTransaction={onUpdateTransaction}
+      />
+    );
+
+    const startWashButtons = screen.getAllByRole("button", { name: /start wash/i });
+    expect(startWashButtons.length).toBeGreaterThan(0);
+
+    // First click initiates mutation
+    fireEvent.click(startWashButtons[0]);
+    expect(onUpdateTransaction).toHaveBeenCalledTimes(1);
+
+    // Button should now show Saving… and be disabled
+    expect(screen.getAllByText(/saving…/i).length).toBeGreaterThanOrEqual(1);
+
+    // Second click on the same ticket while in-flight should not fire again
+    fireEvent.click(startWashButtons[0]);
+    expect(onUpdateTransaction).toHaveBeenCalledTimes(1);
+
+    // Resolve update
+    resolvePromise({ transaction: { ...mockTransactions[0], status: "Washing" } });
+  });
 });
+
