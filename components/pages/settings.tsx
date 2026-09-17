@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import {
   Plus, Trash2, Edit, Save, Upload, Clock, Download, Loader2, CheckCircle2,
   Scale, ShoppingBasket, Package, X, Eye, EyeOff, Tag, Undo2, Redo2, AlertTriangle,
-  Coins, Building2, Gift, Database, CreditCard
+  Coins, Building2, Gift, Database, CreditCard,
+  Sliders, Sparkles, Droplets, Leaf, Zap, Check
 } from "lucide-react";
 import DataImportPage from "@/components/pages/data-import";
 import { Button } from "@/components/ui/button";
@@ -63,6 +64,12 @@ async function buildAuthHeaders(): Promise<Record<string, string>> {
 
 // ─── Pricing ────────────────────────────────────────────────────────────────
 
+const PRICING_TYPE_LABELS: Record<PricingType, string> = {
+  "per-kg":    "Per kg",
+  "per-load":  "Per load",
+  "per-piece": "Per piece",
+};
+
 function PricingSettings() {
   // Base pricing — initialised from shared store
   const [pricingMode, setPricingMode]   = useState<PricingMode>(() => loadPricingConfig().pricingMode);
@@ -83,6 +90,35 @@ function PricingSettings() {
   const [newTierTo, setNewTierTo]       = useState("");
   const [newTierOpen, setNewTierOpen]   = useState(false);
   const [newTierPrice, setNewTierPrice] = useState("");
+
+  // Mobile tier edit state
+  const [mobileEditTier, setMobileEditTier]         = useState<LoadTier | null>(null);
+  const [mobileEditTierName, setMobileEditTierName] = useState("");
+  const [mobileEditTierFrom, setMobileEditTierFrom] = useState("");
+  const [mobileEditTierTo, setMobileEditTierTo]     = useState("");
+  const [mobileEditTierOpen, setMobileEditTierOpen] = useState(false);
+  const [mobileEditTierPrice, setMobileEditTierPrice] = useState("");
+
+  const openMobileEditTier = (tier: LoadTier) => {
+    setMobileEditTier(tier);
+    setMobileEditTierName(tier.name);
+    const parsed = parseRange(tier.range);
+    setMobileEditTierFrom(parsed.from);
+    setMobileEditTierTo(parsed.to);
+    setMobileEditTierOpen(parsed.open);
+    setMobileEditTierPrice(tier.price);
+  };
+
+  const saveMobileEditTier = () => {
+    if (!mobileEditTier) return;
+    const range = buildRange(mobileEditTierFrom, mobileEditTierTo, mobileEditTierOpen);
+    updateTier(mobileEditTier.id, {
+      name: mobileEditTierName,
+      range,
+      price: mobileEditTierPrice,
+    });
+    setMobileEditTier(null);
+  };
 
   // Helper: build range string from from/to/open
   const buildRange = (from: string, to: string, open: boolean) =>
@@ -320,7 +356,742 @@ function PricingSettings() {
 
   return (
     <>
-    <div className="space-y-5 w-full max-w-2xl">
+      {/* ── Mobile Layout (md:hidden) ────────────────────────────────────── */}
+      <div className="md:hidden flex flex-col gap-4 pb-24">
+        {/* 1. Base Pricing Card */}
+        <div className="bg-card rounded-2xl p-4 border border-border/70 shadow-xs flex flex-col gap-4">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-primary" />
+                <h2 className="text-base font-bold text-foreground">Base Pricing</h2>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Configure how laundry is charged to walk-in &amp; pick-up customers
+              </p>
+            </div>
+            <Coins className="text-primary w-5 h-5 shrink-0" />
+          </div>
+
+          {/* Pricing Mode Selector */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] text-muted-foreground uppercase tracking-wider font-bold">
+              Pricing Mode
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {MODES.map(({ value, icon, label, sub }) => {
+                const isActive = pricingMode === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setPricingMode(value)}
+                    className={cn(
+                      "flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all cursor-pointer",
+                      isActive
+                        ? "bg-primary/10 border-primary text-primary font-bold shadow-xs"
+                        : "bg-muted/40 border-border/70 text-muted-foreground hover:bg-muted/60"
+                    )}
+                  >
+                    <div className={cn("mb-1", isActive ? "text-primary" : "text-muted-foreground")}>
+                      {icon}
+                    </div>
+                    <span className={cn("text-xs leading-tight font-semibold", isActive ? "text-primary" : "text-foreground")}>
+                      {value === "per-kg" ? "Per Kg" : value === "per-load" ? "Per Load" : "Both"}
+                    </span>
+                    <span className="text-[9px] text-muted-foreground leading-tight mt-0.5 truncate max-w-full">
+                      {value === "per-kg" ? "By weight" : value === "per-load" ? "Flat rate" : "Staff choice"}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-[11px] text-primary flex items-center gap-1 mt-1 bg-primary/5 border border-primary/10 px-2.5 py-1.5 rounded-lg">
+              <Sparkles className="w-3.5 h-3.5 shrink-0" />
+              <span>Staff selects appropriate pricing mode at intake checkout.</span>
+            </p>
+          </div>
+
+          {/* Kilogram Pricing Details */}
+          {showKg && (
+            <div className="bg-muted/40 rounded-xl p-3 flex flex-col gap-2.5 border border-border/50">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-foreground font-bold flex items-center gap-1.5">
+                  <Scale className="w-3.5 h-3.5 text-primary" />
+                  Kilogram Pricing Details
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-semibold">
+                  Active Rule
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-muted-foreground font-medium">Price per kg (₱)</label>
+                  <div className="flex items-center bg-background border border-border/70 rounded-lg px-2.5 py-1.5 shadow-xs">
+                    <span className="text-primary mr-1 font-bold text-sm">₱</span>
+                    <input
+                      className="w-full bg-transparent text-sm text-foreground font-bold focus:outline-none"
+                      type="number"
+                      min="0"
+                      value={pricePerKg}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9.]/g, "");
+                        setPricePerKg(val);
+                      }}
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-muted-foreground font-medium">Min Weight (kg)</label>
+                  <div className="flex items-center bg-background border border-border/70 rounded-lg px-2.5 py-1.5 shadow-xs">
+                    <input
+                      className="w-full bg-transparent text-sm text-foreground font-bold focus:outline-none"
+                      type="number"
+                      min="0"
+                      value={minWeight}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9.]/g, "");
+                        setMinWeight(val);
+                      }}
+                      placeholder="0"
+                    />
+                    <span className="text-[11px] text-muted-foreground font-medium shrink-0">kg</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Per Load Tiers */}
+          {showLoad && (
+            <div className="flex flex-col gap-2 pt-1 border-t border-border/50">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] text-muted-foreground uppercase tracking-wider font-bold">
+                  Per Load Tiers
+                </label>
+                <div className="flex items-center gap-2">
+                  {(tierHistory.length > 0 || tierFuture.length > 0) && (
+                    <div className="flex items-center gap-1 mr-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        disabled={!tierHistory.length}
+                        onClick={undoTiers}
+                      >
+                        <Undo2 className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        disabled={!tierFuture.length}
+                        onClick={redoTiers}
+                      >
+                        <Redo2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  )}
+                  <span className="text-[10px] text-muted-foreground font-semibold px-2 py-0.5 rounded-full bg-muted/60">
+                    {loadTiers.length} Tiers Defined
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                {loadTiers.map((tier, idx) => {
+                  return (
+                    <div
+                      key={tier.id}
+                      className="flex items-center justify-between p-2.5 bg-muted/30 border border-border/60 rounded-xl"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                          {idx === 0 ? (
+                            <ShoppingBasket className="w-4 h-4" />
+                          ) : idx === 1 ? (
+                            <Package className="w-4 h-4" />
+                          ) : (
+                            <Scale className="w-4 h-4" />
+                          )}
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-xs font-bold text-foreground truncate">
+                            {tier.name}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground">
+                            {tier.range || "Custom range"}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-sm font-extrabold text-primary">
+                          ₱{tier.price}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 rounded-full bg-background border border-border/50 text-muted-foreground hover:text-foreground"
+                          onClick={() => openMobileEditTier(tier)}
+                        >
+                          <Edit className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 rounded-full bg-background border border-border/50 text-destructive hover:text-destructive"
+                          onClick={() => setDeleteTierId(tier.id)}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Add Custom Tier Trigger or Inline Form */}
+              {!showAddTier ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAddTier(true)}
+                  className="w-full py-2.5 mt-1 rounded-xl text-primary font-semibold text-xs flex items-center justify-center gap-1.5 bg-background border-dashed border-primary/30 hover:bg-primary/5"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add Custom Tier
+                </Button>
+              ) : (
+                <div className="bg-muted/40 rounded-xl border border-border/70 p-3 space-y-2.5 mt-1">
+                  <p className="text-xs font-bold text-foreground">New Custom Tier</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="col-span-2">
+                      <Label className="text-[10px] text-muted-foreground mb-1 block">Tier Name *</Label>
+                      <Input
+                        placeholder="e.g. Extra Large"
+                        value={newTierName}
+                        onChange={(e) => setNewTierName(e.target.value)}
+                        className="h-8 text-xs bg-background"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[10px] text-muted-foreground mb-1 block">From (kg)</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={newTierFrom}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9.]/g, "");
+                          setNewTierFrom(val);
+                        }}
+                        className="h-8 text-xs bg-background"
+                      />
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <Label className="text-[10px] text-muted-foreground">To (kg)</Label>
+                        <button
+                          type="button"
+                          onClick={() => setNewTierOpen(!newTierOpen)}
+                          className={cn(
+                            "text-[10px] px-1 py-0.5 rounded border leading-none",
+                            newTierOpen ? "border-primary text-primary font-semibold" : "border-border text-muted-foreground"
+                          )}
+                        >
+                          {newTierOpen ? "Open +" : "Capped"}
+                        </button>
+                      </div>
+                      {!newTierOpen ? (
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={newTierTo}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/[^0-9.]/g, "");
+                            setNewTierTo(val);
+                          }}
+                          className="h-8 text-xs bg-background"
+                        />
+                      ) : (
+                        <div className="h-8 flex items-center px-2 text-xs text-muted-foreground bg-muted/50 rounded-md border border-border/50">
+                          {newTierFrom ? `${newTierFrom} kg+` : "Above"}
+                        </div>
+                      )}
+                    </div>
+                    <div className="col-span-2">
+                      <Label className="text-[10px] text-muted-foreground mb-1 block">Price (₱) *</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="e.g. 150"
+                        value={newTierPrice}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9.]/g, "");
+                          setNewTierPrice(val);
+                        }}
+                        className="h-8 text-xs bg-background"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 pt-1">
+                    <Button
+                      size="sm"
+                      className="flex-1 h-8 text-xs gap-1.5"
+                      onClick={addTier}
+                      disabled={!newTierName.trim() || !newTierPrice.trim()}
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Add Tier
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 text-xs"
+                      onClick={() => {
+                        setShowAddTier(false);
+                        setNewTierName("");
+                        setNewTierFrom("");
+                        setNewTierTo("");
+                        setNewTierOpen(false);
+                        setNewTierPrice("");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* 2. Service Types Card */}
+        <div className="bg-card rounded-2xl p-4 border border-border/70 shadow-xs flex flex-col gap-3.5">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-cyan-600 dark:bg-cyan-400" />
+                <h2 className="text-base font-bold text-foreground">Service Types</h2>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Manage available wash service categories
+              </p>
+            </div>
+            <Switch
+              checked={svcEnabled}
+              onCheckedChange={setSvcEnabled}
+              aria-label="Toggle all service types"
+            />
+          </div>
+
+          {svcEnabled && (
+            <div className="flex flex-col gap-2.5">
+              {services.map((s) => {
+                const lower = s.name.toLowerCase();
+                const SvcIcon = lower.includes("delicate") ? Leaf : lower.includes("express") ? Zap : lower.includes("bulk") ? Package : Droplets;
+                return (
+                  <div
+                    key={s.id}
+                    className={cn(
+                      "p-3 bg-muted/30 border border-border/60 rounded-xl flex items-center justify-between gap-2 transition-opacity",
+                      !s.active && "opacity-60"
+                    )}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                        <SvcIcon className="w-4 h-4" />
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-xs font-bold text-foreground truncate">
+                            {s.name}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
+                            ₱{s.price} / {s.pricingType === "per-kg" ? "kg" : s.pricingType === "per-load" ? "load" : "pc"}
+                          </span>
+                        </div>
+                        {s.description && (
+                          <span className="text-[11px] text-muted-foreground truncate">
+                            {s.description}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-full bg-background border border-border/50 text-muted-foreground hover:text-foreground"
+                        onClick={() => openSvcEdit(s)}
+                      >
+                        <Edit className="w-3 h-3" />
+                      </Button>
+                      <Switch
+                        checked={s.active}
+                        onCheckedChange={(v) =>
+                          updateServices(
+                            services.map((x) =>
+                              x.id === s.id
+                                ? { ...x, active: v, showPrice: v ? (x.showPrice ?? true) : false }
+                                : x
+                            )
+                          )
+                        }
+                        className="scale-90"
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+
+              {!showAddSvc ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAddSvc(true)}
+                  className="w-full py-2.5 rounded-xl text-primary font-semibold text-xs flex items-center justify-center gap-1.5 bg-background border-dashed border-primary/30 hover:bg-primary/5"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add Service Type
+                </Button>
+              ) : (
+                <div className="bg-muted/40 rounded-xl border border-border/70 p-3 space-y-2.5 mt-1">
+                  <p className="text-xs font-bold text-foreground">Add New Service Type</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="col-span-2">
+                      <Label className="text-[10px] text-muted-foreground mb-1 block">Service Name *</Label>
+                      <Input
+                        placeholder="e.g. Heavy Duty Wash"
+                        value={svcNewName}
+                        onChange={(e) => setSvcNewName(e.target.value)}
+                        className="h-8 text-xs bg-background"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <Label className="text-[10px] text-muted-foreground mb-1 block">Description</Label>
+                      <Input
+                        placeholder="e.g. For heavily soiled items"
+                        value={svcNewDesc}
+                        onChange={(e) => setSvcNewDesc(e.target.value)}
+                        className="h-8 text-xs bg-background"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[10px] text-muted-foreground mb-1 block">Price (₱) *</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="e.g. 60"
+                        value={svcNewPrice}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9.]/g, "");
+                          setSvcNewPrice(val);
+                        }}
+                        className="h-8 text-xs bg-background"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[10px] text-muted-foreground mb-1 block">Pricing Type</Label>
+                      <Select
+                        value={svcNewPricingType}
+                        onValueChange={(v) => setSvcNewPricingType(v as PricingType)}
+                      >
+                        <SelectTrigger className="h-8 text-xs bg-background">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="per-kg">Per kg</SelectItem>
+                          <SelectItem value="per-load">Per load</SelectItem>
+                          <SelectItem value="per-piece">Per piece</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 pt-1">
+                    <div className="flex items-center gap-2">
+                      <Switch checked={svcNewShowInTxn} onCheckedChange={setSvcNewShowInTxn} className="scale-90" />
+                      <Label className="text-[11px] text-muted-foreground">Show in Txn</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Switch checked={svcNewShowPrice} onCheckedChange={setSvcNewShowPrice} className="scale-90" />
+                      <Label className="text-[11px] text-muted-foreground">Show Price</Label>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 pt-1">
+                    <Button
+                      size="sm"
+                      className="flex-1 h-8 text-xs gap-1.5"
+                      onClick={handleSvcAdd}
+                      disabled={!svcNewName.trim() || !svcNewPrice.trim()}
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Add Service Type
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 text-xs"
+                      onClick={() => {
+                        setShowAddSvc(false);
+                        setSvcNewName("");
+                        setSvcNewDesc("");
+                        setSvcNewPrice("");
+                        setSvcNewPricingType("per-kg");
+                        setSvcNewShowInTxn(true);
+                        setSvcNewShowPrice(true);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* 3. Add-on Rates Card */}
+        <div className="bg-card rounded-2xl p-4 border border-border/70 shadow-xs flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+              <h2 className="text-base font-bold text-foreground">Add-on Rates</h2>
+            </div>
+            <span className="text-[11px] text-muted-foreground font-medium">Extras &amp; Detergents</span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            {addOns.map((a) => (
+              <div
+                key={a.id}
+                className="p-2.5 bg-muted/30 border border-border/60 rounded-xl flex items-center justify-between gap-1"
+              >
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span className="text-xs font-semibold text-foreground truncate">{a.name}</span>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <span className="text-xs font-bold text-primary">₱{a.rate}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                    onClick={() => {
+                      const next = addOns.filter((x) => x.id !== a.id);
+                      setAddOns(next);
+                      persistAddOns(next);
+                    }}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Add New Custom Add-on Field Inline */}
+          <div className="flex items-center gap-1.5 mt-1 pt-2 border-t border-border/50">
+            <Input
+              placeholder="Add-on item name"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              className="flex-1 h-8 text-xs bg-background"
+            />
+            <div className="w-20 flex items-center bg-background border border-border/70 rounded-lg px-2 shadow-xs h-8">
+              <span className="text-[11px] text-muted-foreground mr-1">₱</span>
+              <input
+                className="w-full bg-transparent text-xs font-bold text-foreground focus:outline-none"
+                placeholder="0"
+                type="number"
+                min="0"
+                value={newRate}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^0-9.]/g, "");
+                  setNewRate(val);
+                }}
+              />
+            </div>
+            <Button
+              size="sm"
+              onClick={addAddon}
+              disabled={!newName.trim() || !newRate.trim()}
+              className="h-8 px-2.5 rounded-lg shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+        </div>
+
+        {/* 4. Payment Status Option Card */}
+        <div className="bg-card rounded-2xl p-4 border border-border/70 shadow-xs flex flex-col gap-3">
+          <div className="flex items-start justify-between">
+            <div className="flex flex-col pr-2">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-primary" />
+                <h2 className="text-base font-bold text-foreground">Payment Status Option</h2>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                Allow staff to choose between <strong className="text-foreground">Paid</strong> and <strong className="text-foreground">Unpaid</strong> when creating new orders. Turn off if shop always records orders as Paid directly.
+              </p>
+            </div>
+            <Switch
+              checked={enablePaymentOption}
+              onCheckedChange={setEnablePaymentOption}
+              aria-label="Toggle payment options"
+              className="mt-1"
+            />
+          </div>
+
+          <div className="p-2.5 bg-muted/40 border border-border/50 rounded-xl flex items-center gap-2 mt-1">
+            <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+            <span className="text-xs text-muted-foreground">
+              Status: <strong className="text-foreground">{enablePaymentOption ? "Flexible Settlement Mode Active" : "Direct Paid Mode Active"}</strong>
+            </span>
+          </div>
+        </div>
+
+        {/* 5. Price Display Setting Micro-Card */}
+        <div className="bg-card rounded-2xl p-4 border border-border/70 shadow-xs flex flex-col gap-2.5">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-foreground">Price Display Setting</h3>
+            <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
+              {priceDisplayMode === "show" ? "Live Breakdown" : priceDisplayMode === "free" ? "Promo / Free" : "Hidden"}
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Control how prices appear to staff during customer drop-off intake.
+          </p>
+          <div className="grid grid-cols-3 gap-2 pt-1">
+            {[
+              { value: "show" as const, label: "Show Price", desc: "Live preview" },
+              { value: "free" as const, label: "Free Mode", desc: "₱0 charges" },
+              { value: "hide" as const, label: "Hide Price", desc: "Hidden till end" },
+            ].map((m) => {
+              const active = priceDisplayMode === m.value;
+              return (
+                <button
+                  key={m.value}
+                  type="button"
+                  onClick={() => setPriceDisplayMode(m.value)}
+                  className={cn(
+                    "p-2.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center",
+                    active
+                      ? "bg-primary/10 border-primary text-primary font-bold shadow-xs"
+                      : "bg-muted/40 border-border/70 text-muted-foreground hover:bg-muted/60"
+                  )}
+                >
+                  <span className={cn("text-xs leading-tight font-semibold", active ? "text-primary" : "text-foreground")}>
+                    {m.label}
+                  </span>
+                  <span className="text-[9px] text-muted-foreground mt-0.5">{m.desc}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Edit Tier modal */}
+      <Dialog open={!!mobileEditTier} onOpenChange={(o) => { if (!o) setMobileEditTier(null); }}>
+        <DialogContent className="max-w-xs">
+          <DialogHeader>
+            <DialogTitle className="text-base">Edit Load Tier</DialogTitle>
+            <DialogDescription className="sr-only">Edit load tier details.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 pt-1">
+            <div>
+              <Label className="text-xs font-medium mb-1 block">Tier Name *</Label>
+              <Input
+                value={mobileEditTierName}
+                onChange={(e) => setMobileEditTierName(e.target.value)}
+                className="h-8 text-sm"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs font-medium mb-1 block">From (kg)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={mobileEditTierFrom}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9.]/g, "");
+                    setMobileEditTierFrom(val);
+                  }}
+                  className="h-8 text-sm"
+                />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <Label className="text-xs font-medium">To (kg)</Label>
+                  <button
+                    type="button"
+                    onClick={() => setMobileEditTierOpen(!mobileEditTierOpen)}
+                    className={cn(
+                      "text-[10px] px-1 py-0.5 rounded border leading-none",
+                      mobileEditTierOpen ? "border-primary text-primary font-semibold" : "border-border text-muted-foreground"
+                    )}
+                  >
+                    {mobileEditTierOpen ? "Open +" : "Capped"}
+                  </button>
+                </div>
+                {!mobileEditTierOpen ? (
+                  <Input
+                    type="number"
+                    min="0"
+                    value={mobileEditTierTo}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^0-9.]/g, "");
+                      setMobileEditTierTo(val);
+                    }}
+                    className="h-8 text-sm"
+                  />
+                ) : (
+                  <div className="h-8 flex items-center px-2 text-xs text-muted-foreground bg-muted/50 rounded-md border border-border/50">
+                    {mobileEditTierFrom ? `${mobileEditTierFrom} kg+` : "Above"}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs font-medium mb-1 block">Price (₱) *</Label>
+              <Input
+                type="number"
+                min="0"
+                value={mobileEditTierPrice}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^0-9.]/g, "");
+                  setMobileEditTierPrice(val);
+                }}
+                className="h-8 text-sm"
+              />
+            </div>
+            <div className="flex gap-2 pt-1">
+              <Button
+                className="flex-1 h-8 text-xs gap-1.5"
+                onClick={saveMobileEditTier}
+                disabled={!mobileEditTierName.trim() || !mobileEditTierPrice.trim()}
+              >
+                <Save className="w-3.5 h-3.5" /> Save Changes
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1 h-8 text-xs"
+                onClick={() => setMobileEditTier(null)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Desktop Layout (hidden md:block) ──────────────────────────────── */}
+      <div className="hidden md:block space-y-5 w-full max-w-2xl">
 
       {/* ── Base Pricing ─────────────────────────────────────────────────── */}
       <Card className="border border-border shadow-none">
@@ -979,12 +1750,6 @@ function PricingSettings() {
     </>
   );
 }
-
-const PRICING_TYPE_LABELS: Record<PricingType, string> = {
-  "per-kg":    "Per kg",
-  "per-load":  "Per load",
-  "per-piece": "Per piece",
-};
 
 
 // ─── Business Profile ────────────────────────────────────────────────────────
@@ -1664,37 +2429,78 @@ export default function SettingsPage({
   const visibleTabs = SETTINGS_TABS.filter((tab) => !tab.adminOnly || role !== "staff");
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="space-y-1">
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">Settings</h1>
-        <p className="text-xs sm:text-sm text-muted-foreground">
-          Configure shop preferences, pricing structures, customer loyalty, and data backups
-        </p>
+    <div className="space-y-4 sm:space-y-6">
+      {/* ── Mobile Header & Horizontal Pill Carousel (md:hidden) ── */}
+      <div className="md:hidden space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Settings</h1>
+            <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+              Configure shop preferences, pricing structures, and loyalty.
+            </p>
+          </div>
+          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0 shadow-xs">
+            <Sliders className="w-5 h-5" />
+          </div>
+        </div>
+
+        {/* Horizontal Pill Tab Carousel */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 -mx-4 px-4 sm:mx-0 sm:px-0">
+          {visibleTabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => handleTabClick(tab.id)}
+                className={cn(
+                  "flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all active:scale-95 cursor-pointer shrink-0",
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-xs"
+                    : "bg-muted/70 hover:bg-muted text-muted-foreground hover:text-foreground border border-border/50"
+                )}
+              >
+                <Icon className={cn("w-3.5 h-3.5 shrink-0", isActive ? "text-primary-foreground" : "text-muted-foreground")} />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Modern Tabs with Icons */}
-      <div className="flex items-center gap-1 sm:gap-2 border-b border-border overflow-x-auto scrollbar-none pb-0">
-        {visibleTabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => handleTabClick(tab.id)}
-              className={cn(
-                "flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-medium border-b-2 transition-all cursor-pointer whitespace-nowrap -mb-[1px]",
-                isActive
-                  ? "border-primary text-primary font-semibold"
-                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
-              )}
-            >
-              <Icon className={cn("w-4 h-4 shrink-0", isActive ? "text-primary" : "text-muted-foreground")} />
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
+      {/* ── Desktop Header & Modern Tabs (hidden md:block) ── */}
+      <div className="hidden md:block space-y-4">
+        <div className="space-y-1">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">Settings</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">
+            Configure shop preferences, pricing structures, customer loyalty, and data backups
+          </p>
+        </div>
+
+        {/* Modern Tabs with Icons */}
+        <div className="flex items-center gap-1 sm:gap-2 border-b border-border overflow-x-auto scrollbar-none pb-0">
+          {visibleTabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => handleTabClick(tab.id)}
+                className={cn(
+                  "flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-medium border-b-2 transition-all cursor-pointer whitespace-nowrap -mb-[1px]",
+                  isActive
+                    ? "border-primary text-primary font-semibold"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                )}
+              >
+                <Icon className={cn("w-4 h-4 shrink-0", isActive ? "text-primary" : "text-muted-foreground")} />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div>

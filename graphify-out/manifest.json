@@ -370,8 +370,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pages\\settings.tsx": {
-    "mtime": 1789367124.5761206,
-    "ast_hash": "76891473a8ab0db787048ee2d4d6caab",
+    "mtime": 1789616018.923544,
+    "ast_hash": "2510a5018cbc3660f8f0720f9746323a",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pages\\staff-login.tsx": {
@@ -1662,6 +1662,11 @@
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\__tests__\\loyalty.test.tsx": {
     "mtime": 1789615572.819179,
     "ast_hash": "3e2a4662e135c8599a622f9419602fa2",
+    "semantic_hash": ""
+  },
+  "E:\\sample project\\LaundryTrackv2-pr-11\\components\\__tests__\\settings.test.tsx": {
+    "mtime": 1789616062.1004581,
+    "ast_hash": "2f8b304b3f7f6b1101f6dc89866371a7",
     "semantic_hash": ""
   }
 }
