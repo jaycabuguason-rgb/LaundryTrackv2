@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import TransactionsPage from "@/components/pages/transactions";
 import type { Transaction } from "@/lib/data";
 
@@ -144,7 +144,7 @@ describe("TransactionsPage Mobile Concept Layout", () => {
     );
 
     const searchInputs = screen.getAllByPlaceholderText(
-      /search customer name or ticket ID…/i
+      /search.*customer name.*ticket ID/i
     );
     const mobileSearchInput = searchInputs[0];
 
@@ -157,6 +157,27 @@ describe("TransactionsPage Mobile Concept Layout", () => {
     const clearButton = screen.getAllByRole("button", { name: /clear search/i })[0];
     fireEvent.click(clearButton);
     expect(screen.getByLabelText(/Ticket #TKT-0028/i)).toBeInTheDocument();
+
+    // Search by phone number (0918 for Bob Reyes)
+    fireEvent.change(mobileSearchInput, { target: { value: "0918" } });
+    expect(screen.getByLabelText(/Ticket #TKT-0028/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Ticket #TKT-0027/i)).not.toBeInTheDocument();
+  });
+
+  it("defaults to Newest First sorting", () => {
+    render(
+      <TransactionsPage
+        transactions={mockTransactions}
+        onCreateTransaction={onCreateTransaction}
+        onUpdateTransaction={onUpdateTransaction}
+      />
+    );
+
+    // In desktop view or mobile cards, Newest First should place TKT-0028 (11:30) before TKT-0027 (10:00)
+    const cards = screen.getAllByLabelText(/Ticket #TKT-/i);
+    expect(cards.length).toBeGreaterThanOrEqual(2);
+    expect(cards[0]).toHaveAttribute("aria-label", expect.stringContaining("TKT-0028"));
+    expect(cards[1]).toHaveAttribute("aria-label", expect.stringContaining("TKT-0027"));
   });
 
   it("opens mobile quick action drawer when clicking more options button on a card", () => {
@@ -169,11 +190,9 @@ describe("TransactionsPage Mobile Concept Layout", () => {
     );
 
     // Find more options button on the mobile card for TKT-0027
-    const moreButtons = screen.getAllByRole("button", { name: /more options/i });
-    expect(moreButtons.length).toBeGreaterThanOrEqual(1);
-
-    // Click first more options button
-    fireEvent.click(moreButtons[0]);
+    const card27 = screen.getByLabelText(/Ticket #TKT-0027/i);
+    const moreBtn = within(card27).getByRole("button", { name: /more options/i });
+    fireEvent.click(moreBtn);
 
     // Drawer should open and display actions
     expect(screen.getByText("Transaction Quick Menu")).toBeInTheDocument();
@@ -201,8 +220,9 @@ describe("TransactionsPage Mobile Concept Layout", () => {
       />
     );
 
-    const moreButtons = screen.getAllByRole("button", { name: /more options/i });
-    fireEvent.click(moreButtons[0]);
+    const card27 = screen.getByLabelText(/Ticket #TKT-0027/i);
+    const moreBtn = within(card27).getByRole("button", { name: /more options/i });
+    fireEvent.click(moreBtn);
 
     const settleBtn = screen.getByText(/Settle Payment/i);
     fireEvent.click(settleBtn);

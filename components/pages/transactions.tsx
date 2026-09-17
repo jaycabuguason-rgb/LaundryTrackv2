@@ -1205,7 +1205,7 @@ export default function TransactionsPage({
   const [filterService, setFilterService] = useState("all");
   const [filterPayment, setFilterPayment] = useState("all");
   const [filterDate, setFilterDate] = useState<Date | undefined>(undefined);
-  const [sortBy, setSortBy] = useState<"smart" | "newest" | "oldest" | "unpaid-first" | "ready-first" | "status-az">("smart");
+  const [sortBy, setSortBy] = useState<"smart" | "newest" | "oldest" | "unpaid-first" | "ready-first" | "status-az">("newest");
   const [activeTab, setActiveTab] = useState<"transactions" | "all" | "claimed" | "voided">("transactions");
 
   const serviceOptions = useMemo(() => Array.from(new Set(txns.map((t) => t.washType).filter(Boolean))), [txns]);
@@ -1528,9 +1528,13 @@ export default function TransactionsPage({
           : activeTab === "voided"
           ? t.status === "Voided"
           : t.status === "Received" || t.status === "Washing" || t.status === "Ready";
+      const q = search.toLowerCase().trim();
       const matchSearch =
-        t.customerName.toLowerCase().includes(search.toLowerCase()) ||
-        t.ticketId.toLowerCase().includes(search.toLowerCase());
+        !q ||
+        t.customerName.toLowerCase().includes(q) ||
+        t.ticketId.toLowerCase().includes(q) ||
+        (t.phone && t.phone.toLowerCase().includes(q)) ||
+        (t.washInstructions && t.washInstructions.toLowerCase().includes(q));
       const matchStatus = filterStatus === "all" || t.status === filterStatus;
       const matchService = filterService === "all" || t.washType === filterService;
       const matchPayment = filterPayment === "all" || t.paymentStatus === filterPayment;
@@ -1590,7 +1594,7 @@ export default function TransactionsPage({
     filterService !== "all" ||
     filterPayment !== "all" ||
     filterDate !== undefined ||
-    sortBy !== "smart"
+    sortBy !== "newest"
   );
 
   const clearAllFilters = () => {
@@ -1599,7 +1603,7 @@ export default function TransactionsPage({
     setFilterService("all");
     setFilterPayment("all");
     setFilterDate(undefined);
-    setSortBy("smart");
+    setSortBy("newest");
   };
 
   return (
@@ -1798,7 +1802,7 @@ export default function TransactionsPage({
           <div className="relative flex items-center w-full">
             <Search className="absolute left-3 w-4 h-4 text-muted-foreground pointer-events-none" />
             <Input
-              placeholder="Search customer name or ticket ID…"
+              placeholder="Search customer name, phone, or ticket ID…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 pr-8 h-10 rounded-xl text-xs bg-card"
@@ -1888,15 +1892,15 @@ export default function TransactionsPage({
             <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
               <SelectTrigger className={cn(
                 "h-8 px-2.5 rounded-full text-xs font-semibold shrink-0 gap-1 shadow-xs border",
-                sortBy !== "smart"
+                sortBy !== "newest"
                   ? "bg-secondary/15 border-secondary/30 text-foreground"
                   : "bg-card border-border/80 text-foreground"
               )}>
                 <SelectValue placeholder="Sort" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="smart">Smart Priority</SelectItem>
                 <SelectItem value="newest">Newest First</SelectItem>
+                <SelectItem value="smart">Smart Priority</SelectItem>
                 <SelectItem value="oldest">Oldest First</SelectItem>
                 <SelectItem value="unpaid-first">Unpaid First</SelectItem>
                 <SelectItem value="ready-first">Ready First</SelectItem>
@@ -2320,8 +2324,8 @@ export default function TransactionsPage({
             <div className="relative flex-1 min-w-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               <Input
-                placeholder="Search by customer name or ticket ID…"
-                aria-label="Search transactions by customer name or ticket ID"
+                placeholder="Search by customer name, phone, or ticket ID…"
+                aria-label="Search transactions by customer name, phone, or ticket ID"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9 pr-8 h-10 md:h-9 text-sm w-full"
@@ -2418,8 +2422,8 @@ export default function TransactionsPage({
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="smart">Default (Smart Priority)</SelectItem>
-                  <SelectItem value="newest">Newest First</SelectItem>
+                  <SelectItem value="newest">Default (Newest First)</SelectItem>
+                  <SelectItem value="smart">Smart Priority</SelectItem>
                   <SelectItem value="oldest">Oldest First</SelectItem>
                   <SelectItem value="unpaid-first">Unpaid First</SelectItem>
                   <SelectItem value="ready-first">Ready First</SelectItem>
