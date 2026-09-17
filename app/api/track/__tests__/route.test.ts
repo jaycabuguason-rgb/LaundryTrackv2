@@ -71,3 +71,4 @@ describe("GET /api/track/[token]", () => {
     expect(response.headers.get("Cache-Control")).toContain("no-store");
   });
 });
+

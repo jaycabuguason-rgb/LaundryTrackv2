@@ -24,3 +24,4 @@ CREATE POLICY "transactions_anon_read_tracking"
   FOR SELECT
   TO anon
   USING (public_tracking_token IS NOT NULL);
+
