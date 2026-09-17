@@ -313,5 +313,101 @@ describe("useTransactions Realtime Reconciliation", () => {
     // Confirmed authoritative "Ready"
     expect(result.current.transactions[0].status).toBe("Ready");
   });
+
+  it("claims a Ready ticket through updateTransaction; preserves Claimed across stale refresh and Realtime sync", async () => {
+    const readyTx = {
+      id: "tx-claim-1",
+      ticketId: "TKT-7777",
+      customerName: "Claim Customer",
+      phone: "",
+      arrivalDateTime: "2026-09-17 08:00",
+      dropOffDate: "2026-09-17",
+      washType: "Regular",
+      weight: 2,
+      fee: 100,
+      status: "Ready" as const,
+      paymentStatus: "paid" as const,
+      addOns: [],
+    };
+
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify({ transactions: [readyTx] })),
+    } as Response);
+
+    const { result } = renderHook(() => useTransactions());
+
+    await act(async () => {
+      // Complete initial load
+    });
+
+    expect(result.current.transactions[0].status).toBe("Ready");
+
+    let resolvePatch: (val: any) => void = () => {};
+    const patchPromise = new Promise((resolve) => {
+      resolvePatch = resolve;
+    });
+
+    (globalThis.fetch as any).mockImplementation(async (_url: string, opts: any) => {
+      if (opts?.method === "PATCH") {
+        return patchPromise;
+      }
+      // Stale refresh with old "Ready" status
+      return {
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify({ transactions: [readyTx] })),
+      };
+    });
+
+    // 1. Claim Verification marks ticket as Claimed
+    let claimPromise: Promise<any>;
+    act(() => {
+      claimPromise = result.current.updateTransaction("TKT-7777", {
+        status: "Claimed",
+        paymentStatus: "paid",
+      });
+    });
+
+    // Optimistically Claimed
+    expect(result.current.transactions[0].status).toBe("Claimed");
+
+    // 2. A stale background refresh happens while PATCH is in-flight
+    await act(async () => {
+      await result.current.refresh();
+    });
+
+    // Stale refresh must NOT revert status back to Ready
+    expect(result.current.transactions[0].status).toBe("Claimed");
+
+    // 3. Realtime event arrives with "Claimed"
+    await act(async () => {
+      channelCallbacks["UPDATE"]?.({
+        new: {
+          id: "tx-claim-1",
+          ticket_id: "TKT-7777",
+          status: "Claimed",
+          payment_status: "paid",
+        },
+      });
+    });
+
+    expect(result.current.transactions[0].status).toBe("Claimed");
+
+    // 4. Authoritative PATCH completes
+    await act(async () => {
+      resolvePatch({
+        ok: true,
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({
+              transaction: { ...readyTx, status: "Claimed", paymentStatus: "paid" },
+            }),
+          ),
+      });
+      await claimPromise;
+    });
+
+    expect(result.current.transactions[0].status).toBe("Claimed");
+  });
 });
 

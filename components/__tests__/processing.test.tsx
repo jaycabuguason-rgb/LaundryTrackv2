@@ -155,5 +155,46 @@ describe("ProcessingPage Single-Click Action Buttons", () => {
     // Resolve update
     resolvePromise({ transaction: { ...mockTransactions[0], status: "Washing" } });
   });
+
+  it("removes a claimed ticket immediately from the Processing pipeline", () => {
+    const readyTx: Transaction = {
+      id: "tx-ready-1",
+      ticketId: "TKT-0099",
+      customerName: "Juan Dela Cruz",
+      phone: "09171234567",
+      washType: "Regular",
+      weight: 3,
+      fee: 120,
+      status: "Ready",
+      paymentStatus: "paid",
+      arrivalDateTime: "2026-09-14 14:00",
+      dropOffDate: "2026-09-14",
+      addOns: [],
+    };
+
+    const { rerender } = render(
+      <ProcessingPage transactions={[readyTx]} />
+    );
+
+    // Total ongoing shows 1
+    expect(screen.getAllByText("1").length).toBeGreaterThan(0);
+
+    // Switch to Ready tab to view the Ready ticket
+    const readyTab = screen.getByRole("tab", { name: /ready/i });
+    fireEvent.click(readyTab);
+
+    // Verify Ready ticket is visible
+    expect(screen.getAllByText("Juan Dela Cruz").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/TKT-0099/).length).toBeGreaterThan(0);
+
+    // After claim in Claim Verification, transactions updates to Claimed
+    rerender(
+      <ProcessingPage transactions={[{ ...readyTx, status: "Claimed" }]} />
+    );
+
+    // Total ongoing drops to 0 and ticket disappears from Processing immediately
+    expect(screen.queryByText("Juan Dela Cruz")).not.toBeInTheDocument();
+    expect(screen.queryByText(/TKT-0099/)).not.toBeInTheDocument();
+  });
 });
 
