@@ -53,7 +53,6 @@ import { toast } from "@/hooks/use-toast";
 import { getBrowserAccessToken, refreshBrowserSession } from "@/lib/supabase/browser-session";
 import {
   loadLoyaltySettings,
-  persistLoyaltySettings,
   type LoyaltySettings,
 } from "@/lib/settings-store";
 
@@ -287,10 +286,6 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
   const [copiedLink, setCopiedLink] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Simulated reward redemption state
-  const [redeemedRewards, setRedeemedRewards] = useState<
-    Array<{ id: string; name: string; memberName: string; date: string }>
-  >([]);
 
   // Undo / Redo Stamp stack
   const [undoStack, setUndoStack] = useState<Array<{ memberId: string; stamps: number }>>([]);
@@ -338,8 +333,8 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
     [members]
   );
   const totalRewardsRedeemed = useMemo(
-    () => members.reduce((acc, m) => acc + (m.rewardsRedeemed || 0), 0) + redeemedRewards.length,
-    [members, redeemedRewards]
+    () => members.reduce((acc, m) => acc + (m.rewardsRedeemed || 0), 0),
+    [members]
   );
 
   async function handleAddMember(e: React.FormEvent<HTMLFormElement>) {
@@ -600,24 +595,6 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
     } finally {
       setSaving(false);
     }
-  }
-
-  async function handleSaveLoyaltyConfig(updated: Partial<LoyaltySettings>) {
-    const next = { ...loyaltyConfig, ...updated };
-    setLoyaltyConfig(next);
-    persistLoyaltySettings(next);
-    toast({ title: "Loyalty settings saved" });
-  }
-
-  function handleRedeemReward(rewardTitle: string, memberName: string = "Walk-in Member") {
-    const item = {
-      id: Math.random().toString(),
-      name: rewardTitle,
-      memberName,
-      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-    };
-    setRedeemedRewards((prev) => [item, ...prev]);
-    toast({ title: `Redeemed: ${rewardTitle} for ${memberName}!` });
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -1197,51 +1174,6 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
         ) : (
           /* Mobile Rewards & Rules Tab */
           <div className="space-y-4">
-            {/* Rules Configuration */}
-            <Card className="border border-border shadow-xs bg-card">
-              <CardHeader className="pb-3 border-b border-border/60">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-primary" /> Loyalty Program Configuration
-                </CardTitle>
-                <CardDescription className="text-xs mt-0.5">
-                  Configure how customers earn stamps and unlock rewards
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-4 space-y-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="mobile-washesPerReward" className="text-xs">Stamps Required for Reward</Label>
-                  <Input
-                    id="mobile-washesPerReward"
-                    type="number"
-                    min="1"
-                    max="50"
-                    value={loyaltyConfig.washesPerReward}
-                    onChange={(e) => setLoyaltyConfig({ ...loyaltyConfig, washesPerReward: e.target.value })}
-                    className="h-9 text-xs"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="mobile-rewardDescription" className="text-xs">Reward Description</Label>
-                  <Input
-                    id="mobile-rewardDescription"
-                    type="text"
-                    value={loyaltyConfig.rewardDescription}
-                    onChange={(e) => setLoyaltyConfig({ ...loyaltyConfig, rewardDescription: e.target.value })}
-                    className="h-9 text-xs"
-                  />
-                </div>
-
-                <Button
-                  size="sm"
-                  onClick={() => handleSaveLoyaltyConfig(loyaltyConfig)}
-                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 text-xs h-9 cursor-pointer"
-                >
-                  Save Configuration
-                </Button>
-              </CardContent>
-            </Card>
-
             {/* Active Reward Perks */}
             <Card className="border border-border shadow-xs bg-card">
               <CardHeader className="pb-3 border-b border-border/60">
@@ -1263,29 +1195,10 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
                       <p className="text-[10px] text-muted-foreground mt-0.5">Unlocked after {washesPerReward} verified stamps</p>
                     </div>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleRedeemReward(loyaltyConfig.rewardDescription || "Free Wash")}
-                    className="text-xs h-8 px-2.5"
-                  >
-                    Simulate
-                  </Button>
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                    Active Perk
+                  </span>
                 </div>
-
-                {redeemedRewards.length > 0 && (
-                  <div className="pt-2">
-                    <p className="text-xs font-semibold text-foreground mb-1.5">Recent Redemptions</p>
-                    <div className="space-y-1.5 max-h-36 overflow-y-auto">
-                      {redeemedRewards.map((r) => (
-                        <div key={r.id} className="text-[11px] flex items-center justify-between border-b border-border/50 pb-1 text-muted-foreground">
-                          <span className="truncate">{r.name} ({r.memberName})</span>
-                          <span className="font-mono text-[10px] shrink-0">{r.date}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </CardContent>
             </Card>
           </div>
@@ -1582,53 +1495,8 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
           </div>
         ) : (
           /* Rewards & Rules Tab */
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Rules Configuration */}
-            <Card className="border border-border shadow-xs bg-card">
-              <CardHeader className="pb-3 border-b border-border/60">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-primary" /> Loyalty Program Configuration
-                </CardTitle>
-                <CardDescription className="text-xs mt-0.5">
-                  Configure how customers earn stamps and unlock rewards
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-5 space-y-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="washesPerReward" className="text-xs">Stamps Required for Reward</Label>
-                  <Input
-                    id="washesPerReward"
-                    type="number"
-                    min="1"
-                    max="50"
-                    value={loyaltyConfig.washesPerReward}
-                    onChange={(e) => setLoyaltyConfig({ ...loyaltyConfig, washesPerReward: e.target.value })}
-                    className="h-9 text-xs"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="rewardDescription" className="text-xs">Reward Description</Label>
-                  <Input
-                    id="rewardDescription"
-                    type="text"
-                    value={loyaltyConfig.rewardDescription}
-                    onChange={(e) => setLoyaltyConfig({ ...loyaltyConfig, rewardDescription: e.target.value })}
-                    className="h-9 text-xs"
-                  />
-                </div>
-
-                <Button
-                  size="sm"
-                  onClick={() => handleSaveLoyaltyConfig(loyaltyConfig)}
-                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 text-xs h-9 cursor-pointer"
-                >
-                  Save Configuration
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Reward Catalog Preview */}
+          <div className="max-w-2xl">
+            {/* Active Reward Perks */}
             <Card className="border border-border shadow-xs bg-card">
               <CardHeader className="pb-3 border-b border-border/60">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -1649,29 +1517,10 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
                       <p className="text-[11px] text-muted-foreground mt-0.5">Unlocked after {washesPerReward} verified stamps</p>
                     </div>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleRedeemReward(loyaltyConfig.rewardDescription || "Free Wash")}
-                    className="text-xs h-8"
-                  >
-                    Simulate Redeem
-                  </Button>
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                    Active Perk
+                  </span>
                 </div>
-
-                {redeemedRewards.length > 0 && (
-                  <div className="pt-2">
-                    <p className="text-xs font-semibold text-foreground mb-2">Recent Redemptions</p>
-                    <div className="space-y-1.5 max-h-40 overflow-y-auto">
-                      {redeemedRewards.map((r) => (
-                        <div key={r.id} className="text-[11px] flex items-center justify-between border-b border-border/50 pb-1.5 text-muted-foreground">
-                          <span>{r.name} ({r.memberName})</span>
-                          <span className="font-mono">{r.date}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </CardContent>
             </Card>
           </div>

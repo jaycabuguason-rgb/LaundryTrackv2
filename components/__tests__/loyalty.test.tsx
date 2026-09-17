@@ -126,8 +126,9 @@ describe("LoyaltyPage Mobile Concept Layout", () => {
     fireEvent.click(rewardsTabs[0]);
 
     // Rewards & Rules content rendered
-    expect(screen.getAllByText("Loyalty Program Configuration").length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText("Loyalty Program Configuration")).not.toBeInTheDocument();
     expect(screen.getAllByText("Active Reward Perks").length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText("Simulate Redeem")).not.toBeInTheDocument();
 
     // Click back to Members tab
     const membersTabs = screen.getAllByRole("button", { name: /members/i });
