@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   Check,
   ChevronLeft,
@@ -68,6 +68,18 @@ export default function NewOrderPage({
   // Autocomplete & Recognized member state
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const nameContainerRef = useRef<HTMLDivElement>(null);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (nameContainerRef.current && !nameContainerRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Service Details State
   const [billBy, setBillBy] = useState<"per-kg" | "per-load">("per-kg");
@@ -128,19 +140,16 @@ export default function NewOrderPage({
     return null;
   }, [customerName, phone, selectedMemberId, loyaltyMembers, loyaltyEnabled]);
 
-  // Autocomplete suggestion matches
+  // Autocomplete suggestion matches (based on customer name only)
   const suggestions = useMemo(() => {
     if (!loyaltyEnabled || selectedMemberId) return [];
     const qName = customerName.trim().toLowerCase();
-    const qPhone = phone.replace(/\D/g, "");
-    if (qName.length < 2 && qPhone.length < 3) return [];
+    if (qName.length < 2) return [];
 
-    return loyaltyMembers.filter(
-      (m) =>
-        (qName.length >= 2 && m.name.toLowerCase().includes(qName)) ||
-        (qPhone.length >= 3 && m.phone && m.phone.replace(/\D/g, "").includes(qPhone))
-    ).slice(0, 4);
-  }, [customerName, phone, selectedMemberId, loyaltyMembers, loyaltyEnabled]);
+    return loyaltyMembers
+      .filter((m) => m.name.toLowerCase().includes(qName))
+      .slice(0, 4);
+  }, [customerName, selectedMemberId, loyaltyMembers, loyaltyEnabled]);
 
   function handleSelectSuggestion(m: typeof loyaltyMembers[0]) {
     setCustomerName(m.name);
@@ -327,14 +336,14 @@ export default function NewOrderPage({
             )}
 
             {/* Name Input with Autocomplete Dropdown */}
-            <div className="space-y-1.5 relative">
+            <div className="space-y-1.5 relative" ref={nameContainerRef}>
               <Label className="text-xs font-semibold">
                 Name <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="customer-name"
                 name="customerName"
-                autoComplete="name"
+                autoComplete="off"
                 placeholder="Customer name"
                 value={customerName}
                 onChange={(e) => {
@@ -383,9 +392,10 @@ export default function NewOrderPage({
                 inputMode="numeric"
                 pattern="[0-9]*"
                 maxLength={11}
-                autoComplete="tel"
+                autoComplete="off"
                 placeholder="Phone number (e.g. 09171234567)"
                 value={phone}
+                onFocus={() => setShowSuggestions(false)}
                 onChange={(e) => {
                   const val = e.target.value.replace(/\D/g, "").slice(0, 11);
                   setPhone(val);
