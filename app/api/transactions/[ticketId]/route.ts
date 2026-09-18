@@ -32,21 +32,32 @@ export async function PATCH(
     if (raw.voidReason !== undefined) body.voidReason = raw.voidReason != null ? String(raw.voidReason).trim().slice(0, 500) : null;
     const transaction = await updateTransaction(ticketId, body);
 
+    const isClaim = body.status === "Claimed";
     const statusChanged = Boolean(body.status);
-    const summary = statusChanged
-      ? `Updated status of ${transaction.ticketId} to ${transaction.status}`
-      : `Updated transaction ${transaction.ticketId}`;
-    const details = statusChanged
-      ? `New status: ${transaction.status} | Payment: ${transaction.paymentStatus}`
-      : [
-          body.paymentStatus ? `Payment updated to ${transaction.paymentStatus}` : null,
-          body.eta !== undefined ? `ETA: ${transaction.eta ?? "none"}` : null,
-          body.washInstructions !== undefined ? `Instructions updated` : null,
-          body.voidReason !== undefined ? `Void reason: ${body.voidReason ?? "cleared"}` : null,
-        ].filter(Boolean).join(" | ") || "Transaction details updated.";
+    const summary = isClaim
+      ? `Verified claim for ${transaction.ticketId}`
+      : statusChanged
+        ? `Updated status of ${transaction.ticketId} to ${transaction.status}`
+        : `Updated transaction ${transaction.ticketId}`;
+    const details = isClaim
+      ? `Customer: ${transaction.customerName} | Claimed and released at counter | Payment: ${transaction.paymentStatus}`
+      : statusChanged
+        ? `New status: ${transaction.status} | Payment: ${transaction.paymentStatus}`
+        : [
+            body.paymentStatus ? `Payment updated to ${transaction.paymentStatus}` : null,
+            body.eta !== undefined ? `ETA: ${transaction.eta ?? "none"}` : null,
+            body.washInstructions !== undefined ? `Instructions updated` : null,
+            body.voidReason !== undefined ? `Void reason: ${body.voidReason ?? "cleared"}` : null,
+          ].filter(Boolean).join(" | ") || "Transaction details updated.";
 
-    void createAuditLog({
-      action: statusChanged ? "status_changed" : "transaction_updated",
+    const action = isClaim
+      ? "claim_verified"
+      : statusChanged
+        ? "status_changed"
+        : "transaction_updated";
+
+    await createAuditLog({
+      action,
       summary,
       details,
       ticketId: transaction.ticketId,

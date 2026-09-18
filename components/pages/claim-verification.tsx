@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Search, CheckCircle, XCircle, AlertTriangle, Printer, ArrowRight } from "lucide-react";
+import { Search, CheckCircle, XCircle, AlertTriangle, Printer, ArrowRight, Loader2 } from "lucide-react";
 import QRScanner from "@/components/qr-scanner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import { formatReadableDateTime } from "@/lib/date-format";
 import type { UpdateTransactionInput } from "@/lib/transaction-contracts";
 import { cn } from "@/lib/utils";
 import { playScanSuccessFeedback } from "@/lib/scanner-feedback";
+import { useAuditLogs } from "@/hooks/use-audit-logs";
 
 function highlightMatch(text: string, query: string) {
   const trimmed = query.trim();
@@ -51,7 +52,59 @@ export default function ClaimVerificationPage({
   const [query, setQuery] = useState("");
   const [result, setResult] = useState<Transaction | null>(null);
   const [notFound, setNotFound] = useState(false);
-  const [logs, setLogs] = useState<AuditLog[]>(initialLogs);
+  const { auditLogs: liveAuditLogs, usingSupabase, logVerificationEvent } = useAuditLogs();
+
+  const logs = useMemo(() => {
+    // Only fall back to initialLogs if Supabase is unconfigured AND there are no live logs
+    if (!usingSupabase && liveAuditLogs.length === 0) {
+      return initialLogs.map((l) => ({
+        ...l,
+        isPending: false,
+        isUnsaved: false,
+      }));
+    }
+
+    return liveAuditLogs
+      .filter((entry) => {
+        const act = (entry.action || "").toLowerCase();
+        return (
+          act === "claim_scanned" ||
+          act === "claim_verified" ||
+          act === "claim_denied" ||
+          act === "override" ||
+          (entry.ticketId &&
+            (act === "status_changed" || act === "transaction_updated") &&
+            entry.details?.toLowerCase().includes("claim"))
+        );
+      })
+      .map((entry) => {
+        let displayAction: AuditLog["action"] = "Scanned";
+        const act = (entry.action || "").toLowerCase();
+        if (act === "claim_verified" || entry.details?.toLowerCase().includes("claim")) {
+          displayAction = "Claimed";
+        } else if (act === "claim_denied") {
+          displayAction = "Denied";
+        } else if (act === "override") {
+          displayAction = "Override";
+        } else {
+          displayAction = "Scanned";
+        }
+
+        return {
+          id: entry.id,
+          dateTime: entry.timestamp,
+          ticketId: entry.ticketId || "—",
+          action: displayAction,
+          staff: entry.staffName || "Staff",
+          notes: entry.details || entry.summary || "",
+          paymentStatus: entry.paymentStatus,
+          customerName: entry.customerName,
+          isPending: Boolean(entry.isPending),
+          isUnsaved: Boolean(entry.isUnsaved),
+        };
+      });
+  }, [liveAuditLogs, usingSupabase]);
+
   const [denyMode, setDenyMode] = useState(false);
   const [denyReason, setDenyReason] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -147,25 +200,34 @@ export default function ClaimVerificationPage({
     }
   }, [result]);
 
-  const addLog = (
-    ticketId: string,
-    action: AuditLog["action"],
-    notes: string,
-    paymentStatus?: PaymentStatus,
-    customerName?: string,
-  ) => {
-    const newLog: AuditLog = {
-      id: String(Date.now()),
-      dateTime: new Date().toLocaleString("en-PH", { dateStyle: "short", timeStyle: "short", hour12: true }),
-      ticketId,
-      action,
-      staff: "Admin",
-      notes,
-      paymentStatus,
-      customerName,
-    };
-    setLogs((prev) => [newLog, ...prev]);
-  };
+  const addLog = useCallback(
+    (
+      ticketId: string,
+      action: AuditLog["action"],
+      notes: string,
+      paymentStatus?: PaymentStatus,
+      customerName?: string,
+    ) => {
+      let auditAction: import("@/lib/audit-log-contracts").AuditActionType = "claim_scanned";
+      if (action === "Claimed") auditAction = "claim_verified";
+      else if (action === "Denied") auditAction = "claim_denied";
+      else if (action === "Override") auditAction = "override";
+
+      if (action === "Claimed" && usingSupabase) {
+        return;
+      }
+
+      void logVerificationEvent({
+        action: auditAction,
+        ticketId,
+        summary: `${action} ticket ${ticketId}`,
+        details: notes,
+        paymentStatus,
+        customerName,
+      });
+    },
+    [logVerificationEvent, usingSupabase],
+  );
 
   const selectTransaction = (transaction: Transaction, notes: string) => {
     setResult(transaction);
@@ -197,6 +259,7 @@ export default function ClaimVerificationPage({
             setResult(null);
             setNotFound(false);
             setClaimedNotice(resolved.ticketId);
+            addLog(resolved.ticketId, "Scanned", `${notes} (Already Claimed)`, resolved.paymentStatus, resolved.customerName);
             return;
           }
           setClaimedNotice(null);
@@ -220,6 +283,7 @@ export default function ClaimVerificationPage({
         setResult(null);
         setNotFound(false);
         setClaimedNotice(found.ticketId);
+        addLog(found.ticketId, "Scanned", `${notes} (Already Claimed)`, found.paymentStatus, found.customerName);
         return;
       }
       setClaimedNotice(null);
@@ -230,7 +294,7 @@ export default function ClaimVerificationPage({
     setClaimedNotice(null);
     setResult(null);
     setNotFound(true);
-  }, [onResolveScannedValue, transactions]);
+  }, [addLog, onResolveScannedValue, transactions]);
 
   const handleSearch = useCallback(async () => {
     await lookupTransaction(query, "Via Manual Search");
@@ -677,40 +741,58 @@ export default function ClaimVerificationPage({
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-border md:hidden">
-            {logs.map((log) => (
-              <div key={log.id} className="space-y-3 p-4 hover:bg-muted/30 transition-colors">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 space-y-1">
-                    <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 font-mono text-xs font-semibold text-primary">
-                      {log.ticketId}
-                    </span>
-                    <p className="truncate text-sm font-medium text-foreground">{log.customerName || "-"}</p>
-                    <p className="text-xs text-muted-foreground">{formatReadableDateTime(log.dateTime) || log.dateTime}</p>
-                  </div>
-                  <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium", actionBadgeColor(log.action))}>
-                    {log.action}
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-2 rounded-lg bg-muted/30 p-2.5 border border-border/50">
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Payment</p>
-                    {log.paymentStatus ? (
-                      <PaymentBadge paymentStatus={log.paymentStatus} className="mt-0.5 text-xs font-bold uppercase" />
-                    ) : (
-                      <p className="text-xs text-muted-foreground">-</p>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Staff</p>
-                    <p className="mt-0.5 text-xs font-medium text-foreground">{log.staff}</p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Notes</p>
-                    <p className="mt-0.5 text-xs text-foreground">{log.notes || "-"}</p>
-                  </div>
-                </div>
+            {logs.length === 0 ? (
+              <div className="p-6 text-center text-xs text-muted-foreground">
+                No verification activity recorded yet.
               </div>
-            ))}
+            ) : (
+              logs.map((log) => (
+                <div key={log.id} className="space-y-3 p-4 hover:bg-muted/30 transition-colors">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 space-y-1">
+                      <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 font-mono text-xs font-semibold text-primary">
+                        {log.ticketId}
+                      </span>
+                      <p className="truncate text-sm font-medium text-foreground">{log.customerName || "-"}</p>
+                      <p className="text-xs text-muted-foreground">{formatReadableDateTime(log.dateTime) || log.dateTime}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium", actionBadgeColor(log.action))}>
+                        {log.action}
+                      </span>
+                      {log.isPending && (
+                        <span className="inline-flex items-center gap-1 rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-600">
+                          <Loader2 className="h-2.5 w-2.5 animate-spin" /> Saving…
+                        </span>
+                      )}
+                      {log.isUnsaved && (
+                        <span className="inline-flex items-center rounded bg-destructive/10 px-1.5 py-0.5 text-[10px] font-medium text-destructive">
+                          Unsaved
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 rounded-lg bg-muted/30 p-2.5 border border-border/50">
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Payment</p>
+                      {log.paymentStatus ? (
+                        <PaymentBadge paymentStatus={log.paymentStatus} className="mt-0.5 text-xs font-bold uppercase" />
+                      ) : (
+                        <p className="text-xs text-muted-foreground">-</p>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Staff</p>
+                      <p className="mt-0.5 text-xs font-medium text-foreground">{log.staff}</p>
+                    </div>
+                    <div className="col-span-2">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Notes</p>
+                      <p className="mt-0.5 text-xs text-foreground">{log.notes || "-"}</p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
           <div className="hidden overflow-x-auto md:block">
             <table className="w-full min-w-[700px] text-sm text-left">
@@ -725,26 +807,46 @@ export default function ClaimVerificationPage({
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60">
-                {logs.map((log) => (
-                  <tr key={log.id} className="border-b border-border/80 hover:bg-muted/40 transition-colors">
-                    <td className="whitespace-nowrap px-4 py-3.5 text-xs text-muted-foreground">{formatReadableDateTime(log.dateTime) || log.dateTime}</td>
-                    <td className="px-4 py-3.5 whitespace-nowrap">
-                      <span className="font-semibold text-xs text-foreground">{log.staff}</span>
-                    </td>
-                    <td className="px-4 py-3.5 whitespace-nowrap">
-                      <CategoryBadge category={log.action.toLowerCase().includes("denied") ? "security" : "transaction"} />
-                    </td>
-                    <td className="px-4 py-3.5 font-medium text-xs text-foreground whitespace-nowrap">
-                      {log.action} (#{log.ticketId})
-                    </td>
-                    <td className="px-4 py-3.5 text-xs text-muted-foreground max-w-xs truncate">
-                      {log.notes || (log.customerName ? `Customer: ${log.customerName}` : "—")}
-                    </td>
-                    <td className="px-4 py-3.5 whitespace-nowrap text-right">
-                      <SeverityBadge severity={log.action.toLowerCase().includes("denied") ? "warning" : "info"} />
+                {logs.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-8 text-center text-xs text-muted-foreground">
+                      No verification activity recorded yet.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  logs.map((log) => (
+                    <tr key={log.id} className="border-b border-border/80 hover:bg-muted/40 transition-colors">
+                      <td className="whitespace-nowrap px-4 py-3.5 text-xs text-muted-foreground">{formatReadableDateTime(log.dateTime) || log.dateTime}</td>
+                      <td className="px-4 py-3.5 whitespace-nowrap">
+                        <span className="font-semibold text-xs text-foreground flex items-center gap-1.5">
+                          {log.staff}
+                          {log.isPending && (
+                            <span className="inline-flex items-center gap-1 text-[10px] text-amber-500 font-normal">
+                              <Loader2 className="h-2.5 w-2.5 animate-spin" /> Saving…
+                            </span>
+                          )}
+                          {log.isUnsaved && (
+                            <span className="inline-flex items-center text-[10px] text-destructive font-normal">
+                              (Unsaved)
+                            </span>
+                          )}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5 whitespace-nowrap">
+                        <CategoryBadge category={log.action.toLowerCase().includes("denied") ? "security" : "transaction"} />
+                      </td>
+                      <td className="px-4 py-3.5 font-medium text-xs text-foreground whitespace-nowrap">
+                        {log.action} (#{log.ticketId})
+                      </td>
+                      <td className="px-4 py-3.5 text-xs text-muted-foreground max-w-xs truncate">
+                        {log.notes || (log.customerName ? `Customer: ${log.customerName}` : "—")}
+                      </td>
+                      <td className="px-4 py-3.5 whitespace-nowrap text-right">
+                        <SeverityBadge severity={log.action.toLowerCase().includes("denied") ? "warning" : "info"} />
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

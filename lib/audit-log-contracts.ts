@@ -4,8 +4,11 @@ export type AuditActionType =
   | "all"
   | "transaction_created"
   | "transaction_updated"
+  | "transaction_voided"
   | "status_changed"
+  | "claim_scanned"
   | "claim_verified"
+  | "claim_denied"
   | "loyalty_stamp"
   | "reward_redeemed"
   | "settings_changed"
@@ -33,6 +36,9 @@ export interface AuditLogEntry {
   customerName?: string;
   paymentStatus?: PaymentStatus;
   ipAddress?: string;
+  clientCorrelationId?: string;
+  isPending?: boolean;
+  isUnsaved?: boolean;
 }
 
 export interface CreateAuditLogInput {

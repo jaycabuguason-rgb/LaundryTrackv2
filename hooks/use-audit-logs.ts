@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import type { AuditLogEntry } from "@/lib/audit-log-contracts";
+import type { AuditActionType, AuditLogEntry, AuditStaffRole } from "@/lib/audit-log-contracts";
+import type { PaymentStatus } from "@/lib/data";
 import {
   getBrowserAccessToken,
   refreshBrowserSession,
@@ -63,7 +64,7 @@ async function readJson<T>(response: Response): Promise<T> {
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const accessToken = await getBrowserAccessToken();
   if (!accessToken) {
-    throw new Error("No active admin session was found.");
+    throw new Error("No active session was found.");
   }
 
   return {
@@ -95,11 +96,62 @@ async function fetchAuditLogsWithAuthRetry(): Promise<AuditLogEntry[]> {
   return data.auditLogs;
 }
 
+export function mapRealtimeAuditRow(record: unknown): AuditLogEntry | null {
+  if (!record || typeof record !== "object") return null;
+  const row = record as Record<string, unknown>;
+  if (typeof row.id !== "string") return null;
+
+  let rawMetadata: Record<string, unknown> | undefined;
+  if (typeof row.metadata === "object" && row.metadata !== null) {
+    rawMetadata = row.metadata as Record<string, unknown>;
+  } else if (typeof row.metadata === "string") {
+    try {
+      rawMetadata = JSON.parse(row.metadata);
+    } catch {
+      rawMetadata = undefined;
+    }
+  }
+  const correlationId =
+    typeof rawMetadata?.correlationId === "string" ? rawMetadata.correlationId : undefined;
+
+  const rawRole = typeof row.staff_role === "string" ? row.staff_role.toLowerCase() : "";
+  const staffRole: AuditStaffRole =
+    rawRole === "admin" ? "Admin" : rawRole === "staff" ? "Staff" : "System";
+
+  return {
+    id: row.id,
+    timestamp: typeof row.created_at === "string" ? row.created_at : new Date().toISOString(),
+    staffName: typeof row.staff_name === "string" && row.staff_name ? row.staff_name : "System",
+    staffRole,
+    action: (typeof row.action === "string" ? row.action : "other") as AuditActionType,
+    summary: typeof row.summary === "string" ? row.summary : "Audit event",
+    details: typeof row.notes === "string" ? row.notes : "No additional details.",
+    ticketId: typeof row.ticket_id === "string" ? row.ticket_id : undefined,
+    customerName: typeof row.customer_name === "string" ? row.customer_name : undefined,
+    paymentStatus:
+      typeof row.payment_status === "string" ? (row.payment_status as PaymentStatus) : undefined,
+    ipAddress: typeof row.ip_address === "string" ? row.ip_address : undefined,
+    clientCorrelationId: correlationId,
+  };
+}
+
+export interface LogVerificationEventInput {
+  action: AuditActionType;
+  ticketId?: string;
+  summary?: string;
+  details?: string;
+  customerName?: string;
+  paymentStatus?: PaymentStatus;
+  metadata?: Record<string, unknown>;
+}
+
 export function useAuditLogs() {
   const supabase = getSupabaseBrowserClient();
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(() => (supabase ? [] : FALLBACK_AUDIT_LOGS));
   const [loading, setLoading] = useState(Boolean(supabase));
   const [error, setError] = useState<string | null>(null);
+
+  const refreshRef = useRef<() => Promise<void>>(undefined);
 
   const refresh = useCallback(async () => {
     if (!supabase) {
@@ -121,10 +173,13 @@ export function useAuditLogs() {
     }
   }, [supabase]);
 
+  refreshRef.current = refresh;
+
   useEffect(() => {
     void refresh();
   }, [refresh]);
 
+  // Realtime subscription with direct INSERT reconciliation and duplicate prevention
   useEffect(() => {
     if (!supabase) {
       return undefined;
@@ -135,12 +190,77 @@ export function useAuditLogs() {
       .on(
         "postgres_changes",
         {
-          event: "*",
+          event: "INSERT",
           schema: "public",
           table: "audit_logs",
         },
-        () => {
-          void refresh();
+        (payload) => {
+          const mapped = mapRealtimeAuditRow(payload.new);
+          if (!mapped) {
+            void refreshRef.current?.();
+            return;
+          }
+
+          setAuditLogs((current) => {
+            const correlationId = mapped.clientCorrelationId;
+            const hasOptimisticMatch = correlationId
+              ? current.some((item) => item.clientCorrelationId === correlationId)
+              : false;
+
+            if (hasOptimisticMatch) {
+              return current.map((item) =>
+                item.clientCorrelationId === correlationId ? mapped : item
+              );
+            }
+
+            // Deduplicate by database id
+            if (current.some((item) => item.id === mapped.id)) {
+              return current;
+            }
+
+            return [mapped, ...current];
+          });
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "audit_logs",
+        },
+        (payload) => {
+          const mapped = mapRealtimeAuditRow(payload.new);
+          if (!mapped) {
+            void refreshRef.current?.();
+            return;
+          }
+
+          setAuditLogs((current) =>
+            current.map((item) =>
+              item.id === mapped.id ||
+              (mapped.clientCorrelationId && item.clientCorrelationId === mapped.clientCorrelationId)
+                ? mapped
+                : item
+            )
+          );
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "audit_logs",
+        },
+        (payload) => {
+          const oldRecord = payload.old as Record<string, unknown> | null;
+          const targetId = typeof oldRecord?.id === "string" ? oldRecord.id : null;
+          if (!targetId) {
+            void refreshRef.current?.();
+            return;
+          }
+          setAuditLogs((current) => current.filter((item) => item.id !== targetId));
         },
       )
       .subscribe();
@@ -148,7 +268,102 @@ export function useAuditLogs() {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [refresh, supabase]);
+  }, [supabase]);
+
+  // Window visibility & focus recovery refresh
+  useEffect(() => {
+    let focusTimeout: ReturnType<typeof setTimeout> | null = null;
+    const handleRecheck = () => {
+      if (document.visibilityState === "hidden") return;
+      if (focusTimeout) clearTimeout(focusTimeout);
+      focusTimeout = setTimeout(() => {
+        void refreshRef.current?.();
+      }, 300);
+    };
+
+    window.addEventListener("focus", handleRecheck);
+    document.addEventListener("visibilitychange", handleRecheck);
+
+    return () => {
+      if (focusTimeout) clearTimeout(focusTimeout);
+      window.removeEventListener("focus", handleRecheck);
+      document.removeEventListener("visibilitychange", handleRecheck);
+    };
+  }, []);
+
+  const logVerificationEvent = useCallback(
+    async (input: LogVerificationEventInput): Promise<AuditLogEntry | null> => {
+      const clientCorrelationId =
+        "corr_" + Math.random().toString(36).substring(2, 10) + "_" + Date.now();
+      const optimisticEntry: AuditLogEntry = {
+        id: "temp_" + clientCorrelationId,
+        timestamp: new Date().toISOString(),
+        staffName: "Staff",
+        staffRole: "Staff",
+        action: input.action,
+        summary: input.summary || `${input.action} for ${input.ticketId || "order"}`,
+        details: input.details || "",
+        ticketId: input.ticketId,
+        customerName: input.customerName,
+        paymentStatus: input.paymentStatus,
+        clientCorrelationId,
+        isPending: true,
+      };
+
+      // Optimistically prepend to state immediately
+      setAuditLogs((prev) => [optimisticEntry, ...prev]);
+
+      try {
+        const headers = await getAuthHeaders();
+        const res = await fetch("/api/audit-logs", {
+          method: "POST",
+          headers: {
+            ...headers,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: input.action,
+            ticketId: input.ticketId,
+            summary: input.summary,
+            details: input.details,
+            customerName: input.customerName,
+            paymentStatus: input.paymentStatus,
+            correlationId: clientCorrelationId,
+            metadata: input.metadata,
+          }),
+        });
+
+        if (!res.ok) {
+          throw new Error("Failed to persist audit log");
+        }
+
+        const data = (await res.json()) as { auditLog: AuditLogEntry };
+        const serverEntry = data.auditLog;
+
+        // Replace optimistic entry with server-confirmed entry
+        setAuditLogs((current) =>
+          current.map((item) =>
+            item.clientCorrelationId === clientCorrelationId || item.id === optimisticEntry.id
+              ? serverEntry
+              : item
+          )
+        );
+
+        return serverEntry;
+      } catch {
+        // Roll back or mark as unsaved
+        setAuditLogs((current) =>
+          current.map((item) =>
+            item.clientCorrelationId === clientCorrelationId
+              ? { ...item, isPending: false, isUnsaved: true }
+              : item
+          )
+        );
+        return null;
+      }
+    },
+    [],
+  );
 
   const staffOptions = useMemo(() => {
     const names = new Set<string>(["All Staff"]);
@@ -169,5 +384,6 @@ export function useAuditLogs() {
     refresh,
     staffOptions,
     usingSupabase: Boolean(supabase),
+    logVerificationEvent,
   };
 }

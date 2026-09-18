@@ -22,6 +22,7 @@ type AuditLogRow = {
   staff_name: string | null;
   staff_role: string | null;
   ip_address: string | null;
+  metadata?: Record<string, unknown> | null;
 };
 
 const AUDIT_LOG_CACHE_TTL_MS = 10_000;
@@ -30,8 +31,11 @@ const auditLogCache = createTtlCache<AuditLogEntry[]>();
 const KNOWN_ACTIONS = new Set<AuditActionType>([
   "transaction_created",
   "transaction_updated",
+  "transaction_voided",
   "status_changed",
+  "claim_scanned",
   "claim_verified",
+  "claim_denied",
   "loyalty_stamp",
   "reward_redeemed",
   "settings_changed",
@@ -108,7 +112,12 @@ function mapStaffRole(value: string | null): AuditStaffRole {
   return "System";
 }
 
-function mapAuditRow(row: AuditLogRow): AuditLogEntry {
+export function mapAuditRow(row: AuditLogRow): AuditLogEntry {
+  const correlationId =
+    row.metadata && typeof row.metadata === "object" && "correlationId" in row.metadata && typeof row.metadata.correlationId === "string"
+      ? row.metadata.correlationId
+      : undefined;
+
   return {
     id: row.id,
     timestamp: row.created_at ?? new Date().toISOString(),
@@ -121,6 +130,7 @@ function mapAuditRow(row: AuditLogRow): AuditLogEntry {
     customerName: row.customer_name ?? undefined,
     paymentStatus: row.payment_status ?? undefined,
     ipAddress: row.ip_address ?? undefined,
+    clientCorrelationId: correlationId,
   };
 }
 
@@ -134,7 +144,7 @@ export async function listAuditLogs(limit = 200): Promise<AuditLogEntry[]> {
   const supabase = getSupabaseAdminClient();
   const { data, error } = await supabase
     .from("audit_logs")
-    .select("id,created_at,action,summary,notes,ticket_id,customer_name,payment_status,staff_name,staff_role,ip_address")
+    .select("id,created_at,action,summary,notes,ticket_id,customer_name,payment_status,staff_name,staff_role,ip_address,metadata")
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -147,28 +157,33 @@ export async function listAuditLogs(limit = 200): Promise<AuditLogEntry[]> {
   return auditLogs;
 }
 
-export async function createAuditLog(input: CreateAuditLogInput): Promise<void> {
+export async function createAuditLog(input: CreateAuditLogInput): Promise<AuditLogEntry> {
   const supabase = getSupabaseAdminClient();
-  const { error } = await supabase.from("audit_logs").insert({
-    transaction_id: input.transactionId ?? null,
-    ticket_id: input.ticketId ?? null,
-    action: input.action,
-    staff_name: input.staffName ?? null,
-    staff_role: input.staffRole ?? null,
-    staff_profile_id: input.staffProfileId ?? null,
-    summary: input.summary,
-    customer_name: input.customerName ?? null,
-    payment_status: input.paymentStatus ?? null,
-    ip_address: input.ipAddress ?? null,
-    notes: input.details ?? "",
-    metadata: input.metadata ?? {},
-  });
+  const { data, error } = await supabase
+    .from("audit_logs")
+    .insert({
+      transaction_id: input.transactionId ?? null,
+      ticket_id: input.ticketId ?? null,
+      action: input.action,
+      staff_name: input.staffName ?? null,
+      staff_role: input.staffRole ?? null,
+      staff_profile_id: input.staffProfileId ?? null,
+      summary: input.summary,
+      customer_name: input.customerName ?? null,
+      payment_status: input.paymentStatus ?? null,
+      ip_address: input.ipAddress ?? null,
+      notes: input.details ?? "",
+      metadata: input.metadata ?? {},
+    })
+    .select("id,created_at,action,summary,notes,ticket_id,customer_name,payment_status,staff_name,staff_role,ip_address,metadata")
+    .single();
 
   if (error) {
     throw new Error(error.message);
   }
 
   auditLogCache.clear();
+  return mapAuditRow(data as AuditLogRow);
 }
 
 export function listMockAuditLogs(): AuditLogEntry[] {

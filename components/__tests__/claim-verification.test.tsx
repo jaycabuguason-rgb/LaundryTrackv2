@@ -175,5 +175,58 @@ describe("ClaimVerificationPage Name Suggestions", () => {
 
     expect(screen.getByText("Verification History")).toBeInTheDocument();
   });
+
+  it("displays verified order details when a ticket is looked up", async () => {
+    render(
+      <ClaimVerificationPage
+        transactions={mockTransactions}
+        onUpdateTransaction={vi.fn()}
+        onResolveScannedValue={vi.fn().mockResolvedValue("TKT-0030")}
+      />
+    );
+
+    const input = screen.getByPlaceholderText(/claim code, ticket id, or customer name/i);
+    fireEvent.change(input, { target: { value: "TKT-0030" } });
+    const searchButton = screen.getByRole("button", { name: /^Search$/i });
+    fireEvent.click(searchButton);
+
+    const matches = await screen.findAllByText(/Juan Dela Cruz/);
+    expect(matches.length).toBeGreaterThan(0);
+  });
+
+  it("handles scanning an already claimed ticket by displaying claimed notice", async () => {
+    const claimedTransactions: Transaction[] = [
+      ...mockTransactions,
+      {
+        id: "tx-claimed",
+        ticketId: "TKT-9999",
+        customerName: "Claimed Customer",
+        status: "Claimed",
+        phone: "09170000000",
+        washType: "Regular",
+        weight: 3,
+        fee: 120,
+        paymentStatus: "paid",
+        arrivalDateTime: "2026-09-14 10:00",
+        dropOffDate: "2026-09-14",
+        addOns: [],
+      },
+    ];
+
+    render(
+      <ClaimVerificationPage
+        transactions={claimedTransactions}
+        onUpdateTransaction={vi.fn()}
+        onResolveScannedValue={vi.fn().mockResolvedValue("TKT-9999")}
+      />
+    );
+
+    const input = screen.getByPlaceholderText(/claim code, ticket id, or customer name/i);
+    fireEvent.change(input, { target: { value: "TKT-9999" } });
+    const searchButton = screen.getByRole("button", { name: /^Search$/i });
+    fireEvent.click(searchButton);
+
+    expect(await screen.findByText(/already been claimed/i)).toBeInTheDocument();
+  });
 });
 
