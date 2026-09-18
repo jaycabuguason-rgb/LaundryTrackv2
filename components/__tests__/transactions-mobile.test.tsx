@@ -273,4 +273,16 @@ describe("TransactionsPage Mobile Concept Layout", () => {
       });
     });
   });
+
+  it("does not render Track button in transaction actions", () => {
+    render(
+      <TransactionsPage
+        transactions={mockTransactions}
+        onCreateTransaction={onCreateTransaction}
+        onUpdateTransaction={onUpdateTransaction}
+      />
+    );
+
+    expect(screen.queryByRole("link", { name: /^track$/i })).not.toBeInTheDocument();
+  });
 });

@@ -2092,18 +2092,6 @@ export default function TransactionsPage({
                         <Eye className="w-3.5 h-3.5 mr-1" />
                         <span>View</span>
                       </Button>
-                      <a
-                        href={`${origin}${txn.publicTrackingToken ? `/track/${txn.publicTrackingToken}` : `/ticket/${txn.ticketId}`}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className={cn(
-                          buttonVariants({ variant: "default", size: "sm" }),
-                          "h-7 px-2.5 text-xs font-semibold rounded-lg shadow-xs cursor-pointer inline-flex items-center"
-                        )}
-                      >
-                        Track
-                      </a>
                       {isReady && txn.paymentStatus === "paid" && (
                         <Button
                           size="sm"
@@ -2585,18 +2573,6 @@ export default function TransactionsPage({
                       <Printer className="w-3.5 h-3.5 text-muted-foreground" />
                       <span className="hidden xs:inline">Print</span>
                     </Button>
-                    <a
-                      href={`${origin}${txn.publicTrackingToken ? `/track/${txn.publicTrackingToken}` : `/ticket/${txn.ticketId}`}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className={cn(
-                        buttonVariants({ variant: "ghost", size: "sm" }),
-                        "h-7 px-2 text-xs text-foreground font-medium hover:text-primary hover:bg-primary/10 cursor-pointer inline-flex items-center"
-                      )}
-                    >
-                      Track
-                    </a>
 
                     {/* Quick Dropdown Actions */}
                     <div onClick={(e) => e.stopPropagation()}>
