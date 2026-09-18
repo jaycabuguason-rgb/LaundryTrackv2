@@ -11,24 +11,30 @@ const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono"
 export const metadata: Metadata = {
   title: 'LaundryTrack - Laundry Shop Management System',
   description: 'LaundryTrack helps laundry shops manage orders, processing, claims, reports, staff, and customer loyalty from one admin dashboard.',
-  generator: 'v0.app',
   manifest: '/manifest.webmanifest',
   icons: {
     icon: [
       {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
         url: '/icon.svg',
         type: 'image/svg+xml',
       },
+      {
+        url: '/favicon.ico',
+        sizes: 'any',
+      },
+      {
+        url: '/icon-light-32x32.png',
+        sizes: '32x32',
+        type: 'image/png',
+      },
+      {
+        url: '/icon-dark-32x32.png',
+        sizes: '32x32',
+        type: 'image/png',
+      },
     ],
     apple: '/apple-icon.png',
+    shortcut: '/favicon.ico',
   },
   appleWebApp: {
     capable: true,

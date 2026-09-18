@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "LaundryTrack offline-first laundry shop management",
     start_url: "/",
     display: "standalone",
-    background_color: "#0c249c",
-    theme_color: "#0c249c",
+    background_color: "#7038d4",
+    theme_color: "#7038d4",
     icons: [
       {
         src: "/apple-icon.png",
