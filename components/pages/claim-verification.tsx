@@ -113,6 +113,11 @@ export default function ClaimVerificationPage({
   const [reprintTransaction, setReprintTransaction] = useState<Transaction | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [claimedNotice, setClaimedNotice] = useState<string | null>(null);
+  const [notReadyNotice, setNotReadyNotice] = useState<{
+    ticketId: string;
+    customerName: string;
+    status: string;
+  } | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -172,6 +177,7 @@ export default function ClaimVerificationPage({
     setShowSuggestions(false);
     setHighlightedIndex(-1);
     setClaimedNotice(null);
+    setNotReadyNotice(null);
     selectTransaction(transaction, "Via Name Suggestion");
   };
 
@@ -184,7 +190,7 @@ export default function ClaimVerificationPage({
     if (result) {
       const updated = transactions.find((transaction) => transaction.ticketId === result.ticketId);
       if (updated) {
-        if (updated.status === "Claimed") {
+        if (updated.status !== "Ready") {
           setResult(null);
         } else {
           setResult(updated);
@@ -244,6 +250,8 @@ export default function ClaimVerificationPage({
     if (!trimmed) {
       setResult(null);
       setNotFound(false);
+      setClaimedNotice(null);
+      setNotReadyNotice(null);
       return;
     }
 
@@ -258,11 +266,25 @@ export default function ClaimVerificationPage({
           if (resolved.status === "Claimed") {
             setResult(null);
             setNotFound(false);
+            setNotReadyNotice(null);
             setClaimedNotice(resolved.ticketId);
             addLog(resolved.ticketId, "Scanned", `${notes} (Already Claimed)`, resolved.paymentStatus, resolved.customerName);
             return;
           }
+          if (resolved.status !== "Ready") {
+            setResult(null);
+            setNotFound(false);
+            setClaimedNotice(null);
+            setNotReadyNotice({
+              ticketId: resolved.ticketId,
+              customerName: resolved.customerName,
+              status: resolved.status,
+            });
+            addLog(resolved.ticketId, "Scanned", `${notes} (Not Ready: ${resolved.status})`, resolved.paymentStatus, resolved.customerName);
+            return;
+          }
           setClaimedNotice(null);
+          setNotReadyNotice(null);
           selectTransaction(resolved, notes);
           return;
         }
@@ -272,26 +294,52 @@ export default function ClaimVerificationPage({
     }
 
     const normalizedQuery = trimmed.toLowerCase();
-    const found = transactions.find(
+
+    // 1. Search for a matching Ready transaction first
+    const readyFound = transactions.find(
+      (transaction) =>
+        transaction.status === "Ready" &&
+        (transaction.ticketId.toLowerCase() === normalizedQuery ||
+          transaction.customerName.toLowerCase().includes(normalizedQuery)),
+    );
+
+    if (readyFound) {
+      setClaimedNotice(null);
+      setNotReadyNotice(null);
+      selectTransaction(readyFound, notes);
+      return;
+    }
+
+    // 2. If no Ready transaction found, check if an unready or claimed transaction matches
+    const otherFound = transactions.find(
       (transaction) =>
         transaction.ticketId.toLowerCase() === normalizedQuery ||
         transaction.customerName.toLowerCase().includes(normalizedQuery),
     );
 
-    if (found) {
-      if (found.status === "Claimed") {
+    if (otherFound) {
+      if (otherFound.status === "Claimed") {
         setResult(null);
         setNotFound(false);
-        setClaimedNotice(found.ticketId);
-        addLog(found.ticketId, "Scanned", `${notes} (Already Claimed)`, found.paymentStatus, found.customerName);
+        setNotReadyNotice(null);
+        setClaimedNotice(otherFound.ticketId);
+        addLog(otherFound.ticketId, "Scanned", `${notes} (Already Claimed)`, otherFound.paymentStatus, otherFound.customerName);
         return;
       }
+      setResult(null);
+      setNotFound(false);
       setClaimedNotice(null);
-      selectTransaction(found, notes);
+      setNotReadyNotice({
+        ticketId: otherFound.ticketId,
+        customerName: otherFound.customerName,
+        status: otherFound.status,
+      });
+      addLog(otherFound.ticketId, "Scanned", `${notes} (Not Ready: ${otherFound.status})`, otherFound.paymentStatus, otherFound.customerName);
       return;
     }
 
     setClaimedNotice(null);
+    setNotReadyNotice(null);
     setResult(null);
     setNotFound(true);
   }, [addLog, onResolveScannedValue, transactions]);
@@ -352,6 +400,8 @@ export default function ClaimVerificationPage({
     setDenyMode(false);
     setDenyReason("");
     setResult(null);
+    setNotReadyNotice(null);
+    setClaimedNotice(null);
     setQuery("");
   };
 
@@ -370,6 +420,8 @@ export default function ClaimVerificationPage({
       await lookupTransaction(scannedValue, "Via QR Scan");
     } catch {
       setResult(null);
+      setNotReadyNotice(null);
+      setClaimedNotice(null);
       setNotFound(true);
     }
   }, [lookupTransaction]);
@@ -388,7 +440,6 @@ export default function ClaimVerificationPage({
   };
 
   const isAlreadyClaimed = result?.status === "Claimed";
-  const isNotReady = result && result.status !== "Ready" && result.status !== "Claimed";
   const isUnpaid = result && paymentToggle === "unpaid";
 
   return (
@@ -432,6 +483,9 @@ export default function ClaimVerificationPage({
                     setQuery(event.target.value);
                     setShowSuggestions(true);
                     setHighlightedIndex(-1);
+                    if (notReadyNotice) setNotReadyNotice(null);
+                    if (claimedNotice) setClaimedNotice(null);
+                    if (notFound) setNotFound(false);
                   }}
                   onFocus={() => {
                     if (query.trim().length >= 1) {
@@ -565,6 +619,16 @@ export default function ClaimVerificationPage({
               </div>
             )}
 
+            {notReadyNotice && (
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-center text-sm text-amber-900 dark:text-amber-200">
+                <AlertTriangle className="mx-auto mb-1 h-5 w-5 text-amber-600 dark:text-amber-400" />
+                <p className="font-semibold">Order Not Ready for Pickup</p>
+                <p className="mt-0.5 text-xs text-amber-800/90 dark:text-amber-300/90">
+                  Ticket #{notReadyNotice.ticketId} ({notReadyNotice.customerName}) is currently in &quot;{notReadyNotice.status}&quot; stage. Only orders marked as &quot;Ready&quot; can be verified and released for pickup.
+                </p>
+              </div>
+            )}
+
             {notFound && (
               <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-center text-sm text-destructive">
                 No ticket found for &quot;{query}&quot;
@@ -646,16 +710,6 @@ export default function ClaimVerificationPage({
                   </div>
                 )}
 
-                {isNotReady && (
-                  <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-900 dark:text-amber-200">
-                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-                    <div>
-                      <p className="font-semibold">Not Ready for Pickup</p>
-                      <p className="mt-0.5 text-xs text-amber-800/90 dark:text-amber-300/90">Current status: {result.status}</p>
-                    </div>
-                  </div>
-                )}
-
                 {isUnpaid && !isAlreadyClaimed && (
                   <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-900 dark:text-amber-200">
                     <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
@@ -672,17 +726,12 @@ export default function ClaimVerificationPage({
                       {!isAlreadyClaimed && !isUnpaid && (
                         <Button
                           size="sm"
-                          className={cn(
-                            "flex min-h-[44px] flex-1 items-center justify-center gap-1.5 font-medium sm:min-h-0 sm:flex-none transition-colors cursor-pointer",
-                            isNotReady
-                              ? "bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-700 dark:hover:bg-amber-600"
-                              : "bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600",
-                          )}
+                          className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 font-medium sm:min-h-0 sm:flex-none transition-colors cursor-pointer bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600"
                           onClick={() => void handleClaim()}
                           disabled={submitting}
                         >
-                          {isNotReady ? <AlertTriangle className="h-3.5 w-3.5" /> : <CheckCircle className="h-3.5 w-3.5" />}
-                          {isNotReady ? "Claim Anyway" : "Confirm Claim & Release"}
+                          <CheckCircle className="h-3.5 w-3.5" />
+                          Confirm Claim &amp; Release
                         </Button>
                       )}
                       <Button

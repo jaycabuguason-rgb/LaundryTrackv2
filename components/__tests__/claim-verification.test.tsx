@@ -228,5 +228,48 @@ describe("ClaimVerificationPage Name Suggestions", () => {
 
     expect(await screen.findByText(/already been claimed/i)).toBeInTheDocument();
   });
+
+  it("does not show claim verification card for non-ready orders and displays not ready notice", async () => {
+    render(
+      <ClaimVerificationPage
+        transactions={mockTransactions}
+        onUpdateTransaction={vi.fn()}
+        onResolveScannedValue={vi.fn().mockResolvedValue(null)}
+      />
+    );
+
+    const input = screen.getByPlaceholderText(/claim code, ticket id, or customer name/i);
+    // Search for Alice Smith (status: Received, TKT-0032)
+    fireEvent.change(input, { target: { value: "Alice Smith" } });
+    const searchButton = screen.getByRole("button", { name: /^Search$/i });
+    fireEvent.click(searchButton);
+
+    // Should display the "Order Not Ready for Pickup" notice
+    expect(await screen.findByText(/Order Not Ready for Pickup/i)).toBeInTheDocument();
+    expect(screen.getByText(/is currently in "Received" stage/i)).toBeInTheDocument();
+
+    // The claim action button and verification details should NOT be rendered
+    expect(screen.queryByRole("button", { name: /Confirm Claim & Release/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Awaiting estimate/i)).not.toBeInTheDocument();
+  });
+
+  it("displays not ready notice when scanning a ticket currently in Washing status", async () => {
+    render(
+      <ClaimVerificationPage
+        transactions={mockTransactions}
+        onUpdateTransaction={vi.fn()}
+        onResolveScannedValue={vi.fn().mockResolvedValue("TKT-0031")}
+      />
+    );
+
+    const input = screen.getByPlaceholderText(/claim code, ticket id, or customer name/i);
+    fireEvent.change(input, { target: { value: "TKT-0031" } });
+    const searchButton = screen.getByRole("button", { name: /^Search$/i });
+    fireEvent.click(searchButton);
+
+    expect(await screen.findByText(/Order Not Ready for Pickup/i)).toBeInTheDocument();
+    expect(screen.getByText(/is currently in "Washing" stage/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Confirm Claim & Release/i })).not.toBeInTheDocument();
+  });
 });
 
