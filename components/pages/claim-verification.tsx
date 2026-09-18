@@ -75,12 +75,15 @@ export default function ClaimVerificationPage({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Autocomplete suggestions based on first letter or query match
+  // Autocomplete suggestions based on first letter or query match (Ready orders only)
   const suggestions = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
 
     const matches = transactions.filter((t) => {
+      // Only suggest customers whose orders are in the Ready stage
+      if (t.status !== "Ready") return false;
+
       const name = (t.customerName || "").toLowerCase();
       const ticket = (t.ticketId || "").toLowerCase();
       const phone = (t.phone || "").replace(/\D/g, "");
@@ -106,17 +109,7 @@ export default function ClaimVerificationPage({
         if (aTicketStarts && !bTicketStarts) return -1;
         if (!aTicketStarts && bTicketStarts) return 1;
 
-        // 3. Prioritize active operational statuses
-        const statusRank: Record<string, number> = {
-          Ready: 1,
-          Washing: 2,
-          Received: 3,
-          Claimed: 4,
-          Voided: 5,
-        };
-        const rankA = statusRank[a.status] ?? 99;
-        const rankB = statusRank[b.status] ?? 99;
-        return rankA - rankB;
+        return 0;
       })
       .slice(0, 6);
   }, [query, transactions]);
@@ -125,14 +118,8 @@ export default function ClaimVerificationPage({
     setQuery(transaction.customerName);
     setShowSuggestions(false);
     setHighlightedIndex(-1);
-    if (transaction.status === "Claimed") {
-      setResult(null);
-      setNotFound(false);
-      setClaimedNotice(transaction.ticketId);
-    } else {
-      setClaimedNotice(null);
-      selectTransaction(transaction, "Via Name Suggestion");
-    }
+    setClaimedNotice(null);
+    selectTransaction(transaction, "Via Name Suggestion");
   };
 
   const isAutoLookupQuery = useCallback((value: string) => {
@@ -427,7 +414,7 @@ export default function ClaimVerificationPage({
                   >
                     <div className="flex items-center justify-between border-b border-border/60 bg-muted/40 px-3 py-1.5">
                       <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                        Suggested Matches ({suggestions.length})
+                        Ready for Pickup ({suggestions.length})
                       </span>
                       <span className="hidden sm:inline text-[10px] text-muted-foreground">
                         Press ↑↓ to navigate, Enter to select
