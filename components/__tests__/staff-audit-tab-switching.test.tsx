@@ -123,4 +123,32 @@ describe("Staff Management & Audit Logs Tab Switching", () => {
 
     expect(onTabChange).toHaveBeenCalledWith("audit");
   });
+
+  it("protects search filter against autofill and provides clear search controls", () => {
+    render(<StaffManagementPage initialTab="staff" currentProfile={mockProfile} />);
+
+    const searchInput = screen.getByPlaceholderText(/search staff, role, status/i);
+    expect(searchInput).toHaveAttribute("type", "search");
+    expect(searchInput).toHaveAttribute("autocomplete", "off");
+    expect(searchInput).toHaveAttribute("name", "staff-search-filter");
+
+    // Filter by non-matching query
+    fireEvent.change(searchInput, { target: { value: "nonexistent@gmail.com" } });
+    expect(screen.getAllByText(/no staff members matching "nonexistent@gmail.com"/i).length).toBeGreaterThanOrEqual(1);
+
+    // Click Clear Search button in empty state
+    const clearBtns = screen.getAllByRole("button", { name: /clear search/i });
+    fireEvent.click(clearBtns[0]);
+
+    expect(searchInput).toHaveValue("");
+    expect(screen.getAllByText("Juan Dela Cruz").length).toBeGreaterThanOrEqual(1);
+
+    // Filter again and click Refresh button
+    fireEvent.change(searchInput, { target: { value: "nonexistent@gmail.com" } });
+    const refreshBtn = screen.getByRole("button", { name: /refresh/i });
+    fireEvent.click(refreshBtn);
+
+    expect(searchInput).toHaveValue("");
+    expect(screen.getAllByText("Juan Dela Cruz").length).toBeGreaterThanOrEqual(1);
+  });
 });

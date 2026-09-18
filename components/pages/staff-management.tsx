@@ -21,6 +21,7 @@ import {
   Shield,
   Briefcase,
   Clock,
+  X,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -71,6 +72,7 @@ function PasswordField({
   onChange,
   placeholder,
   required,
+  autoComplete = "new-password",
 }: {
   id: string;
   label: string;
@@ -78,6 +80,7 @@ function PasswordField({
   onChange: (value: string) => void;
   placeholder?: string;
   required?: boolean;
+  autoComplete?: string;
 }) {
   const [show, setShow] = useState(false);
 
@@ -94,6 +97,7 @@ function PasswordField({
           value={value}
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder}
+          autoComplete={autoComplete}
           className="h-9 pr-9 text-sm"
         />
         <button
@@ -491,6 +495,10 @@ export default function StaffManagementPage({
     try {
       await resetPassword(resetTarget.id, newPassword);
       setResetOpen(false);
+      setNewPassword("");
+      setConfirmPassword("");
+      setPwError("");
+      setResetTarget(null);
       toast({
         title: "Password reset successfully",
         description: `${resetTarget.fullName}'s password has been updated.`,
@@ -623,14 +631,39 @@ export default function StaffManagementPage({
           <div className="relative min-w-0 flex-1 sm:w-64 sm:flex-none">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
+              type="search"
+              name="staff-search-filter"
+              autoComplete="off"
+              data-lpignore="true"
+              data-1p-ignore="true"
+              data-form-type="other"
               placeholder="Search staff, role, status…"
               aria-label="Search staff members by name, role, or status"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              className="h-9 w-full pl-8 text-sm"
+              className={cn("h-9 w-full pl-8 text-sm", search ? "pr-8" : "")}
             />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer p-0.5 rounded"
+                aria-label="Clear search"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
-          <Button size="sm" variant="outline" className="h-9 px-3 text-xs" onClick={() => void refresh()} disabled={loading}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-9 px-3 text-xs"
+            onClick={() => {
+              setSearch("");
+              void refresh();
+            }}
+            disabled={loading}
+          >
             <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </Button>
@@ -718,7 +751,22 @@ export default function StaffManagementPage({
                   <td colSpan={7} className="py-16 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <Users className="h-10 w-10 min-h-[44px] min-w-[44px] text-muted-foreground/20" />
-                      <p className="text-sm text-muted-foreground">No staff members found.</p>
+                      {search ? (
+                        <>
+                          <p className="text-sm font-medium text-foreground">No staff members matching &quot;{search}&quot;</p>
+                          <p className="text-xs text-muted-foreground">Check your search filter or clear it to view all staff.</p>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setSearch("")}
+                            className="mt-1 h-8 text-xs cursor-pointer"
+                          >
+                            Clear Search
+                          </Button>
+                        </>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">No staff members found.</p>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -826,9 +874,24 @@ export default function StaffManagementPage({
               </div>
             ))
           ) : filteredStaff.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2 py-16">
+            <div className="flex flex-col items-center justify-center gap-2 py-16 px-4 text-center">
               <Users className="h-10 w-10 min-h-[44px] min-w-[44px] text-muted-foreground/20" />
-              <p className="text-sm text-muted-foreground">No staff members found.</p>
+              {search ? (
+                <>
+                  <p className="text-sm font-medium text-foreground">No staff members matching &quot;{search}&quot;</p>
+                  <p className="text-xs text-muted-foreground">Check your search filter or clear it to view all staff.</p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setSearch("")}
+                    className="mt-1 h-8 text-xs cursor-pointer"
+                  >
+                    Clear Search
+                  </Button>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">No staff members found.</p>
+              )}
             </div>
           ) : (
             filteredStaff.map((staffAccount) => {
@@ -907,7 +970,14 @@ export default function StaffManagementPage({
               Add Staff Account
             </DialogTitle>
           </DialogHeader>
-          <div className="mt-1 space-y-3">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void handleAddStaff();
+            }}
+            autoComplete="off"
+            className="mt-1 space-y-3"
+          >
             <Field id="add-name" label="Full Name" value={addName} onChange={setAddName} placeholder="e.g. Maria Santos" required />
             {addErrors.name && <p className="-mt-2 text-xs text-destructive">{addErrors.name}</p>}
 
@@ -1000,8 +1070,8 @@ export default function StaffManagementPage({
             {addErrors.form && <p className="text-xs text-destructive">{addErrors.form}</p>}
 
             <Button
+              type="submit"
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
-              onClick={() => void handleAddStaff()}
               disabled={addSubmitting}
             >
               {addSubmitting ? (
@@ -1016,7 +1086,7 @@ export default function StaffManagementPage({
                 </>
               )}
             </Button>
-          </div>
+          </form>
         </DialogContent>
       </Dialog>
 
@@ -1092,7 +1162,18 @@ export default function StaffManagementPage({
       </Dialog>
 
       {/* Reset Password Dialog */}
-      <Dialog open={resetOpen} onOpenChange={setResetOpen}>
+      <Dialog
+        open={resetOpen}
+        onOpenChange={(open) => {
+          setResetOpen(open);
+          if (!open) {
+            setNewPassword("");
+            setConfirmPassword("");
+            setPwError("");
+            setResetTarget(null);
+          }
+        }}
+      >
         <DialogContent className="w-[calc(100vw-2rem)] max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-sm font-semibold">
@@ -1100,7 +1181,25 @@ export default function StaffManagementPage({
               Reset Password — {resetTarget?.fullName}
             </DialogTitle>
           </DialogHeader>
-          <div className="mt-1 space-y-3">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void handleResetPassword();
+            }}
+            autoComplete="off"
+            className="mt-1 space-y-3"
+          >
+            {/* Hidden username field so browser password managers associate this password with the specific staff member being updated, preventing autofill spillover into the page search input */}
+            <input
+              type="text"
+              name="username"
+              value={resetTarget?.email || resetTarget?.username || ""}
+              readOnly
+              tabIndex={-1}
+              autoComplete="username"
+              className="sr-only pointer-events-none"
+              aria-hidden="true"
+            />
             <PasswordField
               id="reset-new-pw"
               label="New Password"
@@ -1110,6 +1209,7 @@ export default function StaffManagementPage({
                 setPwError("");
               }}
               placeholder="Min. 8 characters"
+              autoComplete="new-password"
               required
             />
             <PasswordField
@@ -1121,12 +1221,13 @@ export default function StaffManagementPage({
                 setPwError("");
               }}
               placeholder="Re-enter new password"
+              autoComplete="new-password"
               required
             />
             {pwError && <p className="text-xs text-destructive">{pwError}</p>}
             <Button
+              type="submit"
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
-              onClick={() => void handleResetPassword()}
               disabled={resetSubmitting || !newPassword || !confirmPassword}
             >
               {resetSubmitting ? (
@@ -1141,7 +1242,7 @@ export default function StaffManagementPage({
                 </>
               )}
             </Button>
-          </div>
+          </form>
         </DialogContent>
       </Dialog>
 
