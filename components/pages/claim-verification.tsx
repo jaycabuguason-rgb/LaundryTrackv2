@@ -509,7 +509,7 @@ export default function ClaimVerificationPage({
                 <AlertTriangle className="mx-auto mb-1 h-5 w-5 text-amber-600 dark:text-amber-400" />
                 <p className="font-semibold">Ticket Already Claimed &amp; Disposed</p>
                 <p className="mt-0.5 text-xs text-amber-800/90 dark:text-amber-300/90">
-                  Ticket #{claimedNotice} has already been claimed and released. It is disposed from active verification but remains in your records and Claimed History below.
+                  Ticket #{claimedNotice} has already been claimed and released. It is disposed from active verification but remains in your records and Verification History below.
                 </p>
               </div>
             )}
@@ -686,7 +686,7 @@ export default function ClaimVerificationPage({
 
       <Card className="border border-border bg-card shadow-sm rounded-xl">
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">Audit Log</CardTitle>
+          <CardTitle className="text-sm font-semibold">Verification History</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-border md:hidden">

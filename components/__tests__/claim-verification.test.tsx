@@ -144,4 +144,17 @@ describe("ClaimVerificationPage Name Suggestions", () => {
     fireEvent.keyDown(input, { key: "Escape" });
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   });
+
+  it("renders the Verification History section", () => {
+    render(
+      <ClaimVerificationPage
+        transactions={mockTransactions}
+        onUpdateTransaction={vi.fn()}
+        onResolveScannedValue={vi.fn().mockResolvedValue(null)}
+      />
+    );
+
+    expect(screen.getByText("Verification History")).toBeInTheDocument();
+  });
 });
+
