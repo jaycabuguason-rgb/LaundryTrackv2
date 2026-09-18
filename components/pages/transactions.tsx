@@ -1631,10 +1631,10 @@ export default function TransactionsPage({
               type="button"
               variant="outline"
               size="icon"
-              className="w-9 h-9 rounded-full bg-secondary/10 border-border text-foreground hover:bg-secondary/20 shadow-xs"
-              onClick={() => setMobileShowScanner((prev) => !prev)}
-              aria-label="Quick Scan QR / Barcode"
-              title="Quick Scan QR / Barcode"
+              className="w-9 h-9 rounded-full bg-secondary/10 border-border text-foreground hover:bg-secondary/20 shadow-xs cursor-pointer"
+              onClick={() => (onNavigate ? onNavigate("claim-verification") : setMobileShowScanner((prev) => !prev))}
+              aria-label="Claim Verification"
+              title="Claim Verification"
             >
               <QrCode className="w-4 h-4" />
             </Button>

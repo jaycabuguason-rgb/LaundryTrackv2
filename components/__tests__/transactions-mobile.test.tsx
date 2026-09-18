@@ -93,11 +93,27 @@ describe("TransactionsPage Mobile Concept Layout", () => {
     expect(screen.getAllByText("12.5").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("kg").length).toBeGreaterThanOrEqual(1);
 
-    // Scan button and New Order button
+    // Scan button (Claim Verification) and New Order button
     expect(
-      screen.getByRole("button", { name: /quick scan qr \/ barcode/i })
+      screen.getByRole("button", { name: /claim verification/i })
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /new order/i })).toBeInTheDocument();
+  });
+
+  it("redirects to claim verification when QR button is clicked", () => {
+    const onNavigate = vi.fn();
+    render(
+      <TransactionsPage
+        transactions={mockTransactions}
+        onCreateTransaction={onCreateTransaction}
+        onUpdateTransaction={onUpdateTransaction}
+        onNavigate={onNavigate}
+      />
+    );
+
+    const qrBtn = screen.getByRole("button", { name: /claim verification/i });
+    fireEvent.click(qrBtn);
+    expect(onNavigate).toHaveBeenCalledWith("claim-verification");
   });
 
   it("switches mobile segmented tabs between Active, Claimed, All, and Voided", () => {
