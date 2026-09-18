@@ -9,6 +9,7 @@ export interface Transaction {
   arrivalDateTime: string; // Customer drop-off date & time
   dropOffDate: string;
   claimedAt?: string; // Date customer claimed
+  voidedAt?: string; // Date order was voided
   washType: string;
   weight: number;
   fee: number;

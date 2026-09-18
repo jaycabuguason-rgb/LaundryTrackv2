@@ -106,3 +106,14 @@ export function formatReadableDate(value: string | null | undefined): string {
     day: "numeric",
   }).format(date);
 }
+
+export function formatLifecycleDateTime(value: string | null | undefined): string {
+  if (!value) return "";
+  const formatted = formatReadableDateTime(value);
+  if (!formatted) return "";
+  const lastCommaIndex = formatted.lastIndexOf(", ");
+  if (lastCommaIndex !== -1) {
+    return `${formatted.slice(0, lastCommaIndex)} · ${formatted.slice(lastCommaIndex + 2)}`;
+  }
+  return formatted;
+}

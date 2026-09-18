@@ -7,7 +7,7 @@ import { type Transaction, type TransactionStatus } from "@/lib/data";
 import { StatusBadge, PaymentBadge } from "@/components/status-badge";
 import { CheckCircle2, Circle, CircleDot, Edit, Sparkles } from "lucide-react";
 import { useLoyaltyMembers } from "@/hooks/use-loyalty-members";
-import { formatReadableDateTime } from "@/lib/date-format";
+import { formatReadableDateTime, formatLifecycleDateTime } from "@/lib/date-format";
 
 interface TransactionDetailModalProps {
   open: boolean;
@@ -105,6 +105,27 @@ export function TransactionDetailModal({ open, onOpenChange, transaction, onEdit
               <div className="col-span-2">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Instructions</p>
                 <p className="text-sm text-foreground">{transaction.washInstructions}</p>
+              </div>
+            )}
+            {transaction.status === "Claimed" && (
+              <div className="col-span-2 bg-emerald-500/10 border border-emerald-500/20 rounded-md p-2.5">
+                <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider mb-0.5">Claimed Date &amp; Time</p>
+                <p className="text-sm font-medium text-emerald-900 dark:text-emerald-200">
+                  {formatLifecycleDateTime(transaction.claimedAt) || "Claimed time unavailable"}
+                </p>
+              </div>
+            )}
+            {transaction.status === "Voided" && (
+              <div className="col-span-2 bg-destructive/10 border border-destructive/20 rounded-md p-2.5">
+                <p className="text-xs font-semibold text-destructive uppercase tracking-wider mb-0.5">Voided Date &amp; Time</p>
+                <p className="text-sm font-medium text-destructive">
+                  {formatLifecycleDateTime(transaction.voidedAt) || "Voided time unavailable"}
+                </p>
+                {transaction.voidReason && (
+                  <p className="text-xs text-destructive/80 mt-1">
+                    <span className="font-semibold">Reason:</span> {transaction.voidReason}
+                  </p>
+                )}
               </div>
             )}
           </div>

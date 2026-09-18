@@ -33,7 +33,9 @@ describe("mapRealtimeRow", () => {
       special_instructions: "Handle with care",
       public_tracking_token: "token-abc",
       eta: "2026-09-18T10:00:00.000Z",
-      void_reason: null,
+      void_reason: "Customer cancelled",
+      claimed_at: "2026-09-18T14:34:00.000Z",
+      voided_at: "2026-09-18T15:08:00.000Z",
     };
 
     const mapped = mapRealtimeRow(raw);
@@ -50,6 +52,9 @@ describe("mapRealtimeRow", () => {
     expect(mapped?.addOns).toEqual(["Fabric Softener"]);
     expect(mapped?.washInstructions).toBe("Handle with care");
     expect(mapped?.publicTrackingToken).toBe("token-abc");
+    expect(mapped?.claimedAt).toBeDefined();
+    expect(mapped?.voidedAt).toBeDefined();
+    expect(mapped?.voidReason).toBe("Customer cancelled");
   });
 
   it("normalizes 'Drying' status to 'Washing'", () => {

@@ -361,6 +361,7 @@ alter table public.transactions
   add column if not exists eta timestamp with time zone,
   add column if not exists arrival_time timestamp with time zone not null default now(),
   add column if not exists claimed_at timestamp with time zone,
+  add column if not exists voided_at timestamp with time zone,
   add column if not exists created_by uuid references public.profiles(id) on delete set null,
   add column if not exists updated_by uuid references public.profiles(id) on delete set null,
   add column if not exists updated_at timestamp with time zone not null default now(),

@@ -62,8 +62,10 @@ export function mapRealtimeRow(row: unknown): Transaction | null {
   const arrivalDateTime = formatCompactDateTime(arrivalTimeRaw) || (typeof r.arrivalDateTime === "string" ? r.arrivalDateTime : "");
   const dropOffDate = formatCompactDate(arrivalTimeRaw) || (typeof r.dropOffDate === "string" ? r.dropOffDate : arrivalDateTime.split(" ")[0] || "");
   const status = normalizeStatus(r.status);
-  const claimedTimeRaw = (typeof r.claimed_at === "string" ? r.claimed_at : (typeof r.claimedAt === "string" ? r.claimedAt : null)) ?? (status === "Claimed" ? ((typeof r.updated_at === "string" ? r.updated_at : null) ?? arrivalTimeRaw) : null);
+  const claimedTimeRaw = typeof r.claimed_at === "string" ? r.claimed_at : (typeof r.claimedAt === "string" ? r.claimedAt : null);
   const claimedAt = claimedTimeRaw ? formatCompactDateTime(claimedTimeRaw) || undefined : undefined;
+  const voidedTimeRaw = typeof r.voided_at === "string" ? r.voided_at : (typeof r.voidedAt === "string" ? r.voidedAt : null);
+  const voidedAt = voidedTimeRaw ? formatCompactDateTime(voidedTimeRaw) || undefined : undefined;
 
   const washType = typeof r.wash_type === "string" ? r.wash_type : (typeof r.washType === "string" ? r.washType : "Regular");
   const weight = typeof r.weight_kg === "number" ? r.weight_kg : (Number(r.weight_kg ?? r.weight ?? 0) || 0);
@@ -84,6 +86,7 @@ export function mapRealtimeRow(row: unknown): Transaction | null {
     arrivalDateTime,
     dropOffDate,
     claimedAt,
+    voidedAt,
     washType,
     weight,
     fee,

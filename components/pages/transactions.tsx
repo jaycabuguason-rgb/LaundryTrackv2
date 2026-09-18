@@ -42,7 +42,7 @@ import {
 } from "@/components/ui/select";
 import { loyaltyMembers as _seedMembers, statusOrder, type Transaction, type PaymentStatus, type LoyaltyMember } from "@/lib/data";
 import { useLoyaltyMembers } from "@/hooks/use-loyalty-members";
-import { formatReadableDateTime } from "@/lib/date-format";
+import { formatReadableDateTime, formatLifecycleDateTime } from "@/lib/date-format";
 import {
   type ServiceType,
   type AddOn,
@@ -1221,6 +1221,24 @@ export default function TransactionsPage({
     }
   }
 
+  function getTerminalLifecycleInfo(txn: Transaction): { label: string; dateText: string } | null {
+    if (txn.status === "Claimed") {
+      const formatted = formatLifecycleDateTime(txn.claimedAt);
+      return {
+        label: "Claimed",
+        dateText: formatted || "Claimed time unavailable",
+      };
+    }
+    if (txn.status === "Voided") {
+      const formatted = formatLifecycleDateTime(txn.voidedAt);
+      return {
+        label: "Voided",
+        dateText: formatted || "Voided time unavailable",
+      };
+    }
+    return null;
+  }
+
   // New Transaction wizard
   const [showWizard, setShowWizard] = useState(false);
 
@@ -1965,6 +1983,7 @@ export default function TransactionsPage({
           {filtered.map((txn) => {
             const isVoided = txn.status === "Voided";
             const isClaimed = txn.status === "Claimed";
+            const terminalInfo = getTerminalLifecycleInfo(txn);
             const isReady = txn.status === "Ready";
             const isWashing = txn.status === "Washing" || txn.status === "Drying";
 
@@ -2073,6 +2092,16 @@ export default function TransactionsPage({
                     {/* Status Indicators Pill Column */}
                     <div className="flex flex-col items-end gap-1 shrink-0">
                       <StatusBadge status={txn.status} />
+                      {terminalInfo && (
+                        <span className="text-[11px] text-muted-foreground whitespace-nowrap font-medium text-right">
+                          {terminalInfo.label} {terminalInfo.dateText}
+                        </span>
+                      )}
+                      {isVoided && txn.voidReason && (
+                        <span className="text-[10px] text-destructive/90 font-medium truncate max-w-[160px] text-right">
+                          Reason: {txn.voidReason}
+                        </span>
+                      )}
                       <PaymentBadge paymentStatus={txn.paymentStatus} />
                     </div>
                   </div>
@@ -2467,6 +2496,7 @@ export default function TransactionsPage({
           {filtered.map((txn) => {
             const isVoided = txn.status === "Voided";
             const isClaimed = txn.status === "Claimed";
+            const terminalInfo = getTerminalLifecycleInfo(txn);
             return (
               <div
                 key={txn.id}
@@ -2529,18 +2559,27 @@ export default function TransactionsPage({
                       {txn.washType}{txn.weight ? ` · ${txn.weight} kg` : ""}
                       {txn.addOns && txn.addOns.length > 0 ? ` · ${txn.addOns.join(", ")}` : ""}
                     </p>
-                    {isVoided && txn.voidReason && (
-                      <p className="text-[11px] text-destructive/80 font-medium mt-1 truncate">
-                        Reason: {txn.voidReason}
-                      </p>
-                    )}
                   </div>
                 </div>
 
                 {/* Right Section: Badges, Actions, Price & Date */}
                 <div className="flex items-center flex-wrap sm:flex-nowrap justify-between sm:justify-end gap-2.5 sm:gap-4 shrink-0">
-                  {/* Status Badge */}
-                  <StatusBadge status={txn.status} />
+                  {/* Status Badge & Lifecycle Timestamp */}
+                  <div className="flex flex-col items-start sm:items-end gap-0.5">
+                    <div className="flex items-center gap-2">
+                      <StatusBadge status={txn.status} />
+                      {terminalInfo && (
+                        <span className="text-xs text-muted-foreground whitespace-nowrap font-medium">
+                          {terminalInfo.label} {terminalInfo.dateText}
+                        </span>
+                      )}
+                    </div>
+                    {isVoided && txn.voidReason && (
+                      <p className="text-[11px] text-destructive/90 font-medium truncate max-w-[240px] text-left sm:text-right">
+                        Reason: {txn.voidReason}
+                      </p>
+                    )}
+                  </div>
 
                   {/* Payment Badge */}
                   <PaymentBadge paymentStatus={txn.paymentStatus} />
@@ -3008,6 +3047,15 @@ export default function TransactionsPage({
                   <p className="text-xs text-muted-foreground mb-1">Current Status</p>
                   <StatusBadge status={viewTxn.status} />
                 </div>
+                {/* Claimed Date & Time read-only */}
+                {viewTxn.status === "Claimed" && (
+                  <div className="col-span-2 bg-emerald-500/10 border border-emerald-500/20 rounded-md p-2.5">
+                    <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300">Claimed Date &amp; Time</p>
+                    <p className="font-medium text-emerald-900 dark:text-emerald-200 text-xs mt-0.5">
+                      {formatLifecycleDateTime(viewTxn.claimedAt) || "Claimed time unavailable"}
+                    </p>
+                  </div>
+                )}
                 {/* Wash instructions read-only */}
                 {viewTxn.washInstructions && (
                   <div className="col-span-2 bg-muted/30 rounded-md p-2.5">
@@ -3015,10 +3063,14 @@ export default function TransactionsPage({
                     <p className="font-medium text-foreground text-xs mt-0.5">{viewTxn.washInstructions}</p>
                   </div>
                 )}
-                {/* Void reason read-only */}
+                {/* Void reason and timestamp read-only */}
                 {viewTxn.status === "Voided" && (
                   <div className="col-span-2 bg-destructive/10 border border-destructive/20 rounded-md p-2.5">
-                    <p className="text-xs font-semibold text-destructive">Void Reason</p>
+                    <p className="text-xs font-semibold text-destructive">Voided Date &amp; Time</p>
+                    <p className="font-medium text-destructive text-xs mt-0.5">
+                      {formatLifecycleDateTime(viewTxn.voidedAt) || "Voided time unavailable"}
+                    </p>
+                    <p className="text-xs font-semibold text-destructive mt-2">Void Reason</p>
                     <p className="font-medium text-destructive text-xs mt-0.5">{viewTxn.voidReason || "No specific reason provided."}</p>
                   </div>
                 )}

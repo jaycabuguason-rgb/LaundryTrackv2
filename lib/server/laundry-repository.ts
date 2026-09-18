@@ -34,6 +34,7 @@ type TransactionRow = {
   eta: string | null;
   arrival_time: string | null;
   claimed_at?: string | null;
+  voided_at?: string | null;
   updated_at: string | null;
   created_at: string | null;
   void_reason: string | null;
@@ -45,7 +46,7 @@ type SettingsRow<T = unknown> = {
 };
 
 const TRANSACTION_SELECT =
-  "id,ticket_id,customer_name,phone_number,wash_type,weight_kg,addons,special_instructions,fee,status,payment_status,public_tracking_token,eta,arrival_time,claimed_at,updated_at,created_at,void_reason";
+  "id,ticket_id,customer_name,phone_number,wash_type,weight_kg,addons,special_instructions,fee,status,payment_status,public_tracking_token,eta,arrival_time,claimed_at,voided_at,updated_at,created_at,void_reason";
 const TRANSACTION_LIST_CACHE_TTL_MS = 5_000;
 const transactionListCache = createTtlCache<Transaction[]>();
 
@@ -82,6 +83,7 @@ let mockTransactions: TransactionRow[] = seedTransactions.map((transaction, inde
     eta: null,
     arrival_time: timestamp,
     claimed_at: transaction.claimedAt ? normalizeLocalDateTime(transaction.claimedAt) : null,
+    voided_at: transaction.voidedAt ? normalizeLocalDateTime(transaction.voidedAt) : (transaction.status === "Voided" ? timestamp : null),
     updated_at: timestamp,
     created_at: timestamp,
     void_reason: transaction.status === "Voided" ? "Voided in mock data" : null,
@@ -123,7 +125,8 @@ function createTrackingToken(): string {
 function mapRowToTransaction(row: TransactionRow): Transaction {
   const arrivalTimestamp = row.arrival_time ?? row.created_at;
   const status = normalizeStatus(row.status);
-  const claimedTimestamp = row.claimed_at ?? (status === "Claimed" ? (row.updated_at ?? arrivalTimestamp) : null);
+  const claimedTimestamp = row.claimed_at;
+  const voidedTimestamp = row.voided_at;
 
   return {
     id: row.id,
@@ -133,6 +136,7 @@ function mapRowToTransaction(row: TransactionRow): Transaction {
     arrivalDateTime: formatCompactDateTime(arrivalTimestamp),
     dropOffDate: formatCompactDate(arrivalTimestamp),
     claimedAt: claimedTimestamp ? formatCompactDateTime(claimedTimestamp) : undefined,
+    voidedAt: voidedTimestamp ? formatCompactDateTime(voidedTimestamp) : undefined,
     washType: row.wash_type,
     weight: Number(row.weight_kg ?? 0),
     fee: Number(row.fee ?? 0),
@@ -288,9 +292,22 @@ async function createSupabaseTransaction(input: CreateTransactionInput): Promise
 }
 
 async function updateSupabaseTransaction(ticketId: string, updates: UpdateTransactionInput): Promise<TransactionRow> {
+  const existing = await getSupabaseTransactionByTicket(ticketId);
+  if (!existing) {
+    throw new Error(`Transaction ${ticketId} was not found.`);
+  }
+
   const payload: Record<string, unknown> = {};
 
-  if (updates.status) payload.status = updates.status;
+  if (updates.status) {
+    payload.status = updates.status;
+    if (updates.status === "Claimed" && !existing.claimed_at) {
+      payload.claimed_at = new Date().toISOString();
+    }
+    if (updates.status === "Voided" && !existing.voided_at) {
+      payload.voided_at = new Date().toISOString();
+    }
+  }
   if (updates.paymentStatus) payload.payment_status = updates.paymentStatus;
   if (updates.washInstructions !== undefined) payload.special_instructions = updates.washInstructions?.trim() || null;
   if (updates.eta !== undefined) payload.eta = normalizeLocalDateTime(updates.eta ?? null);
@@ -403,6 +420,7 @@ function createMockTransaction(input: CreateTransactionInput): TransactionRow {
     eta: normalizeLocalDateTime(input.eta ?? null),
     arrival_time: normalizeLocalDateTime(input.arrivalDateTime) ?? now,
     claimed_at: null,
+    voided_at: null,
     updated_at: now,
     created_at: now,
     void_reason: null,
@@ -418,6 +436,17 @@ function updateMockTransaction(ticketId: string, updates: UpdateTransactionInput
     throw new Error(`Transaction ${ticketId} was not found.`);
   }
 
+  const now = new Date().toISOString();
+  let claimed_at = existing.claimed_at;
+  let voided_at = existing.voided_at;
+
+  if (updates.status === "Claimed" && !claimed_at) {
+    claimed_at = now;
+  }
+  if (updates.status === "Voided" && !voided_at) {
+    voided_at = now;
+  }
+
   const updated: TransactionRow = {
     ...existing,
     status: updates.status ?? existing.status,
@@ -428,7 +457,9 @@ function updateMockTransaction(ticketId: string, updates: UpdateTransactionInput
         : existing.special_instructions,
     eta: updates.eta !== undefined ? normalizeLocalDateTime(updates.eta ?? null) : existing.eta,
     void_reason: updates.voidReason !== undefined ? updates.voidReason?.trim() || null : existing.void_reason,
-    updated_at: new Date().toISOString(),
+    claimed_at,
+    voided_at,
+    updated_at: now,
   };
 
   mockTransactions = mockTransactions.map((transaction) =>
