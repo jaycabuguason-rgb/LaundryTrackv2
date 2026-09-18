@@ -400,7 +400,7 @@ export default function DashboardPage({
                     {activeOrdersCount}
                   </span>
                   <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                    In Pipeline
+                    Active
                   </span>
                 </div>
               </div>
