@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { Search, CheckCircle, XCircle, AlertTriangle, Printer } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Search, CheckCircle, XCircle, AlertTriangle, Printer, ArrowRight } from "lucide-react";
 import QRScanner from "@/components/qr-scanner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,23 @@ import { formatReadableDateTime } from "@/lib/date-format";
 import type { UpdateTransactionInput } from "@/lib/transaction-contracts";
 import { cn } from "@/lib/utils";
 import { playScanSuccessFeedback } from "@/lib/scanner-feedback";
+
+function highlightMatch(text: string, query: string) {
+  const trimmed = query.trim();
+  if (!trimmed) return text;
+  const index = text.toLowerCase().indexOf(trimmed.toLowerCase());
+  if (index === -1) return text;
+  const before = text.slice(0, index);
+  const match = text.slice(index, index + trimmed.length);
+  const after = text.slice(index + trimmed.length);
+  return (
+    <>
+      {before}
+      <span className="font-extrabold text-primary underline decoration-primary/40">{match}</span>
+      {after}
+    </>
+  );
+}
 
 interface ClaimVerificationPageProps {
   transactions: Transaction[];
@@ -43,6 +60,80 @@ export default function ClaimVerificationPage({
   const [reprintTransaction, setReprintTransaction] = useState<Transaction | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [claimedNotice, setClaimedNotice] = useState<string | null>(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Autocomplete suggestions based on first letter or query match
+  const suggestions = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+
+    const matches = transactions.filter((t) => {
+      const name = (t.customerName || "").toLowerCase();
+      const ticket = (t.ticketId || "").toLowerCase();
+      const phone = (t.phone || "").replace(/\D/g, "");
+      const cleanQ = q.replace(/\D/g, "");
+      return (
+        name.includes(q) ||
+        ticket.includes(q) ||
+        (cleanQ.length >= 3 && phone.includes(cleanQ))
+      );
+    });
+
+    return matches
+      .sort((a, b) => {
+        // 1. Prioritize names starting with query
+        const aNameStarts = (a.customerName || "").toLowerCase().startsWith(q);
+        const bNameStarts = (b.customerName || "").toLowerCase().startsWith(q);
+        if (aNameStarts && !bNameStarts) return -1;
+        if (!aNameStarts && bNameStarts) return 1;
+
+        // 2. Prioritize tickets starting with query
+        const aTicketStarts = (a.ticketId || "").toLowerCase().startsWith(q);
+        const bTicketStarts = (b.ticketId || "").toLowerCase().startsWith(q);
+        if (aTicketStarts && !bTicketStarts) return -1;
+        if (!aTicketStarts && bTicketStarts) return 1;
+
+        // 3. Prioritize active operational statuses
+        const statusRank: Record<string, number> = {
+          Ready: 1,
+          Washing: 2,
+          Received: 3,
+          Claimed: 4,
+          Voided: 5,
+        };
+        const rankA = statusRank[a.status] ?? 99;
+        const rankB = statusRank[b.status] ?? 99;
+        return rankA - rankB;
+      })
+      .slice(0, 6);
+  }, [query, transactions]);
+
+  const handleSelectSuggestion = (transaction: Transaction) => {
+    setQuery(transaction.customerName);
+    setShowSuggestions(false);
+    setHighlightedIndex(-1);
+    if (transaction.status === "Claimed") {
+      setResult(null);
+      setNotFound(false);
+      setClaimedNotice(transaction.ticketId);
+    } else {
+      setClaimedNotice(null);
+      selectTransaction(transaction, "Via Name Suggestion");
+    }
+  };
 
   const isAutoLookupQuery = useCallback((value: string) => {
     const trimmed = value.trim();
@@ -280,17 +371,131 @@ export default function ClaimVerificationPage({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-col gap-2 sm:flex-row">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <div className="relative flex-1" ref={containerRef}>
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10 pointer-events-none" />
                 <Input
                   placeholder="Claim code, Ticket ID, or customer name…"
                   value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  onKeyDown={(event) => event.key === "Enter" && void handleSearch()}
+                  autoComplete="off"
+                  onChange={(event) => {
+                    setQuery(event.target.value);
+                    setShowSuggestions(true);
+                    setHighlightedIndex(-1);
+                  }}
+                  onFocus={() => {
+                    if (query.trim().length >= 1) {
+                      setShowSuggestions(true);
+                    }
+                  }}
+                  onKeyDown={(event) => {
+                    if (showSuggestions && suggestions.length > 0) {
+                      if (event.key === "ArrowDown") {
+                        event.preventDefault();
+                        setHighlightedIndex((prev) => (prev < suggestions.length - 1 ? prev + 1 : 0));
+                        return;
+                      }
+                      if (event.key === "ArrowUp") {
+                        event.preventDefault();
+                        setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : suggestions.length - 1));
+                        return;
+                      }
+                      if (event.key === "Enter" && highlightedIndex >= 0 && highlightedIndex < suggestions.length) {
+                        event.preventDefault();
+                        handleSelectSuggestion(suggestions[highlightedIndex]);
+                        return;
+                      }
+                      if (event.key === "Escape") {
+                        event.preventDefault();
+                        setShowSuggestions(false);
+                        return;
+                      }
+                    }
+                    if (event.key === "Enter") {
+                      setShowSuggestions(false);
+                      void handleSearch();
+                    }
+                  }}
                   className="h-10 pl-9 text-sm md:h-9 bg-background"
                 />
+
+                {/* Autocomplete Suggestions Dropdown */}
+                {showSuggestions && suggestions.length > 0 && (
+                  <div
+                    role="listbox"
+                    aria-label="Suggested customers"
+                    className="absolute top-full left-0 right-0 z-50 mt-1.5 overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-2xl animate-in fade-in-0 zoom-in-95 duration-150"
+                  >
+                    <div className="flex items-center justify-between border-b border-border/60 bg-muted/40 px-3 py-1.5">
+                      <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                        Suggested Matches ({suggestions.length})
+                      </span>
+                      <span className="hidden sm:inline text-[10px] text-muted-foreground">
+                        Press ↑↓ to navigate, Enter to select
+                      </span>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto divide-y divide-border/40 p-1">
+                      {suggestions.map((item, index) => {
+                        const isHighlighted = index === highlightedIndex;
+                        return (
+                          <button
+                            key={item.id || item.ticketId}
+                            type="button"
+                            role="option"
+                            aria-selected={isHighlighted}
+                            onClick={() => handleSelectSuggestion(item)}
+                            onMouseEnter={() => setHighlightedIndex(index)}
+                            className={cn(
+                              "flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition-colors cursor-pointer",
+                              isHighlighted ? "bg-accent text-accent-foreground" : "hover:bg-muted/60"
+                            )}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary font-bold text-xs">
+                                {item.customerName ? item.customerName.charAt(0).toUpperCase() : "?"}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-bold text-foreground truncate">
+                                    {highlightMatch(item.customerName, query)}
+                                  </span>
+                                  <span className="font-mono text-[11px] text-muted-foreground shrink-0">
+                                    #{item.ticketId}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground truncate">
+                                  <span>{item.washType || "Regular"}</span>
+                                  <span>•</span>
+                                  <span>₱{item.fee.toLocaleString()}</span>
+                                  {item.dropOffDate && (
+                                    <>
+                                      <span>•</span>
+                                      <span className="truncate">{item.dropOffDate}</span>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="shrink-0 flex items-center gap-1.5">
+                              <StatusBadge status={item.status} />
+                              <ArrowRight className="w-3.5 h-3.5 text-muted-foreground opacity-60" />
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
-              <Button size="sm" onClick={() => void handleSearch()} className="min-h-[44px] px-4 md:min-h-0" disabled={loading}>
+              <Button
+                size="sm"
+                onClick={() => {
+                  setShowSuggestions(false);
+                  void handleSearch();
+                }}
+                className="min-h-[44px] px-4 md:min-h-0"
+                disabled={loading}
+              >
                 Search
               </Button>
             </div>
