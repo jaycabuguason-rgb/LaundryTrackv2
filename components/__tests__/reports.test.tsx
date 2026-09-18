@@ -73,7 +73,7 @@ describe("ReportsPage Responsiveness and Mobile Concept Layout", () => {
     expect(headings.length).toBeGreaterThanOrEqual(1);
 
     expect(screen.getByText("3 total transactions")).toBeInTheDocument();
-    expect(screen.getByText("3 total")).toBeInTheDocument();
+    expect(screen.queryByText("3 total")).not.toBeInTheDocument();
   });
 
   it("renders mobile 2x2 metric cards and operational capacity visualizer", () => {
@@ -156,6 +156,6 @@ describe("ReportsPage Responsiveness and Mobile Concept Layout", () => {
 
     expect(screen.getByText(/No report data yet/i)).toBeInTheDocument();
     expect(screen.getByText("0 total transactions")).toBeInTheDocument();
-    expect(screen.getByText("0 total")).toBeInTheDocument();
+    expect(screen.queryByText("0 total")).not.toBeInTheDocument();
   });
 });

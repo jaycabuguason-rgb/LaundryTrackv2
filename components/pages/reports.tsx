@@ -665,17 +665,13 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
       </div>
 
       {/* Mobile Concept Header */}
-      <div className="flex items-end justify-between gap-2 pt-1 pb-0.5 md:hidden">
+      <div className="flex items-center justify-between gap-2 pt-1 pb-0.5 md:hidden">
         <div className="flex flex-col min-w-0">
           <div className="flex items-center gap-1.5">
             <h1 className="text-xl font-bold tracking-tight text-foreground">Reports</h1>
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse inline-block" />
           </div>
           <p className="text-xs text-muted-foreground truncate">Business analytics & daily laundry summaries</p>
-        </div>
-        <div className="flex items-center gap-1.5 bg-muted/60 text-foreground px-2.5 py-1 rounded-full text-xs font-semibold shrink-0">
-          <RotateCw className="w-3 h-3 text-primary animate-spin" style={{ animationDuration: '4s' }} />
-          <span>{transactions.length} total</span>
         </div>
       </div>
 
