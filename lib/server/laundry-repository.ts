@@ -47,6 +47,20 @@ type SettingsRow<T = unknown> = {
 
 const TRANSACTION_SELECT =
   "id,ticket_id,customer_name,phone_number,wash_type,weight_kg,addons,special_instructions,fee,status,payment_status,public_tracking_token,eta,arrival_time,claimed_at,voided_at,updated_at,created_at,void_reason";
+const TRANSACTION_SELECT_NO_VOIDED_AT =
+  "id,ticket_id,customer_name,phone_number,wash_type,weight_kg,addons,special_instructions,fee,status,payment_status,public_tracking_token,eta,arrival_time,claimed_at,updated_at,created_at,void_reason";
+
+let hasVoidedAtColumn = true;
+
+function isMissingVoidedAtError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return message.includes("voided_at") || message.includes("42703");
+}
+
+function getTransactionSelect(): string {
+  return hasVoidedAtColumn ? TRANSACTION_SELECT : TRANSACTION_SELECT_NO_VOIDED_AT;
+}
+
 const TRANSACTION_LIST_CACHE_TTL_MS = 5_000;
 const transactionListCache = createTtlCache<Transaction[]>();
 
@@ -228,20 +242,49 @@ async function restRequest<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 async function listSupabaseRows(): Promise<TransactionRow[]> {
-  const query = `transactions?select=${TRANSACTION_SELECT}&order=arrival_time.desc.nullslast,created_at.desc`;
-  return restRequest<TransactionRow[]>(query);
+  try {
+    const query = `transactions?select=${getTransactionSelect()}&order=arrival_time.desc.nullslast,created_at.desc`;
+    return await restRequest<TransactionRow[]>(query);
+  } catch (error) {
+    if (hasVoidedAtColumn && isMissingVoidedAtError(error)) {
+      hasVoidedAtColumn = false;
+      const fallbackQuery = `transactions?select=${TRANSACTION_SELECT_NO_VOIDED_AT}&order=arrival_time.desc.nullslast,created_at.desc`;
+      return await restRequest<TransactionRow[]>(fallbackQuery);
+    }
+    throw error;
+  }
 }
 
 async function getSupabaseTransactionByTicket(ticketId: string): Promise<TransactionRow | null> {
-  const query = `transactions?select=${TRANSACTION_SELECT}&ticket_id=eq.${encodeURIComponent(ticketId)}&limit=1`;
-  const rows = await restRequest<TransactionRow[]>(query);
-  return rows[0] ?? null;
+  try {
+    const query = `transactions?select=${getTransactionSelect()}&ticket_id=eq.${encodeURIComponent(ticketId)}&limit=1`;
+    const rows = await restRequest<TransactionRow[]>(query);
+    return rows[0] ?? null;
+  } catch (error) {
+    if (hasVoidedAtColumn && isMissingVoidedAtError(error)) {
+      hasVoidedAtColumn = false;
+      const fallbackQuery = `transactions?select=${TRANSACTION_SELECT_NO_VOIDED_AT}&ticket_id=eq.${encodeURIComponent(ticketId)}&limit=1`;
+      const rows = await restRequest<TransactionRow[]>(fallbackQuery);
+      return rows[0] ?? null;
+    }
+    throw error;
+  }
 }
 
 async function getSupabaseTransactionByToken(token: string): Promise<TransactionRow | null> {
-  const query = `transactions?select=${TRANSACTION_SELECT}&public_tracking_token=eq.${encodeURIComponent(token)}&limit=1`;
-  const rows = await restRequest<TransactionRow[]>(query);
-  return rows[0] ?? null;
+  try {
+    const query = `transactions?select=${getTransactionSelect()}&public_tracking_token=eq.${encodeURIComponent(token)}&limit=1`;
+    const rows = await restRequest<TransactionRow[]>(query);
+    return rows[0] ?? null;
+  } catch (error) {
+    if (hasVoidedAtColumn && isMissingVoidedAtError(error)) {
+      hasVoidedAtColumn = false;
+      const fallbackQuery = `transactions?select=${TRANSACTION_SELECT_NO_VOIDED_AT}&public_tracking_token=eq.${encodeURIComponent(token)}&limit=1`;
+      const rows = await restRequest<TransactionRow[]>(fallbackQuery);
+      return rows[0] ?? null;
+    }
+    throw error;
+  }
 }
 
 async function getNextSupabaseTicketId(): Promise<string> {
@@ -313,20 +356,42 @@ async function updateSupabaseTransaction(ticketId: string, updates: UpdateTransa
   if (updates.eta !== undefined) payload.eta = normalizeLocalDateTime(updates.eta ?? null);
   if (updates.voidReason !== undefined) payload.void_reason = updates.voidReason?.trim() || null;
 
-  const query = `transactions?ticket_id=eq.${encodeURIComponent(ticketId)}&select=${TRANSACTION_SELECT}`;
-  const rows = await restRequest<TransactionRow[]>(query, {
-    method: "PATCH",
-    headers: {
-      Prefer: "return=representation",
-    },
-    body: JSON.stringify(payload),
-  });
+  const query = `transactions?ticket_id=eq.${encodeURIComponent(ticketId)}&select=${getTransactionSelect()}`;
+  try {
+    const rows = await restRequest<TransactionRow[]>(query, {
+      method: "PATCH",
+      headers: {
+        Prefer: "return=representation",
+      },
+      body: JSON.stringify(payload),
+    });
 
-  if (!rows[0]) {
-    throw new Error(`Transaction ${ticketId} was not found.`);
+    if (!rows[0]) {
+      throw new Error(`Transaction ${ticketId} was not found.`);
+    }
+
+    return rows[0];
+  } catch (error) {
+    if (hasVoidedAtColumn && isMissingVoidedAtError(error)) {
+      hasVoidedAtColumn = false;
+      delete payload.voided_at;
+      const fallbackQuery = `transactions?ticket_id=eq.${encodeURIComponent(ticketId)}&select=${TRANSACTION_SELECT_NO_VOIDED_AT}`;
+      const rows = await restRequest<TransactionRow[]>(fallbackQuery, {
+        method: "PATCH",
+        headers: {
+          Prefer: "return=representation",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!rows[0]) {
+        throw new Error(`Transaction ${ticketId} was not found.`);
+      }
+
+      return rows[0];
+    }
+    throw error;
   }
-
-  return rows[0];
 }
 
 async function getSupabaseSettings<T>(key: string, fallback: T): Promise<T> {
