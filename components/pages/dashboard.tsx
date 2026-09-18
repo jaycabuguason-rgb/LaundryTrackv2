@@ -15,7 +15,6 @@ import {
   Package,
   Inbox,
   RotateCw,
-  Wind,
   QrCode,
   Layers,
 } from "lucide-react";
@@ -69,13 +68,12 @@ export default function DashboardPage({
     }
   };
 
-  // Counts & Metrics
+  // Counts & Metrics (3 Operational Stages: Received -> Washing -> Ready)
   const totalOrders = transactions.length;
   const receivedCount = transactions.filter((t) => t.status === "Received").length;
-  const washingCount = transactions.filter((t) => t.status === "Washing").length;
-  const dryingCount = transactions.filter((t) => t.status === "Drying").length;
+  const washingCount = transactions.filter((t) => t.status === "Washing" || t.status === "Drying").length;
   const readyCount = transactions.filter((t) => t.status === "Ready").length;
-  const activeOrdersCount = receivedCount + washingCount + dryingCount + readyCount;
+  const activeOrdersCount = receivedCount + washingCount + readyCount;
 
   const paidRevenue = transactions
     .filter((t) => t.paymentStatus === "paid" && t.status !== "Voided")
@@ -83,11 +81,10 @@ export default function DashboardPage({
 
   const totalMembers = liveMembers.length > 0 ? liveMembers.length : initialLoyaltyMembers.length;
 
-  // Donut chart calculations (Active Pipeline)
+  // Donut chart calculations (Active Pipeline: Received -> Washing -> Ready)
   const chartTotal = Math.max(1, activeOrdersCount);
   const receivedPct = (receivedCount / chartTotal) * 100;
   const washingPct = (washingCount / chartTotal) * 100;
-  const dryingPct = (dryingCount / chartTotal) * 100;
   const readyPct = (readyCount / chartTotal) * 100;
 
   // SVG Donut circumference (radius = 38, circumference ≈ 238.76)
@@ -95,13 +92,11 @@ export default function DashboardPage({
   const circumference = 2 * Math.PI * radius;
   const strokeReceived = (receivedPct / 100) * circumference;
   const strokeWashing = (washingPct / 100) * circumference;
-  const strokeDrying = (dryingPct / 100) * circumference;
   const strokeReady = (readyPct / 100) * circumference;
 
   const offsetReceived = 0;
   const offsetWashing = -strokeReceived;
-  const offsetDrying = -(strokeReceived + strokeWashing);
-  const offsetReady = -(strokeReceived + strokeWashing + strokeDrying);
+  const offsetReady = -(strokeReceived + strokeWashing);
 
   return (
     <div className="space-y-5 max-w-7xl mx-auto pb-10">
@@ -343,7 +338,7 @@ export default function DashboardPage({
                   className="w-36 h-36 -rotate-90"
                   viewBox="0 0 100 100"
                   role="img"
-                  aria-label={`Order distribution: ${receivedCount} received, ${washingCount} washing, ${dryingCount} drying, ${readyCount} ready`}
+                  aria-label={`Order distribution: ${receivedCount} received, ${washingCount} washing, ${readyCount} ready`}
                 >
                   {/* Background Track */}
                   <circle
@@ -383,20 +378,6 @@ export default function DashboardPage({
                       strokeLinecap="round"
                     />
                   )}
-                  {/* Drying Segment (Amber) */}
-                  {dryingCount > 0 && (
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r={radius}
-                      fill="none"
-                      stroke="#f59e0b"
-                      strokeWidth="10"
-                      strokeDasharray={`${strokeDrying} ${circumference}`}
-                      strokeDashoffset={offsetDrying}
-                      strokeLinecap="round"
-                    />
-                  )}
                   {/* Ready Segment (Emerald) */}
                   {readyCount > 0 && (
                     <circle
@@ -424,29 +405,25 @@ export default function DashboardPage({
                 </div>
               </div>
 
-              {/* Stage Summary 2x2 Grid */}
-              <div className="grid grid-cols-2 gap-2.5 w-full">
+              {/* Stage Summary 3-Column Bento Grid (Option 3) */}
+              <div className="grid grid-cols-3 gap-2 sm:gap-2.5 w-full">
                 {/* Received */}
                 <div
                   role={onNavigate ? "button" : undefined}
                   tabIndex={onNavigate ? 0 : undefined}
                   onClick={() => onNavigate?.("processing")}
                   onKeyDown={(e) => onNavigate && handleCardKeyDown(e, "processing")}
-                  className="group rounded-xl border border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 p-2.5 transition-all cursor-pointer flex items-center justify-between"
+                  className="group rounded-xl border border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 p-2 sm:p-2.5 transition-all cursor-pointer flex flex-col justify-between items-center text-center space-y-1"
                 >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-7 h-7 rounded-lg bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
-                      <Inbox className="w-3.5 h-3.5" aria-hidden="true" />
-                    </div>
-                    <div className="min-w-0">
-                      <span className="text-xs text-foreground font-semibold block truncate">Received</span>
-                      <span className="text-[11px] text-muted-foreground font-medium">
-                        {activeOrdersCount > 0 ? `${Math.round(receivedPct)}%` : "0%"}
-                      </span>
-                    </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" aria-hidden="true" />
+                    <span className="text-xs text-foreground font-semibold truncate">Received</span>
                   </div>
-                  <span className="text-base font-bold text-foreground tabular-nums shrink-0 ml-1">
+                  <span className="text-lg sm:text-xl font-bold text-foreground tabular-nums leading-tight">
                     {receivedCount}
+                  </span>
+                  <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400">
+                    {activeOrdersCount > 0 ? `${Math.round(receivedPct)}%` : "0%"}
                   </span>
                 </div>
 
@@ -456,45 +433,17 @@ export default function DashboardPage({
                   tabIndex={onNavigate ? 0 : undefined}
                   onClick={() => onNavigate?.("processing")}
                   onKeyDown={(e) => onNavigate && handleCardKeyDown(e, "processing")}
-                  className="group rounded-xl border border-blue-500/20 bg-blue-500/5 hover:bg-blue-500/10 p-2.5 transition-all cursor-pointer flex items-center justify-between"
+                  className="group rounded-xl border border-blue-500/20 bg-blue-500/5 hover:bg-blue-500/10 p-2 sm:p-2.5 transition-all cursor-pointer flex flex-col justify-between items-center text-center space-y-1"
                 >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-7 h-7 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-                      <RotateCw className="w-3.5 h-3.5" aria-hidden="true" />
-                    </div>
-                    <div className="min-w-0">
-                      <span className="text-xs text-foreground font-semibold block truncate">Washing</span>
-                      <span className="text-[11px] text-muted-foreground font-medium">
-                        {activeOrdersCount > 0 ? `${Math.round(washingPct)}%` : "0%"}
-                      </span>
-                    </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" aria-hidden="true" />
+                    <span className="text-xs text-foreground font-semibold truncate">Washing</span>
                   </div>
-                  <span className="text-base font-bold text-foreground tabular-nums shrink-0 ml-1">
+                  <span className="text-lg sm:text-xl font-bold text-foreground tabular-nums leading-tight">
                     {washingCount}
                   </span>
-                </div>
-
-                {/* Drying */}
-                <div
-                  role={onNavigate ? "button" : undefined}
-                  tabIndex={onNavigate ? 0 : undefined}
-                  onClick={() => onNavigate?.("processing")}
-                  onKeyDown={(e) => onNavigate && handleCardKeyDown(e, "processing")}
-                  className="group rounded-xl border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 p-2.5 transition-all cursor-pointer flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-7 h-7 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                      <Wind className="w-3.5 h-3.5" aria-hidden="true" />
-                    </div>
-                    <div className="min-w-0">
-                      <span className="text-xs text-foreground font-semibold block truncate">Drying</span>
-                      <span className="text-[11px] text-muted-foreground font-medium">
-                        {activeOrdersCount > 0 ? `${Math.round(dryingPct)}%` : "0%"}
-                      </span>
-                    </div>
-                  </div>
-                  <span className="text-base font-bold text-foreground tabular-nums shrink-0 ml-1">
-                    {dryingCount}
+                  <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">
+                    {activeOrdersCount > 0 ? `${Math.round(washingPct)}%` : "0%"}
                   </span>
                 </div>
 
@@ -504,21 +453,17 @@ export default function DashboardPage({
                   tabIndex={onNavigate ? 0 : undefined}
                   onClick={() => onNavigate?.("processing")}
                   onKeyDown={(e) => onNavigate && handleCardKeyDown(e, "processing")}
-                  className="group rounded-xl border border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 p-2.5 transition-all cursor-pointer flex items-center justify-between"
+                  className="group rounded-xl border border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 p-2 sm:p-2.5 transition-all cursor-pointer flex flex-col justify-between items-center text-center space-y-1"
                 >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                      <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
-                    </div>
-                    <div className="min-w-0">
-                      <span className="text-xs text-foreground font-semibold block truncate">Ready</span>
-                      <span className="text-[11px] text-muted-foreground font-medium">
-                        {activeOrdersCount > 0 ? `${Math.round(readyPct)}%` : "0%"}
-                      </span>
-                    </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" aria-hidden="true" />
+                    <span className="text-xs text-foreground font-semibold truncate">Ready</span>
                   </div>
-                  <span className="text-base font-bold text-foreground tabular-nums shrink-0 ml-1">
+                  <span className="text-lg sm:text-xl font-bold text-foreground tabular-nums leading-tight">
                     {readyCount}
+                  </span>
+                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                    {activeOrdersCount > 0 ? `${Math.round(readyPct)}%` : "0%"}
                   </span>
                 </div>
               </div>

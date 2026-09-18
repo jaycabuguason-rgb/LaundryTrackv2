@@ -125,5 +125,27 @@ describe("Dashboard Accessibility & Responsiveness", () => {
     fireEvent.click(mobileCard);
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
+
+  it("renders Option 3 3-stage bento cards (Received, Washing, Ready) without Drying", () => {
+    const onNavigate = vi.fn();
+    render(<DashboardPage transactions={mockTransactions} onNavigate={onNavigate} />);
+
+    // Renders 3 stages
+    expect(screen.getAllByText("Received").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Washing").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Ready").length).toBeGreaterThan(0);
+
+    // Does not render Drying stage
+    expect(screen.queryByText("Drying")).not.toBeInTheDocument();
+
+    // Clicking stage navigates to processing
+    const receivedCards = screen.getAllByRole("button");
+    const receivedStageCard = receivedCards.find((c) => c.textContent?.includes("Received") && c.textContent?.includes("%"));
+    expect(receivedStageCard).toBeDefined();
+    if (receivedStageCard) {
+      fireEvent.click(receivedStageCard);
+      expect(onNavigate).toHaveBeenCalledWith("processing");
+    }
+  });
 });
 
