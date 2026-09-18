@@ -45,6 +45,7 @@ const mockTransactions: Transaction[] = [
     paymentStatus: "paid",
     arrivalDateTime: "2026-09-08 09:00",
     dropOffDate: "2026-09-08",
+    addOns: [],
   },
   {
     id: "tx-4",
@@ -58,6 +59,7 @@ const mockTransactions: Transaction[] = [
     paymentStatus: "unpaid",
     arrivalDateTime: "2026-09-07 14:00",
     dropOffDate: "2026-09-07",
+    addOns: [],
     voidReason: "Customer cancelled",
   },
 ];

@@ -16,6 +16,7 @@ export interface Transaction {
   status: TransactionStatus;
   paymentStatus: PaymentStatus;
   addOns: string[];
+  machineNumber?: number;
   washInstructions?: string;
   publicTrackingToken?: string;
   updatedAt?: string;
@@ -29,12 +30,12 @@ export interface LoyaltyMember {
   email?: string;
   phone: string;
   stampCount: number;
-  rewardsAvailable: number;
-  rewardsRedeemed: number;
+  rewardsAvailable?: number;
+  rewardsRedeemed?: number;
   dateJoined: string;
-  stampHistory: { date: string; stamps: number; ticket: string; source?: "auto_claim" | "manual"; notes?: string }[];
-  rewardHistory: { date: string; reward: string }[];
-  preferences: string;
+  stampHistory?: { date: string; stamps: number; ticket: string; source?: "auto_claim" | "manual"; notes?: string }[];
+  rewardHistory?: { date: string; reward: string }[];
+  preferences?: string;
   notes?: string;
 }
 

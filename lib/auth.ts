@@ -5,7 +5,9 @@ export interface UserProfile {
   name: string;
   email: string;
   username: string;
-  phone: string;
+  phone?: string;
   role: UserRole;
   avatarUrl?: string;
+  avatar?: string;
+  isActive?: boolean;
 }

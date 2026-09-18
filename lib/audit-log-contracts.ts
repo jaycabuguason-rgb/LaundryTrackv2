@@ -9,6 +9,7 @@ export type AuditActionType =
   | "claim_scanned"
   | "claim_verified"
   | "claim_denied"
+  | "override"
   | "loyalty_stamp"
   | "reward_redeemed"
   | "settings_changed"
