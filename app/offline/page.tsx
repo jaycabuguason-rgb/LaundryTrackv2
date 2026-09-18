@@ -2,18 +2,19 @@
 
 import { WifiOff, RefreshCw, Home, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export default function OfflinePage() {
-  const router = useRouter();
   const [isOnline, setIsOnline] = useState(false);
 
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
       // Auto-redirect to home when back online
-      setTimeout(() => router.push("/"), 1000);
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1000);
     };
 
     const handleOffline = () => setIsOnline(false);
@@ -26,7 +27,7 @@ export default function OfflinePage() {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
-  }, [router]);
+  }, []);
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-background px-4">
@@ -60,20 +61,24 @@ export default function OfflinePage() {
               
               <div className="grid grid-cols-2 gap-2">
                 <Button
-                  onClick={() => router.push("/")}
+                  asChild
                   variant="outline"
                   className="gap-2"
                 >
-                  <Home className="w-4 h-4" />
-                  Dashboard
+                  <Link href="/">
+                    <Home className="w-4 h-4" />
+                    Dashboard
+                  </Link>
                 </Button>
                 <Button
-                  onClick={() => router.push("/")}
+                  asChild
                   variant="outline"
                   className="gap-2"
                 >
-                  <FileText className="w-4 h-4" />
-                  Transactions
+                  <Link href="/">
+                    <FileText className="w-4 h-4" />
+                    Transactions
+                  </Link>
                 </Button>
               </div>
             </div>
