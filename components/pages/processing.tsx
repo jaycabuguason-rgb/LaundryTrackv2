@@ -880,7 +880,7 @@ export default function ProcessingPage({
 
   return (
     <>
-      <div className="space-y-4 md:space-y-5">
+      <div className="space-y-4 md:space-y-5 pb-32 lg:pb-12">
         {/* Desktop Top row: total card + search + refresh */}
         <div className="hidden md:flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           {/* Total Ongoing Transactions */}
@@ -1106,10 +1106,13 @@ export default function ProcessingPage({
 
       {/* ── Floating Bulk Action Bar ─────────────────────────────────────────── */}
       {selectedTicketIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-200">
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/80 bg-popover/95 px-4 py-3 text-popover-foreground shadow-2xl backdrop-blur-md">
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+        <div
+          data-testid="bulk-action-bar"
+          className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] lg:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[94%] max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-200"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 rounded-2xl border border-border/80 bg-popover/95 px-3 py-2.5 sm:px-4 sm:py-3 text-popover-foreground shadow-2xl backdrop-blur-md">
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              <span className="flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full bg-primary text-[11px] sm:text-xs font-bold text-primary-foreground">
                 {selectedTicketIds.size}
               </span>
               <span className="text-xs font-semibold sm:text-sm">
@@ -1117,7 +1120,7 @@ export default function ProcessingPage({
               </span>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               {/* Quick advance button based on active stage */}
               {expandedStage === "Received" && (
                 <Button
@@ -1128,7 +1131,7 @@ export default function ProcessingPage({
                     e.stopPropagation();
                     handleBulkStatusSelect("Washing");
                   }}
-                  className="h-8 gap-1.5 rounded-xl text-xs font-semibold shadow-xs cursor-pointer"
+                  className="h-8 gap-1.5 rounded-xl px-2.5 sm:px-3 text-xs font-semibold shadow-xs cursor-pointer"
                 >
                   {isBulkUpdating ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1148,7 +1151,7 @@ export default function ProcessingPage({
                     e.stopPropagation();
                     handleBulkStatusSelect("Ready");
                   }}
-                  className="h-8 gap-1.5 rounded-xl text-xs font-semibold shadow-xs cursor-pointer"
+                  className="h-8 gap-1.5 rounded-xl px-2.5 sm:px-3 text-xs font-semibold shadow-xs cursor-pointer"
                 >
                   {isBulkUpdating ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1167,7 +1170,7 @@ export default function ProcessingPage({
                     variant="outline"
                     size="sm"
                     disabled={isBulkUpdating}
-                    className="h-8 gap-1.5 rounded-xl text-xs font-medium cursor-pointer"
+                    className="h-8 gap-1.5 rounded-xl px-2.5 sm:px-3 text-xs font-medium cursor-pointer"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <SlidersHorizontal className="h-3.5 w-3.5" />

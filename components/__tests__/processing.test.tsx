@@ -196,5 +196,35 @@ describe("ProcessingPage Single-Click Action Buttons", () => {
     expect(screen.queryByText("Juan Dela Cruz")).not.toBeInTheDocument();
     expect(screen.queryByText(/TKT-0099/)).not.toBeInTheDocument();
   });
+
+  it("renders floating bulk action bar above mobile bottom nav when tickets are selected", () => {
+    render(<ProcessingPage transactions={mockTransactions} />);
+
+    // Initially, bulk action bar is not rendered
+    expect(screen.queryByTestId("bulk-action-bar")).not.toBeInTheDocument();
+
+    // Select ticket
+    const selectCheckboxes = screen.getAllByLabelText(/select ticket/i);
+    expect(selectCheckboxes.length).toBeGreaterThan(0);
+    fireEvent.click(selectCheckboxes[0]);
+
+    // Bulk action bar appears
+    const bar = screen.getByTestId("bulk-action-bar");
+    expect(bar).toBeInTheDocument();
+    expect(screen.getByText(/ticket selected/i)).toBeInTheDocument();
+
+    // Verify positioning classes for mobile (floating above bottom nav) and desktop
+    expect(bar.className).toContain("bottom-[calc(5rem+env(safe-area-inset-bottom,0px))]");
+    expect(bar.className).toContain("lg:bottom-6");
+    expect(bar.className).toContain("z-50");
+
+    // Clear selection
+    const clearButton = screen.getByRole("button", { name: /clear selection/i });
+    fireEvent.click(clearButton);
+
+    // Bulk action bar is dismissed
+    expect(screen.queryByTestId("bulk-action-bar")).not.toBeInTheDocument();
+  });
 });
+
 
