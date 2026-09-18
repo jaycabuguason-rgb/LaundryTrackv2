@@ -356,8 +356,8 @@ export default function StaffManagementPage({
     }
     if (!addPassword) {
       errors.password = "Password is required.";
-    } else if (addPassword.length < 6) {
-      errors.password = "Password must be at least 6 characters.";
+    } else if (addPassword.length < 8) {
+      errors.password = "Password must be at least 8 characters.";
     }
     if (!addConfirmPassword) {
       errors.confirmPassword = "Please confirm the password.";
@@ -478,8 +478,8 @@ export default function StaffManagementPage({
       setPwError("Please enter a new password.");
       return;
     }
-    if (newPassword.length < 6) {
-      setPwError("Password must be at least 6 characters.");
+    if (newPassword.length < 8) {
+      setPwError("Password must be at least 8 characters.");
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -971,7 +971,7 @@ export default function StaffManagementPage({
                 setAddPassword(value);
                 setAddErrors((current) => ({ ...current, password: "", form: "" }));
               }}
-              placeholder="Min. 6 characters"
+              placeholder="Min. 8 characters"
               required
             />
             {addErrors.password && <p className="-mt-2 text-xs text-destructive">{addErrors.password}</p>}
@@ -1109,7 +1109,7 @@ export default function StaffManagementPage({
                 setNewPassword(value);
                 setPwError("");
               }}
-              placeholder="Min. 6 characters"
+              placeholder="Min. 8 characters"
               required
             />
             <PasswordField

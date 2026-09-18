@@ -124,8 +124,8 @@ function validateCreateInput(input: CreateStaffAccountInput) {
   if (!input.password) {
     throw new Error("Password is required.");
   }
-  if (input.password.length < 6) {
-    throw new Error("Password must be at least 6 characters.");
+  if (input.password.length < 8) {
+    throw new Error("Password must be at least 8 characters.");
   }
 }
 
@@ -334,8 +334,8 @@ export async function resetStaffPassword(staffId: string, password: string): Pro
   if (!password) {
     throw new Error("Password is required.");
   }
-  if (password.length < 6) {
-    throw new Error("Password must be at least 6 characters.");
+  if (password.length < 8) {
+    throw new Error("Password must be at least 8 characters.");
   }
 
   const supabase = getSupabaseAdminClient();
