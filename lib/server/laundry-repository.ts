@@ -35,6 +35,7 @@ type TransactionRow = {
   arrival_time: string | null;
   claimed_at?: string | null;
   voided_at?: string | null;
+  paid_at?: string | null;
   updated_at: string | null;
   created_at: string | null;
   void_reason: string | null;
@@ -46,19 +47,30 @@ type SettingsRow<T = unknown> = {
 };
 
 const TRANSACTION_SELECT =
+  "id,ticket_id,customer_name,phone_number,wash_type,weight_kg,addons,special_instructions,fee,status,payment_status,public_tracking_token,eta,arrival_time,claimed_at,voided_at,paid_at,updated_at,created_at,void_reason";
+const TRANSACTION_SELECT_NO_PAID_AT =
   "id,ticket_id,customer_name,phone_number,wash_type,weight_kg,addons,special_instructions,fee,status,payment_status,public_tracking_token,eta,arrival_time,claimed_at,voided_at,updated_at,created_at,void_reason";
 const TRANSACTION_SELECT_NO_VOIDED_AT =
   "id,ticket_id,customer_name,phone_number,wash_type,weight_kg,addons,special_instructions,fee,status,payment_status,public_tracking_token,eta,arrival_time,claimed_at,updated_at,created_at,void_reason";
 
 let hasVoidedAtColumn = true;
+let hasPaidAtColumn = true;
 
 function isMissingVoidedAtError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error ?? "");
   return message.includes("voided_at") || message.includes("42703");
 }
 
+function isMissingPaidAtError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return message.includes("paid_at") || message.includes("42703");
+}
+
 function getTransactionSelect(): string {
-  return hasVoidedAtColumn ? TRANSACTION_SELECT : TRANSACTION_SELECT_NO_VOIDED_AT;
+  if (!hasPaidAtColumn && !hasVoidedAtColumn) return TRANSACTION_SELECT_NO_VOIDED_AT;
+  if (!hasPaidAtColumn) return TRANSACTION_SELECT_NO_PAID_AT;
+  if (!hasVoidedAtColumn) return "id,ticket_id,customer_name,phone_number,wash_type,weight_kg,addons,special_instructions,fee,status,payment_status,public_tracking_token,eta,arrival_time,claimed_at,paid_at,updated_at,created_at,void_reason";
+  return TRANSACTION_SELECT;
 }
 
 const TRANSACTION_LIST_CACHE_TTL_MS = 5_000;
@@ -98,6 +110,7 @@ let mockTransactions: TransactionRow[] = seedTransactions.map((transaction, inde
     arrival_time: timestamp,
     claimed_at: transaction.claimedAt ? normalizeLocalDateTime(transaction.claimedAt) : null,
     voided_at: transaction.voidedAt ? normalizeLocalDateTime(transaction.voidedAt) : (transaction.status === "Voided" ? timestamp : null),
+    paid_at: transaction.paidAt ? normalizeLocalDateTime(transaction.paidAt) : (transaction.paymentStatus === "paid" ? timestamp : null),
     updated_at: timestamp,
     created_at: timestamp,
     void_reason: transaction.status === "Voided" ? "Voided in mock data" : null,
@@ -141,6 +154,7 @@ function mapRowToTransaction(row: TransactionRow): Transaction {
   const status = normalizeStatus(row.status);
   const claimedTimestamp = row.claimed_at;
   const voidedTimestamp = row.voided_at;
+  const paidTimestamp = row.paid_at;
 
   return {
     id: row.id,
@@ -151,6 +165,7 @@ function mapRowToTransaction(row: TransactionRow): Transaction {
     dropOffDate: formatCompactDate(arrivalTimestamp),
     claimedAt: claimedTimestamp ? formatCompactDateTime(claimedTimestamp) : undefined,
     voidedAt: voidedTimestamp ? formatCompactDateTime(voidedTimestamp) : undefined,
+    paidAt: paidTimestamp ? formatCompactDateTime(paidTimestamp) : undefined,
     washType: row.wash_type,
     weight: Number(row.weight_kg ?? 0),
     fee: Number(row.fee ?? 0),
@@ -189,6 +204,7 @@ function mapRowToPublicRecord(row: TransactionRow, profile: BusinessProfile): Pu
     eta: transaction.eta ?? null,
     updatedAt: transaction.updatedAt ?? null,
     paymentStatus: transaction.paymentStatus,
+    paidAt: transaction.paidAt ?? null,
     balanceDue: transaction.paymentStatus === "paid" ? 0 : transaction.fee,
     weight: transaction.weight,
     washType: transaction.washType,
@@ -298,6 +314,8 @@ async function getNextSupabaseTicketId(): Promise<string> {
 async function createSupabaseTransaction(input: CreateTransactionInput): Promise<TransactionRow> {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const ticketId = await getNextSupabaseTicketId();
+    const now = new Date().toISOString();
+    const isPaid = input.paymentStatus === "paid";
     const payload = {
       ticket_id: ticketId,
       customer_name: input.customerName.trim(),
@@ -309,9 +327,10 @@ async function createSupabaseTransaction(input: CreateTransactionInput): Promise
       fee: input.fee,
       status: input.status ?? "Received",
       payment_status: input.paymentStatus ?? "unpaid",
+      paid_at: isPaid ? now : null,
       public_tracking_token: createTrackingToken(),
       eta: normalizeLocalDateTime(input.eta ?? null),
-      arrival_time: normalizeLocalDateTime(input.arrivalDateTime) ?? new Date().toISOString(),
+      arrival_time: normalizeLocalDateTime(input.arrivalDateTime) ?? now,
     };
 
     try {
@@ -340,6 +359,11 @@ async function updateSupabaseTransaction(ticketId: string, updates: UpdateTransa
     throw new Error(`Transaction ${ticketId} was not found.`);
   }
 
+  const effectivePayment = updates.paymentStatus ?? existing.payment_status;
+  if (updates.status === "Claimed" && effectivePayment !== "paid") {
+    throw new Error("Cannot mark transaction as Claimed while payment is unpaid.");
+  }
+
   const payload: Record<string, unknown> = {};
 
   if (updates.status) {
@@ -351,7 +375,12 @@ async function updateSupabaseTransaction(ticketId: string, updates: UpdateTransa
       payload.voided_at = new Date().toISOString();
     }
   }
-  if (updates.paymentStatus) payload.payment_status = updates.paymentStatus;
+  if (updates.paymentStatus) {
+    payload.payment_status = updates.paymentStatus;
+    if (updates.paymentStatus === "paid" && !existing.paid_at) {
+      payload.paid_at = new Date().toISOString();
+    }
+  }
   if (updates.washInstructions !== undefined) payload.special_instructions = updates.washInstructions?.trim() || null;
   if (updates.eta !== undefined) payload.eta = normalizeLocalDateTime(updates.eta ?? null);
   if (updates.voidReason !== undefined) payload.void_reason = updates.voidReason?.trim() || null;
@@ -372,6 +401,24 @@ async function updateSupabaseTransaction(ticketId: string, updates: UpdateTransa
 
     return rows[0];
   } catch (error) {
+    if (hasPaidAtColumn && isMissingPaidAtError(error)) {
+      hasPaidAtColumn = false;
+      delete payload.paid_at;
+      const fallbackQuery = `transactions?ticket_id=eq.${encodeURIComponent(ticketId)}&select=${getTransactionSelect()}`;
+      const rows = await restRequest<TransactionRow[]>(fallbackQuery, {
+        method: "PATCH",
+        headers: {
+          Prefer: "return=representation",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!rows[0]) {
+        throw new Error(`Transaction ${ticketId} was not found.`);
+      }
+
+      return rows[0];
+    }
     if (hasVoidedAtColumn && isMissingVoidedAtError(error)) {
       hasVoidedAtColumn = false;
       delete payload.voided_at;
@@ -469,6 +516,7 @@ function getNextMockTicketId(): string {
 
 function createMockTransaction(input: CreateTransactionInput): TransactionRow {
   const now = new Date().toISOString();
+  const isPaid = input.paymentStatus === "paid";
   const row: TransactionRow = {
     id: randomUUID(),
     ticket_id: getNextMockTicketId(),
@@ -486,6 +534,7 @@ function createMockTransaction(input: CreateTransactionInput): TransactionRow {
     arrival_time: normalizeLocalDateTime(input.arrivalDateTime) ?? now,
     claimed_at: null,
     voided_at: null,
+    paid_at: isPaid ? now : null,
     updated_at: now,
     created_at: now,
     void_reason: null,
@@ -501,15 +550,24 @@ function updateMockTransaction(ticketId: string, updates: UpdateTransactionInput
     throw new Error(`Transaction ${ticketId} was not found.`);
   }
 
+  const effectivePayment = updates.paymentStatus ?? existing.payment_status;
+  if (updates.status === "Claimed" && effectivePayment !== "paid") {
+    throw new Error("Cannot mark transaction as Claimed while payment is unpaid.");
+  }
+
   const now = new Date().toISOString();
   let claimed_at = existing.claimed_at;
   let voided_at = existing.voided_at;
+  let paid_at = existing.paid_at;
 
   if (updates.status === "Claimed" && !claimed_at) {
     claimed_at = now;
   }
   if (updates.status === "Voided" && !voided_at) {
     voided_at = now;
+  }
+  if (updates.paymentStatus === "paid" && !paid_at) {
+    paid_at = now;
   }
 
   const updated: TransactionRow = {
@@ -524,6 +582,7 @@ function updateMockTransaction(ticketId: string, updates: UpdateTransactionInput
     void_reason: updates.voidReason !== undefined ? updates.voidReason?.trim() || null : existing.void_reason,
     claimed_at,
     voided_at,
+    paid_at,
     updated_at: now,
   };
 

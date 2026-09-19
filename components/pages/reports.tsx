@@ -93,17 +93,6 @@ function formatCurrency(value: number) {
   return `₱${value.toLocaleString()}`;
 }
 
-function getHourLabel(transaction: Transaction) {
-  const match = transaction.arrivalDateTime.match(/(\d{2}):(\d{2})/);
-  if (!match) return "Unknown";
-  const hour = Number(match[1]);
-  if (Number.isNaN(hour)) return "Unknown";
-
-  const suffix = hour >= 12 ? "PM" : "AM";
-  const normalizedHour = hour % 12 === 0 ? 12 : hour % 12;
-  return `${normalizedHour}${suffix}`;
-}
-
 function getServiceIcon(_service: string) {
   return <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />;
 }
@@ -115,6 +104,26 @@ function getStatusIconComponent(status: string) {
 
 function getDateKey(transaction: Transaction) {
   return transaction.dropOffDate;
+}
+
+function getPaymentDateKey(transaction: Transaction): string | null {
+  if (transaction.paidAt) {
+    const match = transaction.paidAt.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (match) return match[1];
+  }
+  return null;
+}
+
+function getPaymentHourLabel(transaction: Transaction): string {
+  if (!transaction.paidAt) return "Unknown";
+  const match = transaction.paidAt.match(/(\d{1,2}):(\d{2})/);
+  if (!match) return "Unknown";
+  const hour = Number(match[1]);
+  if (Number.isNaN(hour)) return "Unknown";
+
+  const suffix = hour >= 12 ? "PM" : "AM";
+  const normalizedHour = hour % 12 === 0 ? 12 : hour % 12;
+  return `${normalizedHour}${suffix}`;
 }
 
 function getDateOnly(date: Date) {
@@ -430,9 +439,46 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
     return dailyTransactions.filter((t) => t.status === mobileStatusFilter);
   }, [dailyTransactions, mobileStatusFilter]);
 
+  const recognizedRevenueTransactions = useMemo(
+    () =>
+      transactions.filter((transaction) => {
+        if (transaction.paymentStatus !== "paid" || transaction.status === "Voided") {
+          return false;
+        }
+        const payDateKey = getPaymentDateKey(transaction);
+        if (!payDateKey) return false;
+        return payDateKey >= exportFrom && payDateKey <= exportTo;
+      }),
+    [exportFrom, exportTo, transactions],
+  );
+
+  const outstandingTransactions = useMemo(
+    () =>
+      transactions.filter((transaction) => {
+        if (transaction.paymentStatus !== "unpaid" || transaction.status === "Voided") {
+          return false;
+        }
+        const dateKey = getDateKey(transaction);
+        return dateKey >= exportFrom && dateKey <= exportTo;
+      }),
+    [exportFrom, exportTo, transactions],
+  );
+
+  const totalRecognizedRevenue = useMemo(
+    () => recognizedRevenueTransactions.reduce((sum, transaction) => sum + transaction.fee, 0),
+    [recognizedRevenueTransactions],
+  );
+
+  const totalOutstandingBalance = useMemo(
+    () => outstandingTransactions.reduce((sum, transaction) => sum + transaction.fee, 0),
+    [outstandingTransactions],
+  );
+
+  const totalPaidTransactions = recognizedRevenueTransactions.length;
+
   const serviceRevenue = useMemo<ServiceRevenueRow[]>(() => {
     const serviceMap = new Map<string, ServiceRevenueRow>();
-    for (const transaction of filteredTransactions) {
+    for (const transaction of recognizedRevenueTransactions) {
       const current = serviceMap.get(transaction.washType) ?? {
         service: transaction.washType,
         revenue: 0,
@@ -443,7 +489,7 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
       serviceMap.set(transaction.washType, current);
     }
     return [...serviceMap.values()].sort((a, b) => b.revenue - a.revenue);
-  }, [filteredTransactions]);
+  }, [recognizedRevenueTransactions]);
 
   const serviceMixData = useMemo(
     () => serviceRevenue.map((row) => ({ name: row.service, value: row.revenue, count: row.count })),
@@ -451,22 +497,16 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
   );
 
   const paymentMixData = useMemo(() => {
-    const paidRevenue = filteredTransactions
-      .filter((transaction) => transaction.paymentStatus === "paid")
-      .reduce((sum, transaction) => sum + transaction.fee, 0);
-    const unpaidRevenue = filteredTransactions
-      .filter((transaction) => transaction.paymentStatus === "unpaid")
-      .reduce((sum, transaction) => sum + transaction.fee, 0);
-
     return [
-      { name: "Paid", value: paidRevenue },
-      { name: "Unpaid", value: unpaidRevenue },
+      { name: "Paid", value: totalRecognizedRevenue },
+      { name: "Unpaid", value: totalOutstandingBalance },
     ];
-  }, [filteredTransactions]);
+  }, [totalRecognizedRevenue, totalOutstandingBalance]);
 
   const statusMixData = useMemo(() => {
     const statusMap = new Map<string, number>();
     for (const transaction of filteredTransactions) {
+      if (transaction.status === "Voided") continue;
       statusMap.set(transaction.status, (statusMap.get(transaction.status) ?? 0) + 1);
     }
     return [...statusMap.entries()].map(([name, value]) => ({ name, value }));
@@ -483,8 +523,8 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
         const label = format(new Date(0, 0, 0, hour, 0, 0), "ha");
         seed(label, label);
       }
-      for (const transaction of filteredTransactions) {
-        const label = getHourLabel(transaction);
+      for (const transaction of recognizedRevenueTransactions) {
+        const label = getPaymentHourLabel(transaction);
         const existing = salesMap.get(label);
         if (!existing) continue;
         existing.revenue += transaction.fee;
@@ -495,8 +535,10 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
         const key = format(month, "MMM yyyy");
         seed(key, key);
       }
-      for (const transaction of filteredTransactions) {
-        const key = format(new Date(`${transaction.dropOffDate}T00:00:00`), "MMM yyyy");
+      for (const transaction of recognizedRevenueTransactions) {
+        const payDateKey = getPaymentDateKey(transaction);
+        if (!payDateKey) continue;
+        const key = format(new Date(`${payDateKey}T00:00:00`), "MMM yyyy");
         const existing = salesMap.get(key);
         if (!existing) continue;
         existing.revenue += transaction.fee;
@@ -507,8 +549,10 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
         const key = format(day, "yyyy-MM-dd");
         seed(key, format(day, "MMM d"));
       }
-      for (const transaction of filteredTransactions) {
-        const existing = salesMap.get(transaction.dropOffDate);
+      for (const transaction of recognizedRevenueTransactions) {
+        const payDateKey = getPaymentDateKey(transaction);
+        if (!payDateKey) continue;
+        const existing = salesMap.get(payDateKey);
         if (!existing) continue;
         existing.revenue += transaction.fee;
         existing.count += 1;
@@ -516,7 +560,7 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
     }
 
     return [...salesMap.values()];
-  }, [rangePreset, exportFromDate, exportToDate, filteredTransactions]);
+  }, [rangePreset, exportFromDate, exportToDate, recognizedRevenueTransactions]);
 
   const highestPeakDay = useMemo(() => {
     if (salesTrendData.length === 0) return null;
@@ -526,8 +570,8 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
   const peakHourData = useMemo(() => {
     const hourMap = new Map<string, number>();
 
-    for (const transaction of filteredTransactions) {
-      const label = getHourLabel(transaction);
+    for (const transaction of recognizedRevenueTransactions) {
+      const label = getPaymentHourLabel(transaction);
       hourMap.set(label, (hourMap.get(label) ?? 0) + 1);
     }
 
@@ -535,7 +579,7 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
       .map(([label, count]) => ({ label, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 6);
-  }, [filteredTransactions]);
+  }, [recognizedRevenueTransactions]);
 
   const unclaimedItems = useMemo(
     () => transactions.filter((transaction) => transaction.status === "Ready"),
@@ -544,8 +588,8 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
 
   const customerRows = useMemo(() => getCustomerSummaryRows(filteredTransactions), [filteredTransactions]);
 
-  const totalFilteredRevenue = filteredTransactions.reduce((sum, transaction) => sum + transaction.fee, 0);
-  const totalFilteredTransactions = filteredTransactions.length;
+  const totalFilteredRevenue = totalRecognizedRevenue;
+  const totalFilteredTransactions = totalPaidTransactions;
   const averageOrderValue = totalFilteredTransactions > 0 ? totalFilteredRevenue / totalFilteredTransactions : 0;
 
   const toggleExport = (id: ExportSection) => {
@@ -577,9 +621,9 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
 
     if (selectedExports.includes("analytics")) {
       rows.push(["Sales and Analytics"]);
-      rows.push(["Metric", "Value"]);
-      rows.push(["Total Revenue", String(totalFilteredRevenue)]);
-      rows.push(["Total Transactions", String(totalFilteredTransactions)]);
+      rows.push(["Collected Revenue", String(totalRecognizedRevenue)]);
+      rows.push(["Paid Orders", String(totalPaidTransactions)]);
+      rows.push(["Outstanding Balance", String(totalOutstandingBalance)]);
       rows.push(["Average Order Value", String(Math.round(averageOrderValue))]);
       for (const row of serviceRevenue) {
         rows.push([`Service: ${row.service}`, `${row.count} txns / ${row.revenue}`]);
@@ -1091,17 +1135,17 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
 
           {/* Mobile 2x2 Metric Summary Grid */}
           <div className="grid grid-cols-2 gap-2.5">
-            {/* Card 1: Sales in Range */}
+            {/* Card 1: Collected Revenue */}
             <div className="rounded-2xl border border-border/70 bg-card p-3.5 shadow-sm flex flex-col justify-between relative overflow-hidden">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-medium text-muted-foreground">Sales in Range</span>
+                <span className="text-xs font-medium text-muted-foreground">Collected Revenue</span>
                 <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
                   ₱
                 </div>
               </div>
               <div>
-                <div className="text-2xl font-extrabold text-foreground tracking-tight">{formatCurrency(totalFilteredRevenue)}</div>
-                <p className="text-[10px] text-muted-foreground truncate mt-0.5">{exportFrom} to {exportTo}</p>
+                <div className="text-2xl font-extrabold text-foreground tracking-tight">{formatCurrency(totalRecognizedRevenue)}</div>
+                <p className="text-[10px] text-muted-foreground truncate mt-0.5">Paid: {exportFrom} to {exportTo}</p>
               </div>
             </div>
 
@@ -1114,10 +1158,10 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
                 </div>
               </div>
               <div>
-                <div className="text-2xl font-extrabold text-foreground tracking-tight">{totalFilteredTransactions}</div>
+                <div className="text-2xl font-extrabold text-foreground tracking-tight">{totalPaidTransactions}</div>
                 <div className="flex items-center gap-1 mt-0.5 text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                  <span>Realtime</span>
+                  <span>Paid Orders</span>
                 </div>
               </div>
             </div>
@@ -1132,21 +1176,21 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
               </div>
               <div>
                 <div className="text-2xl font-extrabold text-foreground tracking-tight">{formatCurrency(Math.round(averageOrderValue))}</div>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Per transaction</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Per paid transaction</p>
               </div>
             </div>
 
-            {/* Card 4: Peak Claim Window */}
+            {/* Card 4: Outstanding */}
             <div className="rounded-2xl border border-border/70 bg-card p-3.5 shadow-sm flex flex-col justify-between relative overflow-hidden">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-medium text-muted-foreground">Peak Claim Window</span>
+                <span className="text-xs font-medium text-muted-foreground">Outstanding</span>
                 <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
                   <Clock className="w-3.5 h-3.5" />
                 </div>
               </div>
               <div>
-                <div className="text-2xl font-extrabold text-foreground tracking-tight">{peakHourData[0]?.label ?? "-"}</div>
-                <p className="text-[10px] text-muted-foreground mt-0.5">{peakHourData[0]?.count ?? 0} transactions</p>
+                <div className="text-2xl font-extrabold text-foreground tracking-tight">{formatCurrency(totalOutstandingBalance)}</div>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{outstandingTransactions.length} unpaid orders</p>
               </div>
             </div>
           </div>
@@ -1390,30 +1434,30 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <Card className="border border-border shadow-none">
               <CardContent className="p-5">
-                <p className="text-xs text-muted-foreground">Sales in Range</p>
-                <p className="mt-1 text-2xl font-bold text-foreground">{formatCurrency(totalFilteredRevenue)}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">{exportFrom} to {exportTo}</p>
+                <p className="text-xs text-muted-foreground">Collected Revenue</p>
+                <p className="mt-1 text-2xl font-bold text-foreground">{formatCurrency(totalRecognizedRevenue)}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">Payment Date: {exportFrom} to {exportTo}</p>
               </CardContent>
             </Card>
             <Card className="border border-border shadow-none">
               <CardContent className="p-5">
                 <p className="text-xs text-muted-foreground">Orders in Range</p>
-                <p className="mt-1 text-2xl font-bold text-foreground">{totalFilteredTransactions}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">Realtime transactions</p>
+                <p className="mt-1 text-2xl font-bold text-foreground">{totalPaidTransactions}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">Paid orders</p>
               </CardContent>
             </Card>
             <Card className="border border-border shadow-none">
               <CardContent className="p-5">
                 <p className="text-xs text-muted-foreground">Average Order Value</p>
                 <p className="mt-1 text-2xl font-bold text-foreground">{formatCurrency(Math.round(averageOrderValue))}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">Per transaction</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">Per paid transaction</p>
               </CardContent>
             </Card>
             <Card className="border border-border shadow-none">
               <CardContent className="p-5">
-                <p className="text-xs text-muted-foreground">Peak Claim Window</p>
-                <p className="mt-1 text-2xl font-bold text-foreground">{peakHourData[0]?.label ?? "-"}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">{peakHourData[0]?.count ?? 0} transactions</p>
+                <p className="text-xs text-muted-foreground">Outstanding</p>
+                <p className="mt-1 text-2xl font-bold text-foreground">{formatCurrency(totalOutstandingBalance)}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{outstandingTransactions.length} unpaid orders</p>
               </CardContent>
             </Card>
           </div>

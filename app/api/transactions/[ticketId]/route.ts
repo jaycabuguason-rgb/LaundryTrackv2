@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { createAuditLog } from "@/lib/server/audit-log-repository";
-import { updateTransaction } from "@/lib/server/laundry-repository";
+import { getTransactionByTicketId, updateTransaction } from "@/lib/server/laundry-repository";
 import { awardClaimStamp, type StampAwardResult } from "@/lib/server/loyalty-repository";
 import { getAuthErrorStatus, requireAuthRequest } from "@/lib/server/request-auth";
 import { getRequestIp } from "@/lib/server/request-meta";
@@ -30,6 +30,20 @@ export async function PATCH(
     if (raw.washInstructions !== undefined) body.washInstructions = String(raw.washInstructions).trim().slice(0, 500);
     if (raw.eta !== undefined) body.eta = raw.eta != null ? String(raw.eta).trim() : null;
     if (raw.voidReason !== undefined) body.voidReason = raw.voidReason != null ? String(raw.voidReason).trim().slice(0, 500) : null;
+
+    const existing = await getTransactionByTicketId(ticketId);
+    if (!existing) {
+      return NextResponse.json({ error: `Transaction ${ticketId} was not found.` }, { status: 404 });
+    }
+
+    const effectivePayment = body.paymentStatus ?? existing.paymentStatus;
+    if (body.status === "Claimed" && effectivePayment !== "paid") {
+      return NextResponse.json(
+        { error: "Cannot mark transaction as Claimed while payment is unpaid." },
+        { status: 400 },
+      );
+    }
+
     const transaction = await updateTransaction(ticketId, body);
 
     const isClaim = body.status === "Claimed";

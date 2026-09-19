@@ -24,6 +24,7 @@ export interface UpdateTransactionInput {
   washInstructions?: string;
   eta?: string | null;
   voidReason?: string | null;
+  paidAt?: string | null;
 }
 
 export type StampAwardResult =
@@ -59,6 +60,7 @@ export interface PublicTrackingRecord {
   eta: string | null;
   updatedAt: string | null;
   paymentStatus: PaymentStatus;
+  paidAt?: string | null;
   balanceDue: number;
   weight: number;
   washType: string;
