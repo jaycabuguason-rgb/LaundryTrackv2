@@ -51,6 +51,8 @@ const TRANSACTION_SELECT =
 const TRANSACTION_SELECT_NO_PAID_AT =
   "id,ticket_id,customer_name,phone_number,wash_type,weight_kg,addons,special_instructions,fee,status,payment_status,public_tracking_token,eta,arrival_time,claimed_at,voided_at,updated_at,created_at,void_reason";
 const TRANSACTION_SELECT_NO_VOIDED_AT =
+  "id,ticket_id,customer_name,phone_number,wash_type,weight_kg,addons,special_instructions,fee,status,payment_status,public_tracking_token,eta,arrival_time,claimed_at,paid_at,updated_at,created_at,void_reason";
+const TRANSACTION_SELECT_NO_VOIDED_AT_NO_PAID_AT =
   "id,ticket_id,customer_name,phone_number,wash_type,weight_kg,addons,special_instructions,fee,status,payment_status,public_tracking_token,eta,arrival_time,claimed_at,updated_at,created_at,void_reason";
 
 let hasVoidedAtColumn = true;
@@ -58,18 +60,18 @@ let hasPaidAtColumn = true;
 
 function isMissingVoidedAtError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error ?? "");
-  return message.includes("voided_at") || message.includes("42703");
+  return message.includes("voided_at") || message.includes("42703") || message.includes("PGRST204");
 }
 
 function isMissingPaidAtError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error ?? "");
-  return message.includes("paid_at") || message.includes("42703");
+  return message.includes("paid_at") || message.includes("42703") || message.includes("PGRST204");
 }
 
 function getTransactionSelect(): string {
-  if (!hasPaidAtColumn && !hasVoidedAtColumn) return TRANSACTION_SELECT_NO_VOIDED_AT;
+  if (!hasPaidAtColumn && !hasVoidedAtColumn) return TRANSACTION_SELECT_NO_VOIDED_AT_NO_PAID_AT;
   if (!hasPaidAtColumn) return TRANSACTION_SELECT_NO_PAID_AT;
-  if (!hasVoidedAtColumn) return "id,ticket_id,customer_name,phone_number,wash_type,weight_kg,addons,special_instructions,fee,status,payment_status,public_tracking_token,eta,arrival_time,claimed_at,paid_at,updated_at,created_at,void_reason";
+  if (!hasVoidedAtColumn) return TRANSACTION_SELECT_NO_VOIDED_AT;
   return TRANSACTION_SELECT;
 }
 
@@ -262,9 +264,17 @@ async function listSupabaseRows(): Promise<TransactionRow[]> {
     const query = `transactions?select=${getTransactionSelect()}&order=arrival_time.desc.nullslast,created_at.desc`;
     return await restRequest<TransactionRow[]>(query);
   } catch (error) {
+    let retried = false;
+    if (hasPaidAtColumn && isMissingPaidAtError(error)) {
+      hasPaidAtColumn = false;
+      retried = true;
+    }
     if (hasVoidedAtColumn && isMissingVoidedAtError(error)) {
       hasVoidedAtColumn = false;
-      const fallbackQuery = `transactions?select=${TRANSACTION_SELECT_NO_VOIDED_AT}&order=arrival_time.desc.nullslast,created_at.desc`;
+      retried = true;
+    }
+    if (retried) {
+      const fallbackQuery = `transactions?select=${getTransactionSelect()}&order=arrival_time.desc.nullslast,created_at.desc`;
       return await restRequest<TransactionRow[]>(fallbackQuery);
     }
     throw error;
@@ -277,9 +287,17 @@ async function getSupabaseTransactionByTicket(ticketId: string): Promise<Transac
     const rows = await restRequest<TransactionRow[]>(query);
     return rows[0] ?? null;
   } catch (error) {
+    let retried = false;
+    if (hasPaidAtColumn && isMissingPaidAtError(error)) {
+      hasPaidAtColumn = false;
+      retried = true;
+    }
     if (hasVoidedAtColumn && isMissingVoidedAtError(error)) {
       hasVoidedAtColumn = false;
-      const fallbackQuery = `transactions?select=${TRANSACTION_SELECT_NO_VOIDED_AT}&ticket_id=eq.${encodeURIComponent(ticketId)}&limit=1`;
+      retried = true;
+    }
+    if (retried) {
+      const fallbackQuery = `transactions?select=${getTransactionSelect()}&ticket_id=eq.${encodeURIComponent(ticketId)}&limit=1`;
       const rows = await restRequest<TransactionRow[]>(fallbackQuery);
       return rows[0] ?? null;
     }
@@ -293,9 +311,17 @@ async function getSupabaseTransactionByToken(token: string): Promise<Transaction
     const rows = await restRequest<TransactionRow[]>(query);
     return rows[0] ?? null;
   } catch (error) {
+    let retried = false;
+    if (hasPaidAtColumn && isMissingPaidAtError(error)) {
+      hasPaidAtColumn = false;
+      retried = true;
+    }
     if (hasVoidedAtColumn && isMissingVoidedAtError(error)) {
       hasVoidedAtColumn = false;
-      const fallbackQuery = `transactions?select=${TRANSACTION_SELECT_NO_VOIDED_AT}&public_tracking_token=eq.${encodeURIComponent(token)}&limit=1`;
+      retried = true;
+    }
+    if (retried) {
+      const fallbackQuery = `transactions?select=${getTransactionSelect()}&public_tracking_token=eq.${encodeURIComponent(token)}&limit=1`;
       const rows = await restRequest<TransactionRow[]>(fallbackQuery);
       return rows[0] ?? null;
     }
@@ -316,7 +342,7 @@ async function createSupabaseTransaction(input: CreateTransactionInput): Promise
     const ticketId = await getNextSupabaseTicketId();
     const now = new Date().toISOString();
     const isPaid = input.paymentStatus === "paid";
-    const payload = {
+    const payload: Record<string, unknown> = {
       ticket_id: ticketId,
       customer_name: input.customerName.trim(),
       phone_number: input.phone?.trim() || null,
@@ -327,11 +353,13 @@ async function createSupabaseTransaction(input: CreateTransactionInput): Promise
       fee: input.fee,
       status: input.status ?? "Received",
       payment_status: input.paymentStatus ?? "unpaid",
-      paid_at: isPaid ? now : null,
       public_tracking_token: createTrackingToken(),
       eta: normalizeLocalDateTime(input.eta ?? null),
       arrival_time: normalizeLocalDateTime(input.arrivalDateTime) ?? now,
     };
+    if (hasPaidAtColumn) {
+      payload.paid_at = isPaid ? now : null;
+    }
 
     try {
       const rows = await restRequest<TransactionRow[]>("transactions", {
@@ -343,6 +371,18 @@ async function createSupabaseTransaction(input: CreateTransactionInput): Promise
       });
       return rows[0];
     } catch (error) {
+      if (hasPaidAtColumn && isMissingPaidAtError(error)) {
+        hasPaidAtColumn = false;
+        delete payload.paid_at;
+        const rows = await restRequest<TransactionRow[]>("transactions", {
+          method: "POST",
+          headers: {
+            Prefer: "return=representation",
+          },
+          body: JSON.stringify(payload),
+        });
+        return rows[0];
+      }
       const message = error instanceof Error ? error.message : String(error);
       if (!message.includes("duplicate key")) {
         throw error;
@@ -371,13 +411,13 @@ async function updateSupabaseTransaction(ticketId: string, updates: UpdateTransa
     if (updates.status === "Claimed" && !existing.claimed_at) {
       payload.claimed_at = new Date().toISOString();
     }
-    if (updates.status === "Voided" && !existing.voided_at) {
+    if (hasVoidedAtColumn && updates.status === "Voided" && !existing.voided_at) {
       payload.voided_at = new Date().toISOString();
     }
   }
   if (updates.paymentStatus) {
     payload.payment_status = updates.paymentStatus;
-    if (updates.paymentStatus === "paid" && !existing.paid_at) {
+    if (hasPaidAtColumn && updates.paymentStatus === "paid" && !existing.paid_at) {
       payload.paid_at = new Date().toISOString();
     }
   }

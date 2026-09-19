@@ -225,7 +225,7 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\app\\api\\transactions\\[ticketId]\\route.ts": {
-    "mtime": 1789790659.370461,
+    "mtime": 1789793266.1931522,
     "ast_hash": "056e7b4a4318c683e1b1fdd6e93d5560",
     "semantic_hash": ""
   },
@@ -365,7 +365,7 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pages\\reports.tsx": {
-    "mtime": 1789791171.952106,
+    "mtime": 1789793926.4126344,
     "ast_hash": "8a4e026f896c08a28b0d3224dbfaa2d6",
     "semantic_hash": ""
   },
@@ -700,7 +700,7 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\hooks\\use-transactions.ts": {
-    "mtime": 1789754028.8470676,
+    "mtime": 1789792993.0365162,
     "ast_hash": "7c5600eab20151db6eb0c6a8a8bf4c4c",
     "semantic_hash": ""
   },
@@ -730,7 +730,7 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\data.ts": {
-    "mtime": 1789791162.4784324,
+    "mtime": 1789793266.44985,
     "ast_hash": "6428adcd2c40ceb41ed90d7122fd2bc2",
     "semantic_hash": ""
   },
@@ -780,7 +780,7 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\transaction-contracts.ts": {
-    "mtime": 1789790539.1967232,
+    "mtime": 1789793266.4538503,
     "ast_hash": "051673aa7a5512d21509914904aba4f5",
     "semantic_hash": ""
   },
@@ -795,8 +795,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\server\\laundry-repository.ts": {
-    "mtime": 1789790676.1960359,
-    "ast_hash": "98b7193430d6a685867ac210f98de75f",
+    "mtime": 1789795249.8204513,
+    "ast_hash": "83973d5b1e76834ec93cbf089e5a0c2b",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\server\\loyalty-repository.ts": {
@@ -1770,22 +1770,27 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\plan\\antigravity plan\\sales-analytics-flow.md": {
-    "mtime": 1789788827.662367,
-    "ast_hash": "d45954754f90d9ccb1248c73553fd8f1",
+    "mtime": 1789793266.454849,
+    "ast_hash": "4dbd2034f6a3ff6e05ca2b4c29bf0b75",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\plan\\codex\\sales analytics.md": {
-    "mtime": 1789780201.6845596,
-    "ast_hash": "68e25abaa5eeffdfffc7da1ee9a15e50",
+    "mtime": 1789793266.4558508,
+    "ast_hash": "aea6b33f9ee3f9b8e052929fbcf98c08",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\__tests__\\sales-analytics-revenue.test.tsx": {
-    "mtime": 1789791125.632963,
-    "ast_hash": "f741d2222d2042ae8439035a2c11713c",
+    "mtime": 1789793926.4150412,
+    "ast_hash": "d9f0d91d567a79e0dfb07ab77ec68b44",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\supabase\\migrations\\20260919_add_paid_at_to_transactions.sql": {
-    "mtime": 1789790515.614617,
+    "mtime": 1789793266.4568484,
+    "ast_hash": "135b9cca31fd39cf7a7a5c0ec78edbd8",
+    "semantic_hash": ""
+  },
+  "E:\\sample project\\LaundryTrackv2-pr-11\\scripts\\008_add_paid_at_to_transactions.sql": {
+    "mtime": 1789795138.3547251,
     "ast_hash": "fb1867053cdf9cfe8a19b3df3a7cfd17",
     "semantic_hash": ""
   }
