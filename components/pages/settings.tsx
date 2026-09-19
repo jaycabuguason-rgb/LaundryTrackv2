@@ -19,13 +19,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { type Page } from "@/components/sidebar";
 import { cn } from "@/lib/utils";
 import {
-  transactions,
-  loyaltyMembers,
-  auditLogs,
-  serviceRevenueData,
-  weeklyRevenueData,
-} from "@/lib/data";
-import {
   type ServiceType,
   type AddOn,
   type PricingType,
@@ -2013,6 +2006,16 @@ function BackupSettings() {
   const [exporting, setExporting]     = useState(false);
   const [lastBackup, setLastBackup]   = useState<Date | null>(null);
   const [justExported, setJustExported] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+
+  // Restore state
+  const restoreInputRef = useRef<HTMLInputElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [restorePreview, setRestorePreview] = useState<any | null>(null);
+  const [restoreError, setRestoreError] = useState<string | null>(null);
+  const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
+  const [restoring, setRestoring] = useState(false);
+  const [restoreResult, setRestoreResult] = useState<{ settingsRestored: number; membersRestored: number; transactionsRestored: number; serviceTypesRestored: number; addOnsRestored: number } | null>(null);
 
   const formatBackupDate = (d: Date) =>
     d.toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" }) +
@@ -2022,84 +2025,112 @@ function BackupSettings() {
   const handleExport = async () => {
     if (exporting) return;
     setExporting(true);
+    setExportError(null);
 
-    // Brief artificial delay so the loading state is visible
-    await new Promise((r) => setTimeout(r, 800));
+    try {
+      const headers = await buildAuthHeaders();
+      const response = await fetch("/api/backup/export", { cache: "no-store", headers });
 
-    const now = new Date();
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({ error: "Export failed." }));
+        throw new Error(body.error ?? `Export failed with status ${response.status}`);
+      }
 
-    // Build full backup payload from all data sources
-    const backup = {
-      meta: {
-        appName: "LaundryTrack",
-        version: "1.0",
-        exportedAt: now.toISOString(),
-        exportedBy: "Admin",
-      },
-      settings: {
-        pricing: {
-          pricePerKg: 30,
-          loyaltyMilestone: 7,
-          addOns: [
-            { name: "Fabcon",        rate: 10 },
-            { name: "Express (+50%)", rate: 50 },
-            { name: "Bleach",        rate: 15 },
-            { name: "Starch",        rate: 20 },
-          ],
-        },
-        serviceTypes: [
-          { name: "Regular",         description: "Standard wash & dry",              active: true },
-          { name: "Delicate",        description: "Gentle cycle for delicate fabrics", active: true },
-          { name: "Express",         description: "Same-day turnaround",               active: true },
-          { name: "Bulk / Commercial", description: "For 10kg and above",             active: false },
-        ],
-        businessProfile: {
-          shopName:      "LaundryTrack",
-          address:       "123 Magsaysay Ave, Brgy. Sta. Cruz, Manila",
-          contactNumber: "(02) 8123-4567",
-          email:         "contact@laundrytrack.ph",
-        },
-        backup: {
-          autoBackup: true,
-          schedule:   "daily",
-        },
-      },
-      data: {
-        transactions,
-        loyaltyMembers,
-        auditLogs,
-        analytics: {
-          serviceRevenue:  serviceRevenueData,
-          weeklyRevenue:   weeklyRevenueData,
-        },
-      },
+      const backup = await response.json();
+
+      // Serialise and trigger download
+      const now      = new Date();
+      const json     = JSON.stringify(backup, null, 2);
+      const blob     = new Blob([json], { type: "application/json" });
+      const url      = URL.createObjectURL(blob);
+      const pad      = (n: number) => String(n).padStart(2, "0");
+      const datePart = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
+      const timePart = `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+      const fileName = `LaundryTrack_Backup_${datePart}_${timePart}.json`;
+      const a        = document.createElement("a");
+      a.href         = url;
+      a.download     = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      setLastBackup(now);
+      setJustExported(true);
+      setTimeout(() => setJustExported(false), 3000);
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : "Export failed.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleRestoreFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setRestoreError(null);
+    setRestoreResult(null);
+
+    if (!f.name.endsWith(".json")) {
+      setRestoreError("Please select a .json backup file.");
+      return;
+    }
+    if (f.size > 10 * 1024 * 1024) {
+      setRestoreError("Backup file exceeds the 10MB limit.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const parsed = JSON.parse(ev.target?.result as string);
+        if (!parsed?.meta?.appName || parsed.meta.appName !== "LaundryTrack" || !parsed?.data) {
+          setRestoreError("This file does not appear to be a valid LaundryTrack backup.");
+          return;
+        }
+        setRestorePreview(parsed);
+        setShowRestoreConfirm(true);
+      } catch {
+        setRestoreError("Failed to parse the backup file. Ensure it is valid JSON.");
+      }
     };
+    reader.readAsText(f);
+    // Reset the input so the same file can be selected again
+    e.target.value = "";
+  };
 
-    // Serialise and trigger download
-    const json     = JSON.stringify(backup, null, 2);
-    const blob     = new Blob([json], { type: "application/json" });
-    const url      = URL.createObjectURL(blob);
-    const pad      = (n: number) => String(n).padStart(2, "0");
-    const datePart = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
-    const timePart = `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
-    const fileName = `LaundryTrack_Backup_${datePart}_${timePart}.json`;
-    const a        = document.createElement("a");
-    a.href         = url;
-    a.download     = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const handleRestore = async () => {
+    if (!restorePreview || restoring) return;
+    setRestoring(true);
+    setRestoreError(null);
 
-    setLastBackup(now);
-    setExporting(false);
-    setJustExported(true);
-    setTimeout(() => setJustExported(false), 3000);
+    try {
+      const headers = await buildAuthHeaders();
+      const response = await fetch("/api/backup/restore", {
+        method: "POST",
+        headers,
+        body: JSON.stringify(restorePreview),
+      });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({ error: "Restore failed." }));
+        throw new Error(body.error ?? `Restore failed with status ${response.status}`);
+      }
+
+      const { result } = await response.json();
+      setRestoreResult(result);
+      setShowRestoreConfirm(false);
+      setRestorePreview(null);
+    } catch (err) {
+      setRestoreError(err instanceof Error ? err.message : "Restore failed.");
+    } finally {
+      setRestoring(false);
+    }
   };
 
   return (
     <div className="space-y-4 w-full max-w-lg">
-      {/* Success toast */}
+      {/* Export success toast */}
       {justExported && (
         <div className="flex items-center gap-2.5 bg-green-50 border border-green-200 text-green-800 rounded-lg px-4 py-3 text-sm animate-in fade-in slide-in-from-top-2">
           <CheckCircle2 className="w-4 h-4 shrink-0 text-green-600" />
@@ -2107,10 +2138,26 @@ function BackupSettings() {
         </div>
       )}
 
+      {/* Export error */}
+      {exportError && (
+        <div className="flex items-center gap-2.5 bg-red-50 border border-red-200 text-red-800 rounded-lg px-4 py-3 text-sm animate-in fade-in slide-in-from-top-2">
+          <AlertTriangle className="w-4 h-4 shrink-0 text-red-600" />
+          {exportError}
+        </div>
+      )}
+
+      {/* Restore success toast */}
+      {restoreResult && (
+        <div className="flex items-center gap-2.5 bg-green-50 border border-green-200 text-green-800 rounded-lg px-4 py-3 text-sm animate-in fade-in slide-in-from-top-2">
+          <CheckCircle2 className="w-4 h-4 shrink-0 text-green-600" />
+          Database restored! Settings: {restoreResult.settingsRestored}, Service Types: {restoreResult.serviceTypesRestored}, Add-ons: {restoreResult.addOnsRestored}, Members: {restoreResult.membersRestored}, Transactions: {restoreResult.transactionsRestored}
+        </div>
+      )}
+
       <Card className="border border-border shadow-none">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm">Manual Backup</CardTitle>
-          <CardDescription className="text-xs">Download a snapshot of all system data.</CardDescription>
+          <CardDescription className="text-xs">Download a snapshot of all system data from the database.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-center gap-3 bg-muted/30 rounded-md p-3">
@@ -2118,7 +2165,7 @@ function BackupSettings() {
             <span className="text-xs text-muted-foreground">
               Last backup:{" "}
               <strong className="text-foreground">
-                {lastBackup ? formatBackupDate(lastBackup) : "April 4, 2026, 11:00 PM"}
+                {lastBackup ? formatBackupDate(lastBackup) : "Never"}
               </strong>
             </span>
           </div>
@@ -2180,16 +2227,68 @@ function BackupSettings() {
           <CardDescription className="text-xs">Upload a previously exported backup file to restore data.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="border-2 border-dashed border-border rounded-lg p-6 flex flex-col items-center gap-2">
+          {restoreError && (
+            <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-800 rounded-md px-3 py-2 text-xs mb-3">
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-red-600" />
+              {restoreError}
+            </div>
+          )}
+          <input
+            ref={restoreInputRef}
+            type="file"
+            accept=".json"
+            className="hidden"
+            onChange={handleRestoreFileSelect}
+          />
+          <div
+            className="border-2 border-dashed border-border rounded-lg p-6 flex flex-col items-center gap-2 cursor-pointer hover:border-primary/50 transition-colors"
+            onClick={() => restoreInputRef.current?.click()}
+          >
             <Upload className="w-6 h-6 text-muted-foreground" />
             <p className="text-xs text-muted-foreground">Click to upload backup file</p>
-            <p className="text-xs text-muted-foreground/60">.json files accepted</p>
+            <p className="text-xs text-muted-foreground/60">.json files accepted (max 10MB)</p>
           </div>
-          <Button size="sm" variant="destructive" className="mt-3 flex items-center gap-1.5">
-            Restore Database
-          </Button>
         </CardContent>
       </Card>
+
+      {/* Restore confirmation dialog */}
+      <Dialog open={showRestoreConfirm} onOpenChange={setShowRestoreConfirm}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirm Database Restore</DialogTitle>
+            <DialogDescription className="text-xs">
+              You are about to restore data from a backup file. Existing records with matching IDs will be updated.
+            </DialogDescription>
+          </DialogHeader>
+          {restorePreview?.meta && (
+            <div className="space-y-2 text-sm">
+              <div className="bg-muted/40 rounded-md p-3 space-y-1">
+                <p className="text-xs"><strong>Backup Date:</strong> {new Date(restorePreview.meta.exportedAt).toLocaleString("en-PH")}</p>
+                <p className="text-xs"><strong>Exported By:</strong> {restorePreview.meta.exportedBy}</p>
+                <p className="text-xs"><strong>Version:</strong> {restorePreview.meta.version}</p>
+              </div>
+              {restorePreview.meta.tableRecordCounts && (
+                <div className="bg-muted/40 rounded-md p-3 space-y-1">
+                  <p className="text-xs font-medium mb-1">Records to restore:</p>
+                  {Object.entries(restorePreview.meta.tableRecordCounts as Record<string, number>).map(([key, count]) => (
+                    <p key={key} className="text-xs text-muted-foreground">{key}: <strong className="text-foreground">{String(count)}</strong></p>
+                  ))}
+                </div>
+              )}
+              <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-800 rounded-md px-3 py-2 text-xs">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                This will merge backup data into the live database. Existing records with matching IDs will be overwritten.
+              </div>
+            </div>
+          )}
+          <div className="flex gap-2 mt-2">
+            <Button variant="destructive" className="flex-1" onClick={handleRestore} disabled={restoring}>
+              {restoring ? <><Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> Restoring...</> : "Confirm Restore"}
+            </Button>
+            <Button variant="outline" className="flex-1" onClick={() => setShowRestoreConfirm(false)} disabled={restoring}>Cancel</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

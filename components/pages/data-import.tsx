@@ -33,6 +33,8 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { getBrowserAccessToken } from "@/lib/supabase/browser-session";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -341,45 +343,107 @@ export default function DataImportPage({ onViewTransactions }: DataImportProps) 
     URL.revokeObjectURL(url);
   };
 
-  // ── Import simulation ────────────────────────────────────────────────────────
+  // ── Import via API ─────────────────────────────────────────────────────────
 
-  const runImport = () => {
+  const runImport = async () => {
     const errRows   = issues.filter((i) => i.severity === "error").map((i) => i.row);
     const uniqueErr = new Set(errRows).size;
-    const valid     = rows.length - (skipErrors ? uniqueErr : 0);
     const dupsSkip  = duplicateAction === "skip" ? duplicateCount : 0;
-    const toImport  = Math.max(0, valid - dupsSkip);
 
     setImporting(true);
     setImportProgress(0);
     const start = Date.now();
 
-    const tick = (progress: number) => {
-      setImportProgress(progress);
-      if (progress < 100) {
-        setTimeout(() => tick(Math.min(100, progress + Math.random() * 18 + 8)), 120);
-      } else {
-        const elapsed = Math.round((Date.now() - start) / 1000);
-        setImportResult({ total: toImport, skipped: skipErrors ? uniqueErr : 0, dupsSkipped: dupsSkip, seconds: elapsed });
-        setImporting(false);
-        setImportDone(true);
-        setStep(5);
+    try {
+      // Build mapped rows for the API
+      const errRowSet = skipErrors ? new Set(errRows) : new Set<number>();
+      const mappedRows = rows
+        .map((row, idx) => {
+          const rowNum = idx + 2; // 1-based + header
+          if (errRowSet.has(rowNum)) return null;
+          return {
+            customerName: row[mapping["customerName"] ?? ""] ?? "",
+            arrivalDate:  row[mapping["arrivalDate"] ?? ""] ?? "",
+            weight:       row[mapping["weight"] ?? ""] ?? "",
+            washType:     row[mapping["washType"] ?? ""] ?? "",
+            fee:          row[mapping["fee"] ?? ""] ?? "",
+            status:       row[mapping["status"] ?? ""] ?? "",
+            phone:        row[mapping["phone"] ?? ""] ?? "",
+            addons:       row[mapping["addons"] ?? ""] ?? "",
+            notes:        row[mapping["notes"] ?? ""] ?? "",
+          };
+        })
+        .filter(Boolean);
 
-        // Add to history
-        setHistory((prev) => [
-          {
-            id: `h${Date.now()}`,
-            timestamp: new Date(),
-            fileName: file?.name ?? "unknown",
-            dataType: dataType ?? "transactions",
-            recordsImported: toImport,
-            status: uniqueErr > 0 ? "Partial" : "Success",
-          },
-          ...prev,
-        ]);
+      setImportProgress(20);
+
+      // Build auth headers
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (getSupabaseBrowserClient()) {
+        const accessToken = await getBrowserAccessToken();
+        if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
       }
-    };
-    tick(0);
+
+      setImportProgress(30);
+
+      const response = await fetch("/api/transactions/import", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ rows: mappedRows }),
+      });
+
+      setImportProgress(80);
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({ error: "Import failed." }));
+        throw new Error(body.error ?? `Import failed with status ${response.status}`);
+      }
+
+      const result = await response.json();
+      const elapsed = Math.round((Date.now() - start) / 1000);
+
+      setImportProgress(100);
+      setImportResult({
+        total: result.importedCount ?? 0,
+        skipped: (result.skippedCount ?? 0) + (skipErrors ? uniqueErr : 0),
+        dupsSkipped: dupsSkip,
+        seconds: elapsed,
+      });
+      setImporting(false);
+      setImportDone(true);
+      setStep(5);
+
+      // Add to history
+      setHistory((prev) => [
+        {
+          id: `h${Date.now()}`,
+          timestamp: new Date(),
+          fileName: file?.name ?? "unknown",
+          dataType: dataType ?? "transactions",
+          recordsImported: result.importedCount ?? 0,
+          status: (result.skippedCount ?? 0) > 0 || uniqueErr > 0 ? "Partial" : "Success",
+        },
+        ...prev,
+      ]);
+    } catch (err) {
+      const elapsed = Math.round((Date.now() - start) / 1000);
+      setImportResult({ total: 0, skipped: rows.length, dupsSkipped: 0, seconds: elapsed });
+      setImporting(false);
+      setImportDone(true);
+      setStep(5);
+
+      setHistory((prev) => [
+        {
+          id: `h${Date.now()}`,
+          timestamp: new Date(),
+          fileName: file?.name ?? "unknown",
+          dataType: dataType ?? "transactions",
+          recordsImported: 0,
+          status: "Failed",
+        },
+        ...prev,
+      ]);
+    }
   };
 
   // ── Navigation ───────────────────────────────────────────────────────────────
