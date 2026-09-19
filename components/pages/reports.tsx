@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   CalendarIcon,
   Clock,
@@ -59,6 +59,8 @@ type RangePreset = "day" | "week" | "month" | "year" | "custom";
 type ReportsPageProps = {
   transactions: Transaction[];
   shopName?: string;
+  onRefresh?: () => Promise<void> | void;
+  loading?: boolean;
 };
 
 type ServiceRevenueRow = {
@@ -111,12 +113,17 @@ function getPaymentDateKey(transaction: Transaction): string | null {
     const match = transaction.paidAt.match(/^(\d{4}-\d{2}-\d{2})/);
     if (match) return match[1];
   }
+  if (transaction.paymentStatus === "paid") {
+    // Graceful fallback for transactions without explicit paidAt timestamp
+    return transaction.dropOffDate || (transaction.arrivalDateTime ? transaction.arrivalDateTime.split(" ")[0] : null);
+  }
   return null;
 }
 
 function getPaymentHourLabel(transaction: Transaction): string {
-  if (!transaction.paidAt) return "Unknown";
-  const match = transaction.paidAt.match(/(\d{1,2}):(\d{2})/);
+  const timeSource = transaction.paidAt || transaction.arrivalDateTime;
+  if (!timeSource) return "Unknown";
+  const match = timeSource.match(/(\d{1,2}):(\d{2})/);
   if (!match) return "Unknown";
   const hour = Number(match[1]);
   if (Number.isNaN(hour)) return "Unknown";
@@ -329,7 +336,7 @@ function getCustomerSummaryRows(transactions: Transaction[]) {
   return [...customerMap.values()].sort((a, b) => b.spent - a.spent);
 }
 
-export default function ReportsPage({ transactions, shopName = "LaundryTrack" }: ReportsPageProps) {
+export default function ReportsPage({ transactions, shopName = "LaundryTrack", onRefresh, loading = false }: ReportsPageProps) {
   const [activeTab, setActiveTab] = useState<string>("overview");
   const [mobileStatusFilter, setMobileStatusFilter] = useState<string>("all");
   const [summaryDate, setSummaryDate] = useState<Date>(new Date());
@@ -343,6 +350,16 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
   const [pdfGenerating, setPdfGenerating] = useState(false);
   const [forecastPdfGenerating, setForecastPdfGenerating] = useState(false);
   const [rangePreset, setRangePreset] = useState<RangePreset>("month");
+
+  useEffect(() => {
+    void onRefresh?.();
+    const interval = setInterval(() => {
+      if (typeof document !== "undefined" && document.visibilityState !== "hidden") {
+        void onRefresh?.();
+      }
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [onRefresh]);
 
   const periodRanges = {
     day: { from: new Date(), to: new Date() },
@@ -704,8 +721,26 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
     <div className="min-h-[60vh] space-y-4">
       {/* Desktop Header */}
       <div className="hidden md:flex items-center justify-between">
-        <h2 className="text-base font-semibold text-foreground">Reports</h2>
-        <p className="text-xs text-muted-foreground">{transactions.length} total transactions</p>
+        <div className="flex items-center gap-2.5">
+          <h2 className="text-base font-semibold text-foreground">Reports</h2>
+          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            Live
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void onRefresh?.()}
+            disabled={loading}
+            className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+          >
+            <RotateCw className={cn("w-3.5 h-3.5", loading && "animate-spin text-primary")} />
+            <span>Refresh</span>
+          </Button>
+          <p className="text-xs text-muted-foreground">{transactions.length} total transactions</p>
+        </div>
       </div>
 
       {/* Mobile Concept Header */}
@@ -713,10 +748,23 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack" }:
         <div className="flex flex-col min-w-0">
           <div className="flex items-center gap-1.5">
             <h1 className="text-xl font-bold tracking-tight text-foreground">Reports</h1>
-            <span className="w-2 h-2 rounded-full bg-primary animate-pulse inline-block" />
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Live
+            </span>
           </div>
           <p className="text-xs text-muted-foreground truncate">Business analytics & daily laundry summaries</p>
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => void onRefresh?.()}
+          disabled={loading}
+          className="h-8 px-2.5 gap-1.5 text-xs text-muted-foreground hover:text-foreground shrink-0"
+        >
+          <RotateCw className={cn("w-3.5 h-3.5", loading && "animate-spin text-primary")} />
+          <span className="hidden sm:inline">Refresh</span>
+        </Button>
       </div>
 
       {transactions.length === 0 && (

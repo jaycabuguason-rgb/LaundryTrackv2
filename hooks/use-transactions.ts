@@ -66,6 +66,8 @@ export function mapRealtimeRow(row: unknown): Transaction | null {
   const claimedAt = claimedTimeRaw ? formatCompactDateTime(claimedTimeRaw) || undefined : undefined;
   const voidedTimeRaw = typeof r.voided_at === "string" ? r.voided_at : (typeof r.voidedAt === "string" ? r.voidedAt : null);
   const voidedAt = voidedTimeRaw ? formatCompactDateTime(voidedTimeRaw) || undefined : undefined;
+  const paidTimeRaw = typeof r.paid_at === "string" ? r.paid_at : (typeof r.paidAt === "string" ? r.paidAt : null);
+  const paidAt = paidTimeRaw ? formatCompactDateTime(paidTimeRaw) || undefined : undefined;
 
   const washType = typeof r.wash_type === "string" ? r.wash_type : (typeof r.washType === "string" ? r.washType : "Regular");
   const weight = typeof r.weight_kg === "number" ? r.weight_kg : (Number(r.weight_kg ?? r.weight ?? 0) || 0);
@@ -87,6 +89,7 @@ export function mapRealtimeRow(row: unknown): Transaction | null {
     dropOffDate,
     claimedAt,
     voidedAt,
+    paidAt,
     washType,
     weight,
     fee,
@@ -475,6 +478,7 @@ export function useTransactions() {
         fee: input.fee,
         status: input.status,
         paymentStatus: input.paymentStatus,
+        paidAt: input.paymentStatus === "paid" ? (input.arrivalDateTime || formatCompactDateTime(new Date().toISOString())) : undefined,
         addOns: input.addOns,
         washInstructions: input.washInstructions,
         eta: input.eta ?? null,
@@ -497,11 +501,18 @@ export function useTransactions() {
     });
 
     const data = await readJson<TransactionResponse>(response);
-    updateTransactions((current) => [data.transaction, ...current]);
-    return data.transaction;
+    const tx: Transaction = {
+      ...data.transaction,
+      ...(data.transaction.paymentStatus === "paid" && !data.transaction.paidAt
+        ? { paidAt: data.transaction.arrivalDateTime || formatCompactDateTime(new Date().toISOString()) }
+        : {}),
+    };
+    updateTransactions((current) => [tx, ...current]);
+    return tx;
   }, [updateTransactions]);
 
   const updateTransaction = useCallback(async (ticketId: string, updates: UpdateTransactionInput) => {
+    const nowStr = formatCompactDateTime(new Date().toISOString());
     if (!isOnline()) {
       await enqueueOfflineMutation({ type: "update", ticketId, updateInput: updates });
       setPendingChangesCount((await readOfflineQueue()).length);
@@ -510,9 +521,19 @@ export function useTransactions() {
       let optimistic: Transaction | null = null;
       updateTransactions((current) => {
         const found = current.find((t) => t.ticketId === ticketId);
-        optimistic = found ? ({ ...found, ...updates } as Transaction) : ({ ticketId, ...updates } as unknown as Transaction);
+        optimistic = found
+          ? ({
+              ...found,
+              ...updates,
+              ...(updates.paymentStatus === "paid" && !found.paidAt ? { paidAt: nowStr } : {}),
+            } as Transaction)
+          : ({
+              ticketId,
+              ...updates,
+              ...(updates.paymentStatus === "paid" ? { paidAt: nowStr } : {}),
+            } as unknown as Transaction);
         return current.map((transaction) =>
-          transaction.ticketId === ticketId ? { ...transaction, ...updates } : transaction,
+          transaction.ticketId === ticketId ? optimistic! : transaction,
         );
       });
       return { transaction: (optimistic ?? ({ ticketId, ...updates } as Transaction)) };
@@ -523,8 +544,16 @@ export function useTransactions() {
     const found = transactionsRef.current.find((t) => t.ticketId === ticketId);
     const originalTxn = found;
     const optimisticTxn: Transaction = found
-      ? ({ ...found, ...updates } as Transaction)
-      : ({ ticketId, ...updates } as unknown as Transaction);
+      ? ({
+          ...found,
+          ...updates,
+          ...(updates.paymentStatus === "paid" && !found.paidAt ? { paidAt: nowStr } : {}),
+        } as Transaction)
+      : ({
+          ticketId,
+          ...updates,
+          ...(updates.paymentStatus === "paid" ? { paidAt: nowStr } : {}),
+        } as unknown as Transaction);
 
     pendingMutationsRef.current.set(ticketId, {
       version: currentVersion,

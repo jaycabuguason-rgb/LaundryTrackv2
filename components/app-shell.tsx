@@ -108,6 +108,7 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
     pendingChangesCount,
     lastSyncError,
     retrySync,
+    refresh,
     createTransaction,
     updateTransaction,
     resolveScannedValue,
@@ -237,7 +238,7 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
             onResolveScannedValue={resolveScannedValue}
           />
         );
-      case "reports": return <ReportsPage transactions={txns} shopName={businessProfile.shopName} />;
+      case "reports": return <ReportsPage transactions={txns} shopName={businessProfile.shopName} onRefresh={refresh} loading={transactionsLoading} />;
       case "settings-pricing":
       case "settings-service-types":
       case "settings-backup":
