@@ -148,14 +148,15 @@ export function parseAppError(error: unknown, fallbackMessage?: string): ParsedA
   if (
     lowerMsg.includes("claimed") && (lowerMsg.includes("cannot be modified") || lowerMsg.includes("locked")) ||
     lowerMsg.includes("voided") && (lowerMsg.includes("cannot be modified") || lowerMsg.includes("locked")) ||
-    lowerMsg.includes("record is finalized")
+    lowerMsg.includes("record is finalized") ||
+    lowerMsg.includes("cannot be reverted")
   ) {
     return {
       category: "finalized_lock",
       title: "Record Finalized",
       message:
-        "This transaction is completed and locked against accidental edits. Use 'Undo Claim' or 'Undo Void' if you need to modify it.",
-      actionLabel: "View Options",
+        "This transaction is completed and locked against accidental edits. Counter transactions marked as Claimed or Voided are permanently archived.",
+      actionLabel: "View Details",
       isRetryable: false,
       technicalDetails: rawMessage,
     };

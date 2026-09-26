@@ -19,6 +19,7 @@ import { type Transaction, type TransactionStatus } from "@/lib/data";
 import { AlertTriangle, Check, Loader2, X } from "lucide-react";
 import { getStatusIcon } from "@/components/status-badge";
 import { toast } from "@/hooks/use-toast";
+import { showAppErrorToast } from "@/lib/error-toast";
 import { cn } from "@/lib/utils";
 
 interface TransactionEditModalProps {
@@ -44,6 +45,7 @@ export function TransactionEditModal({ open, onOpenChange, transaction, onSave }
   const [hasChanges, setHasChanges] = useState(false);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [showClaimConfirm, setShowClaimConfirm] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   useEffect(() => {
     if (transaction && open) {
@@ -51,6 +53,7 @@ export function TransactionEditModal({ open, onOpenChange, transaction, onSave }
       setPaymentStatus(transaction.paymentStatus);
       setWashInstructions(transaction.washInstructions ?? "");
       setHasChanges(false);
+      setEditError(null);
     }
   }, [transaction, open]);
 
@@ -61,6 +64,7 @@ export function TransactionEditModal({ open, onOpenChange, transaction, onSave }
       paymentStatus !== transaction.paymentStatus ||
       (washInstructions ?? "") !== (transaction.washInstructions ?? "");
     setHasChanges(changed);
+    if (changed) setEditError(null);
   }, [status, paymentStatus, washInstructions, transaction]);
 
   const requestClose = () => {
@@ -70,10 +74,13 @@ export function TransactionEditModal({ open, onOpenChange, transaction, onSave }
 
   const handleSave = async () => {
     if (!transaction) return;
+    setEditError(null);
     if (status === "Claimed" && paymentStatus === "unpaid") {
+      const msg = "Mark payment as Paid first before claiming this ticket.";
+      setEditError(msg);
       toast({
         title: "Payment required",
-        description: "Mark payment as Paid first before claiming this ticket.",
+        description: msg,
         variant: "destructive",
       });
       return;
@@ -92,12 +99,11 @@ export function TransactionEditModal({ open, onOpenChange, transaction, onSave }
       });
       setTimeout(() => onOpenChange(false), 100);
     } catch (error) {
-      console.error("Failed to save transaction:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update transaction. Please try again.",
-        variant: "destructive",
+      const parsed = showAppErrorToast(error, {
+        fallbackMessage: "Failed to update transaction. Please try again.",
+        onRetry: () => void handleSave(),
       });
+      setEditError(`${parsed.title}: ${parsed.message}`);
     } finally {
       setSaving(false);
     }
@@ -105,6 +111,7 @@ export function TransactionEditModal({ open, onOpenChange, transaction, onSave }
 
   const handleMoveToClaimed = async () => {
     if (!transaction) return;
+    setEditError(null);
     setSaving(true);
     try {
       await onSave(transaction.ticketId, {
@@ -120,12 +127,11 @@ export function TransactionEditModal({ open, onOpenChange, transaction, onSave }
       setShowClaimConfirm(false);
       setTimeout(() => onOpenChange(false), 100);
     } catch (error) {
-      console.error("Failed to mark as claimed:", error);
-      toast({
-        title: "Error",
-        description: "Failed to mark as claimed. Please try again.",
-        variant: "destructive",
+      const parsed = showAppErrorToast(error, {
+        fallbackMessage: "Failed to mark as claimed. Please try again.",
+        onRetry: () => void handleMoveToClaimed(),
       });
+      setEditError(`${parsed.title}: ${parsed.message}`);
     } finally {
       setSaving(false);
     }
@@ -253,6 +259,17 @@ export function TransactionEditModal({ open, onOpenChange, transaction, onSave }
               <div className="flex items-start gap-2 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2.5 text-sm text-orange-800">
                 <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                 <span>Mark payment as Paid first before claiming this ticket.</span>
+              </div>
+            )}
+
+            {/* Error Alert */}
+            {editError && (
+              <div
+                role="alert"
+                className="flex items-start gap-2 bg-destructive/10 border border-destructive/30 rounded-lg px-3 py-2.5 text-xs text-destructive animate-in fade-in-50 duration-200"
+              >
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span className="font-semibold">{editError}</span>
               </div>
             )}
 

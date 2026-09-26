@@ -15,6 +15,7 @@ import {
   PlusCircle,
   Receipt,
   FileText,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +35,7 @@ import {
 import type { CreateTransactionInput } from "@/lib/transaction-contracts";
 import type { Transaction, PaymentStatus } from "@/lib/data";
 import { toast } from "@/hooks/use-toast";
+import { showAppErrorToast } from "@/lib/error-toast";
 import { cn } from "@/lib/utils";
 import type { Page } from "@/components/sidebar";
 import { PrintReceiptModal } from "@/components/print-receipt-modal";
@@ -55,6 +57,7 @@ export default function NewOrderPage({
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [submitting, setSubmitting] = useState(false);
   const [createdTxn, setCreatedTxn] = useState<Transaction | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   // Form State
   const [customerName, setCustomerName] = useState("");
@@ -193,6 +196,7 @@ export default function NewOrderPage({
   const step2Valid = billBy === "per-kg" ? numWeight > 0 : numLoads > 0 && !!selectedTierId;
 
   async function handleCreateOrder() {
+    setFormError(null);
     setSubmitting(true);
     try {
       const displayWashType =
@@ -221,11 +225,11 @@ export default function NewOrderPage({
 
       setCreatedTxn(newTxn);
     } catch (err) {
-      toast({
-        title: "Failed to create order",
-        description: err instanceof Error ? err.message : "Please check your details and try again.",
-        variant: "destructive",
+      const parsed = showAppErrorToast(err, {
+        fallbackMessage: "Please check your details and try again.",
+        onRetry: () => void handleCreateOrder(),
       });
+      setFormError(`${parsed.title}: ${parsed.message}`);
     } finally {
       setSubmitting(false);
     }
@@ -781,6 +785,19 @@ export default function NewOrderPage({
                 </div>
               )}
             </div>
+
+            {/* Inline Error Alert */}
+            {formError && (
+              <div
+                role="alert"
+                className="flex items-start gap-2.5 p-3 rounded-xl border border-destructive/30 bg-destructive/10 text-destructive text-xs animate-in fade-in-50 duration-200"
+              >
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-semibold">{formError}</p>
+                </div>
+              </div>
+            )}
 
             {/* Action Buttons */}
             <div className="flex items-center justify-between pt-4">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Camera, Info, Loader2, User, Phone, Save, RotateCcw, Trash2, Eye } from "lucide-react";
+import { Camera, Info, Loader2, User, Phone, Save, RotateCcw, Trash2, Eye, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
+import { showAppErrorToast } from "@/lib/error-toast";
 import { getBrowserAccessToken } from "@/lib/supabase/browser-session";
 import type { UserProfile } from "@/lib/auth";
 import { getUserInitials } from "@/lib/utils";
@@ -41,6 +42,8 @@ export default function ProfilePage({
   const [uploading, setUploading] = useState(false);
   const [localAvatarUrl, setLocalAvatarUrl] = useState<string | undefined>(userProfile.avatarUrl);
   const [showPhotoViewer, setShowPhotoViewer] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   // Form states for editable Name & Phone
   const [name, setName] = useState(userProfile.name || "");
@@ -51,6 +54,8 @@ export default function ProfilePage({
     setName(userProfile.name || "");
     setPhone(userProfile.phone || contactNumber || "");
     setLocalAvatarUrl(userProfile.avatarUrl);
+    setAvatarError(null);
+    setProfileError(null);
   }, [userProfile, contactNumber]);
 
   const hasChanges =
@@ -62,6 +67,24 @@ export default function ProfilePage({
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    setAvatarError(null);
+
+    // Validate image file type
+    if (!file.type.startsWith("image/")) {
+      const msg = "Unsupported file type. Please select a valid JPEG, PNG, or WebP photo.";
+      setAvatarError(msg);
+      showAppErrorToast(msg, { fallbackMessage: msg });
+      return;
+    }
+
+    // Validate size (<2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      const msg = "Photo is too large. Please choose an image smaller than 2MB.";
+      setAvatarError(msg);
+      showAppErrorToast(msg, { fallbackMessage: msg });
+      return;
+    }
 
     // Immediately show a local preview
     const previewUrl = URL.createObjectURL(file);
@@ -100,11 +123,8 @@ export default function ProfilePage({
     } catch (err) {
       // Revert to the previous avatar on failure
       setLocalAvatarUrl(userProfile.avatarUrl);
-      toast({
-        title: "Upload failed",
-        description: err instanceof Error ? err.message : "Something went wrong.",
-        variant: "destructive",
-      });
+      const parsed = showAppErrorToast(err, { fallbackMessage: "Something went wrong." });
+      setAvatarError(`${parsed.title}: ${parsed.message}`);
     } finally {
       setUploading(false);
       // Reset the input so the same file can be re-selected
@@ -156,12 +176,11 @@ export default function ProfilePage({
 
   const handleSaveProfile = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    setProfileError(null);
     if (!name.trim()) {
-      toast({
-        title: "Name required",
-        description: "Please enter your name.",
-        variant: "destructive",
-      });
+      const msg = "Please enter your name.";
+      setProfileError(msg);
+      showAppErrorToast(msg, { fallbackMessage: "Name is required." });
       return;
     }
 
@@ -196,11 +215,8 @@ export default function ProfilePage({
         description: "Your name and phone number have been updated successfully.",
       });
     } catch (err) {
-      toast({
-        title: "Update failed",
-        description: err instanceof Error ? err.message : "Something went wrong.",
-        variant: "destructive",
-      });
+      const parsed = showAppErrorToast(err, { fallbackMessage: "Something went wrong." });
+      setProfileError(`${parsed.title}: ${parsed.message}`);
     } finally {
       setSaving(false);
     }
@@ -298,6 +314,17 @@ export default function ProfilePage({
                 </p>
               </div>
             </div>
+
+            {/* Inline Avatar Error Alert */}
+            {avatarError && (
+              <div
+                role="alert"
+                className="flex items-start gap-2 p-2.5 rounded-lg border border-destructive/30 bg-destructive/10 text-destructive text-xs animate-in fade-in-50 duration-200"
+              >
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span className="font-semibold">{avatarError}</span>
+              </div>
+            )}
 
             {/* Photo action buttons */}
             <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-border/60">
@@ -417,6 +444,17 @@ export default function ProfilePage({
                 </div>
               </div>
             </div>
+
+            {/* Inline Profile Error Alert */}
+            {profileError && (
+              <div
+                role="alert"
+                className="flex items-start gap-2 p-2.5 rounded-lg border border-destructive/30 bg-destructive/10 text-destructive text-xs animate-in fade-in-50 duration-200"
+              >
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span className="font-semibold">{profileError}</span>
+              </div>
+            )}
 
             {/* Save / Discard — admin only, visible when there are unsaved changes */}
             {!isStaff && hasChanges && (

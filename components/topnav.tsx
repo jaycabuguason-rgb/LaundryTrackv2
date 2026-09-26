@@ -25,6 +25,7 @@ import { type Page } from "@/components/sidebar";
 import type { UserProfile } from "@/lib/auth";
 import type { Transaction } from "@/lib/data";
 import { getUserInitials } from "@/lib/utils";
+import { ConnectionDiagnosticsDialog } from "@/components/connection-diagnostics-dialog";
 
 const pageTitles: Record<Page, string> = {
   dashboard: "Dashboard",
@@ -79,6 +80,7 @@ export default function TopNav({ activePage, onNavigate, onSignOut, adminProfile
   const [notifOpen, setNotifOpen] = useState(false);
   const [signOutOpen, setSignOutOpen] = useState(false);
   const [showAvatarViewer, setShowAvatarViewer] = useState(false);
+  const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
 
   // Update notifications when external notifications change
   useEffect(() => {
@@ -123,63 +125,70 @@ export default function TopNav({ activePage, onNavigate, onSignOut, adminProfile
         <h1 className="text-sm font-semibold text-foreground truncate">
           {pageTitles[activePage]}
         </h1>
-        {/* Mobile network indicator dot */}
-        <span
-          className={`md:hidden inline-block w-2 h-2 rounded-full shrink-0 ${
-            syncStatus === "online"
-              ? "bg-emerald-500"
-              : syncStatus === "syncing"
-                ? "bg-blue-500 animate-pulse"
-                : syncStatus === "error"
-                  ? "bg-red-500"
-                  : "bg-orange-500"
-          }`}
-          title={
-            syncStatus === "online"
-              ? "Online"
-              : syncStatus === "syncing"
-                ? "Syncing changes"
-                : syncStatus === "error"
-                  ? `Sync Error: ${lastSyncError || "failed"}`
-                  : "Offline mode"
-          }
-          aria-label={`Network status: ${syncStatus}`}
-        />
+        {/* Mobile network indicator dot — opens diagnostics dialog */}
+        <button
+          type="button"
+          onClick={() => setDiagnosticsOpen(true)}
+          className="md:hidden flex items-center justify-center p-1 rounded-full cursor-pointer hover:bg-accent focus:outline-none"
+          title="Click for connection details & diagnostics"
+          aria-label={`Network status: ${syncStatus}. Click for connection diagnostics.`}
+        >
+          <span
+            className={`inline-block w-2.5 h-2.5 rounded-full shrink-0 ${
+              syncStatus === "online"
+                ? "bg-emerald-500"
+                : syncStatus === "syncing"
+                  ? "bg-blue-500 animate-pulse"
+                  : syncStatus === "error"
+                    ? "bg-red-500"
+                    : "bg-orange-500"
+            }`}
+          />
+        </button>
       </div>
 
       <div className="flex items-center gap-1 md:gap-3 shrink-0">
+        {/* Desktop connection status pill — interactive dialog trigger */}
         <div className="hidden md:flex items-center">
-          <span className={`text-xs px-2 py-1 rounded-full font-semibold ${
-            syncStatus === "online"
-              ? "bg-emerald-100 text-emerald-700"
-              : syncStatus === "syncing"
-                ? "bg-blue-100 text-blue-700"
-                : syncStatus === "error"
-                  ? "bg-red-100 text-red-700"
-                  : "bg-orange-100 text-orange-700"
-          }`}>
-            {syncStatus === "online" ? "Online" : syncStatus === "syncing" ? "Syncing" : syncStatus === "error" ? "Sync Error" : "Offline"}
-          </span>
-          {pendingChangesCount > 0 && (
-            <span className="ml-2 text-xs text-muted-foreground">
-              {pendingChangesCount} pending
+          <button
+            type="button"
+            onClick={() => setDiagnosticsOpen(true)}
+            className={`text-xs px-2.5 py-1 rounded-full font-semibold border transition-all cursor-pointer flex items-center gap-1.5 hover:ring-2 hover:ring-primary/20 ${
+              syncStatus === "online"
+                ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800"
+                : syncStatus === "syncing"
+                  ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800"
+                  : syncStatus === "error"
+                    ? "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800 animate-pulse"
+                    : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800"
+            }`}
+            title="Click for connection details & diagnostics"
+            aria-label={`Network status: ${syncStatus}. Click to open diagnostics.`}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                syncStatus === "online"
+                  ? "bg-emerald-500"
+                  : syncStatus === "syncing"
+                    ? "bg-blue-500 animate-pulse"
+                    : syncStatus === "error"
+                      ? "bg-rose-500"
+                      : "bg-amber-500"
+              }`}
+            />
+            <span>
+              {syncStatus === "online"
+                ? "Online"
+                : syncStatus === "syncing"
+                  ? "Syncing"
+                  : syncStatus === "error"
+                    ? "Sync Error"
+                    : "Offline"}
             </span>
-          )}
-          {pendingChangesCount > 0 && syncStatus !== "syncing" && onRetrySync && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="ml-2 h-6 px-2 text-xs"
-              onClick={onRetrySync}
-            >
-              Retry Sync
-            </Button>
-          )}
-          {lastSyncError && syncStatus === "error" && (
-            <span className="ml-2 text-xs text-red-600 max-w-[180px] truncate" title={lastSyncError}>
-              {lastSyncError}
-            </span>
-          )}
+            {pendingChangesCount > 0 && (
+              <span className="opacity-80">({pendingChangesCount})</span>
+            )}
+          </button>
         </div>
         {/* Notifications */}
         <DropdownMenu open={notifOpen} onOpenChange={setNotifOpen}>
@@ -462,6 +471,16 @@ export default function TopNav({ activePage, onNavigate, onSignOut, adminProfile
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Connection & Diagnostics Dialog */}
+      <ConnectionDiagnosticsDialog
+        open={diagnosticsOpen}
+        onOpenChange={setDiagnosticsOpen}
+        syncStatus={syncStatus}
+        pendingChangesCount={pendingChangesCount}
+        lastSyncError={lastSyncError}
+        onRetrySync={onRetrySync}
+      />
     </header>
   );
 }
