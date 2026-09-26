@@ -5,12 +5,13 @@ import {
   Search, EyeOff, Edit, Ban, Printer, ChevronRight, X, QrCode, CalendarIcon,
   AlertTriangle, Plus, User, Star, Camera,
   ChevronLeft, Check, RefreshCw, Inbox, MoreHorizontal, Download, Sparkles,
-  Receipt, Scale, Clock, CheckCircle2, PackageCheck, Eye, ArrowRight
+  Receipt, Scale, Clock, CheckCircle2, PackageCheck, ArrowRight,
+  Undo2, Redo2
 } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -49,6 +50,7 @@ import {
   type PricingMode,
   type PriceDisplayMode,
   type LoadTier,
+  type PricingConfig,
   loadServiceTypes,
   loadAddOns,
   loadPricingConfig,
@@ -56,6 +58,8 @@ import {
   persistServiceTypes,
   persistAddOns,
   loadBusinessProfile,
+  subscribeSettingsSync,
+  LS_PRICING_CONFIG,
 } from "@/lib/settings-store";
 import { downloadQrCodeImage, printQrTicketOnly } from "@/lib/qr-ticket";
 import type { CreateTransactionInput, UpdateTransactionInput } from "@/lib/transaction-contracts";
@@ -1161,8 +1165,6 @@ const MOBILE_STATUS_OPTIONS: StatusOption[] = [
   { status: "Received", label: "Received" },
   { status: "Washing", label: "Washing" },
   { status: "Ready", label: "Ready" },
-  { status: "Claimed", label: "Claimed" },
-  { status: "Voided", label: "Voided" },
 ];
 
 export default function TransactionsPage({
@@ -1204,9 +1206,59 @@ export default function TransactionsPage({
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterService, setFilterService] = useState("all");
   const [filterPayment, setFilterPayment] = useState("all");
+  const [filterVoidReason, setFilterVoidReason] = useState("all");
   const [filterDate, setFilterDate] = useState<Date | undefined>(undefined);
-  const [sortBy, setSortBy] = useState<"smart" | "newest" | "oldest" | "unpaid-first" | "ready-first" | "status-az">("newest");
+  type SortOption =
+    | "smart"
+    | "newest"
+    | "oldest"
+    | "unpaid-first"
+    | "ready-first"
+    | "status-az"
+    | "newest-claimed"
+    | "oldest-claimed"
+    | "newest-voided"
+    | "oldest-voided";
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [activeTab, setActiveTab] = useState<"transactions" | "all" | "claimed" | "voided">("transactions");
+
+  const [enablePaymentOption, setEnablePaymentOption] = useState<boolean>(
+    () => loadPricingConfig().enablePaymentOption ?? true
+  );
+
+  useEffect(() => {
+    return subscribeSettingsSync((detail) => {
+      if (detail.key === LS_PRICING_CONFIG && detail.value) {
+        const cfg = detail.value as PricingConfig;
+        if (typeof cfg.enablePaymentOption === "boolean") {
+          setEnablePaymentOption(cfg.enablePaymentOption);
+        }
+      }
+    });
+  }, []);
+
+  interface StatusMutationRecord {
+    ticketId: string;
+    fromStatus: Transaction["status"];
+    toStatus: Transaction["status"];
+    fromPaymentStatus?: PaymentStatus;
+    toPaymentStatus?: PaymentStatus;
+    fromVoidReason?: string | null;
+  }
+  const [undoStack, setUndoStack] = useState<StatusMutationRecord[]>([]);
+  const [redoStack, setRedoStack] = useState<StatusMutationRecord[]>([]);
+  const [undoPromptTxn, setUndoPromptTxn] = useState<{ txn: Transaction; action: "unclaim" | "unvoid" } | null>(null);
+
+  const voidReasonOptions = useMemo(() => {
+    return Array.from(
+      new Set(
+        txns
+          .filter((t) => t.status === "Voided" && t.voidReason)
+          .map((t) => t.voidReason!.trim())
+          .filter(Boolean)
+      )
+    );
+  }, [txns]);
 
   const serviceOptions = useMemo(() => Array.from(new Set(txns.map((t) => t.washType).filter(Boolean))), [txns]);
 
@@ -1310,10 +1362,25 @@ export default function TransactionsPage({
     if (!voidTxn || !voidReason.trim()) return;
     setBusy(true);
     try {
+      const prevStatus = voidTxn.status;
+      const prevPayment = voidTxn.paymentStatus;
+      const prevReason = voidTxn.voidReason;
       await onUpdateTransaction(voidTxn.ticketId, {
         status: "Voided",
         voidReason,
       });
+      setUndoStack((prev) => [
+        ...prev,
+        {
+          ticketId: voidTxn.ticketId,
+          fromStatus: prevStatus,
+          toStatus: "Voided",
+          fromPaymentStatus: prevPayment,
+          toPaymentStatus: prevPayment,
+          fromVoidReason: prevReason,
+        },
+      ]);
+      setRedoStack([]);
       showToast(`Ticket #${voidTxn.ticketId} has been voided`);
       setVoidTxn(null);
       setVoidReason("");
@@ -1353,11 +1420,26 @@ export default function TransactionsPage({
     }
     setBusy(true);
     try {
+      const prevStatus = editTxn.status;
+      const prevPayment = editTxn.paymentStatus;
       const res = await onUpdateTransaction(editTxn.ticketId, {
         washInstructions: editInstructions,
         status: editStatus,
         paymentStatus: editPaymentStatus,
       });
+      if (editStatus !== prevStatus || editPaymentStatus !== prevPayment) {
+        setUndoStack((prev) => [
+          ...prev,
+          {
+            ticketId: editTxn.ticketId,
+            fromStatus: prevStatus,
+            toStatus: editStatus,
+            fromPaymentStatus: prevPayment,
+            toPaymentStatus: editPaymentStatus,
+          },
+        ]);
+        setRedoStack([]);
+      }
       showToast(`Ticket #${editTxn.ticketId} updated successfully`);
       if (loyaltyEnabled && res.loyaltyResult?.stamped && res.loyaltyResult.rewarded) {
         showToast(`Reward Unlocked! 🎉 Customer earned a free wash! They now have ${res.loyaltyResult.newStampCount} stamps.`);
@@ -1378,11 +1460,24 @@ export default function TransactionsPage({
     if (!editTxn) return;
     setBusy(true);
     try {
+      const prevStatus = editTxn.status;
+      const prevPayment = editTxn.paymentStatus;
       const res = await onUpdateTransaction(editTxn.ticketId, {
         status: "Claimed",
         paymentStatus: editPaymentStatus,
         washInstructions: editInstructions,
       });
+      setUndoStack((prev) => [
+        ...prev,
+        {
+          ticketId: editTxn.ticketId,
+          fromStatus: prevStatus,
+          toStatus: "Claimed",
+          fromPaymentStatus: prevPayment,
+          toPaymentStatus: editPaymentStatus,
+        },
+      ]);
+      setRedoStack([]);
       showToast(`Ticket #${editTxn.ticketId} marked as Claimed`);
       if (loyaltyEnabled && res.loyaltyResult?.stamped && res.loyaltyResult.rewarded) {
         showToast(`Reward Unlocked! 🎉 Customer earned a free wash! They now have ${res.loyaltyResult.newStampCount} stamps.`);
@@ -1400,6 +1495,10 @@ export default function TransactionsPage({
   };
 
   const openEdit = (txn: Transaction) => {
+    if (txn.status === "Claimed" || txn.status === "Voided") {
+      showToast(`Cannot edit ticket: ticket is already ${txn.status.toLowerCase()}`);
+      return;
+    }
     setEditTxn(txn);
     setEditInstructions(txn.washInstructions || "");
     setEditStatus(txn.status);
@@ -1408,6 +1507,10 @@ export default function TransactionsPage({
 
   const handleMobileStatusSelect = async (status: Transaction["status"]) => {
     if (!mobileStatusTxn || status === mobileStatusTxn.status) return;
+    if (mobileStatusTxn.status === "Claimed" || mobileStatusTxn.status === "Voided") {
+      showToast(`Cannot change status: ticket is already ${mobileStatusTxn.status.toLowerCase()}`);
+      return;
+    }
     if (status === "Claimed" && mobileStatusTxn.paymentStatus === "unpaid") {
       showToast("Mark payment as Paid first before claiming this ticket.");
       return;
@@ -1420,10 +1523,22 @@ export default function TransactionsPage({
     }
     setMobileStatusBusyTicket(mobileStatusTxn.ticketId);
     try {
+      const prevStatus = mobileStatusTxn.status;
       const res = await onUpdateTransaction(mobileStatusTxn.ticketId, {
         status,
         paymentStatus: mobileStatusTxn.paymentStatus,
       });
+      setUndoStack((prev) => [
+        ...prev,
+        {
+          ticketId: mobileStatusTxn.ticketId,
+          fromStatus: prevStatus,
+          toStatus: status,
+          fromPaymentStatus: mobileStatusTxn.paymentStatus,
+          toPaymentStatus: mobileStatusTxn.paymentStatus,
+        },
+      ]);
+      setRedoStack([]);
       showToast(`Ticket #${mobileStatusTxn.ticketId} moved to ${status}`);
       if (loyaltyEnabled && res.loyaltyResult?.stamped && res.loyaltyResult.rewarded) {
         showToast(`Reward Unlocked! 🎉 Customer earned a free wash! They now have ${res.loyaltyResult.newStampCount} stamps.`);
@@ -1457,16 +1572,104 @@ export default function TransactionsPage({
       return;
     }
     try {
+      const prevStatus = txn.status;
       const res = await onUpdateTransaction(txn.ticketId, {
         status: "Claimed",
         paymentStatus: txn.paymentStatus,
       });
+      setUndoStack((prev) => [
+        ...prev,
+        {
+          ticketId: txn.ticketId,
+          fromStatus: prevStatus,
+          toStatus: "Claimed",
+          fromPaymentStatus: txn.paymentStatus,
+          toPaymentStatus: txn.paymentStatus,
+        },
+      ]);
+      setRedoStack([]);
       showToast(`Ticket #${txn.ticketId} marked as Claimed`);
       if (loyaltyEnabled && res.loyaltyResult?.stamped && res.loyaltyResult.rewarded) {
         showToast(`Reward Unlocked! 🎉 Customer earned a free wash!`);
       }
     } catch {
       showToast("Unable to claim ticket right now");
+    }
+  };
+
+  const handleUndo = async () => {
+    if (undoStack.length === 0 || busy) return;
+    const last = undoStack[undoStack.length - 1];
+    setBusy(true);
+    try {
+      await onUpdateTransaction(last.ticketId, {
+        status: last.fromStatus,
+        paymentStatus: last.fromPaymentStatus,
+        voidReason: last.fromStatus === "Voided" ? last.fromVoidReason : null,
+        isUndo: true,
+      });
+      setUndoStack((prev) => prev.slice(0, -1));
+      setRedoStack((prev) => [...prev, last]);
+      showToast(`Undone: #${last.ticketId} reverted to ${last.fromStatus}`);
+    } catch {
+      showToast("Unable to undo status right now");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleRedo = async () => {
+    if (redoStack.length === 0 || busy) return;
+    const next = redoStack[redoStack.length - 1];
+    setBusy(true);
+    try {
+      await onUpdateTransaction(next.ticketId, {
+        status: next.toStatus,
+        paymentStatus: next.toPaymentStatus,
+      });
+      setRedoStack((prev) => prev.slice(0, -1));
+      setUndoStack((prev) => [...prev, next]);
+      showToast(`Redone: #${next.ticketId} moved to ${next.toStatus}`);
+    } catch {
+      showToast("Unable to redo status right now");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleConfirmUndoPrompt = async () => {
+    if (!undoPromptTxn) return;
+    const { txn, action } = undoPromptTxn;
+    setBusy(true);
+    try {
+      const targetStatus: Transaction["status"] = action === "unclaim" ? "Ready" : "Received";
+      await onUpdateTransaction(txn.ticketId, {
+        status: targetStatus,
+        voidReason: null,
+        isUndo: true,
+      });
+      setUndoStack((prev) => [
+        ...prev,
+        {
+          ticketId: txn.ticketId,
+          fromStatus: txn.status,
+          toStatus: targetStatus,
+          fromPaymentStatus: txn.paymentStatus,
+          toPaymentStatus: txn.paymentStatus,
+          fromVoidReason: txn.voidReason,
+        },
+      ]);
+      setRedoStack([]);
+      showToast(
+        action === "unclaim"
+          ? `Ticket #${txn.ticketId} claim undone, reverted to Ready`
+          : `Ticket #${txn.ticketId} void undone, restored to ${targetStatus}`
+      );
+      setUndoPromptTxn(null);
+    } catch {
+      showToast("Unable to restore ticket right now");
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -1556,8 +1759,18 @@ export default function TransactionsPage({
       const matchStatus = filterStatus === "all" || t.status === filterStatus;
       const matchService = filterService === "all" || t.washType === filterService;
       const matchPayment = filterPayment === "all" || t.paymentStatus === filterPayment;
-      const matchDate = !filterDate || t.dropOffDate === format(filterDate, "yyyy-MM-dd");
-      return matchTab && matchSearch && matchStatus && matchService && matchPayment && matchDate;
+      const matchVoidReason = activeTab !== "voided" || filterVoidReason === "all" || t.voidReason === filterVoidReason;
+      
+      const targetDateFormatted = filterDate ? format(filterDate, "yyyy-MM-dd") : null;
+      const matchDate =
+        !targetDateFormatted ||
+        (activeTab === "claimed"
+          ? (t.claimedAt ? t.claimedAt.slice(0, 10) === targetDateFormatted : t.dropOffDate === targetDateFormatted)
+          : activeTab === "voided"
+          ? (t.voidedAt ? t.voidedAt.slice(0, 10) === targetDateFormatted : t.dropOffDate === targetDateFormatted)
+          : t.dropOffDate === targetDateFormatted);
+
+      return matchTab && matchSearch && matchStatus && matchService && matchPayment && matchVoidReason && matchDate;
     });
 
     const sorted = [...base];
@@ -1590,6 +1803,18 @@ export default function TransactionsPage({
       case "status-az":
         sorted.sort((a, b) => a.status.localeCompare(b.status));
         break;
+      case "newest-claimed":
+        sorted.sort((a, b) => (b.claimedAt || b.arrivalDateTime).localeCompare(a.claimedAt || a.arrivalDateTime));
+        break;
+      case "oldest-claimed":
+        sorted.sort((a, b) => (a.claimedAt || a.arrivalDateTime).localeCompare(b.claimedAt || b.arrivalDateTime));
+        break;
+      case "newest-voided":
+        sorted.sort((a, b) => (b.voidedAt || b.arrivalDateTime).localeCompare(a.voidedAt || a.arrivalDateTime));
+        break;
+      case "oldest-voided":
+        sorted.sort((a, b) => (a.voidedAt || a.arrivalDateTime).localeCompare(b.voidedAt || b.arrivalDateTime));
+        break;
     }
     return sorted;
   })();
@@ -1606,13 +1831,16 @@ export default function TransactionsPage({
   const claimedOrdersCount = useMemo(() => txns.filter((t) => t.status === "Claimed").length, [txns]);
   const voidedOrdersCount = useMemo(() => txns.filter((t) => t.status === "Voided").length, [txns]);
 
+  const defaultSortForTab = activeTab === "claimed" ? "newest-claimed" : activeTab === "voided" ? "newest-voided" : "newest";
+
   const hasActiveFilters = Boolean(
     search.trim() ||
     filterStatus !== "all" ||
     filterService !== "all" ||
     filterPayment !== "all" ||
+    (activeTab === "voided" && filterVoidReason !== "all") ||
     filterDate !== undefined ||
-    sortBy !== "newest"
+    sortBy !== defaultSortForTab
   );
 
   const clearAllFilters = () => {
@@ -1620,8 +1848,9 @@ export default function TransactionsPage({
     setFilterStatus("all");
     setFilterService("all");
     setFilterPayment("all");
+    setFilterVoidReason("all");
     setFilterDate(undefined);
-    setSortBy("newest");
+    setSortBy(defaultSortForTab);
   };
 
   return (
@@ -1691,6 +1920,7 @@ export default function TransactionsPage({
             onClick={() => {
               setActiveTab("transactions");
               setFilterStatus("all");
+              setSortBy("newest");
             }}
             className={cn(
               "flex-1 py-1.5 px-1.5 rounded-lg font-semibold text-xs flex items-center justify-center gap-1 transition-all active:scale-95",
@@ -1718,6 +1948,7 @@ export default function TransactionsPage({
             onClick={() => {
               setActiveTab("claimed");
               setFilterStatus("all");
+              setSortBy("newest-claimed");
             }}
             className={cn(
               "flex-1 py-1.5 px-1.5 rounded-lg font-semibold text-xs flex items-center justify-center gap-1 transition-all active:scale-95",
@@ -1745,6 +1976,7 @@ export default function TransactionsPage({
             onClick={() => {
               setActiveTab("all");
               setFilterStatus("all");
+              setSortBy("newest");
             }}
             className={cn(
               "flex-1 py-1.5 px-1.5 rounded-lg font-semibold text-xs flex items-center justify-center gap-1 transition-all active:scale-95",
@@ -1772,6 +2004,7 @@ export default function TransactionsPage({
             onClick={() => {
               setActiveTab("voided");
               setFilterStatus("all");
+              setSortBy("newest-voided");
             }}
             className={cn(
               "flex-1 py-1.5 px-1.5 rounded-lg font-semibold text-xs flex items-center justify-center gap-1 transition-all active:scale-95",
@@ -1839,6 +2072,34 @@ export default function TransactionsPage({
 
           {/* Horizontal Scrolling Filter Chips */}
           <div className="flex items-center gap-1.5 overflow-x-auto py-1 no-scrollbar -mx-1 px-1">
+            {/* Undo / Redo chips */}
+            <button
+              type="button"
+              onClick={handleUndo}
+              disabled={undoStack.length === 0 || busy}
+              title="Undo status change"
+              className={cn(
+                "h-8 px-2.5 rounded-full text-xs font-semibold shrink-0 flex items-center gap-1 shadow-xs border transition-colors",
+                undoStack.length > 0 ? "bg-card border-border/80 text-foreground active:scale-95" : "opacity-40 pointer-events-none"
+              )}
+            >
+              <Undo2 className="w-3.5 h-3.5" />
+              <span>Undo</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleRedo}
+              disabled={redoStack.length === 0 || busy}
+              title="Redo status change"
+              className={cn(
+                "h-8 px-2.5 rounded-full text-xs font-semibold shrink-0 flex items-center gap-1 shadow-xs border transition-colors",
+                redoStack.length > 0 ? "bg-card border-border/80 text-foreground active:scale-95" : "opacity-40 pointer-events-none"
+              )}
+            >
+              <Redo2 className="w-3.5 h-3.5" />
+              <span>Redo</span>
+            </button>
+
             {/* Status Chip */}
             {(activeTab === "transactions" || activeTab === "all") && (
               <Select value={filterStatus} onValueChange={setFilterStatus}>
@@ -1867,6 +2128,26 @@ export default function TransactionsPage({
                       <SelectItem value="Voided">Voided</SelectItem>
                     </>
                   )}
+                </SelectContent>
+              </Select>
+            )}
+
+            {/* Void Reason Chip */}
+            {activeTab === "voided" && (
+              <Select value={filterVoidReason} onValueChange={setFilterVoidReason}>
+                <SelectTrigger className={cn(
+                  "h-8 px-2.5 rounded-full text-xs font-semibold shrink-0 gap-1 shadow-xs border",
+                  filterVoidReason !== "all"
+                    ? "bg-destructive/10 border-destructive/30 text-destructive font-bold"
+                    : "bg-card border-border/80 text-foreground"
+                )}>
+                  <SelectValue placeholder="All Reasons" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Void Reasons</SelectItem>
+                  {voidReasonOptions.map((r) => (
+                    <SelectItem key={r} value={r}>{r}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             )}
@@ -1910,19 +2191,34 @@ export default function TransactionsPage({
             <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
               <SelectTrigger className={cn(
                 "h-8 px-2.5 rounded-full text-xs font-semibold shrink-0 gap-1 shadow-xs border",
-                sortBy !== "newest"
+                sortBy !== defaultSortForTab
                   ? "bg-secondary/15 border-secondary/30 text-foreground"
                   : "bg-card border-border/80 text-foreground"
               )}>
                 <SelectValue placeholder="Sort" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="newest">Newest First</SelectItem>
-                <SelectItem value="smart">Smart Priority</SelectItem>
-                <SelectItem value="oldest">Oldest First</SelectItem>
-                <SelectItem value="unpaid-first">Unpaid First</SelectItem>
-                <SelectItem value="ready-first">Ready First</SelectItem>
-                <SelectItem value="status-az">Status (A-Z)</SelectItem>
+                {activeTab === "claimed" ? (
+                  <>
+                    <SelectItem value="newest-claimed">Recently Claimed</SelectItem>
+                    <SelectItem value="oldest-claimed">Oldest Claimed</SelectItem>
+                    <SelectItem value="unpaid-first">Unpaid First</SelectItem>
+                  </>
+                ) : activeTab === "voided" ? (
+                  <>
+                    <SelectItem value="newest-voided">Recently Voided</SelectItem>
+                    <SelectItem value="oldest-voided">Oldest Voided</SelectItem>
+                  </>
+                ) : (
+                  <>
+                    <SelectItem value="newest">Newest First</SelectItem>
+                    <SelectItem value="smart">Smart Priority</SelectItem>
+                    <SelectItem value="oldest">Oldest First</SelectItem>
+                    <SelectItem value="unpaid-first">Unpaid First</SelectItem>
+                    <SelectItem value="ready-first">Ready First</SelectItem>
+                    <SelectItem value="status-az">Status (A-Z)</SelectItem>
+                  </>
+                )}
               </SelectContent>
             </Select>
 
@@ -1939,7 +2235,15 @@ export default function TransactionsPage({
                   )}
                 >
                   <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span>{filterDate ? format(filterDate, "MMM d") : "All Dates"}</span>
+                  <span>
+                    {filterDate
+                      ? format(filterDate, "MMM d")
+                      : activeTab === "claimed"
+                      ? "Claim Date"
+                      : activeTab === "voided"
+                      ? "Void Date"
+                      : "All Dates"}
+                  </span>
                 </button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -2109,18 +2413,6 @@ export default function TransactionsPage({
                   {/* Action Tray */}
                   <div className="mt-1 pt-2 border-t border-border/40 flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="h-7 px-2.5 text-xs font-semibold rounded-lg hover:bg-secondary/80 cursor-pointer"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setViewTxn(txn);
-                        }}
-                      >
-                        <Eye className="w-3.5 h-3.5 mr-1" />
-                        <span>View</span>
-                      </Button>
                       {isReady && txn.paymentStatus === "paid" && (
                         <Button
                           size="sm"
@@ -2238,6 +2530,7 @@ export default function TransactionsPage({
             onClick={() => {
               setActiveTab("all");
               setFilterStatus("all");
+              setSortBy("newest");
             }}
             className={cn(
               "flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-medium border-b-2 transition-all cursor-pointer -mb-[1px]",
@@ -2262,6 +2555,7 @@ export default function TransactionsPage({
             onClick={() => {
               setActiveTab("transactions");
               setFilterStatus("all");
+              setSortBy("newest");
             }}
             className={cn(
               "flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-medium border-b-2 transition-all cursor-pointer -mb-[1px]",
@@ -2286,6 +2580,7 @@ export default function TransactionsPage({
             onClick={() => {
               setActiveTab("claimed");
               setFilterStatus("all");
+              setSortBy("newest-claimed");
             }}
             className={cn(
               "flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-medium border-b-2 transition-all cursor-pointer -mb-[1px]",
@@ -2310,6 +2605,7 @@ export default function TransactionsPage({
             onClick={() => {
               setActiveTab("voided");
               setFilterStatus("all");
+              setSortBy("newest-voided");
             }}
             className={cn(
               "flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-medium border-b-2 transition-all cursor-pointer -mb-[1px]",
@@ -2361,6 +2657,33 @@ export default function TransactionsPage({
 
             {/* Filter Dropdowns */}
             <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+              <div className="flex items-center gap-1 border-r border-border/60 pr-2 mr-0.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleUndo}
+                  disabled={undoStack.length === 0 || busy}
+                  className="h-10 md:h-9 px-2.5 text-xs font-semibold gap-1.5 cursor-pointer"
+                  title={undoStack.length > 0 ? `Undo: Revert #${undoStack[undoStack.length - 1].ticketId}` : "Nothing to undo"}
+                  aria-label="Undo status change"
+                >
+                  <Undo2 className="w-3.5 h-3.5" />
+                  <span className="hidden xl:inline">Undo</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRedo}
+                  disabled={redoStack.length === 0 || busy}
+                  className="h-10 md:h-9 px-2.5 text-xs font-semibold gap-1.5 cursor-pointer"
+                  title={redoStack.length > 0 ? `Redo: Advance #${redoStack[redoStack.length - 1].ticketId}` : "Nothing to redo"}
+                  aria-label="Redo status change"
+                >
+                  <Redo2 className="w-3.5 h-3.5" />
+                  <span className="hidden xl:inline">Redo</span>
+                </Button>
+              </div>
+
               {(activeTab === "transactions" || activeTab === "all") && (
                 <Select value={filterStatus} onValueChange={setFilterStatus}>
                   <SelectTrigger className="w-full sm:w-[130px] h-10 md:h-9 text-sm">
@@ -2377,6 +2700,20 @@ export default function TransactionsPage({
                         <SelectItem value="Voided">Voided</SelectItem>
                       </>
                     )}
+                  </SelectContent>
+                </Select>
+              )}
+
+              {activeTab === "voided" && (
+                <Select value={filterVoidReason} onValueChange={setFilterVoidReason}>
+                  <SelectTrigger className="w-full sm:w-[155px] h-10 md:h-9 text-sm">
+                    <SelectValue placeholder="All Void Reasons" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Void Reasons</SelectItem>
+                    {voidReasonOptions.map((r) => (
+                      <SelectItem key={r} value={r}>{r}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               )}
@@ -2409,12 +2746,20 @@ export default function TransactionsPage({
                   <Button
                     variant="outline"
                     className={cn(
-                      "w-full sm:w-[140px] h-10 md:h-9 text-sm justify-start gap-2 font-normal",
+                      "w-full sm:w-[145px] h-10 md:h-9 text-sm justify-start gap-2 font-normal",
                       filterDate && "border-primary text-primary font-medium"
                     )}
                   >
                     <CalendarIcon className="w-4 h-4 text-muted-foreground shrink-0" />
-                    <span className="truncate">{filterDate ? format(filterDate, "MMM d, yyyy") : "All dates"}</span>
+                    <span className="truncate">
+                      {filterDate
+                        ? format(filterDate, "MMM d, yyyy")
+                        : activeTab === "claimed"
+                        ? "All Claim Dates"
+                        : activeTab === "voided"
+                        ? "All Void Dates"
+                        : "All dates"}
+                    </span>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -2435,16 +2780,31 @@ export default function TransactionsPage({
               </Popover>
 
               <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
-                <SelectTrigger className="w-full sm:w-[180px] h-10 md:h-9 text-sm">
+                <SelectTrigger className="w-full sm:w-[185px] h-10 md:h-9 text-sm">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="newest">Default (Newest First)</SelectItem>
-                  <SelectItem value="smart">Smart Priority</SelectItem>
-                  <SelectItem value="oldest">Oldest First</SelectItem>
-                  <SelectItem value="unpaid-first">Unpaid First</SelectItem>
-                  <SelectItem value="ready-first">Ready First</SelectItem>
-                  <SelectItem value="status-az">Status (A-Z)</SelectItem>
+                  {activeTab === "claimed" ? (
+                    <>
+                      <SelectItem value="newest-claimed">Recently Claimed (Newest)</SelectItem>
+                      <SelectItem value="oldest-claimed">Oldest Claimed</SelectItem>
+                      <SelectItem value="unpaid-first">Unpaid First</SelectItem>
+                    </>
+                  ) : activeTab === "voided" ? (
+                    <>
+                      <SelectItem value="newest-voided">Recently Voided (Newest)</SelectItem>
+                      <SelectItem value="oldest-voided">Oldest Voided</SelectItem>
+                    </>
+                  ) : (
+                    <>
+                      <SelectItem value="newest">Default (Newest First)</SelectItem>
+                      <SelectItem value="smart">Smart Priority</SelectItem>
+                      <SelectItem value="oldest">Oldest First</SelectItem>
+                      <SelectItem value="unpaid-first">Unpaid First</SelectItem>
+                      <SelectItem value="ready-first">Ready First</SelectItem>
+                      <SelectItem value="status-az">Status (A-Z)</SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
 
@@ -2587,17 +2947,6 @@ export default function TransactionsPage({
                   {/* Action Links */}
                   <div className="flex items-center gap-0.5">
                     <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setViewTxn(txn);
-                      }}
-                      className="h-7 px-2 text-xs text-foreground font-medium hover:text-primary hover:bg-primary/10 cursor-pointer"
-                    >
-                      View
-                    </Button>
-                    <Button
                       variant="outline"
                       size="sm"
                       onClick={(e) => {
@@ -2644,7 +2993,7 @@ export default function TransactionsPage({
                           <DropdownMenuItem onClick={() => void handleDownloadQr(txn)}>
                             <Download className="w-3.5 h-3.5 mr-2 text-primary" /> Download QR Code
                           </DropdownMenuItem>
-                          {!isVoided && (
+                          {!isVoided && !isClaimed && (
                             <>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => openEdit(txn)}>
@@ -2658,6 +3007,22 @@ export default function TransactionsPage({
                                 className="text-destructive focus:text-destructive"
                               >
                                 <Ban className="w-3.5 h-3.5 mr-2" /> Void Order
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                          {isClaimed && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => setUndoPromptTxn({ txn, action: "unclaim" })}>
+                                <Undo2 className="w-3.5 h-3.5 mr-2 text-primary" /> Undo Claim
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                          {isVoided && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => setUndoPromptTxn({ txn, action: "unvoid" })}>
+                                <Undo2 className="w-3.5 h-3.5 mr-2 text-emerald-600" /> Undo Void (Restore)
                               </DropdownMenuItem>
                             </>
                           )}
@@ -2885,7 +3250,7 @@ export default function TransactionsPage({
                   <span className="text-[11px] font-medium text-muted-foreground">Stage Actions</span>
                 </div>
                 <div className="bg-muted/40 rounded-xl p-1 space-y-0.5">
-                  {mobileActionTxn.paymentStatus === "unpaid" && mobileActionTxn.status !== "Voided" && (
+                  {mobileActionTxn.paymentStatus === "unpaid" && mobileActionTxn.status !== "Voided" && mobileActionTxn.status !== "Claimed" && (
                     <button
                       type="button"
                       onClick={() => void handleQuickSettlePayment(mobileActionTxn)}
@@ -2906,7 +3271,7 @@ export default function TransactionsPage({
                     </button>
                   )}
 
-                  {mobileActionTxn.status !== "Voided" && (
+                  {mobileActionTxn.status !== "Voided" && mobileActionTxn.status !== "Claimed" && (
                     <>
                       <button
                         type="button"
@@ -2953,11 +3318,61 @@ export default function TransactionsPage({
                       </button>
                     </>
                   )}
+
+                  {mobileActionTxn.status === "Claimed" && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const t = mobileActionTxn;
+                        setMobileActionTxn(null);
+                        setUndoPromptTxn({ txn: t, action: "unclaim" });
+                      }}
+                      className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-card active:bg-card transition-colors text-left"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-card text-primary flex items-center justify-center shadow-xs">
+                          <Undo2 className="w-4 h-4 text-primary" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-foreground">Undo Claim</p>
+                          <p className="text-[11px] text-muted-foreground truncate">
+                            Revert order back to Ready
+                          </p>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                  )}
+
+                  {mobileActionTxn.status === "Voided" && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const t = mobileActionTxn;
+                        setMobileActionTxn(null);
+                        setUndoPromptTxn({ txn: t, action: "unvoid" });
+                      }}
+                      className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-card active:bg-card transition-colors text-left"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-card text-emerald-600 flex items-center justify-center shadow-xs">
+                          <Undo2 className="w-4 h-4 text-emerald-600" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-foreground">Undo Void (Restore)</p>
+                          <p className="text-[11px] text-muted-foreground truncate">
+                            Restore ticket to active state
+                          </p>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                  )}
                 </div>
               </div>
 
               {/* Group 3: Void Order */}
-              {mobileActionTxn.status !== "Voided" && (
+              {mobileActionTxn.status !== "Voided" && mobileActionTxn.status !== "Claimed" && (
                 <div className="space-y-1.5">
                   <div className="bg-destructive/10 rounded-xl p-1">
                     <button
@@ -3122,8 +3537,8 @@ export default function TransactionsPage({
 
               {/* View modal actions */}
               <div className="flex flex-col gap-2 pt-1">
-                {/* Primary action: Edit Status */}
-                {viewTxn.status !== "Voided" && (
+                {/* Primary action: Edit Status or Undo */}
+                {viewTxn.status !== "Voided" && viewTxn.status !== "Claimed" && (
                   <Button
                     size="sm"
                     className="w-full gap-1.5"
@@ -3134,6 +3549,34 @@ export default function TransactionsPage({
                     }}
                   >
                     <Edit className="w-3.5 h-3.5" /> Edit Status
+                  </Button>
+                )}
+                {viewTxn.status === "Claimed" && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full gap-1.5"
+                    onClick={() => {
+                      const txn = viewTxn;
+                      setViewTxn(null);
+                      setUndoPromptTxn({ txn, action: "unclaim" });
+                    }}
+                  >
+                    <Undo2 className="w-3.5 h-3.5 text-primary" /> Undo Claim
+                  </Button>
+                )}
+                {viewTxn.status === "Voided" && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full gap-1.5"
+                    onClick={() => {
+                      const txn = viewTxn;
+                      setViewTxn(null);
+                      setUndoPromptTxn({ txn, action: "unvoid" });
+                    }}
+                  >
+                    <Undo2 className="w-3.5 h-3.5 text-emerald-600" /> Undo Void (Restore)
                   </Button>
                 )}
                 {/* Secondary actions */}
@@ -3238,13 +3681,12 @@ export default function TransactionsPage({
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-border/50 shadow-lg p-1.5">
                     {(
-                      ["Received", "Washing", "Ready", "Claimed", "Voided"] as const
+                      ["Received", "Washing", "Ready"] as const
                     ).map((value) => {
                       const Icon = STATUS_ICONS[value];
-                      const isClaimedBlocked = value === "Claimed" && editPaymentStatus === "unpaid";
                       const isCurrent = value === editStatus;
                       return (
-                        <SelectItem key={value} value={value} disabled={isClaimedBlocked} className={cn("cursor-pointer rounded-lg mb-1 last:mb-0", isCurrent ? "bg-muted/60" : "focus:bg-muted/40")}>
+                        <SelectItem key={value} value={value} className={cn("cursor-pointer rounded-lg mb-1 last:mb-0", isCurrent ? "bg-muted/60" : "focus:bg-muted/40")}>
                           <div className="flex items-center gap-3 py-1.5 w-full pr-4">
                             <Icon className={cn("w-4 h-4", isCurrent ? "text-foreground" : "text-muted-foreground")} aria-hidden="true" />
                             <span className={cn("font-medium text-[15px] flex-1 text-left", isCurrent ? "text-foreground" : "text-muted-foreground")}>{value}</span>
@@ -3254,9 +3696,6 @@ export default function TransactionsPage({
                                 <Check className="w-3.5 h-3.5 text-muted-foreground" />
                               </div>
                             )}
-                            {isClaimedBlocked && !isCurrent && (
-                              <span className="ml-2 text-xs text-muted-foreground font-medium uppercase tracking-wider">(Payment Required)</span>
-                            )}
                           </div>
                         </SelectItem>
                       );
@@ -3265,30 +3704,32 @@ export default function TransactionsPage({
                 </Select>
               </div>
 
-              {/* Payment Status */}
-              <div>
-                <label className="text-xs font-bold text-foreground mb-1.5 block">Payment Status</label>
-                <div className="grid grid-cols-2 gap-2.5">
-                  {(["unpaid", "paid"] as const).map((ps) => (
-                    <button
-                      key={ps}
-                      onClick={() => setEditPaymentStatus(ps)}
-                      className={cn(
-                        "rounded-xl border-2 py-2.5 px-3 text-[13px] font-bold transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
-                        ps === "unpaid"
-                          ? editPaymentStatus === "unpaid"
-                            ? "border-red-500 bg-red-50 text-red-700 shadow-sm"
-                            : "border-border/60 bg-muted/20 text-muted-foreground hover:border-red-300 hover:bg-red-50/50 hover:text-red-600"
-                          : editPaymentStatus === "paid"
-                            ? "border-green-500 bg-green-50 text-green-700 shadow-sm"
-                            : "border-border/60 bg-muted/20 text-muted-foreground hover:border-green-300 hover:bg-green-50/50 hover:text-green-600"
-                      )}
-                    >
-                      {ps === "unpaid" ? "Unpaid" : "Paid"}
-                    </button>
-                  ))}
+              {/* Payment Status (Hidden if disabled in settings) */}
+              {enablePaymentOption && (
+                <div>
+                  <label className="text-xs font-bold text-foreground mb-1.5 block">Payment Status</label>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {(["unpaid", "paid"] as const).map((ps) => (
+                      <button
+                        key={ps}
+                        onClick={() => setEditPaymentStatus(ps)}
+                        className={cn(
+                          "rounded-xl border-2 py-2.5 px-3 text-[13px] font-bold transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+                          ps === "unpaid"
+                            ? editPaymentStatus === "unpaid"
+                              ? "border-red-500 bg-red-50 text-red-700 shadow-sm"
+                              : "border-border/60 bg-muted/20 text-muted-foreground hover:border-red-300 hover:bg-red-50/50 hover:text-red-600"
+                            : editPaymentStatus === "paid"
+                              ? "border-green-500 bg-green-50 text-green-700 shadow-sm"
+                              : "border-border/60 bg-muted/20 text-muted-foreground hover:border-green-300 hover:bg-green-50/50 hover:text-green-600"
+                        )}
+                      >
+                        {ps === "unpaid" ? "Unpaid" : "Paid"}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Wash instructions */}
               <div>
@@ -3302,7 +3743,7 @@ export default function TransactionsPage({
               </div>
 
               {/* Warning when payment is Unpaid and user is trying to claim */}
-              {editPaymentStatus === "unpaid" && editStatus === "Ready" && (
+              {enablePaymentOption && editPaymentStatus === "unpaid" && editStatus === "Ready" && (
                 <div className="flex items-start gap-3 bg-orange-50 border border-orange-200 rounded-xl px-3.5 py-3 text-sm text-orange-800 shadow-sm">
                   <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-orange-600" />
                   <span className="font-semibold leading-tight">Mark payment as Paid first before claiming this ticket.</span>
@@ -3311,7 +3752,7 @@ export default function TransactionsPage({
 
               {/* Edit actions */}
               <div className="flex flex-col gap-2.5 pt-3 border-t border-border/40 mt-2">
-                {editStatus === "Ready" && editPaymentStatus === "paid" && (
+                {editStatus === "Ready" && (!enablePaymentOption || editPaymentStatus === "paid") && (
                   <Button size="lg" onClick={markAsClaimed} className="w-full gap-2 transition-all duration-200 hover:scale-[1.02] bg-green-600 hover:bg-green-700 text-white shadow-sm font-bold text-sm h-12 rounded-xl">
                     <Check className="w-4 h-4" /> Move to Claimed
                   </Button>
@@ -3504,6 +3945,44 @@ export default function TransactionsPage({
         disabled={Boolean(mobileStatusTxn && mobileStatusBusyTicket === mobileStatusTxn.ticketId)}
         onSelectStatus={handleMobileStatusSelect}
       />
+
+      {/* ── UNDO PROMPT CONFIRMATION MODAL ─────────────────────────────────────── */}
+      <Dialog open={!!undoPromptTxn} onOpenChange={(open) => !open && setUndoPromptTxn(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <Undo2 className="w-5 h-5 text-primary" />
+              </div>
+              <DialogTitle>
+                {undoPromptTxn?.action === "unclaim" ? "Undo Claim" : "Restore Voided Ticket"}
+              </DialogTitle>
+            </div>
+            <DialogDescription>
+              {undoPromptTxn?.action === "unclaim"
+                ? `Revert Ticket #${undoPromptTxn?.txn.ticketId} from Claimed back to Ready? Customer pickup can be recorded again.`
+                : `Restore voided Ticket #${undoPromptTxn?.txn.ticketId} back to active processing?`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 mt-3">
+            <Button
+              className="flex-1 cursor-pointer font-bold"
+              disabled={busy}
+              onClick={handleConfirmUndoPrompt}
+            >
+              {undoPromptTxn?.action === "unclaim" ? "Yes, Undo Claim" : "Yes, Restore Ticket"}
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1 cursor-pointer"
+              disabled={busy}
+              onClick={() => setUndoPromptTxn(null)}
+            >
+              Cancel
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

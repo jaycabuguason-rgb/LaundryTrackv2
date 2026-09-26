@@ -25,6 +25,10 @@ export interface UpdateTransactionInput {
   eta?: string | null;
   voidReason?: string | null;
   paidAt?: string | null;
+  isUndo?: boolean;
+  allowTerminalRevert?: boolean;
+  claimedAt?: string | null;
+  voidedAt?: string | null;
 }
 
 export type StampAwardResult =

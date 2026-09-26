@@ -8,7 +8,14 @@ import MobileBottomNav from "@/components/mobile-bottom-nav";
 import OfflineAccessNotice from "@/components/offline-access-notice";
 import { TransactionDetailModal } from "@/components/transaction-detail-modal";
 import { type Transaction, type Notification } from "@/lib/data";
-import { loadLoyaltySettings, loadBusinessProfile, type BusinessProfile } from "@/lib/settings-store";
+import {
+  loadLoyaltySettings,
+  loadBusinessProfile,
+  subscribeSettingsSync,
+  LS_BUSINESS_PROFILE,
+  LS_LOYALTY_SETTINGS,
+  type BusinessProfile,
+} from "@/lib/settings-store";
 import type { UserProfile } from "@/lib/auth";
 import { useTransactions } from "@/hooks/use-transactions";
 import { toast } from "@/hooks/use-toast";
@@ -243,11 +250,18 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
       case "settings-service-types":
       case "settings-backup":
       case "settings-data-import":
-        return <SettingsPage page={activePage} onNavigate={handleNavigate} role={adminProfile.role} />;
       case "settings-business-profile":
-        return <SettingsPage page={activePage} onBusinessProfileChange={setBusinessProfile} onNavigate={handleNavigate} role={adminProfile.role} />;
       case "settings-loyalty":
-        return <SettingsPage page={activePage} loyaltyEnabled={loyaltyEnabled} onLoyaltyEnabledChange={setLoyaltyEnabled} onNavigate={handleNavigate} role={adminProfile.role} />;
+        return (
+          <SettingsPage
+            page={activePage}
+            loyaltyEnabled={loyaltyEnabled}
+            onLoyaltyEnabledChange={setLoyaltyEnabled}
+            onBusinessProfileChange={setBusinessProfile}
+            onNavigate={handleNavigate}
+            role={adminProfile.role}
+          />
+        );
       case "staff-management":
       case "audit-logs":
         return (
@@ -330,6 +344,16 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
           title: "Back Online",
           description: "Queued changes are syncing in the background.",
         });
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    return subscribeSettingsSync((detail) => {
+      if (detail.key === LS_BUSINESS_PROFILE && detail.value) {
+        setBusinessProfile(detail.value as BusinessProfile);
+      } else if (detail.key === LS_LOYALTY_SETTINGS && detail.value) {
+        setLoyaltyEnabled(Boolean((detail.value as { enabled?: boolean }).enabled));
       }
     });
   }, []);

@@ -410,9 +410,14 @@ async function updateSupabaseTransaction(ticketId: string, updates: UpdateTransa
     payload.status = updates.status;
     if (updates.status === "Claimed" && !existing.claimed_at) {
       payload.claimed_at = new Date().toISOString();
+    } else if (updates.status !== "Claimed" && existing.status === "Claimed") {
+      payload.claimed_at = null;
     }
     if (hasVoidedAtColumn && updates.status === "Voided" && !existing.voided_at) {
       payload.voided_at = new Date().toISOString();
+    } else if (hasVoidedAtColumn && updates.status !== "Voided" && existing.status === "Voided") {
+      payload.voided_at = null;
+      payload.void_reason = null;
     }
   }
   if (updates.paymentStatus) {
@@ -602,9 +607,13 @@ function updateMockTransaction(ticketId: string, updates: UpdateTransactionInput
 
   if (updates.status === "Claimed" && !claimed_at) {
     claimed_at = now;
+  } else if (updates.status && updates.status !== "Claimed" && existing.status === "Claimed") {
+    claimed_at = null;
   }
   if (updates.status === "Voided" && !voided_at) {
     voided_at = now;
+  } else if (updates.status && updates.status !== "Voided" && existing.status === "Voided") {
+    voided_at = null;
   }
   if (updates.paymentStatus === "paid" && !paid_at) {
     paid_at = now;
@@ -619,7 +628,12 @@ function updateMockTransaction(ticketId: string, updates: UpdateTransactionInput
         ? updates.washInstructions?.trim() || null
         : existing.special_instructions,
     eta: updates.eta !== undefined ? normalizeLocalDateTime(updates.eta ?? null) : existing.eta,
-    void_reason: updates.voidReason !== undefined ? updates.voidReason?.trim() || null : existing.void_reason,
+    void_reason:
+      updates.status && updates.status !== "Voided" && existing.status === "Voided"
+        ? null
+        : updates.voidReason !== undefined
+        ? updates.voidReason?.trim() || null
+        : existing.void_reason,
     claimed_at,
     voided_at,
     paid_at,

@@ -36,6 +36,28 @@ export async function PATCH(
       return NextResponse.json({ error: `Transaction ${ticketId} was not found.` }, { status: 404 });
     }
 
+    if (
+      (existing.status === "Claimed" || existing.status === "Voided") &&
+      body.status &&
+      body.status !== existing.status &&
+      !raw.isUndo &&
+      !raw.allowTerminalRevert
+    ) {
+      return NextResponse.json(
+        {
+          error: `${existing.status} transactions cannot be reverted to an active status directly. Please use the Undo action.`,
+        },
+        { status: 400 },
+      );
+    }
+
+    if (raw.isUndo) {
+      body.isUndo = true;
+    }
+    if (raw.allowTerminalRevert) {
+      body.allowTerminalRevert = true;
+    }
+
     const effectivePayment = body.paymentStatus ?? existing.paymentStatus;
     if (body.status === "Claimed" && effectivePayment !== "paid") {
       return NextResponse.json(

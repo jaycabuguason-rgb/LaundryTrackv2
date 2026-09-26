@@ -167,8 +167,40 @@ function loadWithSchema<T>(key: string, fallback: T, schema: z.ZodType<T>): T {
   }
 }
 
+export const SETTINGS_SYNC_EVENT = "laundrytrack:settings-sync";
+
 function persist<T>(key: string, value: T): void {
-  try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* ignore */ }
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent(SETTINGS_SYNC_EVENT, { detail: { key, value } }));
+    }
+  } catch { /* ignore */ }
+}
+
+export function subscribeSettingsSync(
+  callback: (detail: { key: string; value: unknown }) => void,
+): () => void {
+  if (typeof window === "undefined") return () => {};
+  const handleCustom = (e: Event) => {
+    const custom = e as CustomEvent<{ key: string; value: unknown }>;
+    if (custom.detail) callback(custom.detail);
+  };
+  const handleStorage = (e: StorageEvent) => {
+    if (e.key && e.newValue) {
+      try {
+        callback({ key: e.key, value: JSON.parse(e.newValue) });
+      } catch {
+        // ignore parse error
+      }
+    }
+  };
+  window.addEventListener(SETTINGS_SYNC_EVENT, handleCustom);
+  window.addEventListener("storage", handleStorage);
+  return () => {
+    window.removeEventListener(SETTINGS_SYNC_EVENT, handleCustom);
+    window.removeEventListener("storage", handleStorage);
+  };
 }
 
 // ─── Public read helpers (non-hook, for use inside wizard on mount) ──────────

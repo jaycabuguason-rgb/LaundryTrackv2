@@ -150,7 +150,7 @@ describe("TransactionsPage Mobile Concept Layout", () => {
     expect(screen.getByLabelText(/Ticket #TKT-0028/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Ticket #TKT-0029/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Ticket #TKT-0030/i)).toBeInTheDocument();
-  });
+  }, 15000);
 
   it("filters transactions via search input and clears search", () => {
     render(

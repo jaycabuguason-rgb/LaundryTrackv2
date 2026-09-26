@@ -305,7 +305,7 @@ export default function DashboardPage({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Orders by Stage Card */}
         <div className="order-1 lg:order-2">
-          <Card className="border border-border/70 rounded-2xl shadow-xs h-full flex flex-col justify-between p-4 sm:p-5 gap-3 sm:gap-4 bg-card">
+          <Card className="border border-border/70 rounded-2xl shadow-xs h-full flex flex-col p-4 sm:p-5 gap-3 sm:gap-4 bg-card">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-purple-100/80 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 flex items-center justify-center shrink-0">
@@ -331,7 +331,7 @@ export default function DashboardPage({
             </div>
 
             {/* Donut graphic + Stage Summary (Responsive layout) */}
-            <div className="flex flex-col sm:flex-col items-center justify-center gap-4 my-1">
+            <div className="flex-1 flex flex-col items-center justify-center gap-5 my-auto py-1">
               {/* Donut graphic */}
               <div className="relative flex items-center justify-center shrink-0">
                 <svg

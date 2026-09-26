@@ -129,7 +129,7 @@ export default function Sidebar({ activePage, onNavigate, onPreload, loyaltyEnab
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 py-4 overflow-y-auto">
+      <nav className="flex-1 py-4 overflow-y-auto [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.15)_transparent] hover:[scrollbar-color:rgba(255,255,255,0.3)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/15 hover:[&::-webkit-scrollbar-thumb]:bg-white/25">
         <ul className="space-y-1 px-2">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -233,13 +233,14 @@ export default function Sidebar({ activePage, onNavigate, onPreload, loyaltyEnab
       </nav>
 
       {/* Collapse toggle — desktop only */}
-      <div className="p-3 border-t border-sidebar-border hidden lg:block">
+      <div className="p-2.5 border-t border-sidebar-border/80 bg-sidebar/95 backdrop-blur-xs shrink-0 hidden lg:block">
         <button
           onClick={() => setCollapsed((prev) => !prev)}
-          className="w-full flex items-center justify-center gap-2 rounded-md px-3 py-2 text-xs text-sidebar-foreground/50 hover:text-white hover:bg-sidebar-accent/60 transition-colors min-h-[44px]"
+          title={effectiveCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="w-full flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-sidebar-foreground/70 hover:text-white hover:bg-sidebar-accent/70 transition-all cursor-pointer min-h-[40px] border border-transparent hover:border-sidebar-border/50"
         >
           {effectiveCollapsed ? (
-            <PanelLeftOpen className="w-4 h-4" />
+            <PanelLeftOpen className="w-4 h-4 text-sidebar-foreground/80 hover:text-white" />
           ) : (
             <>
               <PanelLeftClose className="w-4 h-4" />
