@@ -2991,22 +2991,6 @@ export default function TransactionsPage({
                               </DropdownMenuItem>
                             </>
                           )}
-                          {isClaimed && (
-                            <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => setUndoPromptTxn({ txn, action: "unclaim" })}>
-                                <Undo2 className="w-3.5 h-3.5 mr-2 text-primary" /> Undo Claim
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                          {isVoided && (
-                            <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => setUndoPromptTxn({ txn, action: "unvoid" })}>
-                                <Undo2 className="w-3.5 h-3.5 mr-2 text-emerald-600" /> Undo Void (Restore)
-                              </DropdownMenuItem>
-                            </>
-                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -3300,55 +3284,6 @@ export default function TransactionsPage({
                     </>
                   )}
 
-                  {mobileActionTxn.status === "Claimed" && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const t = mobileActionTxn;
-                        setMobileActionTxn(null);
-                        setUndoPromptTxn({ txn: t, action: "unclaim" });
-                      }}
-                      className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-card active:bg-card transition-colors text-left"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-lg bg-card text-primary flex items-center justify-center shadow-xs">
-                          <Undo2 className="w-4 h-4 text-primary" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold text-foreground">Undo Claim</p>
-                          <p className="text-[11px] text-muted-foreground truncate">
-                            Revert order back to Ready
-                          </p>
-                        </div>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                    </button>
-                  )}
-
-                  {mobileActionTxn.status === "Voided" && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const t = mobileActionTxn;
-                        setMobileActionTxn(null);
-                        setUndoPromptTxn({ txn: t, action: "unvoid" });
-                      }}
-                      className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-card active:bg-card transition-colors text-left"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-lg bg-card text-emerald-600 flex items-center justify-center shadow-xs">
-                          <Undo2 className="w-4 h-4 text-emerald-600" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold text-foreground">Undo Void (Restore)</p>
-                          <p className="text-[11px] text-muted-foreground truncate">
-                            Restore ticket to active state
-                          </p>
-                        </div>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                    </button>
-                  )}
                 </div>
               </div>
 

@@ -531,25 +531,6 @@ export function TransactionDetailModal({
                 </Button>
               )}
 
-              {/* Claimed or Voided Undo Controls */}
-              {isClaimed && onUndoClaim && (
-                <Button
-                  onClick={() => onUndoClaim(transaction)}
-                  variant="outline"
-                  className="w-full h-11 rounded-xl text-xs font-semibold gap-1.5"
-                >
-                  <Undo2 className="w-4 h-4 text-primary" /> Undo Claim (Restore to Ready)
-                </Button>
-              )}
-              {isVoided && onUndoVoid && (
-                <Button
-                  onClick={() => onUndoVoid(transaction)}
-                  variant="outline"
-                  className="w-full h-11 rounded-xl text-xs font-semibold gap-1.5 text-emerald-700 border-emerald-300"
-                >
-                  <Undo2 className="w-4 h-4" /> Undo Void (Restore Order)
-                </Button>
-              )}
 
               {/* Secondary Buttons Grid: Payment + Thermal Receipt */}
               <div className="grid grid-cols-2 gap-2">
