@@ -3602,7 +3602,7 @@ export default function TransactionsPage({
               <div className="flex flex-col gap-2.5 pt-3 border-t border-border/40 mt-2">
                 {editStatus === "Ready" && (!enablePaymentOption || editPaymentStatus === "paid") && (
                   <Button size="lg" onClick={markAsClaimed} className="w-full gap-2 transition-all duration-200 hover:scale-[1.02] bg-green-600 hover:bg-green-700 text-white shadow-sm font-bold text-sm h-12 rounded-xl">
-                    <Check className="w-4 h-4" /> Move to Claimed
+                    <Check className="w-4 h-4" /> Claim Order
                   </Button>
                 )}
                 <Button

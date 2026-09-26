@@ -169,4 +169,23 @@ describe("TransactionsPage Enhanced Features", () => {
 
     unsubscribe();
   });
+
+  it("renders 'Claim Order' button in Edit Ticket dialog when status is Ready and order is paid", () => {
+    persistPricingConfig({
+      ...DEFAULT_PRICING_CONFIG,
+      enablePaymentOption: true,
+    });
+
+    render(
+      <TransactionsPage
+        transactions={testTransactions}
+        onCreateTransaction={onCreateTransaction}
+        onUpdateTransaction={onUpdateTransaction}
+        editTicketId="TKT-1001"
+      />
+    );
+
+    expect(screen.getByRole("button", { name: /claim order/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /move to claimed/i })).not.toBeInTheDocument();
+  });
 });

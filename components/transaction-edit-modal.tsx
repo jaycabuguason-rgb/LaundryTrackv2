@@ -266,7 +266,7 @@ export function TransactionEditModal({ open, onOpenChange, transaction, onSave }
                   className="flex-1 gap-1.5 cursor-pointer"
                 >
                   <Check className="w-3.5 h-3.5" />
-                  Move to Claimed
+                  Claim Order
                 </Button>
               )}
               <Button
@@ -331,7 +331,7 @@ export function TransactionEditModal({ open, onOpenChange, transaction, onSave }
         </DialogContent>
       </Dialog>
 
-      {/* Move to Claimed confirmation */}
+      {/* Claim Order confirmation */}
       <AlertDialog open={showClaimConfirm} onOpenChange={setShowClaimConfirm}>
         <AlertDialogContent className="w-[calc(100vw-2rem)] max-w-sm">
           <AlertDialogHeader>
