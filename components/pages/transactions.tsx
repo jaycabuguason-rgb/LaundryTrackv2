@@ -1880,6 +1880,10 @@ export default function TransactionsPage({
     return (
       <ContextMenuContent className="w-48 shadow-lg border border-border bg-popover text-popover-foreground">
         <ContextMenuItem
+          onSelect={() => {
+            setPrintTxn(txn);
+            setPrintPostCreate(false);
+          }}
           onClick={() => {
             setPrintTxn(txn);
             setPrintPostCreate(false);
@@ -1889,6 +1893,7 @@ export default function TransactionsPage({
           <Printer className="w-3.5 h-3.5 mr-2" /> Print Receipt
         </ContextMenuItem>
         <ContextMenuItem
+          onSelect={() => void handleDownloadReceipt(txn)}
           onClick={() => void handleDownloadReceipt(txn)}
           className="cursor-pointer"
         >
@@ -1896,18 +1901,21 @@ export default function TransactionsPage({
         </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem
+          onSelect={() => setReprintTxn(txn)}
           onClick={() => setReprintTxn(txn)}
           className="cursor-pointer"
         >
           <QrCode className="w-3.5 h-3.5 mr-2" /> QR Code Ticket
         </ContextMenuItem>
         <ContextMenuItem
+          onSelect={() => void handlePrintQrTicket(txn)}
           onClick={() => void handlePrintQrTicket(txn)}
           className="cursor-pointer"
         >
           <Printer className="w-3.5 h-3.5 mr-2 text-primary" /> Print QR Only
         </ContextMenuItem>
         <ContextMenuItem
+          onSelect={() => void handleDownloadQr(txn)}
           onClick={() => void handleDownloadQr(txn)}
           className="cursor-pointer"
         >
@@ -1917,6 +1925,7 @@ export default function TransactionsPage({
           <>
             <ContextMenuSeparator />
             <ContextMenuItem
+              onSelect={() => openEdit(txn)}
               onClick={() => openEdit(txn)}
               className="cursor-pointer"
             >
@@ -1932,6 +1941,7 @@ export default function TransactionsPage({
                   return (
                     <ContextMenuItem
                       key={s}
+                      onSelect={() => void handleDirectStatusSelect(txn, s)}
                       onClick={() => void handleDirectStatusSelect(txn, s)}
                       disabled={isCurrent}
                       className={cn(
@@ -1959,6 +1969,10 @@ export default function TransactionsPage({
               </ContextMenuSubContent>
             </ContextMenuSub>
             <ContextMenuItem
+              onSelect={() => {
+                setVoidTxn(txn);
+                setVoidReason("");
+              }}
               onClick={() => {
                 setVoidTxn(txn);
                 setVoidReason("");

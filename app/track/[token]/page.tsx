@@ -2,22 +2,18 @@ import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import Link from "next/link";
 import {
-  CheckCircle2,
   MapPin,
   Phone,
   Mail,
-  Shirt,
   ShieldCheck,
-  Package,
   Star,
   Gift,
-  Award,
   Sparkles,
   Flame,
   QrCode,
   ExternalLink,
   History,
-  Calendar,
+  Store,
 } from "lucide-react";
 
 import { CustomerTrackingView } from "@/components/customer-tracking-view";
@@ -77,13 +73,13 @@ export default async function PublicTrackingPage(
     : null;
 
   return (
-    <div className="min-h-screen force-light bg-[#f7f6f4] py-6 px-3 sm:px-6 text-slate-800 antialiased">
+    <div className="min-h-screen force-light bg-[#f8f9ff] py-6 px-3 sm:px-6 text-slate-800 antialiased">
       {/* Constrained max width perfectly suited for Mobile viewing */}
       <main className="max-w-[480px] mx-auto space-y-4" data-purpose="mobile-tracking-container">
         {/* BEGIN: BrandHeader */}
-        <header className="text-center pt-2 pb-2" data-purpose="shop-brand-header">
+        <header className="text-center pt-2 pb-1" data-purpose="shop-brand-header">
           {/* Centered Shop Avatar/Badge */}
-          <div className="inline-flex items-center justify-center p-1.5 bg-white rounded-2xl shadow-sm border border-stone-200/80 mb-2.5">
+          <div className="inline-flex items-center justify-center p-1.5 bg-white rounded-2xl shadow-xs border border-border/80 mb-2">
             {record.shopProfile.logoDataUrl ? (
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
@@ -113,87 +109,19 @@ export default async function PublicTrackingPage(
           pickupQrUrl={pickupQrUrl}
         />
 
-        {/* BEGIN: LaundryDetailsCard */}
-        <section className="bg-white rounded-2xl p-5 shadow-sm border border-stone-200/90" data-purpose="laundry-details-section">
-          <div className="flex items-center gap-2 mb-3">
-            <Package className="w-4 h-4 text-primary" />
-            <h2 className="text-sm font-bold text-slate-800 tracking-tight">Laundry Details</h2>
-          </div>
-          <dl className="divide-y divide-stone-100 text-xs">
-            {record.customerName && (
-              <div className="flex justify-between py-2">
-                <dt className="text-slate-500 font-medium">Recipient</dt>
-                <dd className="text-slate-800 font-semibold">{record.customerName}</dd>
-              </div>
-            )}
-            <div className="flex justify-between py-2">
-              <dt className="text-slate-500 font-medium">Weight</dt>
-              <dd className="text-slate-800 font-semibold tabular-nums">{record.weight} kg</dd>
-            </div>
-            <div className="flex justify-between py-2">
-              <dt className="text-slate-500 font-medium">Wash Type</dt>
-              <dd className="text-slate-800 font-semibold">{record.washType}</dd>
-            </div>
-            <div className="flex justify-between py-2">
-              <dt className="text-slate-500 font-medium">Add-ons</dt>
-              <dd className="text-slate-800 font-semibold">
-                {record.addOns && record.addOns.length > 0 ? record.addOns.join(", ") : "None"}
-              </dd>
-            </div>
-            {record.washInstructions && (
-              <div className="flex justify-between py-2 gap-4">
-                <dt className="text-slate-500 font-medium shrink-0">Special Instructions</dt>
-                <dd className="text-slate-800 font-semibold text-right">{record.washInstructions}</dd>
-              </div>
-            )}
-          </dl>
-        </section>
-        {/* END: LaundryDetailsCard */}
-
-        {/* BEGIN: PaymentSummaryCard */}
-        <section className="bg-white rounded-2xl p-5 shadow-sm border border-stone-200/90" data-purpose="payment-section">
-          <div className="flex items-center gap-2 mb-3">
-            <Shirt className="w-4 h-4 text-primary" />
-            <h2 className="text-sm font-bold text-slate-800 tracking-tight">Payment</h2>
-          </div>
-          {/* Payment Status Block */}
-          <div className="bg-stone-50/70 border border-stone-200/80 rounded-xl p-3.5 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">STATUS</span>
-              <span
-                className={cn(
-                  "px-2 py-0.5 text-[11px] font-semibold border rounded-md",
-                  record.paymentStatus === "paid"
-                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                    : "bg-rose-50 text-rose-700 border-rose-200"
-                )}
-              >
-                {record.paymentStatus === "paid" ? "Paid" : "Unpaid"}
-              </span>
-            </div>
-            <div className="flex items-baseline justify-between pt-1">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">BALANCE DUE</span>
-              <span className="text-xl font-extrabold text-primary tabular-nums">₱{record.balanceDue.toLocaleString()}</span>
-            </div>
-          </div>
-          {/* Counter Settlement Note */}
-          <div className="mt-3 p-2.5 bg-purple-50/60 border border-purple-100 rounded-lg text-center">
-            <p className="text-[10px] text-purple-900 leading-normal">
-              Online payment is not available here. Please settle any unpaid balance at the shop during pickup.
-            </p>
-          </div>
-        </section>
-        {/* END: PaymentSummaryCard */}
-
         {/* BEGIN: PickupInstructionsAndContact */}
-        <section className="bg-white rounded-2xl p-5 shadow-sm border border-stone-200/90" data-purpose="pickup-instructions-section">
-          <div className="flex items-center gap-2 mb-3.5">
-            <ShieldCheck className="w-4 h-4 text-primary" />
-            <h2 className="text-sm font-bold text-slate-800 tracking-tight">Pickup Instructions</h2>
+        <section
+          className="bg-white rounded-3xl p-4 sm:p-5 shadow-[0_10px_30px_rgba(11,28,48,0.06)] border border-border/70"
+          data-purpose="pickup-instructions-section"
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <Store className="w-4 h-4 text-primary" />
+            <h2 className="text-sm font-bold text-slate-800 tracking-tight">Pickup & Store Information</h2>
           </div>
+
           {/* Shop Info Container */}
-          <div className="bg-stone-50/70 border border-stone-200/80 rounded-xl p-3.5 space-y-2 text-xs">
-            <h3 className="font-bold text-slate-800 mb-1.5">{record.shopProfile.shopName}</h3>
+          <div className="bg-[#eff4ff]/60 dark:bg-muted/20 border border-border/60 rounded-2xl p-3.5 space-y-2 text-xs">
+            <h3 className="font-bold text-slate-800">{record.shopProfile.shopName}</h3>
             {record.shopProfile.address && (
               <div className="flex items-center gap-2 text-slate-600">
                 <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
@@ -217,15 +145,17 @@ export default async function PublicTrackingPage(
               </div>
             )}
           </div>
+
           {/* Before Pickup Note */}
-          <div className="mt-3 bg-stone-50/70 border border-stone-200/80 rounded-xl p-3 text-xs">
+          <div className="mt-3 bg-[#eff4ff]/60 dark:bg-muted/20 border border-border/60 rounded-2xl p-3 text-xs">
             <h4 className="font-bold text-slate-800 text-[11px] mb-0.5">Before Pickup</h4>
             <p className="text-slate-600 text-[11px] leading-relaxed">
-              {record.shopProfile.pickupInstructions || "Present this receipt or QR code upon claiming."}
+              {record.shopProfile.pickupInstructions || "Present your ticket number or QR pass upon claiming at the counter."}
             </p>
           </div>
+
           {/* Warm Closing Salutation */}
-          <div className="mt-4 text-center">
+          <div className="mt-3.5 text-center">
             <p className="text-xs text-slate-500 font-medium italic">
               {record.shopProfile.receiptFooter || "Maraming salamat po!"}
             </p>
@@ -235,8 +165,8 @@ export default async function PublicTrackingPage(
 
         {/* Loyalty & Rewards Section (Shown at bottom for members) */}
         {isLoyaltyEnabled && loyaltyRecord && (
-          <section className="bg-white rounded-2xl border border-primary/25 p-5 shadow-sm space-y-4">
-            <div className="flex items-center justify-between gap-3 border-b border-stone-100 pb-3.5">
+          <section className="bg-white rounded-3xl border border-primary/25 p-4 sm:p-5 shadow-[0_10px_30px_rgba(11,28,48,0.06)] space-y-4">
+            <div className="flex items-center justify-between gap-3 border-b border-border/50 pb-3.5">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold shadow-xs">
                   {loyaltyRecord.name
@@ -269,7 +199,7 @@ export default async function PublicTrackingPage(
             </div>
 
             {/* Remaining Laundries Banner */}
-            <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 text-center">
+            <div className="rounded-2xl border border-primary/20 bg-primary/5 p-3.5 text-center">
               {loyaltyRecord.stampsUntilReward > 0 ? (
                 <div className="space-y-1">
                   <p className="text-xs font-bold text-slate-800">
@@ -312,23 +242,23 @@ export default async function PublicTrackingPage(
 
             {/* Lifetime Stats */}
             <div className="grid grid-cols-3 gap-2 pt-1">
-              <div className="rounded-xl border border-stone-200/80 bg-stone-50/70 p-2.5 text-center">
+              <div className="rounded-xl border border-border/80 bg-[#eff4ff]/60 p-2.5 text-center">
                 <p className="text-sm font-bold text-slate-900">{loyaltyRecord.totalVisits}</p>
                 <p className="text-[10px] text-slate-500 mt-0.5">Visits</p>
               </div>
-              <div className="rounded-xl border border-stone-200/80 bg-stone-50/70 p-2.5 text-center">
+              <div className="rounded-xl border border-border/80 bg-[#eff4ff]/60 p-2.5 text-center">
                 <p className="text-sm font-bold text-slate-900">{loyaltyRecord.totalKgWashed} kg</p>
                 <p className="text-[10px] text-slate-500 mt-0.5">Washed</p>
               </div>
-              <div className="rounded-xl border border-stone-200/80 bg-stone-50/70 p-2.5 text-center">
+              <div className="rounded-xl border border-border/80 bg-[#eff4ff]/60 p-2.5 text-center">
                 <p className="text-sm font-bold text-slate-900">{loyaltyRecord.rewardsRedeemed}</p>
                 <p className="text-[10px] text-slate-500 mt-0.5">Claimed</p>
               </div>
             </div>
 
             {/* Member QR Code */}
-            <div className="flex items-center gap-3.5 rounded-xl border border-stone-200/80 bg-stone-50/70 p-3">
-              <div className="bg-white p-1.5 rounded-lg shadow-xs border border-stone-200/80 shrink-0">
+            <div className="flex items-center gap-3.5 rounded-2xl border border-border/80 bg-[#eff4ff]/60 p-3">
+              <div className="bg-white p-1.5 rounded-xl shadow-xs border border-border/80 shrink-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(
@@ -350,7 +280,7 @@ export default async function PublicTrackingPage(
 
             {/* Laundry Records / History */}
             {loyaltyRecord.laundryRecords.length > 0 && (
-              <div className="space-y-2 pt-2 border-t border-stone-100">
+              <div className="space-y-2 pt-2 border-t border-border/50">
                 <div className="flex items-center justify-between">
                   <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                     <History className="w-3.5 h-3.5 text-primary" /> Laundry Records
@@ -363,7 +293,7 @@ export default async function PublicTrackingPage(
                   {loyaltyRecord.laundryRecords.slice(0, 8).map((item, idx) => (
                     <div
                       key={`${item.ticketId}-${idx}`}
-                      className="flex items-center justify-between gap-2 rounded-lg border border-stone-200/70 bg-stone-50/50 p-2.5 text-xs"
+                      className="flex items-center justify-between gap-2 rounded-xl border border-border/70 bg-[#eff4ff]/40 p-2.5 text-xs"
                     >
                       <div className="space-y-0.5">
                         <div className="flex items-center gap-1.5">
@@ -393,8 +323,8 @@ export default async function PublicTrackingPage(
 
         {/* Promotional Loyalty Program Banner (Shown only when loyalty enabled and customer is non-member) */}
         {isLoyaltyEnabled && !loyaltyRecord && (
-          <section className="bg-white rounded-2xl border border-primary/20 p-5 shadow-sm text-center space-y-2">
-            <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 text-primary">
+          <section className="bg-white rounded-3xl border border-primary/20 p-5 shadow-[0_10px_30px_rgba(11,28,48,0.06)] text-center space-y-2">
+            <div className="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-primary/10 text-primary">
               <Sparkles className="w-5 h-5" />
             </div>
             <h3 className="text-sm font-bold text-slate-900">Earn Free Laundries With Every Wash!</h3>
