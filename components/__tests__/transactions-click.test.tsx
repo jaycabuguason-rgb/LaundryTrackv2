@@ -1,7 +1,23 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi, beforeAll } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import TransactionsPage from "@/components/pages/transactions";
 import { type Transaction } from "@/lib/data";
+
+// Polyfills for Radix UI context menu in jsdom
+beforeAll(() => {
+  window.HTMLElement.prototype.scrollIntoView = vi.fn();
+  window.HTMLElement.prototype.hasPointerCapture = vi.fn();
+  window.HTMLElement.prototype.releasePointerCapture = vi.fn();
+  if (typeof window.PointerEvent === "undefined") {
+    // @ts-expect-error polyfill for jsdom
+    window.PointerEvent = window.MouseEvent;
+  }
+  global.ResizeObserver = class ResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+});
 
 const mockTransactions: Transaction[] = [
   {

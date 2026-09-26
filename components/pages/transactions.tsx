@@ -24,6 +24,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -1864,6 +1874,105 @@ export default function TransactionsPage({
     setSortBy(defaultSortForTab);
   };
 
+  const renderTransactionContextMenu = (txn: Transaction) => {
+    const isVoided = txn.status === "Voided";
+    const isClaimed = txn.status === "Claimed";
+    return (
+      <ContextMenuContent className="w-48 shadow-lg border border-border bg-popover text-popover-foreground">
+        <ContextMenuItem
+          onClick={() => {
+            setPrintTxn(txn);
+            setPrintPostCreate(false);
+          }}
+          className="cursor-pointer"
+        >
+          <Printer className="w-3.5 h-3.5 mr-2" /> Print Receipt
+        </ContextMenuItem>
+        <ContextMenuItem
+          onClick={() => void handleDownloadReceipt(txn)}
+          className="cursor-pointer"
+        >
+          <Download className="w-3.5 h-3.5 mr-2" /> Download Receipt
+        </ContextMenuItem>
+        <ContextMenuSeparator />
+        <ContextMenuItem
+          onClick={() => setReprintTxn(txn)}
+          className="cursor-pointer"
+        >
+          <QrCode className="w-3.5 h-3.5 mr-2" /> QR Code Ticket
+        </ContextMenuItem>
+        <ContextMenuItem
+          onClick={() => void handlePrintQrTicket(txn)}
+          className="cursor-pointer"
+        >
+          <Printer className="w-3.5 h-3.5 mr-2 text-primary" /> Print QR Only
+        </ContextMenuItem>
+        <ContextMenuItem
+          onClick={() => void handleDownloadQr(txn)}
+          className="cursor-pointer"
+        >
+          <Download className="w-3.5 h-3.5 mr-2 text-primary" /> Download QR Code
+        </ContextMenuItem>
+        {!isVoided && !isClaimed && (
+          <>
+            <ContextMenuSeparator />
+            <ContextMenuItem
+              onClick={() => openEdit(txn)}
+              className="cursor-pointer"
+            >
+              <Edit className="w-3.5 h-3.5 mr-2" /> Edit Order
+            </ContextMenuItem>
+            <ContextMenuSub>
+              <ContextMenuSubTrigger className="cursor-pointer">
+                <RefreshCw className="w-3.5 h-3.5 mr-2" /> Change Status
+              </ContextMenuSubTrigger>
+              <ContextMenuSubContent className="w-44 shadow-lg border border-border bg-popover text-popover-foreground">
+                {(["Received", "Washing", "Drying", "Ready", "Claimed"] as const).map((s) => {
+                  const isCurrent = txn.status === s;
+                  return (
+                    <ContextMenuItem
+                      key={s}
+                      onClick={() => void handleDirectStatusSelect(txn, s)}
+                      disabled={isCurrent}
+                      className={cn(
+                        "cursor-pointer flex items-center justify-between text-xs py-2",
+                        isCurrent && "font-bold text-primary bg-primary/10"
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={cn(
+                            "w-2 h-2 rounded-full",
+                            s === "Received" && "bg-purple-500",
+                            s === "Washing" && "bg-blue-500",
+                            s === "Drying" && "bg-amber-500",
+                            s === "Ready" && "bg-green-500",
+                            s === "Claimed" && "bg-slate-500"
+                          )}
+                        />
+                        <span>{s === "Claimed" ? "Claim Order" : s}</span>
+                      </div>
+                      {isCurrent && <Check className="w-3.5 h-3.5 text-primary ml-auto" />}
+                    </ContextMenuItem>
+                  );
+                })}
+              </ContextMenuSubContent>
+            </ContextMenuSub>
+            <ContextMenuItem
+              onClick={() => {
+                setVoidTxn(txn);
+                setVoidReason("");
+              }}
+              className="text-destructive focus:text-destructive cursor-pointer"
+            >
+              <Ban className="w-3.5 h-3.5 mr-2" /> Void Order
+            </ContextMenuItem>
+          </>
+        )}
+      </ContextMenuContent>
+    );
+  };
+
   return (
     <div className="space-y-5">
       {/* Toast */}
@@ -2294,11 +2403,12 @@ export default function TransactionsPage({
               : "bg-primary";
 
             return (
-              <div
-                key={`mobile-${txn.id}`}
-                role="button"
-                tabIndex={0}
-                onClick={() => setViewTxn(txn)}
+              <ContextMenu key={`mobile-${txn.id}`}>
+                <ContextMenuTrigger asChild>
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setViewTxn(txn)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     const target = e.target as HTMLElement;
@@ -2448,7 +2558,10 @@ export default function TransactionsPage({
                   </div>
                 </div>
               </div>
-            );
+            </ContextMenuTrigger>
+            {renderTransactionContextMenu(txn)}
+          </ContextMenu>
+        );
           })}
 
           {filtered.length === 0 && (
@@ -2849,11 +2962,12 @@ export default function TransactionsPage({
             const isClaimed = txn.status === "Claimed";
             const terminalInfo = getTerminalLifecycleInfo(txn);
             return (
-              <div
-                key={txn.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => setViewTxn(txn)}
+              <ContextMenu key={txn.id}>
+                <ContextMenuTrigger asChild>
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setViewTxn(txn)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     const target = e.target as HTMLElement;
@@ -3050,7 +3164,10 @@ export default function TransactionsPage({
                   </div>
                 </div>
               </div>
-            );
+            </ContextMenuTrigger>
+            {renderTransactionContextMenu(txn)}
+          </ContextMenu>
+        );
           })}
 
           {filtered.length === 0 && (
