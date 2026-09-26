@@ -5,6 +5,8 @@ import { useEffect } from "react";
 const OVERLAY_SELECTORS = [
   "#pratikabuSTTDiv",
   "#pratikabuSTTDiv2",
+  '[id*="pratikabu"]',
+  '[class*="pratikabu"]',
   '[id^="pratikabuSTT"]',
   '[class^="pratikabuSTT"]',
   "#scroll-to-top",

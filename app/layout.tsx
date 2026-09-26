@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { Toaster } from '@/components/ui/toaster'
 import PwaInit from '@/components/pwa-init'
 import { ThemeProvider } from '@/components/theme-provider'
+import ThirdPartyOverlayGuard from '@/components/third-party-overlay-guard'
 import './globals.css'
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
@@ -52,6 +53,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${geist.variable} ${geistMono.variable} font-sans antialiased`} suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <ThirdPartyOverlayGuard />
           {children}
           <Toaster />
           <PwaInit />

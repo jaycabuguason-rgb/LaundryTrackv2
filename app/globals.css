@@ -267,3 +267,28 @@
   border-color: var(--border);
 }
 
+/* Suppress third-party extension overlays (e.g. Scroll To Top extensions) */
+#pratikabuSTTDiv,
+#pratikabuSTTDiv2,
+[id*="pratikabu"],
+[class*="pratikabu"],
+[id^="pratikabuSTT"],
+[class^="pratikabuSTT"],
+#scroll-to-top,
+.scroll-to-top,
+.scroll-to-top-button,
+#scroll-to-top-button,
+#stt-container,
+.stt-button,
+[data-stt],
+[data-scroll-to-top] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+
