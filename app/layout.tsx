@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Toaster } from '@/components/ui/toaster'
 import PwaInit from '@/components/pwa-init'
-import ThirdPartyOverlayGuard from '@/components/third-party-overlay-guard'
 import { ThemeProvider } from '@/components/theme-provider'
 import './globals.css'
 
@@ -56,7 +55,6 @@ export default function RootLayout({
           {children}
           <Toaster />
           <PwaInit />
-          <ThirdPartyOverlayGuard />
         </ThemeProvider>
       </body>
     </html>

@@ -225,6 +225,23 @@ describe("ProcessingPage Single-Click Action Buttons", () => {
     // Bulk action bar is dismissed
     expect(screen.queryByTestId("bulk-action-bar")).not.toBeInTheDocument();
   });
+
+  it("calls onRefresh when clicking Refresh button without reloading page", async () => {
+    const onRefresh = vi.fn().mockResolvedValue(undefined);
+    render(
+      <ProcessingPage
+        transactions={mockTransactions}
+        onRefresh={onRefresh}
+      />
+    );
+
+    const refreshButtons = screen.getAllByRole("button", { name: /refresh/i });
+    expect(refreshButtons.length).toBeGreaterThan(0);
+
+    fireEvent.click(refreshButtons[0]);
+
+    expect(onRefresh).toHaveBeenCalledTimes(1);
+  });
 });
 
 

@@ -50,6 +50,7 @@ interface ProcessingPageProps {
   transactions: Transaction[];
   loading?: boolean;
   error?: string | null;
+  onRefresh?: () => Promise<void> | void;
   onUpdateTransaction?: (ticketId: string, updates: { status: TransactionStatus }) => Promise<{ transaction: Transaction; loyaltyResult?: import("@/lib/transaction-contracts").StampAwardResult }>;
   onViewTransaction?: (ticketId: string) => void;
   onEditTransaction?: (ticketId: string) => void;
@@ -223,6 +224,7 @@ export default function ProcessingPage({
   transactions,
   loading = false,
   error = null,
+  onRefresh,
   onUpdateTransaction,
   onViewTransaction,
   onEditTransaction: _onEditTransaction,
@@ -233,6 +235,7 @@ export default function ProcessingPage({
   const [search, setSearch] = useState("");
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [tick, setTick] = useState(0); // force re-render for relative time
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [updatingTicket, setUpdatingTicket] = useState<string | null>(null);
   const [sheetTxn, setSheetTxn] = useState<Transaction | null>(null);
   const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -306,13 +309,14 @@ export default function ProcessingPage({
   // Auto-refresh every 30 seconds
   useEffect(() => {
     refreshIntervalRef.current = setInterval(() => {
+      void onRefresh?.();
       setLastUpdated(new Date());
       setTick((n) => n + 1);
     }, 30000);
     return () => {
       if (refreshIntervalRef.current) clearInterval(refreshIntervalRef.current);
     };
-  }, []);
+  }, [onRefresh]);
 
   // Update relative time display every 5 seconds
   useEffect(() => {
@@ -320,10 +324,19 @@ export default function ProcessingPage({
     return () => clearInterval(timer);
   }, []);
 
-  const handleManualRefresh = useCallback(() => {
-    setLastUpdated(new Date());
-    setTick((n) => n + 1);
-  }, []);
+  const handleManualRefresh = useCallback(async () => {
+    if (isRefreshing) return;
+    try {
+      setIsRefreshing(true);
+      if (onRefresh) {
+        await onRefresh();
+      }
+    } finally {
+      setIsRefreshing(false);
+      setLastUpdated(new Date());
+      setTick((n) => n + 1);
+    }
+  }, [onRefresh, isRefreshing]);
 
   const handleToggleStage = (stage: ProcessingStageId) => {
     setExpandedStage((prev) => (prev === stage ? null : stage));
@@ -918,14 +931,16 @@ export default function ProcessingPage({
                 Last updated: {formatLastUpdated(lastUpdated)}
               </span>
               <Button
+                type="button"
                 variant="outline"
                 size="sm"
-                onClick={handleManualRefresh}
+                onClick={() => void handleManualRefresh()}
+                disabled={loading || isRefreshing}
                 className="h-9 gap-1.5 text-xs cursor-pointer"
                 aria-label="Refresh"
               >
-                <RefreshCw className="h-3.5 w-3.5" />
-                Refresh
+                <RefreshCw className={cn("h-3.5 w-3.5", (loading || isRefreshing) && "animate-spin text-primary")} />
+                {isRefreshing ? "Refreshing…" : "Refresh"}
               </Button>
             </div>
           </div>
@@ -942,14 +957,16 @@ export default function ProcessingPage({
               </p>
             </div>
             <Button
+              type="button"
               variant="outline"
               size="sm"
-              onClick={handleManualRefresh}
+              onClick={() => void handleManualRefresh()}
+              disabled={loading || isRefreshing}
               className="h-8 gap-1 rounded-full text-xs font-semibold px-3 cursor-pointer shadow-xs"
               aria-label="Refresh"
             >
-              <RefreshCw className="h-3.5 w-3.5" />
-              <span>{formatLastUpdated(lastUpdated)}</span>
+              <RefreshCw className={cn("h-3.5 w-3.5", (loading || isRefreshing) && "animate-spin text-primary")} />
+              <span>{isRefreshing ? "Refreshing…" : formatLastUpdated(lastUpdated)}</span>
             </Button>
           </div>
 

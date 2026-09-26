@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   CalendarIcon,
   Clock,
@@ -350,6 +350,17 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack", o
   const [pdfGenerating, setPdfGenerating] = useState(false);
   const [forecastPdfGenerating, setForecastPdfGenerating] = useState(false);
   const [rangePreset, setRangePreset] = useState<RangePreset>("month");
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleManualRefresh = useCallback(async () => {
+    if (isRefreshing) return;
+    try {
+      setIsRefreshing(true);
+      await onRefresh?.();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [onRefresh, isRefreshing]);
 
   useEffect(() => {
     void onRefresh?.();
@@ -730,14 +741,15 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack", o
         </div>
         <div className="flex items-center gap-3">
           <Button
+            type="button"
             variant="outline"
             size="sm"
-            onClick={() => void onRefresh?.()}
-            disabled={loading}
-            className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+            onClick={() => void handleManualRefresh()}
+            disabled={loading || isRefreshing}
+            className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
           >
-            <RotateCw className={cn("w-3.5 h-3.5", loading && "animate-spin text-primary")} />
-            <span>Refresh</span>
+            <RotateCw className={cn("w-3.5 h-3.5", (loading || isRefreshing) && "animate-spin text-primary")} />
+            <span>{isRefreshing ? "Refreshing…" : "Refresh"}</span>
           </Button>
           <p className="text-xs text-muted-foreground">{transactions.length} total transactions</p>
         </div>
@@ -756,14 +768,15 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack", o
           <p className="text-xs text-muted-foreground truncate">Business analytics & daily laundry summaries</p>
         </div>
         <Button
+          type="button"
           variant="outline"
           size="sm"
-          onClick={() => void onRefresh?.()}
-          disabled={loading}
-          className="h-8 px-2.5 gap-1.5 text-xs text-muted-foreground hover:text-foreground shrink-0"
+          onClick={() => void handleManualRefresh()}
+          disabled={loading || isRefreshing}
+          className="h-8 px-2.5 gap-1.5 text-xs text-muted-foreground hover:text-foreground shrink-0 cursor-pointer"
         >
-          <RotateCw className={cn("w-3.5 h-3.5", loading && "animate-spin text-primary")} />
-          <span className="hidden sm:inline">Refresh</span>
+          <RotateCw className={cn("w-3.5 h-3.5", (loading || isRefreshing) && "animate-spin text-primary")} />
+          <span className="hidden sm:inline">{isRefreshing ? "Refreshing…" : "Refresh"}</span>
         </Button>
       </div>
 
