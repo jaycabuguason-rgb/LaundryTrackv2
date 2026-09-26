@@ -18,6 +18,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -1506,49 +1509,56 @@ export default function TransactionsPage({
     setEditPaymentStatus(txn.paymentStatus);
   };
 
-  const handleMobileStatusSelect = async (status: Transaction["status"]) => {
-    if (!mobileStatusTxn || status === mobileStatusTxn.status) return;
-    if (mobileStatusTxn.status === "Claimed" || mobileStatusTxn.status === "Voided") {
-      showToast(`Cannot change status: ticket is already ${mobileStatusTxn.status.toLowerCase()}`);
+  const handleDirectStatusSelect = async (txn: Transaction, status: Transaction["status"]) => {
+    if (status === txn.status) return;
+    if (txn.status === "Claimed" || txn.status === "Voided") {
+      showToast(`Cannot change status: ticket is already ${txn.status.toLowerCase()}`);
       return;
     }
-    if (status === "Claimed" && mobileStatusTxn.paymentStatus === "unpaid") {
+    if (status === "Claimed" && txn.paymentStatus === "unpaid") {
       showToast("Mark payment as Paid first before claiming this ticket.");
       return;
     }
     if (status === "Voided") {
-      setVoidTxn(mobileStatusTxn);
+      setVoidTxn(txn);
       setVoidReason("");
-      setMobileStatusTxn(null);
       return;
     }
-    setMobileStatusBusyTicket(mobileStatusTxn.ticketId);
     try {
-      const prevStatus = mobileStatusTxn.status;
-      const res = await onUpdateTransaction(mobileStatusTxn.ticketId, {
+      const prevStatus = txn.status;
+      const res = await onUpdateTransaction(txn.ticketId, {
         status,
-        paymentStatus: mobileStatusTxn.paymentStatus,
+        paymentStatus: txn.paymentStatus,
       });
       setUndoStack((prev) => [
         ...prev,
         {
-          ticketId: mobileStatusTxn.ticketId,
+          ticketId: txn.ticketId,
           fromStatus: prevStatus,
           toStatus: status,
-          fromPaymentStatus: mobileStatusTxn.paymentStatus,
-          toPaymentStatus: mobileStatusTxn.paymentStatus,
+          fromPaymentStatus: txn.paymentStatus,
+          toPaymentStatus: txn.paymentStatus,
         },
       ]);
       setRedoStack([]);
-      showToast(`Ticket #${mobileStatusTxn.ticketId} moved to ${status}`);
+      showToast(`Ticket #${txn.ticketId} moved to ${status}`);
       if (loyaltyEnabled && res.loyaltyResult?.stamped && res.loyaltyResult.rewarded) {
         showToast(`Reward Unlocked! 🎉 Customer earned a free wash! They now have ${res.loyaltyResult.newStampCount} stamps.`);
       } else if (loyaltyEnabled && res.loyaltyResult?.stamped) {
         showToast(`Stamp Added 🌟 Customer now has ${res.loyaltyResult.newStampCount} stamps.`);
       }
-      setMobileStatusTxn(null);
     } catch {
       showToast("Unable to update the ticket status right now");
+    }
+  };
+
+  const handleMobileStatusSelect = async (status: Transaction["status"]) => {
+    if (!mobileStatusTxn) return;
+    const target = mobileStatusTxn;
+    setMobileStatusBusyTicket(target.ticketId);
+    try {
+      await handleDirectStatusSelect(target, status);
+      setMobileStatusTxn(null);
     } finally {
       setMobileStatusBusyTicket(null);
     }
@@ -2980,9 +2990,42 @@ export default function TransactionsPage({
                               <DropdownMenuItem onClick={() => openEdit(txn)}>
                                 <Edit className="w-3.5 h-3.5 mr-2" /> Edit Order
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setMobileStatusTxn(txn)}>
-                                <RefreshCw className="w-3.5 h-3.5 mr-2" /> Change Status
-                              </DropdownMenuItem>
+                              <DropdownMenuSub>
+                                <DropdownMenuSubTrigger className="cursor-pointer">
+                                  <RefreshCw className="w-3.5 h-3.5 mr-2" /> Change Status
+                                </DropdownMenuSubTrigger>
+                                <DropdownMenuSubContent className="w-44 shadow-lg border border-border bg-popover text-popover-foreground">
+                                  {(["Received", "Washing", "Drying", "Ready", "Claimed"] as const).map((s) => {
+                                    const isCurrent = txn.status === s;
+                                    return (
+                                      <DropdownMenuItem
+                                        key={s}
+                                        onClick={() => void handleDirectStatusSelect(txn, s)}
+                                        disabled={isCurrent}
+                                        className={cn(
+                                          "cursor-pointer flex items-center justify-between text-xs py-2",
+                                          isCurrent && "font-bold text-primary bg-primary/10"
+                                        )}
+                                      >
+                                        <div className="flex items-center gap-2">
+                                          <span
+                                            className={cn(
+                                              "w-2 h-2 rounded-full",
+                                              s === "Received" && "bg-purple-500",
+                                              s === "Washing" && "bg-blue-500",
+                                              s === "Drying" && "bg-amber-500",
+                                              s === "Ready" && "bg-green-500",
+                                              s === "Claimed" && "bg-slate-500"
+                                            )}
+                                          />
+                                          <span>{s === "Claimed" ? "Claim Order" : s}</span>
+                                        </div>
+                                        {isCurrent && <Check className="w-3.5 h-3.5 text-primary ml-auto" />}
+                                      </DropdownMenuItem>
+                                    );
+                                  })}
+                                </DropdownMenuSubContent>
+                              </DropdownMenuSub>
                               <DropdownMenuItem
                                 onClick={() => { setVoidTxn(txn); setVoidReason(""); }}
                                 className="text-destructive focus:text-destructive"

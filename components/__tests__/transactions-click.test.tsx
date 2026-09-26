@@ -46,3 +46,4 @@ describe("TransactionsPage Card Click Interaction", () => {
     expect(screen.getAllByText("Washing").length).toBeGreaterThan(0);
   });
 });
+
