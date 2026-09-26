@@ -149,7 +149,7 @@ export function TransactionDetailModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="p-0 border-0 bg-transparent shadow-none max-w-lg w-full max-h-[92vh] overflow-hidden flex flex-col justify-end sm:justify-center">
         <DialogTitle className="sr-only">
-          Ticket Details — {transaction.ticketId}
+          {`Ticket Details — ${transaction.ticketId}`}
         </DialogTitle>
         <DialogDescription className="sr-only">
           Detailed view and actions for transaction {transaction.ticketId}

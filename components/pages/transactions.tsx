@@ -5,7 +5,7 @@ import {
   Search, EyeOff, Edit, Ban, Printer, ChevronRight, X, QrCode, CalendarIcon,
   AlertTriangle, Plus, User, Star, Camera,
   ChevronLeft, Check, RefreshCw, Inbox, MoreHorizontal, Download, Sparkles,
-  Receipt, Scale, Clock, CheckCircle2, PackageCheck, ArrowRight,
+  Receipt, Clock, CheckCircle2, PackageCheck, ArrowRight,
   Undo2, Redo2
 } from "lucide-react";
 import { format } from "date-fns";
@@ -2026,26 +2026,6 @@ export default function TransactionsPage({
               {voidedOrdersCount}
             </span>
           </button>
-        </div>
-
-        {/* Live Aggregated Metrics Strip */}
-        <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-card border border-border/70 shadow-xs text-xs font-medium">
-          <div className="flex items-center gap-1.5">
-            <Receipt className="w-3.5 h-3.5 text-primary shrink-0" />
-            <span className="font-bold text-foreground">{totalFilteredOrders}</span>
-            <span className="text-muted-foreground">orders</span>
-          </div>
-          <span className="w-1 h-1 rounded-full bg-border" />
-          <div className="flex items-center gap-1">
-            <span className="font-bold text-primary">₱{totalFilteredRevenue.toLocaleString()}</span>
-            <span className="text-muted-foreground">total</span>
-          </div>
-          <span className="w-1 h-1 rounded-full bg-border" />
-          <div className="flex items-center gap-1">
-            <Scale className="w-3.5 h-3.5 text-sky-500 shrink-0" />
-            <span className="font-bold text-foreground">{totalFilteredWeight.toFixed(1)}</span>
-            <span className="text-muted-foreground">kg</span>
-          </div>
         </div>
 
         {/* Mobile Search & Filter Carousel */}

@@ -74,7 +74,7 @@ describe("TransactionsPage Mobile Concept Layout", () => {
     vi.clearAllMocks();
   });
 
-  it("renders mobile header, live metrics strip, and new order button", () => {
+  it("renders mobile header, search controls, and new order button", () => {
     render(
       <TransactionsPage
         transactions={mockTransactions}
@@ -89,11 +89,9 @@ describe("TransactionsPage Mobile Concept Layout", () => {
       screen.getByText(/Monitor laundry orders, stage progress & payments/i)
     ).toBeInTheDocument();
 
-    // Mobile Live Aggregated Metrics Strip (Active orders default = 2 txns: tx-1 & tx-2, fee = 180 + 350 = 530, weight = 12.5 kg)
-    expect(screen.getAllByText("orders").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("₱530").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("12.5").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("kg").length).toBeGreaterThanOrEqual(1);
+    // Mobile Live Aggregated Metrics Strip is removed
+    expect(screen.queryByText(/^kg$/)).not.toBeInTheDocument();
+    expect(screen.getAllByText("orders")).toHaveLength(1);
 
     // Scan button (Claim Verification) and New Order button
     expect(
