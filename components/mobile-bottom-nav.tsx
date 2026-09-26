@@ -13,7 +13,7 @@ interface MobileBottomNavProps {
 const ITEMS: Array<{ page: Page; label: string; icon: typeof LayoutDashboard }> = [
   { page: "dashboard", label: "Home", icon: LayoutDashboard },
   { page: "processing", label: "Process", icon: ListTodo },
-  { page: "new-transaction", label: "New order", icon: Plus },
+  { page: "new-transaction", label: "New Order", icon: Plus },
   { page: "transactions", label: "Records", icon: Receipt },
   { page: "profile", label: "Profile", icon: User },
 ];
@@ -34,12 +34,14 @@ export default function MobileBottomNav({ activePage, onNavigate, onPreload }: M
               onClick={() => onNavigate(page)}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex min-h-14 flex-col items-center justify-center gap-1 py-2 text-xs outline-none focus-visible:bg-primary/10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
-                active ? "text-primary font-semibold" : "text-muted-foreground",
+                "flex min-h-14 min-w-0 flex-col items-center justify-center gap-0.5 sm:gap-1 px-0.5 py-1.5 sm:py-2 outline-none focus-visible:bg-primary/10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary transition-colors",
+                active ? "text-primary font-semibold" : "text-muted-foreground hover:text-foreground",
               )}
             >
-              <Icon className="w-4 h-4" />
-              <span>{label}</span>
+              <Icon className="w-4 h-4 shrink-0" />
+              <span className="text-[10px] sm:text-xs leading-tight tracking-tight truncate max-w-full px-0.5">
+                {label}
+              </span>
             </button>
           );
         })}

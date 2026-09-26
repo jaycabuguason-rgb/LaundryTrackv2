@@ -954,7 +954,7 @@ export default function ProcessingPage({
           </div>
 
           {/* Mobile Stage Filter Tabs (Segmented Control) */}
-          <div className="bg-muted/50 p-1 rounded-2xl flex items-center gap-1 shadow-xs border border-border/50" role="tablist">
+          <div className="bg-muted/50 p-1 rounded-2xl flex items-center gap-1 shadow-xs border border-border/50 overflow-x-auto no-scrollbar flex-nowrap scroll-smooth" role="tablist">
             {STAGES.map((s) => {
               const isActive = expandedStage === s.id;
               const allItems = grouped.find((g) => g.stage === s.id)?.items ?? [];
@@ -969,17 +969,17 @@ export default function ProcessingPage({
                   aria-selected={isActive}
                   onClick={() => setExpandedStage(s.id)}
                   className={cn(
-                    "flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl text-xs font-semibold transition-all text-center cursor-pointer",
+                    "flex-1 min-w-[85px] sm:min-w-0 flex items-center justify-center gap-1 sm:gap-1.5 py-1.5 sm:py-2 px-1.5 sm:px-2.5 rounded-xl text-[11px] sm:text-xs font-semibold shrink-0 transition-all text-center cursor-pointer",
                     isActive
                       ? "bg-primary text-primary-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground hover:bg-background/50",
                   )}
                 >
-                  <Icon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                  <span>{s.label}</span>
+                  <Icon className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" aria-hidden="true" />
+                  <span className="truncate">{s.label}</span>
                   <span
                     className={cn(
-                      "px-1.5 py-0.2 rounded-full text-[10px] font-bold leading-tight tabular-nums",
+                      "px-1.5 py-0.2 rounded-full text-[9px] sm:text-[10px] font-bold leading-tight tabular-nums shrink-0",
                       isActive
                         ? "bg-primary-foreground/20 text-primary-foreground"
                         : "bg-muted text-muted-foreground",

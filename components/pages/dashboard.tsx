@@ -190,84 +190,84 @@ export default function DashboardPage({
         </div>
 
         <div className={cn(
-          "flex sm:grid overflow-x-auto sm:overflow-visible no-scrollbar snap-x snap-mandatory gap-3 pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0",
+          "flex sm:grid overflow-x-auto sm:overflow-visible no-scrollbar snap-x snap-mandatory gap-2.5 sm:gap-3 pb-2 sm:pb-0 mx-0 px-0",
           isLoyaltyOn ? "sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5" : "sm:grid-cols-2 lg:grid-cols-4"
         )}>
           {/* 1. Today's Orders */}
-          <Card className="snap-start shrink-0 w-[164px] sm:w-auto border border-border/70 rounded-2xl shadow-xs bg-card">
-            <CardContent className="p-4 sm:p-5">
-              <div className="flex items-start justify-between gap-2">
+          <Card className="snap-start shrink-0 w-[148px] sm:w-auto border border-border/70 rounded-2xl shadow-xs bg-card">
+            <CardContent className="p-3.5 sm:p-5">
+              <div className="flex items-start justify-between gap-1.5 sm:gap-2">
                 <div className="space-y-0.5 min-w-0">
-                  <p className="text-xs font-semibold text-muted-foreground">
+                  <p className="text-xs font-semibold text-muted-foreground truncate">
                     Today&apos;s Orders
                   </p>
                   <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
                     {totalOrders}
                   </p>
-                  <p className="text-xs text-muted-foreground">orders this cycle</p>
+                  <p className="text-[11px] sm:text-xs text-muted-foreground truncate">orders this cycle</p>
                 </div>
-                <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0">
-                  <Receipt className="w-5 h-5" aria-hidden="true" />
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0">
+                  <Receipt className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* 2. In Progress */}
-          <Card className="snap-start shrink-0 w-[164px] sm:w-auto border border-border/70 rounded-2xl shadow-xs bg-card">
-            <CardContent className="p-4 sm:p-5">
-              <div className="flex items-start justify-between gap-2">
+          <Card className="snap-start shrink-0 w-[148px] sm:w-auto border border-border/70 rounded-2xl shadow-xs bg-card">
+            <CardContent className="p-3.5 sm:p-5">
+              <div className="flex items-start justify-between gap-1.5 sm:gap-2">
                 <div className="space-y-0.5 min-w-0">
-                  <p className="text-xs font-semibold text-muted-foreground">
+                  <p className="text-xs font-semibold text-muted-foreground truncate">
                     In Progress
                   </p>
                   <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
                     {washingCount}
                   </p>
-                  <p className="text-xs text-muted-foreground">currently washing</p>
+                  <p className="text-[11px] sm:text-xs text-muted-foreground truncate">currently washing</p>
                 </div>
-                <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0">
-                  <Droplet className="w-5 h-5" aria-hidden="true" />
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0">
+                  <Droplet className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* 3. Ready for Pickup */}
-          <Card className="snap-start shrink-0 w-[164px] sm:w-auto border border-border/70 rounded-2xl shadow-xs bg-card">
-            <CardContent className="p-4 sm:p-5">
-              <div className="flex items-start justify-between gap-2">
+          <Card className="snap-start shrink-0 w-[148px] sm:w-auto border border-border/70 rounded-2xl shadow-xs bg-card">
+            <CardContent className="p-3.5 sm:p-5">
+              <div className="flex items-start justify-between gap-1.5 sm:gap-2">
                 <div className="space-y-0.5 min-w-0">
-                  <p className="text-xs font-semibold text-muted-foreground">
+                  <p className="text-xs font-semibold text-muted-foreground truncate">
                     Ready for Pickup
                   </p>
                   <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
                     {readyCount}
                   </p>
-                  <p className="text-xs text-muted-foreground">waiting for customers</p>
+                  <p className="text-[11px] sm:text-xs text-muted-foreground truncate">waiting for customers</p>
                 </div>
-                <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0">
-                  <Sparkles className="w-5 h-5" aria-hidden="true" />
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0">
+                  <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* 4. Revenue */}
-          <Card className="snap-start shrink-0 w-[164px] sm:w-auto border border-border/70 rounded-2xl shadow-xs bg-card">
-            <CardContent className="p-4 sm:p-5">
-              <div className="flex items-start justify-between gap-2">
+          <Card className="snap-start shrink-0 w-[148px] sm:w-auto border border-border/70 rounded-2xl shadow-xs bg-card">
+            <CardContent className="p-3.5 sm:p-5">
+              <div className="flex items-start justify-between gap-1.5 sm:gap-2">
                 <div className="space-y-0.5 min-w-0">
-                  <p className="text-xs font-semibold text-muted-foreground">
+                  <p className="text-xs font-semibold text-muted-foreground truncate">
                     Revenue
                   </p>
-                  <p className="text-2xl font-bold tracking-tight text-foreground font-mono tabular-nums">
+                  <p className="text-2xl font-bold tracking-tight text-foreground font-mono tabular-nums truncate">
                     ₱{paidRevenue.toLocaleString()}
                   </p>
-                  <p className="text-xs text-muted-foreground">paid transactions</p>
+                  <p className="text-[11px] sm:text-xs text-muted-foreground truncate">paid transactions</p>
                 </div>
-                <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0">
-                  <Banknote className="w-5 h-5" aria-hidden="true" />
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0">
+                  <Banknote className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
                 </div>
               </div>
             </CardContent>
@@ -275,20 +275,20 @@ export default function DashboardPage({
 
           {/* 5. Loyalty Members — Only rendered when loyalty is enabled */}
           {isLoyaltyOn && (
-            <Card className="snap-start shrink-0 w-[164px] sm:w-auto border border-border/70 rounded-2xl shadow-xs bg-card">
-              <CardContent className="p-4 sm:p-5">
-                <div className="flex items-start justify-between gap-2">
+            <Card className="snap-start shrink-0 w-[148px] sm:w-auto border border-border/70 rounded-2xl shadow-xs bg-card">
+              <CardContent className="p-3.5 sm:p-5">
+                <div className="flex items-start justify-between gap-1.5 sm:gap-2">
                   <div className="space-y-0.5 min-w-0">
-                    <p className="text-xs font-semibold text-muted-foreground">
+                    <p className="text-xs font-semibold text-muted-foreground truncate">
                       Loyalty Members
                     </p>
                     <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
                       {totalMembers}
                     </p>
-                    <p className="text-xs text-muted-foreground">registered members</p>
+                    <p className="text-[11px] sm:text-xs text-muted-foreground truncate">registered members</p>
                   </div>
-                  <div className="w-10 h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0">
-                    <Users className="w-5 h-5" aria-hidden="true" />
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0">
+                    <Users className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
                   </div>
                 </div>
               </CardContent>

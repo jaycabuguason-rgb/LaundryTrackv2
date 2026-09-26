@@ -71,6 +71,7 @@ import { StatusBadge, PaymentBadge, STATUS_ICONS } from "@/components/status-bad
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import QRScanner from "@/components/qr-scanner";
 import type { Page } from "@/components/sidebar";
+import { TransactionDetailModal } from "@/components/transaction-detail-modal";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // QR Scanner
@@ -1912,7 +1913,7 @@ export default function TransactionsPage({
         )}
 
         {/* Mobile Segmented Navigation Tabs */}
-        <div className="p-1 bg-muted/60 rounded-xl flex items-center gap-1 shadow-inner">
+        <div className="p-1 bg-muted/60 rounded-xl flex items-center gap-1 shadow-inner overflow-x-auto no-scrollbar flex-nowrap scroll-smooth">
           <button
             type="button"
             role="tab"
@@ -1923,7 +1924,7 @@ export default function TransactionsPage({
               setSortBy("newest");
             }}
             className={cn(
-              "flex-1 py-1.5 px-1.5 rounded-lg font-semibold text-xs flex items-center justify-center gap-1 transition-all active:scale-95",
+              "flex-1 min-w-[68px] sm:min-w-0 py-1.5 px-1.5 sm:px-2 rounded-lg font-semibold text-[11px] sm:text-xs flex items-center justify-center gap-1 shrink-0 transition-all active:scale-95",
               activeTab === "transactions"
                 ? "bg-primary text-primary-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
@@ -1932,7 +1933,7 @@ export default function TransactionsPage({
             <span className="truncate">Active</span>
             <span
               className={cn(
-                "px-1.5 py-0.2 rounded-full text-[10px] font-bold tabular-nums",
+                "px-1.5 py-0.2 rounded-full text-[9px] sm:text-[10px] font-bold tabular-nums shrink-0",
                 activeTab === "transactions"
                   ? "bg-white/20 text-primary-foreground"
                   : "bg-muted text-muted-foreground"
@@ -1951,7 +1952,7 @@ export default function TransactionsPage({
               setSortBy("newest-claimed");
             }}
             className={cn(
-              "flex-1 py-1.5 px-1.5 rounded-lg font-semibold text-xs flex items-center justify-center gap-1 transition-all active:scale-95",
+              "flex-1 min-w-[68px] sm:min-w-0 py-1.5 px-1.5 sm:px-2 rounded-lg font-semibold text-[11px] sm:text-xs flex items-center justify-center gap-1 shrink-0 transition-all active:scale-95",
               activeTab === "claimed"
                 ? "bg-primary text-primary-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
@@ -1960,7 +1961,7 @@ export default function TransactionsPage({
             <span className="truncate">Claimed</span>
             <span
               className={cn(
-                "px-1.5 py-0.2 rounded-full text-[10px] font-bold tabular-nums",
+                "px-1.5 py-0.2 rounded-full text-[9px] sm:text-[10px] font-bold tabular-nums shrink-0",
                 activeTab === "claimed"
                   ? "bg-white/20 text-primary-foreground"
                   : "bg-muted text-muted-foreground"
@@ -1979,7 +1980,7 @@ export default function TransactionsPage({
               setSortBy("newest");
             }}
             className={cn(
-              "flex-1 py-1.5 px-1.5 rounded-lg font-semibold text-xs flex items-center justify-center gap-1 transition-all active:scale-95",
+              "flex-1 min-w-[55px] sm:min-w-0 py-1.5 px-1.5 sm:px-2 rounded-lg font-semibold text-[11px] sm:text-xs flex items-center justify-center gap-1 shrink-0 transition-all active:scale-95",
               activeTab === "all"
                 ? "bg-primary text-primary-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
@@ -1988,7 +1989,7 @@ export default function TransactionsPage({
             <span className="truncate">All</span>
             <span
               className={cn(
-                "px-1.5 py-0.2 rounded-full text-[10px] font-bold tabular-nums",
+                "px-1.5 py-0.2 rounded-full text-[9px] sm:text-[10px] font-bold tabular-nums shrink-0",
                 activeTab === "all"
                   ? "bg-white/20 text-primary-foreground"
                   : "bg-muted text-muted-foreground"
@@ -2007,7 +2008,7 @@ export default function TransactionsPage({
               setSortBy("newest-voided");
             }}
             className={cn(
-              "flex-1 py-1.5 px-1.5 rounded-lg font-semibold text-xs flex items-center justify-center gap-1 transition-all active:scale-95",
+              "flex-1 min-w-[68px] sm:min-w-0 py-1.5 px-1.5 sm:px-2 rounded-lg font-semibold text-[11px] sm:text-xs flex items-center justify-center gap-1 shrink-0 transition-all active:scale-95",
               activeTab === "voided"
                 ? "bg-destructive text-destructive-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
@@ -2016,7 +2017,7 @@ export default function TransactionsPage({
             <span className="truncate">Voided</span>
             <span
               className={cn(
-                "px-1.5 py-0.2 rounded-full text-[10px] font-bold tabular-nums",
+                "px-1.5 py-0.2 rounded-full text-[9px] sm:text-[10px] font-bold tabular-nums shrink-0",
                 activeTab === "voided"
                   ? "bg-white/20 text-destructive-foreground"
                   : "bg-muted text-muted-foreground"
@@ -3415,187 +3416,54 @@ export default function TransactionsPage({
         </DrawerContent>
       </Drawer>
 
-      {/* ── VIEW MODAL (read-only) ──────────────────────────────────────────── */}
-      <Dialog open={!!viewTxn} onOpenChange={(open) => { if (!open) { setViewTxn(null); onEditComplete?.(); } }}>
-        <DialogContent className="w-[calc(100vw-1rem)] sm:w-auto max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Ticket Details — {viewTxn?.ticketId}</DialogTitle>
-            <DialogDescription>Read-only view of this transaction.</DialogDescription>
-          </DialogHeader>
-          {viewTxn && (
-            <div className="space-y-5">
-              {/* Details grid */}
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                {[
-                  { label: "Ticket ID", value: viewTxn.ticketId, span: false },
-                  { label: "Customer Name", value: viewTxn.customerName, span: false },
-                  { label: "Arrival Date & Time", value: formatReadableDateTime(viewTxn.arrivalDateTime) || viewTxn.arrivalDateTime, span: true },
-                  { label: "Weight (kg)", value: `${viewTxn.weight} kg`, span: false },
-                  { label: "Wash Type", value: viewTxn.washType, span: false },
-                  { label: "Add-ons", value: viewTxn.addOns.length ? viewTxn.addOns.join(", ") : "None", span: false },
-                  { label: "Total Fee", value: `₱${viewTxn.fee}`, span: false },
-                  { label: "ETA", value: viewTxn.eta ? formatReadableDateTime(viewTxn.eta) : "Awaiting estimate", span: false },
-                ].map((row) => (
-                  <div key={row.label} className={cn("bg-muted/30 rounded-md p-2.5", row.span && "col-span-2")}>
-                    <p className="text-xs text-muted-foreground">{row.label}</p>
-                    <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
-                      <p className="font-medium text-foreground text-xs">{row.value}</p>
-                      {row.label === "Customer Name" && loyaltyEnabled && Boolean(getLoyaltyMemberForTxn(viewTxn)) && (
-                        <span
-                          className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/25 px-1.5 py-0.5 text-[9px] font-semibold shrink-0"
-                          title="Registered Loyalty Member"
-                        >
-                          <Sparkles className="w-2.5 h-2.5 text-amber-500 fill-amber-500" aria-hidden="true" />
-                          Loyalty Member
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                {/* Payment Status */}
-                <div className="bg-muted/30 rounded-md p-2.5">
-                  <p className="text-xs text-muted-foreground mb-1">Payment Status</p>
-                  <PaymentBadge paymentStatus={viewTxn.paymentStatus} />
-                </div>
-                {/* Current Status */}
-                <div className="bg-muted/30 rounded-md p-2.5">
-                  <p className="text-xs text-muted-foreground mb-1">Current Status</p>
-                  <StatusBadge status={viewTxn.status} />
-                </div>
-                {/* Claimed Date & Time read-only */}
-                {viewTxn.status === "Claimed" && (
-                  <div className="col-span-2 bg-emerald-500/10 border border-emerald-500/20 rounded-md p-2.5">
-                    <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300">Claimed Date &amp; Time</p>
-                    <p className="font-medium text-emerald-900 dark:text-emerald-200 text-xs mt-0.5">
-                      {formatLifecycleDateTime(viewTxn.claimedAt) || "Claimed time unavailable"}
-                    </p>
-                  </div>
-                )}
-                {/* Wash instructions read-only */}
-                {viewTxn.washInstructions && (
-                  <div className="col-span-2 bg-muted/30 rounded-md p-2.5">
-                    <p className="text-xs text-muted-foreground">Wash Instructions</p>
-                    <p className="font-medium text-foreground text-xs mt-0.5">{viewTxn.washInstructions}</p>
-                  </div>
-                )}
-                {/* Void reason and timestamp read-only */}
-                {viewTxn.status === "Voided" && (
-                  <div className="col-span-2 bg-destructive/10 border border-destructive/20 rounded-md p-2.5">
-                    <p className="text-xs font-semibold text-destructive">Voided Date &amp; Time</p>
-                    <p className="font-medium text-destructive text-xs mt-0.5">
-                      {formatLifecycleDateTime(viewTxn.voidedAt) || "Voided time unavailable"}
-                    </p>
-                    <p className="text-xs font-semibold text-destructive mt-2">Void Reason</p>
-                    <p className="font-medium text-destructive text-xs mt-0.5">{viewTxn.voidReason || "No specific reason provided."}</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Status stepper — read-only */}
-              {viewTxn.status !== "Voided" && (
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider">Status Progress</p>
-                  <div className="flex items-center">
-                    {statusOrder.map((step, idx) => {
-                      const stepIdx = statusOrder.indexOf(viewTxn.status as (typeof statusOrder)[number]);
-                      const isCompleted = idx < stepIdx;
-                      const isCurrent = idx === stepIdx;
-                      const isLast = idx === statusOrder.length - 1;
-                      return (
-                        <div key={step} className="flex items-center flex-1 last:flex-none">
-                          <div className="flex flex-col items-center">
-                            <div className={cn(
-                              "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border-2",
-                              isCompleted || isCurrent ? "bg-primary border-primary text-primary-foreground" : "bg-background border-border text-muted-foreground"
-                            )}>
-                              {isCompleted ? "✓" : idx + 1}
-                            </div>
-                            <span className={cn("text-xs mt-1 text-center w-10 md:w-12 leading-tight", isCurrent ? "text-primary font-semibold" : "text-muted-foreground")}>
-                              {step}
-                            </span>
-                          </div>
-                          {!isLast && <div className={cn("flex-1 h-0.5 mb-4 mx-0.5", isCompleted ? "bg-primary" : "bg-border")} />}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* QR Code */}
-              <div className="flex flex-col items-center gap-2 py-2 bg-muted/30 rounded-lg">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={getTrackingQrSrc(viewTxn, 100)}
-                  alt={`QR for ${viewTxn.ticketId}`}
-                  width={100}
-                  height={100}
-                  crossOrigin="anonymous"
-                />
-                <p className="text-xs text-muted-foreground font-mono">{viewTxn.ticketId}</p>
-              </div>
-
-              {/* View modal actions */}
-              <div className="flex flex-col gap-2 pt-1">
-                {/* Primary action: Edit Status or Undo */}
-                {viewTxn.status !== "Voided" && viewTxn.status !== "Claimed" && (
-                  <Button
-                    size="sm"
-                    className="w-full gap-1.5"
-                    onClick={() => {
-                      const txn = viewTxn;
-                      setViewTxn(null);
-                      openEdit(txn);
-                    }}
-                  >
-                    <Edit className="w-3.5 h-3.5" /> Edit Status
-                  </Button>
-                )}
-                {viewTxn.status === "Claimed" && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full gap-1.5"
-                    onClick={() => {
-                      const txn = viewTxn;
-                      setViewTxn(null);
-                      setUndoPromptTxn({ txn, action: "unclaim" });
-                    }}
-                  >
-                    <Undo2 className="w-3.5 h-3.5 text-primary" /> Undo Claim
-                  </Button>
-                )}
-                {viewTxn.status === "Voided" && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full gap-1.5"
-                    onClick={() => {
-                      const txn = viewTxn;
-                      setViewTxn(null);
-                      setUndoPromptTxn({ txn, action: "unvoid" });
-                    }}
-                  >
-                    <Undo2 className="w-3.5 h-3.5 text-emerald-600" /> Undo Void (Restore)
-                  </Button>
-                )}
-                {/* Secondary actions */}
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" className="flex-1 gap-1.5" onClick={() => { setReprintTxn(viewTxn); setViewTxn(null); onEditComplete?.(); }}>
-                    <Printer className="w-3.5 h-3.5" /> Reprint QR
-                  </Button>
-                  <Button size="sm" variant="outline" className="flex-1 gap-1.5" onClick={() => { setPrintTxn(viewTxn); setPrintPostCreate(false); setViewTxn(null); onEditComplete?.(); }}>
-                    <Printer className="w-3.5 h-3.5" /> Print Receipt
-                  </Button>
-                  <Button size="sm" variant="secondary" className="flex-1" onClick={() => { setViewTxn(null); onEditComplete?.(); }}>
-                    <X className="w-3.5 h-3.5 mr-1" /> Close
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* ── VIEW MODAL (Adaptive Mobile Drawer & Desktop Modal) ───────────── */}
+      <TransactionDetailModal
+        open={!!viewTxn}
+        onOpenChange={(open) => {
+          if (!open) {
+            setViewTxn(null);
+            onEditComplete?.();
+          }
+        }}
+        transaction={viewTxn}
+        loyaltyEnabled={loyaltyEnabled}
+        onEditStatus={(ticketId) => {
+          const txn = viewTxn || txns.find((t) => t.ticketId === ticketId);
+          setViewTxn(null);
+          if (txn) openEdit(txn);
+        }}
+        onAdvanceStage={(txn) => {
+          setViewTxn(null);
+          if (txn.status === "Ready") {
+            void handleQuickClaim(txn);
+          } else {
+            setMobileStatusTxn(txn);
+          }
+        }}
+        onReceivePayment={(txn) => {
+          setViewTxn(null);
+          void handleQuickSettlePayment(txn);
+        }}
+        onPrintReceipt={(txn) => {
+          setViewTxn(null);
+          setPrintTxn(txn);
+          setPrintPostCreate(false);
+          onEditComplete?.();
+        }}
+        onReprintQr={(txn) => {
+          setViewTxn(null);
+          setReprintTxn(txn);
+          onEditComplete?.();
+        }}
+        onUndoClaim={(txn) => {
+          setViewTxn(null);
+          setUndoPromptTxn({ txn, action: "unclaim" });
+        }}
+        onUndoVoid={(txn) => {
+          setViewTxn(null);
+          setUndoPromptTxn({ txn, action: "unvoid" });
+        }}
+      />
 
       {/* ── EDIT MODAL ────────���────────────────────────────────────────────── */}
       <Dialog open={!!editTxn} onOpenChange={(open) => { if (!open) { setEditTxn(null); onEditComplete?.(); } }}>

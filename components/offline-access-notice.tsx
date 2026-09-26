@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { AlertTriangle, RefreshCw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { parseAppError } from "@/lib/error-catalog";
 
 interface OfflineAccessNoticeProps {
   syncStatus: "online" | "offline" | "syncing" | "error";
@@ -98,11 +99,14 @@ export default function OfflineAccessNotice({
                   <span className="font-semibold">Pending changes:</span> {pendingChangesCount}
                 </p>
               )}
-              {lastSyncError && syncStatus === "error" && (
-                <p className="text-red-700">
-                  <span className="font-semibold">Sync error:</span> {lastSyncError}
-                </p>
-              )}
+              {lastSyncError && syncStatus === "error" && (() => {
+                const parsed = parseAppError(lastSyncError);
+                return (
+                  <p className="text-red-700">
+                    <span className="font-semibold">{parsed.title}:</span> {parsed.message}
+                  </p>
+                );
+              })()}
             </div>
             <div className="flex gap-2">
               <Button size="sm" variant="ghost" className="h-9 flex-1 px-3 text-xs text-orange-900 hover:bg-orange-100 sm:flex-none" onClick={onDismiss}>
