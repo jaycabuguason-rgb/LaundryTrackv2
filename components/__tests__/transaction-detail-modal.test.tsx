@@ -4,6 +4,8 @@ import { TransactionDetailModal } from "../transaction-detail-modal";
 import { type Transaction } from "@/lib/data";
 
 const mockTransaction: Transaction = {
+  id: "tx-0027",
+  dropOffDate: "2026-09-09",
   ticketId: "TKT-0027",
   customerName: "Maria Santos",
   phone: "+63 917 220 9021",

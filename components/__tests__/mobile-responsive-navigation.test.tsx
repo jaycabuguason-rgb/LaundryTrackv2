@@ -30,6 +30,7 @@ describe("Mobile Responsive Navigation & Modern Sidebar Dock", () => {
       <Sidebar
         activePage="dashboard"
         onNavigate={vi.fn()}
+        loyaltyEnabled={true}
       />
     );
 

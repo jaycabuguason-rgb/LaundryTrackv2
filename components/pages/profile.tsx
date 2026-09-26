@@ -227,71 +227,80 @@ export default function ProfilePage({
       <Card className="border border-border shadow-none overflow-hidden">
         {/* Top accent strip */}
         <div className="h-20 bg-gradient-to-r from-primary/20 via-primary/10 to-transparent" />
-        <CardContent className="px-6 pb-6 -mt-10">
-          <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-            {/* Avatar */}
-            <div className="relative shrink-0">
-              <button
-                type="button"
-                onClick={() => localAvatarUrl && setShowPhotoViewer(true)}
-                disabled={!localAvatarUrl}
-                className={`w-20 h-20 rounded-full bg-primary ring-4 ring-card flex items-center justify-center text-primary-foreground text-2xl font-semibold select-none overflow-hidden shadow-md group relative transition-transform focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
-                  localAvatarUrl ? "cursor-pointer hover:scale-105 active:scale-95" : "cursor-default"
-                }`}
-                title={localAvatarUrl ? "Click to view full photo" : undefined}
-                aria-label={localAvatarUrl ? "View profile picture" : "Profile initials"}
-              >
-                {localAvatarUrl ? (
-                  <>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={localAvatarUrl}
-                      alt={name || userProfile.name}
-                      className="w-full h-full object-cover transition-opacity group-hover:opacity-90"
-                    />
-                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <Eye className="w-5 h-5 text-white drop-shadow" />
+        <CardContent className="px-5 sm:px-6 pb-5 pt-0">
+          <div className="flex flex-col gap-4 -mt-10">
+            {/* Top row: Avatar & Identity info */}
+            <div className="flex items-end gap-3.5 sm:gap-4 min-w-0">
+              {/* Avatar */}
+              <div className="relative shrink-0">
+                <button
+                  type="button"
+                  onClick={() => localAvatarUrl && setShowPhotoViewer(true)}
+                  disabled={!localAvatarUrl}
+                  className={`w-20 h-20 rounded-full bg-primary ring-4 ring-card flex items-center justify-center text-primary-foreground text-2xl font-semibold select-none overflow-hidden shadow-md group relative transition-transform focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+                    localAvatarUrl ? "cursor-pointer hover:scale-105 active:scale-95" : "cursor-default"
+                  }`}
+                  title={localAvatarUrl ? "Click to view full photo" : undefined}
+                  aria-label={localAvatarUrl ? "View profile picture" : "Profile initials"}
+                >
+                  {localAvatarUrl ? (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={localAvatarUrl}
+                        alt={name || userProfile.name}
+                        className="w-full h-full object-cover transition-opacity group-hover:opacity-90"
+                      />
+                      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Eye className="w-5 h-5 text-white drop-shadow" />
+                      </div>
+                    </>
+                  ) : (
+                    initials
+                  )}
+                  {uploading && (
+                    <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center">
+                      <Loader2 className="w-6 h-6 text-white animate-spin" />
                     </div>
-                  </>
-                ) : (
-                  initials
-                )}
-                {uploading && (
-                  <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center">
-                    <Loader2 className="w-6 h-6 text-white animate-spin" />
-                  </div>
-                )}
-              </button>
-              {/* Camera badge */}
-              <label
-                htmlFor={uploading ? undefined : FILE_INPUT_ID}
-                className={`absolute bottom-0 right-0 w-6 h-6 rounded-full bg-primary border-2 border-card shadow flex items-center justify-center hover:bg-primary/80 transition-colors ${uploading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                title="Upload or change profile picture"
-              >
-                <Camera className="w-3 h-3 text-primary-foreground" />
-              </label>
-            </div>
-
-            {/* Name + badges + photo actions */}
-            <div className="flex-1 min-w-0 pb-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="font-bold text-foreground text-lg leading-tight">{name || userProfile.name}</p>
-                {isStaff ? (
-                  <Badge className="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 border border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800">
-                    Staff
-                  </Badge>
-                ) : (
-                  <Badge className="text-xs px-2 py-0.5 bg-primary/15 text-primary border border-primary/30">
-                    Admin
-                  </Badge>
-                )}
+                  )}
+                </button>
+                {/* Camera badge */}
+                <label
+                  htmlFor={uploading ? undefined : FILE_INPUT_ID}
+                  className={`absolute bottom-0 right-0 w-6 h-6 rounded-full bg-primary border-2 border-card shadow flex items-center justify-center hover:bg-primary/80 transition-colors ${uploading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                  title="Upload or change profile picture"
+                >
+                  <Camera className="w-3 h-3 text-primary-foreground" />
+                </label>
               </div>
-              <p className="text-sm text-muted-foreground mt-0.5">{userProfile.email}</p>
-              <p className="text-xs text-muted-foreground/70 mt-0.5">{shopName || "LaundryTrack"}</p>
+
+              {/* Name + badges + user details */}
+              <div className="flex-1 min-w-0 pb-0.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-bold text-foreground text-lg leading-tight truncate">
+                    {name || userProfile.name}
+                  </p>
+                  {isStaff ? (
+                    <Badge className="shrink-0 text-xs px-2 py-0.5 bg-purple-100 text-purple-700 border border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800">
+                      Staff
+                    </Badge>
+                  ) : (
+                    <Badge className="shrink-0 text-xs px-2 py-0.5 bg-primary/15 text-primary border border-primary/30">
+                      Admin
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground mt-0.5 truncate" title={userProfile.email}>
+                  {userProfile.email}
+                </p>
+                <p className="text-xs text-muted-foreground/70 mt-0.5 truncate" title={shopName || "LaundryTrack"}>
+                  {shopName || "LaundryTrack"}
+                </p>
+              </div>
             </div>
 
-            {/* Photo buttons — right-aligned on desktop, below on mobile */}
-            <div className="flex items-center gap-2 shrink-0">
+            {/* Photo action buttons */}
+            <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-border/60">
               {localAvatarUrl && (
                 <>
                   <Button
