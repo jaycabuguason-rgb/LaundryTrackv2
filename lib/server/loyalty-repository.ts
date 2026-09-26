@@ -2,7 +2,7 @@ import "server-only";
 
 import { loyaltyMembers as seedMembers, type LoyaltyMember } from "@/lib/data";
 import { getPublicSupabaseConfig } from "@/lib/supabase/config";
-import { listTransactions, getBusinessProfile } from "@/lib/server/laundry-repository";
+import { listTransactions, getBusinessProfile, getSettings, saveSettings } from "@/lib/server/laundry-repository";
 import type { PublicLoyaltyMemberRecord, PublicShopProfile } from "@/lib/transaction-contracts";
 
 export type StampAwardResult =
@@ -283,21 +283,50 @@ export async function addStampsToMember(
 }
 
 export async function getLoyaltySettings(): Promise<{ loyalty_enabled: boolean; washes_per_reward: number; reward_description: string }> {
-  if (!hasSupabaseConfig()) return { loyalty_enabled: true, washes_per_reward: 7, reward_description: "Free wash" };
+  // 1. Check getSettings from laundry-repository (handles Supabase key 'loyalty_settings' and in-memory mock settings)
   try {
-    const rows = await restRequest<Array<{ key: string; value: { enabled?: boolean; washesPerReward?: number; rewardDescription?: string } }>>("settings?key=eq.loyalty&select=key,value&limit=1");
-    if (rows && rows[0]?.value) {
-      const val = rows[0].value;
+    const fromRepo = await getSettings<{ enabled?: boolean; washesPerReward?: number | string; rewardDescription?: string }>("loyalty_settings");
+    if (fromRepo && typeof fromRepo === "object") {
+      const isEnabled = typeof fromRepo.enabled === "boolean" ? fromRepo.enabled : true;
       return {
-        loyalty_enabled: val.enabled ?? true,
-        washes_per_reward: Number(val.washesPerReward) || 7,
-        reward_description: val.rewardDescription || "Free wash",
+        loyalty_enabled: isEnabled,
+        washes_per_reward: Number(fromRepo.washesPerReward) || 7,
+        reward_description: fromRepo.rewardDescription || "Free wash",
       };
     }
   } catch {
-    // fallback if error
+    // fallback
   }
+
+  // 2. Also check if stored in Supabase under key 'loyalty_settings' or legacy 'loyalty'
+  if (hasSupabaseConfig()) {
+    try {
+      const rows = await restRequest<Array<{ key: string; value: { enabled?: boolean; washesPerReward?: number | string; rewardDescription?: string } }>>(
+        "settings?key=in.(loyalty_settings,loyalty)&select=key,value&limit=1"
+      );
+      if (rows && rows[0]?.value) {
+        const val = rows[0].value;
+        const isEnabled = typeof val.enabled === "boolean" ? val.enabled : true;
+        return {
+          loyalty_enabled: isEnabled,
+          washes_per_reward: Number(val.washesPerReward) || 7,
+          reward_description: val.rewardDescription || "Free wash",
+        };
+      }
+    } catch {
+      // fallback
+    }
+  }
+
   return { loyalty_enabled: true, washes_per_reward: 7, reward_description: "Free wash" };
+}
+
+export async function setMockLoyaltySettings(settings: { enabled: boolean; washesPerReward?: number | string; rewardDescription?: string }) {
+  await saveSettings("loyalty_settings", {
+    enabled: settings.enabled,
+    washesPerReward: settings.washesPerReward ?? 7,
+    rewardDescription: settings.rewardDescription ?? "Free wash",
+  });
 }
 
 export async function getLoyaltyMemberWithHistory(memberId: string): Promise<LoyaltyMember> {

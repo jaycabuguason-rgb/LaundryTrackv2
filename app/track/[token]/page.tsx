@@ -53,9 +53,16 @@ function StampDots({ count, max = 7 }: { count: number; max?: number }) {
 }
 
 export default async function PublicTrackingPage(
-  { params }: { params: Promise<{ token: string }> },
+  {
+    params,
+    searchParams,
+  }: {
+    params: Promise<{ token: string }>;
+    searchParams?: Promise<{ loyalty?: string }>;
+  },
 ) {
   const { token } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const [record, loyaltySettings] = await Promise.all([
     getPublicTrackingRecord(token),
     getLoyaltySettings(),
@@ -70,7 +77,12 @@ export default async function PublicTrackingPage(
     notFound();
   }
 
-  const isLoyaltyEnabled = Boolean(loyaltySettings?.loyalty_enabled);
+  const queryLoyalty = resolvedSearchParams?.loyalty?.toLowerCase();
+  const isLoyaltyEnabled = queryLoyalty === "false" || queryLoyalty === "0"
+    ? false
+    : queryLoyalty === "true" || queryLoyalty === "1"
+    ? true
+    : Boolean(loyaltySettings?.loyalty_enabled);
 
   const loyaltyRecord = (isLoyaltyEnabled && (record.customerPhone || record.customerName))
     ? await getPublicLoyaltyMemberRecord(record.customerPhone || record.customerName)

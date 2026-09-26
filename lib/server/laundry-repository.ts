@@ -120,6 +120,9 @@ let mockTransactions: TransactionRow[] = seedTransactions.map((transaction, inde
 });
 
 let mockBusinessProfile = { ...DEFAULT_BUSINESS_PROFILE };
+let mockSettingsMap: Record<string, unknown> = {
+  loyalty_settings: { enabled: true, washesPerReward: 7, rewardDescription: "Free wash" },
+};
 
 function isValidTransactionStatus(value: string): value is TransactionStatus {
   return ["Received", "Washing", "Drying", "Ready", "Claimed", "Voided"].includes(value);
@@ -762,14 +765,26 @@ export function getDefaultPublicShopProfile(): PublicShopProfile {
 
 export async function getSettings<T>(key: string, fallback?: T): Promise<T | null> {
   if (hasSupabaseConfig()) {
-    return getSupabaseSettings<T>(key, fallback ?? null as T);
+    try {
+      return await getSupabaseSettings<T>(key, fallback ?? (null as T));
+    } catch {
+      // fallback to mockSettingsMap if Supabase request fails
+    }
   }
-  return fallback ?? null as T;
+  if (key in mockSettingsMap) {
+    return mockSettingsMap[key] as T;
+  }
+  return fallback ?? (null as T);
 }
 
 export async function saveSettings<T>(key: string, value: T): Promise<T> {
+  mockSettingsMap[key] = value;
   if (hasSupabaseConfig()) {
-    return saveSupabaseSettings<T>(key, value);
+    try {
+      return await saveSupabaseSettings<T>(key, value);
+    } catch {
+      return value;
+    }
   }
   return value;
 }

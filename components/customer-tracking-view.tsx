@@ -214,7 +214,7 @@ export function CustomerTrackingView({
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel).catch(() => {});
+      void Promise.resolve(supabase.removeChannel(channel)).catch(() => {});
     };
   }, [isActive, initialRecord.ticketId]);
 
