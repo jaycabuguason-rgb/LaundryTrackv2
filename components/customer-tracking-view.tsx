@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import {
   CheckCircle2,
+  Check,
+  Copy,
   Inbox,
   RotateCw,
   ShoppingBag,
@@ -59,93 +61,77 @@ export function StatusStepper({ status }: { status: string }) {
 
   if (status === "Voided") {
     return (
-      <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-300">
+      <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700">
         This order was voided. Please contact the shop for assistance.
       </div>
     );
   }
 
   return (
-    <div className="flex items-start justify-between gap-1 sm:gap-2 overflow-x-auto pb-1 pt-1">
-      {TRACKING_STEPS.map((step, index) => {
-        const completed = index < activeIndex || status === "Claimed";
-        const current = index === activeIndex && status !== "Claimed";
-        const StepIcon = step.icon;
+    <div className="relative px-2">
+      {/* Connecting background line */}
+      <div className="absolute top-4 left-10 right-10 h-0.5 bg-purple-100 -z-0">
+        <div
+          className="h-full bg-primary transition-all duration-500"
+          style={{
+            width: activeIndex >= 2 || status === "Claimed" ? "100%" : activeIndex === 1 ? "50%" : "0%",
+          }}
+        />
+      </div>
 
-        return (
-          <div key={step.id} className="flex min-w-[90px] flex-1 items-start">
-            <div className="flex w-full flex-col items-center gap-2">
-              <div className="relative">
-                {/* Active glow/ping ring for current stage */}
-                {current && (
-                  <span
-                    className="absolute -inset-1.5 rounded-full bg-primary/25 animate-ping opacity-60 pointer-events-none"
-                    aria-hidden="true"
+      <div className="flex items-start justify-between relative z-10">
+        {TRACKING_STEPS.map((step, index) => {
+          const completed = index < activeIndex || status === "Claimed";
+          const current = index === activeIndex && status !== "Claimed";
+          const StepIcon = step.icon;
+
+          return (
+            <div key={step.id} className="flex flex-col items-center text-center w-24">
+              <div
+                className={cn(
+                  "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 shadow-xs",
+                  completed
+                    ? "bg-primary text-white"
+                    : current
+                      ? "bg-primary text-white ring-4 ring-primary/20 shadow-sm"
+                      : "bg-stone-100 text-stone-400 border border-stone-200"
+                )}
+                aria-label={`${step.label} stage: ${completed ? "completed" : current ? "in progress" : "pending"}`}
+              >
+                {completed ? (
+                  <Check className="w-4 h-4 text-white" />
+                ) : (
+                  <StepIcon
+                    className={cn(
+                      "w-4 h-4",
+                      current && step.id === "Received" && "animate-stage-bounce",
+                      current && step.id === "Washed" && "animate-stage-spin",
+                      current && step.id === "Ready" && "animate-stage-sparkle text-amber-300",
+                    )}
                   />
                 )}
-                <div
-                  className={cn(
-                    "relative flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-300",
-                    completed
-                      ? "border-primary bg-primary text-primary-foreground shadow-sm shadow-primary/25"
-                      : current
-                        ? "border-primary bg-primary text-primary-foreground ring-4 ring-primary/20 shadow-md shadow-primary/30 scale-105"
-                        : "border-border bg-background text-muted-foreground",
-                  )}
-                  aria-label={`${step.label} stage: ${completed ? "completed" : current ? "in progress" : "pending"}`}
-                >
-                  {completed ? (
-                    <CheckCircle2 className="h-5 w-5 animate-in zoom-in-75 duration-200" />
-                  ) : (
-                    <StepIcon
-                      className={cn(
-                        "h-5 w-5 transition-transform duration-300",
-                        current && step.id === "Received" && "animate-stage-bounce",
-                        current && step.id === "Washed" && "animate-stage-spin",
-                        current && step.id === "Ready" && "animate-stage-sparkle text-amber-300",
-                      )}
-                    />
-                  )}
-                </div>
               </div>
-
-              <div className="flex flex-col items-center text-center">
-                <span
-                  className={cn(
-                    "text-xs leading-tight font-medium",
-                    current
-                      ? "font-bold text-primary"
-                      : completed
-                        ? "font-semibold text-foreground"
-                        : "text-muted-foreground",
-                  )}
-                >
-                  {step.label}
-                </span>
-                {current && (
-                  <span className="mt-0.5 inline-flex items-center rounded-full bg-primary/10 px-1.5 py-0.2 text-[10px] font-semibold text-primary animate-pulse">
-                    In Progress
-                  </span>
+              <span
+                className={cn(
+                  "text-xs mt-2 leading-tight",
+                  current
+                    ? "font-bold text-primary"
+                    : completed
+                      ? "font-semibold text-slate-800"
+                      : "text-slate-400 font-medium",
                 )}
-              </div>
+              >
+                {step.label}
+              </span>
+              {current && (
+                <span className="text-[9px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded mt-0.5 animate-pulse">
+                  In Progress
+                </span>
+              )}
             </div>
-            {index < TRACKING_STEPS.length - 1 && (
-              <div className="relative mt-5 h-1 flex-1 mx-1 rounded-full bg-border overflow-hidden">
-                <div
-                  className={cn(
-                    "h-full rounded-full transition-all duration-500",
-                    index < activeIndex || status === "Claimed"
-                      ? "w-full bg-primary"
-                      : index === activeIndex
-                        ? "w-1/2 bg-primary/70 animate-pulse"
-                        : "w-0",
-                  )}
-                />
-              </div>
-            )}
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -167,6 +153,7 @@ export function CustomerTrackingView({
   const [eta, setEta] = useState<string | null>(initialRecord.eta);
   const [lastSynced, setLastSynced] = useState<Date>(() => new Date());
   const [isPulsing, setIsPulsing] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const statusRef = useRef(status);
   useEffect(() => {
@@ -180,6 +167,14 @@ export function CustomerTrackingView({
     setLastSynced(new Date());
     setIsPulsing(true);
     setTimeout(() => setIsPulsing(false), 1200);
+  };
+
+  const handleCopyToken = () => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      void navigator.clipboard.writeText(token);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    }
   };
 
   // 1. Supabase Realtime Subscription (Zero reload, instant push)
@@ -263,120 +258,174 @@ export function CustomerTrackingView({
   }, [isActive, token]);
 
   return (
-    <div className="space-y-6">
-      {/* Ticket Info Card */}
-      <section className={cn(
-        "rounded-3xl border border-border/80 bg-background/95 p-6 shadow-sm backdrop-blur transition-all duration-300",
-        isPulsing && "ring-2 ring-primary/40"
-      )}>
-        <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="space-y-4">
+      {/* BEGIN: TicketOverviewCard */}
+      <section
+        className={cn(
+          "bg-white rounded-2xl p-5 shadow-sm border border-stone-200/90 relative transition-all duration-300",
+          isPulsing && "ring-2 ring-primary/40",
+        )}
+        data-purpose="ticket-summary-card"
+      >
+        {/* Top Ticket ID Header Row */}
+        <div className="flex items-start justify-between gap-2">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
-              Ticket ID
-            </p>
-            <h1 className="mt-2 text-2xl font-bold tracking-tight font-mono tabular-nums">
+            <span className="text-[10px] font-bold tracking-wider text-primary uppercase block mb-0.5">
+              TICKET ID
+            </span>
+            <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight font-mono">
               {initialRecord.ticketId}
-            </h1>
-            {initialRecord.customerName && (
-              <div className="mt-2 flex items-center gap-1.5 text-sm">
-                <User className="h-4 w-4 text-primary shrink-0" />
-                <span className="text-muted-foreground">
-                  Recipient: <span className="font-semibold text-foreground">{initialRecord.customerName}</span>
-                </span>
-              </div>
-            )}
-            <p className="mt-1 text-sm text-muted-foreground">
-              Drop-off: {initialRecord.dropOffTime}
-            </p>
-            {eta && (
-              <p className="mt-1 text-sm font-medium text-foreground">
-                Estimated pickup: {formatReadableDateTime(eta)}
-              </p>
-            )}
+            </h2>
           </div>
-          <StatusBadge status={status} className="px-3 py-1 text-xs font-semibold transition-all duration-300" />
+          {/* Status Badge */}
+          <StatusBadge status={status} className="px-3 py-1 text-xs font-semibold shadow-xs" />
         </div>
 
-        {/* Ready for Pickup Celebration Banner */}
+        {/* Recipient & Drop-off Timestamps */}
+        <div className="mt-2.5 space-y-1 text-[13px] text-slate-600">
+          {initialRecord.customerName && (
+            <div className="flex items-center gap-2">
+              <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span>
+                Recipient: <strong className="font-semibold text-slate-800">{initialRecord.customerName}</strong>
+              </span>
+            </div>
+          )}
+          <p className="text-xs text-slate-500 pl-5.5">
+            Drop-off: <time>{initialRecord.dropOffTime}</time>
+          </p>
+          {eta && (
+            <p className="text-xs text-primary font-medium pl-5.5">
+              Estimated pickup: {formatReadableDateTime(eta)}
+            </p>
+          )}
+        </div>
+
+        {/* Status Callout Alert Box */}
         {status === "Ready" && (
-          <div className="mt-5 rounded-2xl border-2 border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-950 dark:text-emerald-100 flex items-start gap-3.5 shadow-xs animate-in fade-in duration-300">
-            <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-              <Sparkles className="w-5 h-5" />
+          <div className="mt-4 p-3.5 bg-emerald-50/80 rounded-xl border border-emerald-200/90 flex items-start gap-3 animate-in fade-in duration-300" data-purpose="ready-pickup-alert">
+            <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+              <Sparkles className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold">Your Laundry is Ready for Pickup!</h3>
-              <p className="text-xs text-emerald-900/90 dark:text-emerald-300/90 mt-0.5 leading-relaxed">
+              <h3 className="text-xs font-bold text-emerald-950">Your Laundry is Ready for Pickup!</h3>
+              <p className="text-[11px] text-emerald-800 leading-relaxed mt-0.5">
                 All items are washed and neatly packaged. Present your ticket ID or QR pass at the shop counter to claim.
               </p>
             </div>
           </div>
         )}
 
-        {/* Status Timeline */}
-        <div className="mt-6 rounded-2xl border border-border bg-muted/30 p-4">
-          <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Status Timeline
+        {(status === "Washing" || status === "Drying") && (
+          <div className="mt-4 p-3.5 bg-sky-50/80 rounded-xl border border-sky-200/90 flex items-start gap-3 animate-in fade-in duration-300">
+            <div className="w-8 h-8 rounded-full bg-sky-600 text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+              <RotateCw className="w-4 h-4 animate-spin" />
+            </div>
+            <div>
+              <h3 className="text-xs font-bold text-sky-950">Your Laundry is Being Washed!</h3>
+              <p className="text-[11px] text-sky-800 leading-relaxed mt-0.5">
+                Our team is currently running the wash and dry cycle for your clothes.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {status === "Received" && (
+          <div className="mt-4 p-3.5 bg-purple-50/80 rounded-xl border border-purple-200/90 flex items-start gap-3 animate-in fade-in duration-300">
+            <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+              <Inbox className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-xs font-bold text-purple-950">Order Received & Queued</h3>
+              <p className="text-[11px] text-purple-800 leading-relaxed mt-0.5">
+                Your laundry has been received and will be scheduled for washing shortly.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Nested Status Timeline */}
+        <div className="mt-4 pt-4 border-t border-stone-100" data-purpose="status-timeline-widget">
+          <p className="text-[10px] font-bold tracking-wider text-slate-400 uppercase mb-4">
+            STATUS TIMELINE
           </p>
           <StatusStepper status={status} />
-          
-          {/* Live Sync Status Indicator (Zero Reload) */}
+
+          {/* Sync Status Line */}
           {isActive ? (
-            <div className="mt-4 pt-3 border-t border-border/60 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-              </span>
+            <div className="mt-5 pt-3 border-t border-stone-100 flex items-center justify-center gap-1.5 text-[11px] text-slate-500 font-medium">
+              <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span>Live tracking active</span>
-              <span className="text-muted-foreground/40">•</span>
-              <span className="tabular-nums text-[11px]">
+              <span>•</span>
+              <span className="tabular-nums">
                 Synced {lastSynced.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}
               </span>
             </div>
           ) : (
-            <div className="mt-4 pt-3 border-t border-border/60 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+            <div className="mt-5 pt-3 border-t border-stone-100 flex items-center justify-center gap-1.5 text-[11px] text-slate-500 font-medium">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
               <span>Order completed</span>
             </div>
           )}
         </div>
       </section>
+      {/* END: TicketOverviewCard */}
 
-      {/* Pickup QR Code - Only show when Ready */}
-      {status === "Ready" && (
-        <section className="rounded-3xl border border-border bg-background p-5 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <ShieldCheck className="h-4 w-4 text-primary" />
-            Pickup QR Code
+      {/* BEGIN: PickupQRCodePass (Revealed when Ready or Claimed) */}
+      {(status === "Ready" || status === "Claimed") && (
+        <section className="bg-white rounded-2xl p-5 shadow-sm border border-stone-200/90 animate-in fade-in slide-in-from-bottom-2 duration-300" data-purpose="qr-pass-section">
+          {/* Section Header */}
+          <div className="flex items-center gap-2 mb-4">
+            <ShieldCheck className="w-4 h-4 text-primary" />
+            <h2 className="text-sm font-bold text-slate-800 tracking-tight">Pickup QR Code</h2>
           </div>
-          <div className="mt-4 flex flex-col items-center rounded-2xl border border-border bg-muted/20 p-5 text-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={pickupQrUrl}
-              alt={`Pickup QR code for ${initialRecord.ticketId}`}
-              width={220}
-              height={220}
-              className="rounded-xl border border-border bg-white p-2 shadow-sm"
-            />
-            <p className="mt-4 text-sm font-semibold text-foreground">
-              Show this QR code at pickup
-            </p>
-            <p className="mt-2 max-w-md text-xs leading-5 text-muted-foreground">
+          {/* QR Box Frame Container */}
+          <div className="bg-stone-50/70 border border-stone-200/80 rounded-xl p-4 text-center">
+            {/* Scannable High-Contrast QR Code */}
+            <div className="bg-white p-3 rounded-xl inline-block shadow-sm border border-stone-200/80">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={pickupQrUrl}
+                alt={`Pickup QR code for ${initialRecord.ticketId}`}
+                className="w-44 h-44 sm:w-48 sm:h-48 object-contain"
+              />
+            </div>
+            <h3 className="text-xs font-bold text-slate-800 mt-3">Show this QR code at pickup</h3>
+            <p className="text-[11px] text-slate-500 max-w-xs mx-auto mt-1 leading-relaxed">
               The shop can scan this code in Claim Verification to open your order quickly and complete the claim.
             </p>
-            <div className="mt-4 w-full max-w-md rounded-xl border border-border bg-background px-4 py-3 text-left">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Claim Code
-              </p>
-              <p className="mt-1 break-all font-mono text-sm font-semibold text-foreground">
+            {/* Claim Code Text Box with Copy Action */}
+            <div className="mt-3.5 bg-white border border-stone-200 rounded-lg p-3 text-left">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">CLAIM CODE</span>
+                <button
+                  type="button"
+                  onClick={handleCopyToken}
+                  className="text-[10px] text-primary hover:underline font-semibold inline-flex items-center gap-1 active:opacity-75 transition-opacity cursor-pointer"
+                  data-purpose="copy-claim-button"
+                >
+                  {copied ? (
+                    <span className="text-emerald-600 font-bold inline-flex items-center gap-1">
+                      <Check className="w-3 h-3" /> Copied!
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-primary">
+                      <Copy className="w-3 h-3" /> Copy
+                    </span>
+                  )}
+                </button>
+              </div>
+              <p className="font-mono text-[11px] font-semibold text-slate-800 break-all select-all">
                 {token}
               </p>
-              <p className="mt-2 text-xs leading-5 text-muted-foreground">
+              <p className="text-[10px] text-slate-400 mt-2 leading-relaxed">
                 If the staff does not scan the QR code, they can paste this claim code into Claim Verification and your transaction will appear automatically.
               </p>
             </div>
           </div>
         </section>
       )}
+      {/* END: PickupQRCodePass */}
     </div>
   );
 }

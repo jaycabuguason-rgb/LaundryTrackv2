@@ -77,162 +77,168 @@ export default async function PublicTrackingPage(
     : null;
 
   return (
-    <main className="min-h-screen force-light bg-[radial-gradient(circle_at_top,_rgba(139,92,246,0.08),_transparent_32%),linear-gradient(180deg,var(--background)_0%,hsl(35,28%,92%)_100%)] px-4 py-8 text-foreground">
-      <div className="mx-auto max-w-2xl space-y-6">
-        {/* Header with Logo and Shop Name */}
-        <div className="flex flex-col items-center gap-3 text-center">
-          {record.shopProfile.logoDataUrl && (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={record.shopProfile.logoDataUrl}
-              alt={`${record.shopProfile.shopName} logo`}
-              className="h-16 w-auto object-contain"
-            />
-          )}
-          <h2 className="text-xl font-bold text-foreground">{record.shopProfile.shopName}</h2>
-          {record.shopProfile.tagline && (
-            <p className="text-xs text-muted-foreground">{record.shopProfile.tagline}</p>
-          )}
-        </div>
+    <div className="min-h-screen force-light bg-[#f7f6f4] py-6 px-3 sm:px-6 text-slate-800 antialiased">
+      {/* Constrained max width perfectly suited for Mobile viewing */}
+      <main className="max-w-[480px] mx-auto space-y-4" data-purpose="mobile-tracking-container">
+        {/* BEGIN: BrandHeader */}
+        <header className="text-center pt-2 pb-2" data-purpose="shop-brand-header">
+          {/* Centered Shop Avatar/Badge */}
+          <div className="inline-flex items-center justify-center p-1.5 bg-white rounded-2xl shadow-sm border border-stone-200/80 mb-2.5">
+            {record.shopProfile.logoDataUrl ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={record.shopProfile.logoDataUrl}
+                alt={`${record.shopProfile.shopName} Shop Logo`}
+                className="w-14 h-14 object-cover rounded-xl"
+              />
+            ) : (
+              <div className="w-14 h-14 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold text-lg">
+                {record.shopProfile.shopName.slice(0, 2).toUpperCase()}
+              </div>
+            )}
+          </div>
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 leading-snug">
+            {record.shopProfile.shopName}
+          </h1>
+          <p className="text-xs text-slate-500 font-medium tracking-wide mt-0.5">
+            Powered by <span className="text-primary font-semibold">LaundryTrack</span>
+          </p>
+        </header>
+        {/* END: BrandHeader */}
 
-        {/* Dynamic Live Customer Tracking (Zero-Reload) */}
+        {/* Dynamic Live Customer Tracking & Pickup QR Code (Zero-Reload) */}
         <CustomerTrackingView
           initialRecord={record}
           token={token}
           pickupQrUrl={pickupQrUrl}
         />
 
-        {/* Laundry Details Card */}
-        <section className="rounded-3xl border border-border bg-background p-5 shadow-sm">
-          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <Package className="h-4 w-4 text-primary" />
-            Laundry Details
+        {/* BEGIN: LaundryDetailsCard */}
+        <section className="bg-white rounded-2xl p-5 shadow-sm border border-stone-200/90" data-purpose="laundry-details-section">
+          <div className="flex items-center gap-2 mb-3">
+            <Package className="w-4 h-4 text-primary" />
+            <h2 className="text-sm font-bold text-slate-800 tracking-tight">Laundry Details</h2>
           </div>
-          <dl className="mt-4 space-y-3 text-sm">
+          <dl className="divide-y divide-stone-100 text-xs">
             {record.customerName && (
-              <div className="flex items-start justify-between gap-4 rounded-lg bg-muted/30 px-3 py-2">
-                <dt className="text-muted-foreground">Recipient</dt>
-                <dd className="text-right font-medium text-foreground">{record.customerName}</dd>
+              <div className="flex justify-between py-2">
+                <dt className="text-slate-500 font-medium">Recipient</dt>
+                <dd className="text-slate-800 font-semibold">{record.customerName}</dd>
               </div>
             )}
-            <div className="flex items-start justify-between gap-4 rounded-lg bg-muted/30 px-3 py-2">
-              <dt className="text-muted-foreground">Weight</dt>
-              <dd className="text-right font-medium tabular-nums">{record.weight} kg</dd>
+            <div className="flex justify-between py-2">
+              <dt className="text-slate-500 font-medium">Weight</dt>
+              <dd className="text-slate-800 font-semibold tabular-nums">{record.weight} kg</dd>
             </div>
-            <div className="flex items-start justify-between gap-4 rounded-lg bg-muted/30 px-3 py-2">
-              <dt className="text-muted-foreground">Wash Type</dt>
-              <dd className="text-right font-medium">{record.washType}</dd>
+            <div className="flex justify-between py-2">
+              <dt className="text-slate-500 font-medium">Wash Type</dt>
+              <dd className="text-slate-800 font-semibold">{record.washType}</dd>
             </div>
-            {record.addOns && record.addOns.length > 0 && (
-              <div className="flex items-start justify-between gap-4 rounded-lg bg-muted/30 px-3 py-2">
-                <dt className="text-muted-foreground">Add-ons</dt>
-                <dd className="text-right font-medium">{record.addOns.join(", ")}</dd>
-              </div>
-            )}
+            <div className="flex justify-between py-2">
+              <dt className="text-slate-500 font-medium">Add-ons</dt>
+              <dd className="text-slate-800 font-semibold">
+                {record.addOns && record.addOns.length > 0 ? record.addOns.join(", ") : "None"}
+              </dd>
+            </div>
             {record.washInstructions && (
-              <div className="rounded-lg bg-muted/30 px-3 py-2">
-                <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Special Instructions</dt>
-                <dd className="mt-1 text-sm font-medium">{record.washInstructions}</dd>
+              <div className="flex justify-between py-2 gap-4">
+                <dt className="text-slate-500 font-medium shrink-0">Special Instructions</dt>
+                <dd className="text-slate-800 font-semibold text-right">{record.washInstructions}</dd>
               </div>
             )}
           </dl>
         </section>
+        {/* END: LaundryDetailsCard */}
 
-        {/* Payment Card */}
-        <section className="rounded-3xl border border-border bg-background p-5 shadow-sm">
-          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <Shirt className="h-4 w-4 text-primary" />
-            Payment
+        {/* BEGIN: PaymentSummaryCard */}
+        <section className="bg-white rounded-2xl p-5 shadow-sm border border-stone-200/90" data-purpose="payment-section">
+          <div className="flex items-center gap-2 mb-3">
+            <Shirt className="w-4 h-4 text-primary" />
+            <h2 className="text-sm font-bold text-slate-800 tracking-tight">Payment</h2>
           </div>
-          <div className="mt-4 rounded-2xl border border-border bg-muted/20 p-4">
+          {/* Payment Status Block */}
+          <div className="bg-stone-50/70 border border-stone-200/80 rounded-xl p-3.5 space-y-2">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Status
-              </p>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">STATUS</span>
               <span
                 className={cn(
-                  "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold",
+                  "px-2 py-0.5 text-[11px] font-semibold border rounded-md",
                   record.paymentStatus === "paid"
-                    ? "bg-green-50 text-green-700 border border-green-200"
-                    : "bg-red-50 text-red-600 border border-red-200"
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    : "bg-rose-50 text-rose-700 border-rose-200"
                 )}
               >
                 {record.paymentStatus === "paid" ? "Paid" : "Unpaid"}
               </span>
             </div>
-            <div className="mt-4 flex items-baseline gap-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Balance Due
-              </p>
-              <p className="text-2xl font-bold text-primary tabular-nums">
-                ₱{record.balanceDue.toLocaleString()}
-              </p>
+            <div className="flex items-baseline justify-between pt-1">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">BALANCE DUE</span>
+              <span className="text-xl font-extrabold text-primary tabular-nums">₱{record.balanceDue.toLocaleString()}</span>
             </div>
           </div>
-          <div className="mt-4 rounded-lg border border-purple-200 bg-purple-50 dark:border-purple-800/40 dark:bg-purple-950/30 px-3 py-2.5 text-xs text-purple-900 dark:text-purple-200">
-            Online payment is not available here. Please settle any unpaid balance at the shop during pickup.
+          {/* Counter Settlement Note */}
+          <div className="mt-3 p-2.5 bg-purple-50/60 border border-purple-100 rounded-lg text-center">
+            <p className="text-[10px] text-purple-900 leading-normal">
+              Online payment is not available here. Please settle any unpaid balance at the shop during pickup.
+            </p>
           </div>
         </section>
+        {/* END: PaymentSummaryCard */}
 
-        {/* Pickup Instructions Card */}
-        <section className="rounded-3xl border border-border bg-background p-5 shadow-sm">
-          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <ShieldCheck className="h-4 w-4 text-primary" />
-            Pickup Instructions
+        {/* BEGIN: PickupInstructionsAndContact */}
+        <section className="bg-white rounded-2xl p-5 shadow-sm border border-stone-200/90" data-purpose="pickup-instructions-section">
+          <div className="flex items-center gap-2 mb-3.5">
+            <ShieldCheck className="w-4 h-4 text-primary" />
+            <h2 className="text-sm font-bold text-slate-800 tracking-tight">Pickup Instructions</h2>
           </div>
-          <div className="mt-4 space-y-4">
-            {/* Shop Contact Info */}
-            <div className="rounded-2xl border border-border bg-muted/20 p-4">
-              <p className="text-sm font-semibold text-foreground">{record.shopProfile.shopName}</p>
-              <div className="mt-3 space-y-2.5 text-sm">
-                <div className="flex items-start gap-2.5">
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                  <span className="text-muted-foreground">{record.shopProfile.address}</span>
-                </div>
-                {record.shopProfile.contactNumber && (
-                  <div className="flex items-center gap-2.5">
-                    <Phone className="h-4 w-4 shrink-0 text-primary" />
-                    <a href={`tel:${record.shopProfile.contactNumber}`} className="text-muted-foreground hover:text-primary">
-                      {record.shopProfile.contactNumber}
-                    </a>
-                  </div>
-                )}
-                {record.shopProfile.email && (
-                  <div className="flex items-center gap-2.5">
-                    <Mail className="h-4 w-4 shrink-0 text-primary" />
-                    <a href={`mailto:${record.shopProfile.email}`} className="text-muted-foreground hover:text-primary">
-                      {record.shopProfile.email}
-                    </a>
-                  </div>
-                )}
+          {/* Shop Info Container */}
+          <div className="bg-stone-50/70 border border-stone-200/80 rounded-xl p-3.5 space-y-2 text-xs">
+            <h3 className="font-bold text-slate-800 mb-1.5">{record.shopProfile.shopName}</h3>
+            {record.shopProfile.address && (
+              <div className="flex items-center gap-2 text-slate-600">
+                <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
+                <span>{record.shopProfile.address}</span>
               </div>
-            </div>
-
-            {/* Before Pickup */}
-            <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
-              <p className="text-sm font-semibold text-foreground">Before Pickup</p>
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                {record.shopProfile.pickupInstructions}
-              </p>
-            </div>
-
-            {/* Footer Message */}
-            {record.shopProfile.receiptFooter && (
-              <div className="text-center">
-                <p className="text-xs text-muted-foreground">
-                  {record.shopProfile.receiptFooter}
-                </p>
+            )}
+            {record.shopProfile.contactNumber && (
+              <div className="flex items-center gap-2 text-slate-600">
+                <Phone className="w-3.5 h-3.5 text-primary shrink-0" />
+                <a className="hover:underline text-slate-700 font-medium" href={`tel:${record.shopProfile.contactNumber}`}>
+                  {record.shopProfile.contactNumber}
+                </a>
+              </div>
+            )}
+            {record.shopProfile.email && (
+              <div className="flex items-center gap-2 text-slate-600">
+                <Mail className="w-3.5 h-3.5 text-primary shrink-0" />
+                <a className="hover:underline text-primary font-medium" href={`mailto:${record.shopProfile.email}`}>
+                  {record.shopProfile.email}
+                </a>
               </div>
             )}
           </div>
+          {/* Before Pickup Note */}
+          <div className="mt-3 bg-stone-50/70 border border-stone-200/80 rounded-xl p-3 text-xs">
+            <h4 className="font-bold text-slate-800 text-[11px] mb-0.5">Before Pickup</h4>
+            <p className="text-slate-600 text-[11px] leading-relaxed">
+              {record.shopProfile.pickupInstructions || "Present this receipt or QR code upon claiming."}
+            </p>
+          </div>
+          {/* Warm Closing Salutation */}
+          <div className="mt-4 text-center">
+            <p className="text-xs text-slate-500 font-medium italic">
+              {record.shopProfile.receiptFooter || "Maraming salamat po!"}
+            </p>
+          </div>
         </section>
+        {/* END: PickupInstructionsAndContact */}
 
         {/* Loyalty & Rewards Section (Shown at bottom for members) */}
         {isLoyaltyEnabled && loyaltyRecord && (
-          <section className="rounded-3xl border border-primary/25 bg-background p-5 sm:p-6 shadow-sm space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/70 pb-4">
+          <section className="bg-white rounded-2xl border border-primary/25 p-5 shadow-sm space-y-4">
+            <div className="flex items-center justify-between gap-3 border-b border-stone-100 pb-3.5">
               <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground font-bold shadow-xs">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold shadow-xs">
                   {loyaltyRecord.name
                     .split(" ")
                     .map((n) => n[0])
@@ -242,12 +248,12 @@ export default async function PublicTrackingPage(
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-base font-bold text-foreground">{loyaltyRecord.name}</h2>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2.5 py-0.5 text-[11px] font-bold border border-primary/20">
+                    <h2 className="text-sm font-bold text-slate-900">{loyaltyRecord.name}</h2>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2 py-0.5 text-[10px] font-bold border border-primary/20">
                       <Sparkles className="w-3 h-3" /> Loyalty Member
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground font-mono mt-0.5">
+                  <p className="text-[11px] text-slate-400 font-mono mt-0.5">
                     {loyaltyRecord.id.startsWith("MEM-") ? loyaltyRecord.id : `MEM-${loyaltyRecord.id.slice(-6).toUpperCase()}`}
                   </p>
                 </div>
@@ -258,34 +264,34 @@ export default async function PublicTrackingPage(
                 target="_blank"
                 className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
               >
-                Open Full Member Card <ExternalLink className="w-3 h-3" />
+                Card <ExternalLink className="w-3 h-3" />
               </Link>
             </div>
 
             {/* Remaining Laundries Banner */}
-            <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 text-center">
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 text-center">
               {loyaltyRecord.stampsUntilReward > 0 ? (
                 <div className="space-y-1">
-                  <p className="text-sm font-bold text-foreground sm:text-base">
+                  <p className="text-xs font-bold text-slate-800">
                     Only{" "}
-                    <span className="text-primary font-extrabold text-lg">
+                    <span className="text-primary font-extrabold text-sm">
                       {loyaltyRecord.stampsUntilReward}
                     </span>{" "}
                     more {loyaltyRecord.stampsUntilReward === 1 ? "laundry" : "laundries"} remaining!
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[11px] text-slate-500">
                     Complete {loyaltyRecord.stampsUntilReward} more wash to earn your next{" "}
                     <span className="font-semibold text-primary">{loyaltyRecord.rewardDescription}</span>.
                   </p>
                 </div>
               ) : (
                 <div className="space-y-1">
-                  <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 sm:text-base">
+                  <p className="text-xs font-bold text-emerald-700">
                     🎉 Congratulations! Free Reward Ready!
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[11px] text-slate-500">
                     You have earned a{" "}
-                    <span className="font-semibold text-foreground">{loyaltyRecord.rewardDescription}</span>. Claim it at the counter!
+                    <span className="font-semibold text-slate-800">{loyaltyRecord.rewardDescription}</span>. Claim it at the counter!
                   </p>
                 </div>
               )}
@@ -294,10 +300,10 @@ export default async function PublicTrackingPage(
             {/* Stamp Progress Dots */}
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-foreground flex items-center gap-1.5">
-                  <Flame className="w-4 h-4 text-amber-500" /> Reward Progress
+                <span className="font-semibold text-slate-800 flex items-center gap-1.5">
+                  <Flame className="w-3.5 h-3.5 text-amber-500" /> Reward Progress
                 </span>
-                <span className="font-bold text-primary">
+                <span className="font-bold text-primary text-[11px]">
                   {loyaltyRecord.currentCycleStamps} / {loyaltyRecord.washesPerReward} Stamps
                 </span>
               </div>
@@ -305,134 +311,99 @@ export default async function PublicTrackingPage(
             </div>
 
             {/* Lifetime Stats */}
-            <div className="grid grid-cols-3 gap-2.5 pt-1">
-              <div className="rounded-2xl border border-border/80 bg-muted/20 p-3 text-center">
-                <p className="text-base font-bold text-foreground">{loyaltyRecord.totalVisits}</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Visits</p>
+            <div className="grid grid-cols-3 gap-2 pt-1">
+              <div className="rounded-xl border border-stone-200/80 bg-stone-50/70 p-2.5 text-center">
+                <p className="text-sm font-bold text-slate-900">{loyaltyRecord.totalVisits}</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">Visits</p>
               </div>
-              <div className="rounded-2xl border border-border/80 bg-muted/20 p-3 text-center">
-                <p className="text-base font-bold text-foreground">{loyaltyRecord.totalKgWashed} kg</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Washed</p>
+              <div className="rounded-xl border border-stone-200/80 bg-stone-50/70 p-2.5 text-center">
+                <p className="text-sm font-bold text-slate-900">{loyaltyRecord.totalKgWashed} kg</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">Washed</p>
               </div>
-              <div className="rounded-2xl border border-border/80 bg-muted/20 p-3 text-center">
-                <p className="text-base font-bold text-foreground">{loyaltyRecord.rewardsRedeemed}</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Claimed</p>
+              <div className="rounded-xl border border-stone-200/80 bg-stone-50/70 p-2.5 text-center">
+                <p className="text-sm font-bold text-slate-900">{loyaltyRecord.rewardsRedeemed}</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">Claimed</p>
               </div>
             </div>
 
             {/* Member QR Code */}
-            <div className="flex flex-col sm:flex-row items-center gap-4 rounded-2xl border border-border/80 bg-muted/20 p-4">
-              <div className="bg-white p-2 rounded-xl shadow-xs border border-border/80 shrink-0">
+            <div className="flex items-center gap-3.5 rounded-xl border border-stone-200/80 bg-stone-50/70 p-3">
+              <div className="bg-white p-1.5 rounded-lg shadow-xs border border-stone-200/80 shrink-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(
                     `${protocol}://${host}/member/${loyaltyRecord.id}`
                   )}`}
                   alt={`Loyalty QR code for ${loyaltyRecord.name}`}
-                  className="w-24 h-24 object-contain rounded"
+                  className="w-16 h-16 object-contain rounded"
                 />
               </div>
-              <div className="space-y-1 text-center sm:text-left">
-                <p className="text-xs font-bold text-foreground flex items-center justify-center sm:justify-start gap-1.5">
-                  <QrCode className="w-3.5 h-3.5 text-primary" /> Your Member Pass
+              <div className="space-y-0.5">
+                <p className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <QrCode className="w-3.5 h-3.5 text-primary" /> Member Pass
                 </p>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Show this QR code at checkout during your next visit to quickly collect stamps and redeem rewards!
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Show this QR code at checkout to quickly collect stamps!
                 </p>
               </div>
             </div>
 
             {/* Laundry Records / History */}
             {loyaltyRecord.laundryRecords.length > 0 && (
-              <div className="space-y-2.5 pt-2 border-t border-border/70">
+              <div className="space-y-2 pt-2 border-t border-stone-100">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                    <History className="w-3.5 h-3.5 text-primary" /> Laundry Records & History
+                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                    <History className="w-3.5 h-3.5 text-primary" /> Laundry Records
                   </h3>
-                  <span className="text-[11px] text-muted-foreground">
+                  <span className="text-[10px] text-slate-400">
                     {loyaltyRecord.laundryRecords.length} records
                   </span>
                 </div>
-                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
                   {loyaltyRecord.laundryRecords.slice(0, 8).map((item, idx) => (
                     <div
                       key={`${item.ticketId}-${idx}`}
-                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-xl border border-border/60 bg-muted/30 p-3 text-xs"
+                      className="flex items-center justify-between gap-2 rounded-lg border border-stone-200/70 bg-stone-50/50 p-2.5 text-xs"
                     >
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-foreground">{item.ticketId}</span>
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono font-bold text-slate-800 text-[11px]">{item.ticketId}</span>
                           <StatusBadge status={item.status} className="px-1.5 py-0 text-[10px]" />
                           {item.rewardUsed && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 px-1.5 py-0 text-[10px] font-bold">
+                            <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-100 text-emerald-800 px-1 py-0 text-[9px] font-bold">
                               <Gift className="w-2.5 h-2.5" /> Reward
                             </span>
                           )}
                         </div>
-                        <p className="text-[11px] text-muted-foreground">
+                        <p className="text-[10px] text-slate-500">
                           {item.washType} {item.weight > 0 ? `• ${item.weight} kg` : ""} {item.fee > 0 ? `• ₱${item.fee}` : ""}
                         </p>
                       </div>
 
-                      <div className="flex flex-wrap sm:flex-col sm:items-end gap-x-3 gap-y-1 text-[11px] self-start sm:self-auto">
-                        <div className="flex items-center gap-1.5 text-muted-foreground whitespace-nowrap" title="Date dropped off">
-                          <Calendar className="w-3.5 h-3.5 shrink-0 opacity-70" />
-                          <span>In: <span className="font-medium text-foreground">{item.date}</span></span>
-                        </div>
-                        {item.status === "Claimed" ? (
-                          <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium whitespace-nowrap" title="Date claimed">
-                            <CheckCircle2 className="w-3 h-3 shrink-0" />
-                            <span>Claimed: {item.claimedDate || item.date}</span>
-                          </div>
-                        ) : item.status === "Ready" ? (
-                          <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Ready for pickup</span>
-                        ) : (
-                          <span className="text-amber-600 dark:text-amber-400 font-medium">In Progress</span>
-                        )}
+                      <div className="text-right text-[10px]">
+                        <span className="text-slate-400">{item.date}</span>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
             )}
-
-            {/* Recent Rewards Claimed History */}
-            {loyaltyRecord.rewardHistory && loyaltyRecord.rewardHistory.length > 0 && (
-              <div className="space-y-2 pt-2 border-t border-border/70">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <Award className="w-3.5 h-3.5 text-amber-500" /> Claimed Rewards History
-                </h3>
-                <div className="space-y-1.5">
-                  {loyaltyRecord.rewardHistory.map((rew, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-between rounded-xl border border-amber-200/50 bg-amber-50/50 dark:border-amber-900/30 dark:bg-amber-950/20 px-3 py-2 text-xs"
-                    >
-                      <span className="font-semibold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
-                        <Gift className="w-3 h-3 text-amber-600" /> {rew.reward}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground">{rew.date}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </section>
         )}
 
-        {/* Promotional Loyalty Program Banner (Shown at bottom for non-members) */}
+        {/* Promotional Loyalty Program Banner (Shown only when loyalty enabled and customer is non-member) */}
         {isLoyaltyEnabled && !loyaltyRecord && (
-          <section className="rounded-3xl border border-primary/20 bg-primary/5 p-6 shadow-sm text-center space-y-2.5">
-            <div className="inline-flex items-center justify-center w-11 h-11 rounded-2xl bg-primary/10 text-primary">
+          <section className="bg-white rounded-2xl border border-primary/20 p-5 shadow-sm text-center space-y-2">
+            <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 text-primary">
               <Sparkles className="w-5 h-5" />
             </div>
-            <h3 className="text-base font-bold text-foreground">Earn Free Laundries With Every Wash!</h3>
-            <p className="text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
+            <h3 className="text-sm font-bold text-slate-900">Earn Free Laundries With Every Wash!</h3>
+            <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
               Ask our staff to enroll your number into our Loyalty Program on your next visit to collect stamps and earn free washes.
             </p>
           </section>
         )}
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }
