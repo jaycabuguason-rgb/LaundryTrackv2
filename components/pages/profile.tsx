@@ -1,12 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Camera, Info, Loader2, Check, User, Phone, Save, RotateCcw, Trash2 } from "lucide-react";
+import { Camera, Info, Loader2, User, Phone, Save, RotateCcw, Trash2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { getBrowserAccessToken } from "@/lib/supabase/browser-session";
 import type { UserProfile } from "@/lib/auth";
@@ -33,6 +40,7 @@ export default function ProfilePage({
   const isStaff = userProfile.role === "staff";
   const [uploading, setUploading] = useState(false);
   const [localAvatarUrl, setLocalAvatarUrl] = useState<string | undefined>(userProfile.avatarUrl);
+  const [showPhotoViewer, setShowPhotoViewer] = useState(false);
 
   // Form states for editable Name & Phone
   const [name, setName] = useState(userProfile.name || "");
@@ -223,13 +231,28 @@ export default function ProfilePage({
           <div className="flex flex-col sm:flex-row sm:items-end gap-4">
             {/* Avatar */}
             <div className="relative shrink-0">
-              <div className="w-20 h-20 rounded-full bg-primary ring-4 ring-card flex items-center justify-center text-primary-foreground text-2xl font-semibold select-none overflow-hidden shadow-md">
+              <button
+                type="button"
+                onClick={() => localAvatarUrl && setShowPhotoViewer(true)}
+                disabled={!localAvatarUrl}
+                className={`w-20 h-20 rounded-full bg-primary ring-4 ring-card flex items-center justify-center text-primary-foreground text-2xl font-semibold select-none overflow-hidden shadow-md group relative transition-transform focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+                  localAvatarUrl ? "cursor-pointer hover:scale-105 active:scale-95" : "cursor-default"
+                }`}
+                title={localAvatarUrl ? "Click to view full photo" : undefined}
+                aria-label={localAvatarUrl ? "View profile picture" : "Profile initials"}
+              >
                 {localAvatarUrl ? (
-                  <img
-                    src={localAvatarUrl}
-                    alt={name || userProfile.name}
-                    className="w-full h-full object-cover"
-                  />
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={localAvatarUrl}
+                      alt={name || userProfile.name}
+                      className="w-full h-full object-cover transition-opacity group-hover:opacity-90"
+                    />
+                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <Eye className="w-5 h-5 text-white drop-shadow" />
+                    </div>
+                  </>
                 ) : (
                   initials
                 )}
@@ -238,7 +261,7 @@ export default function ProfilePage({
                     <Loader2 className="w-6 h-6 text-white animate-spin" />
                   </div>
                 )}
-              </div>
+              </button>
               {/* Camera badge */}
               <label
                 htmlFor={uploading ? undefined : FILE_INPUT_ID}
@@ -270,18 +293,32 @@ export default function ProfilePage({
             {/* Photo buttons — right-aligned on desktop, below on mobile */}
             <div className="flex items-center gap-2 shrink-0">
               {localAvatarUrl && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  disabled={uploading}
-                  onClick={handleDeleteAvatar}
-                  className="text-xs h-8 gap-1.5 text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer"
-                  title="Delete profile picture and revert to name initials"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  Remove Photo
-                </Button>
+                <>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={uploading}
+                    onClick={() => setShowPhotoViewer(true)}
+                    className="text-xs h-8 gap-1.5 cursor-pointer"
+                    title="View full-size profile picture"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    View Photo
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    disabled={uploading}
+                    onClick={handleDeleteAvatar}
+                    className="text-xs h-8 gap-1.5 text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer"
+                    title="Delete profile picture and revert to name initials"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Remove Photo
+                  </Button>
+                </>
               )}
               <Button
                 type="button"
@@ -451,6 +488,61 @@ export default function ProfilePage({
           </p>
         </div>
       )}
+
+      {/* ── Photo Viewer Modal ────────────────────────────────────────── */}
+      <Dialog open={showPhotoViewer} onOpenChange={setShowPhotoViewer}>
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-md p-4 sm:p-6 bg-card border-border overflow-hidden">
+          <DialogHeader className="pb-2 border-b border-border/50">
+            <DialogTitle className="text-base font-bold text-foreground">
+              Profile Picture
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+              {name || userProfile.name} • {isStaff ? "Staff Account" : "Admin Account"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-4 flex flex-col items-center justify-center">
+            <div className="relative w-full max-h-[65vh] aspect-square rounded-2xl overflow-hidden bg-muted/40 border border-border flex items-center justify-center shadow-inner">
+              {localAvatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={localAvatarUrl}
+                  alt={name || userProfile.name}
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <div className="w-32 h-32 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-4xl font-bold">
+                  {initials}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-4 flex items-center justify-between gap-2 pt-2 border-t border-border/50">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              asChild
+              className="text-xs h-8 gap-1.5 cursor-pointer"
+            >
+              <label htmlFor={uploading ? undefined : FILE_INPUT_ID} onClick={() => setShowPhotoViewer(false)}>
+                <Camera className="w-3.5 h-3.5" />
+                Change Photo
+              </label>
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="text-xs h-8 cursor-pointer"
+              onClick={() => setShowPhotoViewer(false)}
+            >
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

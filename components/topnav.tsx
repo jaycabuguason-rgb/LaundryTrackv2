@@ -78,6 +78,7 @@ export default function TopNav({ activePage, onNavigate, onSignOut, adminProfile
   const [notifications, setNotifications] = useState<Notification[]>(externalNotifications || initialNotifications);
   const [notifOpen, setNotifOpen] = useState(false);
   const [signOutOpen, setSignOutOpen] = useState(false);
+  const [showAvatarViewer, setShowAvatarViewer] = useState(false);
 
   // Update notifications when external notifications change
   useEffect(() => {
@@ -289,13 +290,51 @@ export default function TopNav({ activePage, onNavigate, onSignOut, adminProfile
               <ChevronDown className="w-3.5 h-3.5 text-muted-foreground hidden sm:block" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <div className="px-3 py-2 border-b border-border">
-              <p className="text-xs font-semibold text-foreground truncate">{adminProfile.name}</p>
-              <p className="text-xs text-muted-foreground truncate">{adminProfile.email}</p>
+          <DropdownMenuContent align="end" className="w-56">
+            <div className="px-3 py-2 border-b border-border flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => adminProfile.avatarUrl && setShowAvatarViewer(true)}
+                className={`w-9 h-9 rounded-full bg-primary flex items-center justify-center shrink-0 overflow-hidden ring-2 ring-primary/20 ${
+                  adminProfile.avatarUrl ? "cursor-pointer hover:ring-primary/50 group relative" : ""
+                }`}
+                title={adminProfile.avatarUrl ? "Click to view full photo" : undefined}
+                aria-label={adminProfile.avatarUrl ? "View profile picture" : undefined}
+              >
+                {adminProfile.avatarUrl ? (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`${adminProfile.avatarUrl}?width=90&height=90&resize=cover`}
+                      alt={adminProfile.name}
+                      className="w-full h-full object-cover transition-opacity group-hover:opacity-90"
+                    />
+                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <Eye className="w-3.5 h-3.5 text-white drop-shadow" />
+                    </div>
+                  </>
+                ) : (
+                  <span className="text-xs font-bold text-primary-foreground select-none">
+                    {getUserInitials(adminProfile.name, adminProfile.username, adminProfile.email)}
+                  </span>
+                )}
+              </button>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-foreground truncate">{adminProfile.name}</p>
+                <p className="text-xs text-muted-foreground truncate">{adminProfile.email}</p>
+              </div>
             </div>
+            {adminProfile.avatarUrl && (
+              <DropdownMenuItem
+                className="cursor-pointer mt-1"
+                onClick={() => setShowAvatarViewer(true)}
+              >
+                <Eye className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
+                View Profile Picture
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem
-              className="cursor-pointer mt-1"
+              className={`cursor-pointer ${!adminProfile.avatarUrl ? "mt-1" : ""}`}
               onClick={() => onNavigate("profile")}
             >
               <User className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
@@ -364,6 +403,61 @@ export default function TopNav({ activePage, onNavigate, onSignOut, adminProfile
               }}
             >
               Sign Out
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Profile Picture Viewer Dialog */}
+      <Dialog open={showAvatarViewer} onOpenChange={setShowAvatarViewer}>
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-sm sm:max-w-md p-6">
+          <DialogHeader>
+            <DialogTitle className="text-base font-semibold">
+              {adminProfile.name || "Profile Picture"}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              {adminProfile.role === "staff" ? "Staff" : "Admin"} &bull; {adminProfile.email}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-4 flex flex-col items-center justify-center">
+            <div className="relative w-full max-h-[60vh] aspect-square rounded-2xl overflow-hidden bg-muted/40 border border-border flex items-center justify-center shadow-inner">
+              {adminProfile.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={adminProfile.avatarUrl}
+                  alt={adminProfile.name}
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <div className="w-32 h-32 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-4xl font-bold">
+                  {getUserInitials(adminProfile.name, adminProfile.username, adminProfile.email)}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-4 flex items-center justify-between gap-2 pt-2 border-t border-border/50">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="text-xs h-8 cursor-pointer"
+              onClick={() => {
+                setShowAvatarViewer(false);
+                onNavigate("profile");
+              }}
+            >
+              Go to Profile
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="text-xs h-8 cursor-pointer"
+              onClick={() => setShowAvatarViewer(false)}
+            >
+              Close
             </Button>
           </div>
         </DialogContent>
