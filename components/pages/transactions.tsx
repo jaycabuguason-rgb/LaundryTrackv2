@@ -1288,6 +1288,19 @@ export default function TransactionsPage({
 
   const serviceOptions = useMemo(() => Array.from(new Set(txns.map((t) => t.washType).filter(Boolean))), [txns]);
 
+  function getCustomerInitials(name: string): string {
+    if (!name) return "LT";
+    const clean = name.replace(/[^a-zA-Z0-9\s]/g, "").trim();
+    const parts = clean.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    if (parts.length === 1 && parts[0].length >= 2) {
+      return parts[0].slice(0, 2).toUpperCase();
+    }
+    return clean.slice(0, 2).toUpperCase() || "LT";
+  }
+
   function formatDateDisplay(dateStr?: string) {
     if (!dateStr) return "—";
     try {
@@ -2464,122 +2477,150 @@ export default function TransactionsPage({
                     )}
                     aria-label={`Ticket #${txn.ticketId} — ${txn.customerName}`}
                   >
-                    {/* Left Colored Accent Status Edge */}
-                    <div className={cn("absolute left-0 top-0 bottom-0 w-1.5", accentColor)} />
-
-                    <div className="p-3.5 pl-4 flex flex-col gap-2">
-                      {/* Card Top Bar: Ticket Pill, Date, Price */}
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5">
-                          <span
+                    {/* Main Card Row: Avatar + Customer Details (Left) and Price + Chevron (Right) */}
+                    <div className="p-3.5 flex flex-col gap-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          {/* Avatar Circle with Initials */}
+                          <div
                             className={cn(
-                              "px-2 py-0.5 rounded-lg font-mono text-xs font-bold tracking-tight",
+                              "w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs shrink-0 border select-none transition-colors",
                               isVoided
-                                ? "bg-muted text-muted-foreground line-through"
-                                : "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-foreground"
+                                ? "bg-muted text-muted-foreground border-border/50"
+                                : "bg-muted/80 text-foreground border-border/60"
                             )}
+                            aria-hidden="true"
                           >
-                            #{txn.ticketId}
-                          </span>
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Clock className="w-3 h-3 text-muted-foreground/70" />
-                            {formatDateDisplay(txn.arrivalDateTime || txn.dropOffDate)}
-                          </span>
+                            {getCustomerInitials(txn.customerName)}
+                          </div>
+
+                          {/* Customer Name and Subtitle Row (Status + Date) */}
+                          <div className="flex flex-col min-w-0 flex-1 justify-center">
+                            <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
+                              <span
+                                className={cn(
+                                  "font-bold text-sm text-foreground truncate",
+                                  isVoided && "line-through text-muted-foreground"
+                                )}
+                              >
+                                {txn.customerName}
+                              </span>
+                              {txn.phone && (
+                                <span className="text-[11px] text-muted-foreground/80 font-mono truncate hidden xs:inline">
+                                  ({txn.phone})
+                                </span>
+                              )}
+                              {loyaltyEnabled && Boolean(getLoyaltyMemberForTxn(txn)) && (
+                                <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 px-1.5 py-0.2 text-[9px] font-semibold shrink-0">
+                                  <Sparkles className="w-2 h-2 text-amber-500 fill-amber-500" />
+                                  Loyalty
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground pt-0.5 flex-wrap">
+                              <StatusBadge status={txn.status} className="scale-90 origin-left" />
+                              <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                                <Clock className="w-3 h-3 text-muted-foreground/60" />
+                                {formatDateDisplay(txn.arrivalDateTime || txn.dropOffDate)}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1">
+
+                        {/* Price & Chevron (Right) */}
+                        <div className="flex flex-col items-end justify-center shrink-0 gap-1">
                           <span
                             className={cn(
-                              "text-base font-extrabold text-foreground leading-none tabular-nums",
+                              "text-sm sm:text-base font-extrabold text-foreground leading-none tabular-nums",
                               isVoided && "line-through text-muted-foreground"
                             )}
                           >
                             ₱{txn.fee.toLocaleString()}
                           </span>
-                        </div>
-                      </div>
-
-                      {/* Summary Row (Always visible): Name, Phone, StatusBadge, Chevron */}
-                      <div className="flex items-center justify-between gap-2 pt-0.5">
-                        <div className="flex items-center gap-1.5 min-w-0 flex-1 flex-wrap">
-                          <span
-                            className={cn(
-                              "font-bold text-sm text-foreground truncate",
-                              isVoided && "line-through text-muted-foreground"
-                            )}
-                          >
-                            {txn.customerName}
-                          </span>
-                          {txn.phone && (
-                            <span className="text-xs text-muted-foreground font-mono truncate">
-                              ({txn.phone})
-                            </span>
-                          )}
-                          {loyaltyEnabled && Boolean(getLoyaltyMemberForTxn(txn)) && (
-                            <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 px-1.5 py-0.2 text-[10px] font-semibold shrink-0">
-                              <Sparkles className="w-2.5 h-2.5 text-amber-500 fill-amber-500" />
-                              Loyalty
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-1 shrink-0">
-                          <StatusBadge status={txn.status} />
                           <ChevronDown
                             className={cn(
-                              "w-4 h-4 text-muted-foreground transition-transform duration-200 ml-0.5",
+                              "w-4 h-4 text-muted-foreground transition-transform duration-200",
                               isExpanded && "rotate-180 text-foreground"
                             )}
                           />
                         </div>
                       </div>
 
-                      {/* Expanded Section: Services, Payment, Lifecycle, Actions, Go to bottom sheet button */}
+                      {/* Expanded Section: Ticket / Full Record, Service / Payment, Actions */}
                       {isExpanded && (
                         <div
-                          className="pt-2 mt-0.5 border-t border-border/40 flex flex-col gap-2.5 animate-in fade-in-50 duration-200"
+                          className="pt-2.5 mt-1 border-t border-border/50 flex flex-col gap-2.5 animate-in fade-in-50 duration-200"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          {/* Service Details Line */}
-                          <div className="flex items-center justify-between gap-2 flex-wrap text-xs text-muted-foreground">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span>{txn.washType}</span>
-                              {txn.weight ? (
-                                <>
-                                  <span>•</span>
-                                  <span className="font-medium text-foreground">{txn.weight} kg</span>
-                                </>
-                              ) : null}
-                              {txn.addOns && txn.addOns.length > 0 ? (
-                                <>
-                                  <span>•</span>
-                                  <span className="text-muted-foreground font-medium">{txn.addOns.join(", ")}</span>
-                                </>
-                              ) : null}
-                              {txn.machineNumber ? (
-                                <>
-                                  <span>•</span>
-                                  <span className="text-primary font-medium">Machine #{txn.machineNumber}</span>
-                                </>
-                              ) : null}
+                          {/* Key-Value Row 1: Ticket ID + Full Record Link */}
+                          <div className="flex items-center justify-between gap-2 text-xs">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="text-muted-foreground w-12 shrink-0 font-medium">Ticket</span>
+                              <span
+                                className={cn(
+                                  "font-mono font-bold text-xs text-foreground px-1.5 py-0.5 rounded bg-muted/60 border border-border/40",
+                                  isVoided && "line-through text-muted-foreground"
+                                )}
+                              >
+                                #{txn.ticketId}
+                              </span>
                             </div>
-                            <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setViewTxn(txn);
+                              }}
+                              className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer group"
+                            >
+                              <span>Full record</span>
+                              <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />
+                            </button>
+                          </div>
+
+                          {/* Key-Value Row 2: Service + Payment Status */}
+                          <div className="flex items-center justify-between gap-2 text-xs">
+                            <div className="flex items-center gap-2 min-w-0 flex-1 flex-wrap">
+                              <span className="text-muted-foreground w-12 shrink-0 font-medium">Service</span>
+                              <div className="flex items-center gap-1.5 flex-wrap text-foreground font-medium">
+                                <span>{txn.washType}</span>
+                                {txn.weight ? (
+                                  <>
+                                    <span className="text-muted-foreground">•</span>
+                                    <span>{txn.weight} kg</span>
+                                  </>
+                                ) : null}
+                                {txn.addOns && txn.addOns.length > 0 ? (
+                                  <>
+                                    <span className="text-muted-foreground">•</span>
+                                    <span className="text-muted-foreground">{txn.addOns.join(", ")}</span>
+                                  </>
+                                ) : null}
+                                {txn.machineNumber ? (
+                                  <>
+                                    <span className="text-muted-foreground">•</span>
+                                    <span className="text-primary font-semibold">Machine #{txn.machineNumber}</span>
+                                  </>
+                                ) : null}
+                              </div>
+                            </div>
+                            <div className="shrink-0">
                               <PaymentBadge paymentStatus={txn.paymentStatus} />
                             </div>
                           </div>
 
                           {/* Lifecycle info (Claimed timestamp or Void reason) */}
                           {(terminalInfo || (isVoided && txn.voidReason)) && (
-                            <div className="flex items-center justify-between gap-2 text-xs">
-                              {terminalInfo && (
-                                <span className="text-[11px] text-muted-foreground font-medium">
-                                  {terminalInfo.label} {terminalInfo.dateText}
+                            <div className="flex items-center justify-between gap-2 text-xs pt-0.5">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="text-muted-foreground w-12 shrink-0 font-medium">
+                                  {terminalInfo ? terminalInfo.label : "Void"}
                                 </span>
-                              )}
-                              {isVoided && txn.voidReason && (
-                                <span className="text-[10px] text-destructive/90 font-medium truncate max-w-[220px]">
-                                  Reason: {txn.voidReason}
+                                <span className="text-muted-foreground font-medium truncate">
+                                  {terminalInfo ? terminalInfo.dateText : txn.voidReason}
                                 </span>
-                              )}
+                              </div>
                             </div>
                           )}
 
@@ -2589,7 +2630,7 @@ export default function TransactionsPage({
                               {isReady && txn.paymentStatus === "paid" && (
                                 <Button
                                   size="sm"
-                                  className="h-7 px-2.5 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer"
+                                  className="h-7 px-3 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setClaimConfirmTxn(txn);
@@ -2603,8 +2644,8 @@ export default function TransactionsPage({
                             <div className="flex items-center gap-1">
                               <Button
                                 variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground"
+                                size="sm"
+                                className="h-7 px-2 text-xs rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
                                 aria-label={`Print receipt for ticket ${txn.ticketId}`}
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -2612,12 +2653,13 @@ export default function TransactionsPage({
                                   setPrintPostCreate(false);
                                 }}
                               >
-                                <Printer className="w-3.5 h-3.5" />
+                                <Printer className="w-3.5 h-3.5 mr-1" />
+                                <span>Print</span>
                               </Button>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground"
+                                className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
                                 aria-label="More options"
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -2629,7 +2671,7 @@ export default function TransactionsPage({
                             </div>
                           </div>
 
-                          {/* Go to bottom sheet button */}
+                          {/* Dedicated Bottom Sheet Button */}
                           <Button
                             type="button"
                             variant="outline"
