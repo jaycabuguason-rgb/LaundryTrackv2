@@ -41,6 +41,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Drawer,
   DrawerContent,
   DrawerHeader,
@@ -1262,6 +1272,8 @@ export default function TransactionsPage({
   const [undoStack, setUndoStack] = useState<StatusMutationRecord[]>([]);
   const [redoStack, setRedoStack] = useState<StatusMutationRecord[]>([]);
   const [undoPromptTxn, setUndoPromptTxn] = useState<{ txn: Transaction; action: "unclaim" | "unvoid" } | null>(null);
+  const [claimConfirmTxn, setClaimConfirmTxn] = useState<Transaction | null>(null);
+  const [claimBusy, setClaimBusy] = useState(false);
 
   const voidReasonOptions = useMemo(() => {
     return Array.from(
@@ -1539,6 +1551,10 @@ export default function TransactionsPage({
     if (status === "Voided") {
       setVoidTxn(txn);
       setVoidReason("");
+      return;
+    }
+    if (status === "Claimed") {
+      setClaimConfirmTxn(txn);
       return;
     }
     try {
@@ -2576,7 +2592,7 @@ export default function TransactionsPage({
                                   className="h-7 px-2.5 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    void handleQuickClaim(txn);
+                                    setClaimConfirmTxn(txn);
                                   }}
                                 >
                                   <PackageCheck className="w-3.5 h-3.5 mr-1" />
@@ -3584,7 +3600,11 @@ export default function TransactionsPage({
         onAdvanceStage={(txn) => {
           setViewTxn(null);
           if (txn.status === "Ready") {
-            void handleQuickClaim(txn);
+            if (txn.paymentStatus === "unpaid") {
+              showToast("Mark payment as Paid first before claiming this ticket.");
+              return;
+            }
+            setClaimConfirmTxn(txn);
           } else {
             setMobileStatusTxn(txn);
           }
@@ -3615,21 +3635,42 @@ export default function TransactionsPage({
       />
 
       {/* ── EDIT MODAL ────────���────────────────────────────────────────────── */}
-      <Dialog open={!!editTxn} onOpenChange={(open) => { if (!open) { setEditTxn(null); onEditComplete?.(); } }}>
-        <DialogContent className="w-[calc(100vw-1rem)] sm:w-auto max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader className="text-left space-y-1.5">
-            <div className="flex justify-between items-start pr-4">
-              <DialogTitle className="text-lg font-bold">Edit Ticket — {editTxn?.ticketId}</DialogTitle>
-              {editTxn && (
-                <StatusBadge status={editTxn.status} className="border shadow-sm mt-0.5 font-bold" />
-              )}
+      <Drawer open={!!editTxn} onOpenChange={(open) => { if (!open) { setEditTxn(null); onEditComplete?.(); } }}>
+        <DrawerContent className="bg-card border-t border-border text-foreground shadow-2xl max-w-lg mx-auto rounded-t-3xl data-[vaul-drawer-direction=bottom]:max-h-[90vh] flex flex-col p-0 overflow-hidden outline-none">
+          {/* Retractable Handle Bar & Sticky Drawer Header */}
+          <div className="pt-2.5 pb-2.5 px-4 flex flex-col items-center bg-muted/40 border-b border-border/60 shrink-0 sticky top-0 z-20 backdrop-blur-md">
+            <div className="w-12 h-1.5 rounded-full bg-muted-foreground/30 mb-2 cursor-grab active:cursor-grabbing" />
+            <div className="w-full flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                  <Edit className="w-4 h-4" />
+                </div>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <DrawerTitle className="font-bold text-sm sm:text-base text-foreground tracking-tight truncate">
+                    Edit Ticket — {editTxn?.ticketId}
+                  </DrawerTitle>
+                  {editTxn && (
+                    <StatusBadge status={editTxn.status} className="border shadow-xs text-[10px] sm:text-xs font-bold shrink-0" />
+                  )}
+                </div>
+              </div>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                className="w-8 h-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer shrink-0"
+                onClick={() => { setEditTxn(null); onEditComplete?.(); }}
+                title="Close"
+              >
+                <X className="w-4 h-4" />
+              </Button>
             </div>
-            <DialogDescription className="text-sm text-muted-foreground font-medium">
+            <DrawerDescription className="text-xs text-muted-foreground font-medium text-left w-full mt-1">
               Update status and payment for this transaction.
-            </DialogDescription>
-          </DialogHeader>
+            </DrawerDescription>
+          </div>
           {editTxn && (
-            <div className="space-y-6 mt-1">
+            <div className="p-4 sm:p-5 overflow-y-auto overscroll-contain space-y-6">
               {/* Summary */}
               <div className="grid grid-cols-2 gap-2.5 text-sm">
                 {[
@@ -3793,8 +3834,8 @@ export default function TransactionsPage({
               </div>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
+        </DrawerContent>
+      </Drawer>
 
       {/* ── VOID CONFIRMATION MODAL ──────────────────────────────────────────── */}
       <Dialog open={!!voidTxn} onOpenChange={(open) => { if (!open) { setVoidTxn(null); setVoidReason(""); } }}>
@@ -4000,6 +4041,89 @@ export default function TransactionsPage({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* ── CLAIM CONFIRMATION MODAL ────────────────────────────────────────────── */}
+      <AlertDialog
+        open={Boolean(claimConfirmTxn)}
+        onOpenChange={(open) => {
+          if (!open && !claimBusy) {
+            setClaimConfirmTxn(null);
+          }
+        }}
+      >
+        <AlertDialogContent className="w-[calc(100vw-2rem)] max-w-sm rounded-2xl p-5">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+                <PackageCheck className="w-5 h-5 text-emerald-600" />
+              </div>
+              <AlertDialogTitle className="text-base font-bold text-foreground">
+                Move to Claimed?
+              </AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-left text-sm text-muted-foreground pt-1">
+              Do you want to move this ticket to Claimed?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          {claimConfirmTxn && (
+            <div className="bg-muted/40 rounded-xl p-3 space-y-1.5 text-xs border border-border/50">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Ticket ID</span>
+                <span className="font-semibold text-foreground">#{claimConfirmTxn.ticketId}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Customer</span>
+                <span className="font-semibold text-foreground">{claimConfirmTxn.customerName}</span>
+              </div>
+              {claimConfirmTxn.phone && (
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Phone</span>
+                  <span className="font-medium text-foreground">{claimConfirmTxn.phone}</span>
+                </div>
+              )}
+              {claimConfirmTxn.fee !== undefined && (
+                <div className="flex items-center justify-between pt-1 border-t border-border/40">
+                  <span className="text-muted-foreground">Total Fee</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                    ₱{claimConfirmTxn.fee.toLocaleString()}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+          <AlertDialogFooter className="flex-row gap-2 mt-2">
+            <AlertDialogCancel
+              className="flex-1 mt-0 rounded-xl cursor-pointer"
+              disabled={claimBusy}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl cursor-pointer"
+              disabled={claimBusy}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!claimConfirmTxn) return;
+                const target = claimConfirmTxn;
+                setClaimBusy(true);
+                try {
+                  await handleQuickClaim(target);
+                  setClaimConfirmTxn(null);
+                  if (editTxn?.ticketId === target.ticketId) {
+                    setEditTxn(null);
+                    onEditComplete?.();
+                  }
+                } finally {
+                  setClaimBusy(false);
+                }
+              }}
+            >
+              {claimBusy ? "Claiming..." : "Move to Claimed"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

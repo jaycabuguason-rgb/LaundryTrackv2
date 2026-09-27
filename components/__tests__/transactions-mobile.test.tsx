@@ -304,12 +304,46 @@ describe("TransactionsPage Mobile Concept Layout", () => {
 
     fireEvent.click(claimButton);
 
+    // Confirmation dialog appears with "Do you want to move this ticket to Claimed?"
+    expect(screen.getByText(/Do you want to move this ticket to Claimed\?/i)).toBeInTheDocument();
+    expect(screen.getAllByText("Bob Reyes").length).toBeGreaterThanOrEqual(1);
+
+    const confirmClaimBtn = screen.getByRole("button", { name: /move to claimed/i });
+    fireEvent.click(confirmClaimBtn);
+
     await waitFor(() => {
       expect(onUpdateTransaction).toHaveBeenCalledWith("TKT-0028", {
         status: "Claimed",
         paymentStatus: "paid",
       });
     });
+  });
+
+  it("dismisses claim confirmation dialog when Cancel is clicked", async () => {
+    render(
+      <TransactionsPage
+        transactions={mockTransactions}
+        onCreateTransaction={onCreateTransaction}
+        onUpdateTransaction={onUpdateTransaction}
+      />
+    );
+
+    const card28 = screen.getByLabelText(/Ticket #TKT-0028/i);
+    fireEvent.click(card28);
+
+    const claimButton = screen.getByRole("button", { name: /^claim$/i });
+    fireEvent.click(claimButton);
+
+    expect(screen.getByText(/Do you want to move this ticket to Claimed\?/i)).toBeInTheDocument();
+
+    const cancelBtn = screen.getByRole("button", { name: /^cancel$/i });
+    fireEvent.click(cancelBtn);
+
+    await waitFor(() => {
+      expect(screen.queryByText(/Do you want to move this ticket to Claimed\?/i)).not.toBeInTheDocument();
+    });
+
+    expect(onUpdateTransaction).not.toHaveBeenCalled();
   });
 
   it("does not render Track button in transaction actions", () => {

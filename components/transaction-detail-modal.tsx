@@ -1,7 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { type Transaction, type TransactionStatus } from "@/lib/data";
 import {
@@ -146,21 +152,19 @@ export function TransactionDetailModal({
     : [arrivalFormatted, ""];
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="p-0 border-0 bg-transparent shadow-none max-w-lg w-full max-h-[92vh] overflow-hidden flex flex-col justify-end sm:justify-center">
-        <DialogTitle className="sr-only">
-          {`Ticket Details — ${transaction.ticketId}`}
-        </DialogTitle>
-        <DialogDescription className="sr-only">
-          Detailed view and actions for transaction {transaction.ticketId}
-        </DialogDescription>
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="bg-card border-t border-border text-foreground shadow-2xl max-w-lg mx-auto rounded-t-3xl data-[vaul-drawer-direction=bottom]:max-h-[90vh] flex flex-col p-0 overflow-hidden outline-none">
+        <DrawerHeader className="sr-only">
+          <DrawerTitle>{`Ticket Details — ${transaction.ticketId}`}</DrawerTitle>
+          <DrawerDescription>
+            Detailed view and actions for transaction {transaction.ticketId}
+          </DrawerDescription>
+        </DrawerHeader>
 
-        {/* ── MOBILE DRAWER / DESKTOP MODAL CONTAINER ──────────────────────── */}
-        <div className="relative w-full bg-card rounded-t-3xl sm:rounded-3xl border border-border shadow-2xl overflow-hidden flex flex-col max-h-[88vh]">
-          {/* Drag Handle & Drawer Header */}
-          <div className="pt-2.5 pb-2.5 px-4 flex flex-col items-center bg-muted/40 border-b border-border/60 shrink-0 sticky top-0 z-20 backdrop-blur-md">
-            <div className="w-12 h-1.5 rounded-full bg-muted-foreground/30 mb-2 sm:hidden" />
-            <div className="w-full flex items-center justify-between gap-2">
+        {/* Retractable Handle Bar & Drawer Header */}
+        <div className="pt-2.5 pb-2.5 px-4 flex flex-col items-center bg-muted/40 border-b border-border/60 shrink-0 sticky top-0 z-20 backdrop-blur-md">
+          <div className="w-12 h-1.5 rounded-full bg-muted-foreground/30 mb-2 cursor-grab active:cursor-grabbing" />
+          <div className="w-full flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
                 <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
                   <Receipt className="w-4 h-4" />
@@ -579,8 +583,7 @@ export function TransactionDetailModal({
               </button>
             </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
+        </DrawerContent>
+      </Drawer>
+    );
+  }

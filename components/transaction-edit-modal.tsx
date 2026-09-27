@@ -3,6 +3,13 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -144,15 +151,14 @@ export function TransactionEditModal({ open, onOpenChange, transaction, onSave }
 
   return (
     <>
-      <Dialog
+      <Drawer
         open={open && !showDiscardConfirm}
         onOpenChange={(next) => {
           if (!next) requestClose();
         }}
-        modal
       >
-        <DialogContent
-          className="p-0 border-0 bg-transparent shadow-none max-w-lg w-full max-h-[92vh] overflow-hidden flex flex-col justify-end sm:justify-center"
+        <DrawerContent
+          className="bg-card border-t border-border text-foreground shadow-2xl max-w-lg mx-auto rounded-t-3xl data-[vaul-drawer-direction=bottom]:max-h-[90vh] flex flex-col p-0 overflow-hidden outline-none"
           onPointerDownOutside={(e) => {
             if (hasChanges) {
               e.preventDefault();
@@ -166,20 +172,18 @@ export function TransactionEditModal({ open, onOpenChange, transaction, onSave }
             }
           }}
         >
-          {/* ── MOBILE DRAWER / DESKTOP MODAL CONTAINER ──────────────────────── */}
-          <div className="relative w-full bg-card rounded-t-3xl sm:rounded-2xl border border-border shadow-2xl overflow-hidden flex flex-col max-h-[88vh]">
-            {/* Drag Handle & Sticky Drawer Header */}
-            <div className="pt-2.5 pb-2.5 px-4 flex flex-col items-center bg-muted/40 border-b border-border/60 shrink-0 sticky top-0 z-20 backdrop-blur-md">
-              <div className="w-12 h-1.5 rounded-full bg-muted-foreground/30 mb-2 sm:hidden" />
-              <div className="w-full flex items-center justify-between gap-2">
+          {/* Retractable Handle Bar & Sticky Drawer Header */}
+          <div className="pt-2.5 pb-2.5 px-4 flex flex-col items-center bg-muted/40 border-b border-border/60 shrink-0 sticky top-0 z-20 backdrop-blur-md">
+            <div className="w-12 h-1.5 rounded-full bg-muted-foreground/30 mb-2 cursor-grab active:cursor-grabbing" />
+            <div className="w-full flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
                   <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
                     <Edit className="w-4 h-4" />
                   </div>
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <DialogTitle className="font-bold text-sm sm:text-base text-foreground tracking-tight truncate">
+                    <DrawerTitle className="font-bold text-sm sm:text-base text-foreground tracking-tight truncate">
                       Edit Ticket
-                    </DialogTitle>
+                    </DrawerTitle>
                     <span className="px-2 py-0.5 rounded-full bg-purple-700 text-white font-mono text-[11px] sm:text-xs font-bold tracking-wide shrink-0 shadow-xs">
                       {transaction.ticketId}
                     </span>
@@ -196,9 +200,9 @@ export function TransactionEditModal({ open, onOpenChange, transaction, onSave }
                   <X className="w-4 h-4" />
                 </Button>
               </div>
-              <DialogDescription className="sr-only">
+              <DrawerDescription className="sr-only">
                 Update status and payment for this transaction.
-              </DialogDescription>
+              </DrawerDescription>
             </div>
 
             {/* Scrollable Form Body */}
@@ -344,9 +348,8 @@ export function TransactionEditModal({ open, onOpenChange, transaction, onSave }
                 </Button>
               </div>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+        </DrawerContent>
+      </Drawer>
 
       {/* Discard confirmation */}
       <Dialog open={showDiscardConfirm} onOpenChange={setShowDiscardConfirm}>
