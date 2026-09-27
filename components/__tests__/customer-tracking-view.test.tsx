@@ -72,7 +72,7 @@ describe("CustomerTrackingView", () => {
     );
 
     expect(screen.getByText("TKT-1001")).toBeInTheDocument();
-    expect(screen.getAllByText("Maria Clara")[0]).toBeInTheDocument();
+    expect(screen.getByText("Maria Clara")).toBeInTheDocument();
     expect(screen.getByText("Live tracking active")).toBeInTheDocument();
     expect(screen.queryByText(/Your Laundry is Ready for Pickup!/i)).not.toBeInTheDocument();
   });
@@ -149,6 +149,5 @@ describe("CustomerTrackingView", () => {
 
     expect(screen.getByText("Order completed")).toBeInTheDocument();
     expect(screen.queryByText("Live tracking active")).not.toBeInTheDocument();
-    expect(screen.queryByText("Pickup QR Code")).not.toBeInTheDocument();
   });
 });

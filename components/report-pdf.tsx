@@ -123,27 +123,51 @@ const S = StyleSheet.create({
 });
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
+function formatPhp(amount: number): string {
+  return `PHP ${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 const Table = ({
   headers,
   rows,
   flexes,
+  aligns,
 }: {
   headers: string[];
   rows: string[][];
   flexes?: number[];
+  aligns?: Array<"left" | "center" | "right">;
 }) => (
   <View style={S.table}>
     {/* Header */}
     <View style={S.tableHeaderRow}>
       {headers.map((h, i) => (
-        <Text key={i} style={[S.th, flexes ? { flex: flexes[i] } : {}]}>{h}</Text>
+        <Text
+          key={i}
+          style={[
+            S.th,
+            flexes ? { flex: flexes[i] } : {},
+            aligns && aligns[i] ? { textAlign: aligns[i] } : {},
+          ]}
+        >
+          {h}
+        </Text>
       ))}
     </View>
     {/* Rows */}
     {rows.map((row, ri) => (
       <View key={ri} style={ri % 2 === 0 ? S.tableRow : S.tableRowEven}>
         {row.map((cell, ci) => (
-          <Text key={ci} style={[S.td, flexes ? { flex: flexes[ci] } : {}]}>{cell}</Text>
+          <Text
+            key={ci}
+            style={[
+              S.td,
+              flexes ? { flex: flexes[ci] } : {},
+              aligns && aligns[ci] ? { textAlign: aligns[ci] } : {},
+            ]}
+          >
+            {cell}
+          </Text>
         ))}
       </View>
     ))}
@@ -164,14 +188,16 @@ function ReportDocument({ exportFrom, exportTo, sections, transactions, serviceR
   const seen = new Set<string>();
   const custRows: string[][] = [];
   transactions.forEach((t) => {
-    if (!seen.has(t.phone)) {
-      seen.add(t.phone);
-      const ct = transactions.filter((x) => x.phone === t.phone);
+    const key = t.phone || t.customerName;
+    if (!seen.has(key)) {
+      seen.add(key);
+      const ct = transactions.filter((x) => (t.phone ? x.phone === t.phone : x.customerName === t.customerName));
+      const totalSpent = ct.reduce((s, x) => s + x.fee, 0);
       custRows.push([
-        t.customerName,
-        t.phone,
+        t.customerName || "Customer",
+        t.phone || "-",
         String(ct.length),
-        `₱${ct.reduce((s, x) => s + x.fee, 0)}`,
+        formatPhp(totalSpent),
       ]);
     }
   });
@@ -190,18 +216,19 @@ function ReportDocument({ exportFrom, exportTo, sections, transactions, serviceR
           <View style={S.body}>
             <Text style={S.sectionTitle}>Transactions</Text>
             <Table
-              headers={["Ticket ID", "Customer", "Phone", "Drop-off", "Type", "Weight", "Fee", "Status"]}
+              headers={["Ticket ID", "Customer", "Phone", "Drop-off", "Type", "Weight", "Fee (PHP)", "Status"]}
               rows={transactions.map((t) => [
                 t.ticketId,
                 t.customerName,
-                t.phone,
+                t.phone || "-",
                 t.dropOffDate,
                 t.washType,
                 `${t.weight} kg`,
-                `₱${t.fee}`,
+                formatPhp(t.fee),
                 t.status,
               ])}
-              flexes={[0.9, 1.4, 1.1, 0.9, 0.9, 0.7, 0.7, 0.9]}
+              flexes={[0.9, 1.4, 1.1, 0.9, 0.9, 0.7, 1.1, 0.9]}
+              aligns={["left", "left", "left", "center", "left", "right", "right", "center"]}
             />
           </View>
         </Page>
@@ -219,13 +246,15 @@ function ReportDocument({ exportFrom, exportTo, sections, transactions, serviceR
           <View style={S.body}>
             <Text style={S.sectionTitle}>Revenue by Service Type</Text>
             <Table
-              headers={["Service", "Transactions", "Revenue (₱)", "Avg per Order (₱)"]}
+              headers={["Service", "Transactions", "Revenue (PHP)", "Avg per Order (PHP)"]}
               rows={serviceRevenue.map((r) => [
                 r.service,
                 String(r.count),
-                `₱${r.revenue.toLocaleString()}`,
-                `₱${Math.round(r.revenue / r.count)}`,
+                formatPhp(r.revenue),
+                formatPhp(r.count > 0 ? Math.round(r.revenue / r.count) : 0),
               ])}
+              flexes={[1.4, 1, 1.2, 1.2]}
+              aligns={["left", "center", "right", "right"]}
             />
           </View>
         </Page>
@@ -243,9 +272,10 @@ function ReportDocument({ exportFrom, exportTo, sections, transactions, serviceR
           <View style={S.body}>
             <Text style={S.sectionTitle}>Loyalty Customer Records</Text>
             <Table
-              headers={["Name", "Phone", "Total Transactions", "Total Spent (₱)"]}
+              headers={["Customer Name", "Phone", "Total Transactions", "Total Spent (PHP)"]}
               rows={custRows}
-              flexes={[1.4, 1.1, 1, 1]}
+              flexes={[1.4, 1.1, 1.1, 1.3]}
+              aligns={["left", "left", "center", "right"]}
             />
           </View>
         </Page>

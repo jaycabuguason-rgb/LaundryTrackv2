@@ -12,6 +12,7 @@ import {
   Gift,
   Award,
   Check,
+  Sparkles,
   CheckCircle2,
   LayoutGrid,
   Table as TableIcon,
@@ -1074,7 +1075,7 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
             <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-primary text-white rounded-2xl p-3.5 shadow-xs relative overflow-hidden flex items-center justify-between">
               <div className="relative z-10 pr-2 space-y-0.5">
                 <div className="flex items-center gap-1.5 text-purple-200 text-[10px] font-bold uppercase tracking-wider">
-                  <Award className="w-3.5 h-3.5" />
+                  <Sparkles className="w-3.5 h-3.5" />
                   <span>Active Shop Campaign</span>
                 </div>
                 <h4 className="font-bold text-sm leading-tight text-white">
@@ -1658,7 +1659,7 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
                 {/* Remaining Laundries Banner */}
                 <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 text-center space-y-1">
                   <div className="flex items-center justify-center gap-1.5 text-xs font-semibold text-primary">
-                    <Award className="w-3.5 h-3.5" />
+                    <Sparkles className="w-3.5 h-3.5" />
                     <span>{cycleStamps} of {washesPerReward} washes collected</span>
                   </div>
                   <p className="text-sm font-bold text-foreground">

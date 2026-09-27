@@ -4,6 +4,7 @@ import {
   Star,
   Award,
   Package,
+  Sparkles,
   MapPin,
   Phone,
   Mail,
@@ -310,7 +311,7 @@ export default async function MemberLoyaltyStatusPage({
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                      <Gift className="h-4 w-4" />
+                      <Sparkles className="h-4 w-4" />
                     </div>
                     <div>
                       <p className="text-xs font-bold text-foreground">{item.reward}</p>
