@@ -135,6 +135,7 @@ describe("Tier 3: TopNav Connection & Diagnostics Dialog", () => {
         adminProfile={{
           id: "u-1",
           name: "Admin User",
+          username: "admin",
           email: "admin@test.com",
           role: "admin",
         }}
@@ -169,6 +170,7 @@ describe("Tier 4: Inline Form & Modal Alerts", () => {
       id: "tx-test-1",
       ticketId: "TKT-0100",
       customerName: "Test Customer",
+      phone: "09123456789",
       washType: "Regular",
       weight: 5,
       fee: 200,

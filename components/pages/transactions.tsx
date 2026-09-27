@@ -3128,6 +3128,7 @@ export default function TransactionsPage({
                                     return (
                                       <DropdownMenuItem
                                         key={s}
+                                        onSelect={() => void handleDirectStatusSelect(txn, s)}
                                         onClick={() => void handleDirectStatusSelect(txn, s)}
                                         disabled={isCurrent}
                                         className={cn(
