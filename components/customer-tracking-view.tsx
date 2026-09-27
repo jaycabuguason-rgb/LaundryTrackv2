@@ -83,13 +83,13 @@ export function StatusStepper({ status, dropOffTime }: { status: string; dropOff
 
   return (
     <div className="relative px-1 pt-1 pb-1">
-      {/* Horizontal background track */}
-      <div className="absolute left-6 right-6 top-5 h-1 bg-muted rounded-full -z-0" />
-      {/* Dynamic progress bar */}
-      <div
-        className="absolute left-6 top-5 h-1 bg-primary rounded-full transition-all duration-500 -z-0"
-        style={{ width: progressPercent }}
-      />
+      {/* Horizontal background track and progress fill */}
+      <div className="absolute left-6 right-6 top-5 h-1 bg-muted rounded-full overflow-hidden -z-0">
+        <div
+          className="h-full bg-primary rounded-full transition-all duration-500"
+          style={{ width: progressPercent }}
+        />
+      </div>
 
       <div className="flex items-start justify-between relative z-10">
         {TRACKING_STEPS.map((step, index) => {
@@ -303,38 +303,25 @@ export function CustomerTrackingView({
 
         {/* Current Stage & Quick Payment Banner */}
         <div className="mt-3.5 w-full bg-[#F6F1F9] dark:bg-purple-950/40 rounded-2xl p-3 sm:p-3.5 flex items-center justify-between border border-purple-100/80 dark:border-purple-900/40 shadow-xs">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/60 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0">
-              {status === "Washing" || status === "Drying" ? (
-                <RotateCw className="w-5 h-5 animate-spin" style={{ animationDuration: "9s" }} />
-              ) : status === "Ready" ? (
-                <Sparkles className="w-5 h-5" />
-              ) : status === "Claimed" ? (
-                <CheckCircle2 className="w-5 h-5" />
-              ) : (
-                <Inbox className="w-5 h-5" />
-              )}
-            </div>
-            <div className="flex flex-col min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                  Current Stage
-                </span>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-200/70 dark:bg-purple-800 text-purple-900 dark:text-purple-100 text-[11px] font-bold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-purple-700 dark:bg-purple-300" />
-                  {status}
-                </span>
-              </div>
-              <span className="text-xs sm:text-sm font-semibold text-foreground truncate mt-0.5">
-                {status === "Washing" || status === "Drying"
-                  ? "Machine Processing • Active Cycle"
-                  : status === "Ready"
-                    ? "Drying Complete • Awaiting Pickup"
-                    : status === "Claimed"
-                      ? "Order Handed Over to Customer"
-                      : "Intake Checked • Ready for Wash"}
+          <div className="flex flex-col min-w-0 pr-2">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                Current Stage
+              </span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-200/70 dark:bg-purple-800 text-purple-900 dark:text-purple-100 text-[11px] font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-700 dark:bg-purple-300" />
+                {status}
               </span>
             </div>
+            <span className="text-xs sm:text-sm font-semibold text-foreground truncate mt-0.5">
+              {status === "Washing" || status === "Drying"
+                ? "Machine Processing • Active Cycle"
+                : status === "Ready"
+                  ? "Drying Complete • Awaiting Pickup"
+                  : status === "Claimed"
+                    ? "Order Handed Over to Customer"
+                    : "Intake Checked • Ready for Wash"}
+            </span>
           </div>
 
           <div className="flex flex-col items-end shrink-0 pl-2">

@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { type Transaction, type TransactionStatus } from "@/lib/data";
-import { AlertTriangle, Check, Loader2, X } from "lucide-react";
+import { AlertTriangle, Check, Edit, Loader2, X } from "lucide-react";
 import { getStatusIcon } from "@/components/status-badge";
 import { toast } from "@/hooks/use-toast";
 import { showAppErrorToast } from "@/lib/error-toast";
@@ -152,7 +152,7 @@ export function TransactionEditModal({ open, onOpenChange, transaction, onSave }
         modal
       >
         <DialogContent
-          className="w-[calc(100vw-1rem)] sm:w-auto max-w-lg max-h-[90vh] overflow-y-auto"
+          className="p-0 border-0 bg-transparent shadow-none max-w-lg w-full max-h-[92vh] overflow-hidden flex flex-col justify-end sm:justify-center"
           onPointerDownOutside={(e) => {
             if (hasChanges) {
               e.preventDefault();
@@ -166,151 +166,183 @@ export function TransactionEditModal({ open, onOpenChange, transaction, onSave }
             }
           }}
         >
-          <DialogHeader>
-            <DialogTitle>Edit Ticket — {transaction.ticketId}</DialogTitle>
-            <DialogDescription>Update status and payment for this transaction.</DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-5">
-            {/* Read-only summary */}
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              {[
-                { label: "Customer",  value: transaction.customerName },
-                { label: "Wash Type", value: transaction.washType },
-                { label: "Weight",    value: transaction.weight > 0 ? `${transaction.weight} kg` : "Per load" },
-                { label: "Fee",       value: `₱${transaction.fee}` },
-              ].map((row) => (
-                <div key={row.label} className="bg-muted/30 rounded-md p-2.5">
-                  <p className="text-xs text-muted-foreground">{row.label}</p>
-                  <p className="font-medium text-foreground text-xs mt-0.5">{row.value}</p>
+          {/* ── MOBILE DRAWER / DESKTOP MODAL CONTAINER ──────────────────────── */}
+          <div className="relative w-full bg-card rounded-t-3xl sm:rounded-2xl border border-border shadow-2xl overflow-hidden flex flex-col max-h-[88vh]">
+            {/* Drag Handle & Sticky Drawer Header */}
+            <div className="pt-2.5 pb-2.5 px-4 flex flex-col items-center bg-muted/40 border-b border-border/60 shrink-0 sticky top-0 z-20 backdrop-blur-md">
+              <div className="w-12 h-1.5 rounded-full bg-muted-foreground/30 mb-2 sm:hidden" />
+              <div className="w-full flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                    <Edit className="w-4 h-4" />
+                  </div>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <DialogTitle className="font-bold text-sm sm:text-base text-foreground tracking-tight truncate">
+                      Edit Ticket
+                    </DialogTitle>
+                    <span className="px-2 py-0.5 rounded-full bg-purple-700 text-white font-mono text-[11px] sm:text-xs font-bold tracking-wide shrink-0 shadow-xs">
+                      {transaction.ticketId}
+                    </span>
+                  </div>
                 </div>
-              ))}
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="w-8 h-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted"
+                  onClick={requestClose}
+                  title="Close"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+              <DialogDescription className="sr-only">
+                Update status and payment for this transaction.
+              </DialogDescription>
             </div>
 
-            {/* Current Status */}
-            <div>
-              <label className="text-xs font-medium text-foreground mb-1.5 block">Current Status</label>
-              <Select
-                value={status === "Drying" ? "Washing" : status}
-                onValueChange={(v) => setStatus(v as TransactionStatus)}
-              >
-                <SelectTrigger className="h-9 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_OPTIONS.map(({ value, text }) => {
-                    const blocked = value === "Claimed" && paymentStatus === "unpaid";
-                    return (
-                      <SelectItem key={value} value={value} disabled={blocked}>
-                        <div className="flex items-center gap-2">
-                          <span className={cn("shrink-0", text)}>{getStatusIcon(value, "w-3.5 h-3.5")}</span>
-                          <span className={cn("font-medium text-xs", text)}>{value}</span>
-                          {blocked && (
-                            <span className="ml-1 text-xs text-muted-foreground">(payment required)</span>
-                          )}
-                        </div>
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Payment Status */}
-            <div>
-              <label className="text-xs font-medium text-foreground mb-1.5 block">Payment Status</label>
-              <div className="grid grid-cols-2 gap-2">
-                {(["unpaid", "paid"] as const).map((ps) => (
-                  <button
-                    key={ps}
-                    type="button"
-                    onClick={() => setPaymentStatus(ps)}
-                    className={cn(
-                      "rounded-lg border-2 py-2.5 px-3 text-xs font-semibold transition-colors duration-200 cursor-pointer",
-                      ps === "unpaid"
-                        ? paymentStatus === "unpaid"
-                          ? "border-red-500 bg-red-50 text-red-600"
-                          : "border-border bg-background text-muted-foreground hover:border-red-400 hover:bg-red-50 hover:text-red-600"
-                        : paymentStatus === "paid"
-                          ? "border-green-500 bg-green-50 text-green-600"
-                          : "border-border bg-background text-muted-foreground hover:border-green-400 hover:bg-green-50 hover:text-green-600",
-                    )}
-                  >
-                    {ps === "unpaid" ? "Unpaid" : "Paid"}
-                  </button>
+            {/* Scrollable Form Body */}
+            <div className="p-4 sm:p-5 space-y-4 overflow-y-auto overscroll-contain">
+              {/* Read-only summary */}
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                {[
+                  { label: "Customer",  value: transaction.customerName },
+                  { label: "Wash Type", value: transaction.washType },
+                  { label: "Weight",    value: transaction.weight > 0 ? `${transaction.weight} kg` : "Per load" },
+                  { label: "Fee",       value: `₱${transaction.fee}` },
+                ].map((row) => (
+                  <div key={row.label} className="bg-muted/30 rounded-md p-2.5">
+                    <p className="text-xs text-muted-foreground">{row.label}</p>
+                    <p className="font-medium text-foreground text-xs mt-0.5">{row.value}</p>
+                  </div>
                 ))}
               </div>
-            </div>
 
-            {/* Wash Instructions */}
-            <div>
-              <label className="text-xs font-medium text-foreground mb-1.5 block">Wash Instructions</label>
-              <Textarea
-                placeholder="Add special wash instructions..."
-                value={washInstructions}
-                onChange={(e) => setWashInstructions(e.target.value)}
-                className="text-sm resize-none"
-                rows={2}
-              />
-            </div>
-
-            {/* Warning */}
-            {showUnpaidWarning && (
-              <div className="flex items-start gap-2 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2.5 text-sm text-orange-800">
-                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                <span>Mark payment as Paid first before claiming this ticket.</span>
+              {/* Current Status */}
+              <div>
+                <label className="text-xs font-medium text-foreground mb-1.5 block">Current Status</label>
+                <Select
+                  value={status === "Drying" ? "Washing" : status}
+                  onValueChange={(v) => setStatus(v as TransactionStatus)}
+                >
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUS_OPTIONS.map(({ value, text }) => {
+                      const blocked = value === "Claimed" && paymentStatus === "unpaid";
+                      return (
+                        <SelectItem key={value} value={value} disabled={blocked}>
+                          <div className="flex items-center gap-2">
+                            <span className={cn("shrink-0", text)}>{getStatusIcon(value, "w-3.5 h-3.5")}</span>
+                            <span className={cn("font-medium text-xs", text)}>{value}</span>
+                            {blocked && (
+                              <span className="ml-1 text-xs text-muted-foreground">(payment required)</span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
               </div>
-            )}
 
-            {/* Error Alert */}
-            {editError && (
-              <div
-                role="alert"
-                className="flex items-start gap-2 bg-destructive/10 border border-destructive/30 rounded-lg px-3 py-2.5 text-xs text-destructive animate-in fade-in-50 duration-200"
-              >
-                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                <span className="font-semibold">{editError}</span>
+              {/* Payment Status */}
+              <div>
+                <label className="text-xs font-medium text-foreground mb-1.5 block">Payment Status</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["unpaid", "paid"] as const).map((ps) => (
+                    <button
+                      key={ps}
+                      type="button"
+                      onClick={() => setPaymentStatus(ps)}
+                      className={cn(
+                        "rounded-lg border-2 py-2.5 px-3 text-xs font-semibold transition-colors duration-200 cursor-pointer",
+                        ps === "unpaid"
+                          ? paymentStatus === "unpaid"
+                            ? "border-red-500 bg-red-50 text-red-600"
+                            : "border-border bg-background text-muted-foreground hover:border-red-400 hover:bg-red-50 hover:text-red-600"
+                          : paymentStatus === "paid"
+                            ? "border-green-500 bg-green-50 text-green-600"
+                            : "border-border bg-background text-muted-foreground hover:border-green-400 hover:bg-green-50 hover:text-green-600",
+                      )}
+                    >
+                      {ps === "unpaid" ? "Unpaid" : "Paid"}
+                    </button>
+                  ))}
+                </div>
               </div>
-            )}
 
-            {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-2 pt-1">
-              {showMoveToClaimed && (
+              {/* Wash Instructions */}
+              <div>
+                <label className="text-xs font-medium text-foreground mb-1.5 block">Wash Instructions</label>
+                <Textarea
+                  placeholder="Add special wash instructions..."
+                  value={washInstructions}
+                  onChange={(e) => setWashInstructions(e.target.value)}
+                  className="text-sm resize-none"
+                  rows={2}
+                />
+              </div>
+
+              {/* Warning */}
+              {showUnpaidWarning && (
+                <div className="flex items-start gap-2 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2.5 text-sm text-orange-800">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>Mark payment as Paid first before claiming this ticket.</span>
+                </div>
+              )}
+
+              {/* Error Alert */}
+              {editError && (
+                <div
+                  role="alert"
+                  className="flex items-start gap-2 bg-destructive/10 border border-destructive/30 rounded-lg px-3 py-2.5 text-xs text-destructive animate-in fade-in-50 duration-200"
+                >
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span className="font-semibold">{editError}</span>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                {showMoveToClaimed && (
+                  <Button
+                    size="sm"
+                    onClick={() => setShowClaimConfirm(true)}
+                    disabled={saving}
+                    className="flex-1 gap-1.5 cursor-pointer"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    Move to Claimed
+                  </Button>
+                )}
                 <Button
                   size="sm"
-                  onClick={() => setShowClaimConfirm(true)}
-                  disabled={saving}
-                  className="flex-1 gap-1.5 cursor-pointer"
+                  variant="secondary"
+                  onClick={handleSave}
+                  disabled={saving || !hasChanges}
+                  className="flex-1 cursor-pointer"
                 >
-                  <Check className="w-3.5 h-3.5" />
-                  Move to Claimed
+                  {saving ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
                 </Button>
-              )}
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={handleSave}
-                disabled={saving || !hasChanges}
-                className="flex-1 cursor-pointer"
-              >
-                {saving ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  "Save Changes"
-                )}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={requestClose}
-                disabled={saving}
-                className="flex-1 cursor-pointer"
-              >
-                <X className="w-3.5 h-3.5 mr-1" /> Cancel
-              </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={requestClose}
+                  disabled={saving}
+                  className="flex-1 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5 mr-1" /> Cancel
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>

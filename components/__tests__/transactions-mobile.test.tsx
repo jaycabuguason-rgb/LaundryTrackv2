@@ -196,6 +196,37 @@ describe("TransactionsPage Mobile Concept Layout", () => {
     expect(cards[1]).toHaveAttribute("aria-label", expect.stringContaining("TKT-0027"));
   });
 
+  it("expands card on tap and opens bottom sheet drawer via dedicated button", () => {
+    render(
+      <TransactionsPage
+        transactions={mockTransactions}
+        onCreateTransaction={onCreateTransaction}
+        onUpdateTransaction={onUpdateTransaction}
+      />
+    );
+
+    const card27 = screen.getByLabelText(/Ticket #TKT-0027/i);
+    expect(card27).toBeInTheDocument();
+
+    // In collapsed state, service specifics and bottom sheet trigger are hidden
+    expect(within(card27).queryByText(/Go to bottom sheet for full ticket details/i)).not.toBeInTheDocument();
+
+    // Tap card to expand
+    fireEvent.click(card27);
+
+    // Expanded state reveals service details and the bottom sheet trigger button
+    const bottomSheetBtn = within(card27).getByRole("button", {
+      name: /Go to bottom sheet for full ticket details/i,
+    });
+    expect(bottomSheetBtn).toBeInTheDocument();
+
+    // Click Go to bottom sheet button
+    fireEvent.click(bottomSheetBtn);
+
+    // Ticket details bottom sheet modal should be open
+    expect(screen.getByText("Ticket Details")).toBeInTheDocument();
+  });
+
   it("opens mobile quick action drawer when clicking more options button on a card", () => {
     render(
       <TransactionsPage
@@ -205,8 +236,10 @@ describe("TransactionsPage Mobile Concept Layout", () => {
       />
     );
 
-    // Find more options button on the mobile card for TKT-0027
+    // Find card and tap to expand
     const card27 = screen.getByLabelText(/Ticket #TKT-0027/i);
+    fireEvent.click(card27);
+
     const moreBtn = within(card27).getByRole("button", { name: /more options/i });
     fireEvent.click(moreBtn);
 
@@ -237,6 +270,8 @@ describe("TransactionsPage Mobile Concept Layout", () => {
     );
 
     const card27 = screen.getByLabelText(/Ticket #TKT-0027/i);
+    fireEvent.click(card27);
+
     const moreBtn = within(card27).getByRole("button", { name: /more options/i });
     fireEvent.click(moreBtn);
 
@@ -260,7 +295,10 @@ describe("TransactionsPage Mobile Concept Layout", () => {
       />
     );
 
-    // Bob Reyes is Ready and paid, so he has a Claim button
+    // Bob Reyes is Ready and paid; expand card TKT-0028
+    const card28 = screen.getByLabelText(/Ticket #TKT-0028/i);
+    fireEvent.click(card28);
+
     const claimButton = screen.getByRole("button", { name: /^claim$/i });
     expect(claimButton).toBeInTheDocument();
 

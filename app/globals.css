@@ -270,10 +270,10 @@
 /* Suppress third-party extension overlays (e.g. Scroll To Top extensions) */
 #pratikabuSTTDiv,
 #pratikabuSTTDiv2,
-[id*="pratikabu"],
-[class*="pratikabu"],
-[id^="pratikabuSTT"],
-[class^="pratikabuSTT"],
+[id*="pratikabu" i],
+[class*="pratikabu" i],
+[id^="pratikabuSTT" i],
+[class^="pratikabuSTT" i],
 #scroll-to-top,
 .scroll-to-top,
 .scroll-to-top-button,
@@ -281,7 +281,15 @@
 #stt-container,
 .stt-button,
 [data-stt],
-[data-scroll-to-top] {
+[data-scroll-to-top],
+[id*="scrolltop" i],
+[class*="scrolltop" i],
+[id*="scroll-top" i],
+[class*="scroll-top" i],
+[id*="stt" i],
+[class*="stt" i],
+[id*="scroll-button" i],
+[class*="scroll-button" i] {
   display: none !important;
   visibility: hidden !important;
   opacity: 0 !important;

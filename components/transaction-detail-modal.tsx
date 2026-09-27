@@ -203,42 +203,27 @@ export function TransactionDetailModal({
           <div className="p-3.5 sm:p-5 space-y-3 sm:space-y-4 overflow-y-auto overscroll-contain">
             {/* 1. Current Stage & Quick Payment Banner */}
             <div className="w-full bg-[#F6F1F9] dark:bg-purple-950/40 rounded-2xl p-3 flex items-center justify-between border border-purple-100/80 dark:border-purple-900/40 shadow-xs">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/60 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0">
-                  {transaction.status === "Washing" ? (
-                    <RotateCw className="w-5 h-5 animate-spin" style={{ animationDuration: "9s" }} />
-                  ) : transaction.status === "Received" ? (
-                    <Inbox className="w-5 h-5" />
-                  ) : transaction.status === "Ready" ? (
-                    <Sparkles className="w-5 h-5" />
-                  ) : transaction.status === "Claimed" ? (
-                    <CheckCircle2 className="w-5 h-5" />
-                  ) : (
-                    <Circle className="w-5 h-5 text-destructive" />
-                  )}
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                      Current Stage
-                    </span>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-200/70 dark:bg-purple-800 text-purple-900 dark:text-purple-100 text-[11px] font-bold">
-                      <span className="w-1.5 h-1.5 rounded-full bg-purple-700 dark:bg-purple-300" />
-                      {transaction.status}
-                    </span>
-                  </div>
-                  <span className="text-xs sm:text-sm font-semibold text-foreground truncate mt-0.5">
-                    {transaction.status === "Washing"
-                      ? "Machine Processing • Active Cycle"
-                      : transaction.status === "Ready"
-                        ? "Drying Complete • Awaiting Pickup"
-                        : transaction.status === "Claimed"
-                          ? "Handed Over to Customer"
-                          : transaction.status === "Voided"
-                            ? "Cancelled & Voided"
-                            : "Intake Checked • Ready for Wash"}
+              <div className="flex flex-col min-w-0 pr-2">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                    Current Stage
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-200/70 dark:bg-purple-800 text-purple-900 dark:text-purple-100 text-[11px] font-bold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-700 dark:bg-purple-300" />
+                    {transaction.status}
                   </span>
                 </div>
+                <span className="text-xs sm:text-sm font-semibold text-foreground truncate mt-0.5">
+                  {transaction.status === "Washing"
+                    ? "Machine Processing • Active Cycle"
+                    : transaction.status === "Ready"
+                      ? "Drying Complete • Awaiting Pickup"
+                      : transaction.status === "Claimed"
+                        ? "Handed Over to Customer"
+                        : transaction.status === "Voided"
+                          ? "Cancelled & Voided"
+                          : "Intake Checked • Ready for Wash"}
+                </span>
               </div>
 
               <div className="flex flex-col items-end shrink-0 pl-2">
@@ -272,13 +257,14 @@ export function TransactionDetailModal({
 
                 {/* Horizontal Stepper */}
                 <div className="relative flex items-center justify-between px-2 pt-1 pb-1">
-                  <div className="absolute left-6 right-6 top-4 h-1 bg-muted rounded-full -z-0" />
-                  <div
-                    className="absolute left-6 top-4 h-1 bg-primary rounded-full transition-all duration-300 -z-0"
-                    style={{
-                      width: stepIndex <= 0 ? "0%" : stepIndex === 1 ? "33%" : stepIndex === 2 ? "66%" : "100%",
-                    }}
-                  />
+                  <div className="absolute left-6 right-6 top-4 h-1 bg-muted rounded-full overflow-hidden -z-0">
+                    <div
+                      className="h-full bg-primary rounded-full transition-all duration-300"
+                      style={{
+                        width: stepIndex <= 0 ? "0%" : stepIndex === 1 ? "33.3%" : stepIndex === 2 ? "66.6%" : "100%",
+                      }}
+                    />
+                  </div>
 
                   {STATUS_STEPS.map((step, idx) => {
                     const isDone = idx < stepIndex;

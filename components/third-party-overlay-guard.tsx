@@ -5,10 +5,10 @@ import { useEffect } from "react";
 const OVERLAY_SELECTORS = [
   "#pratikabuSTTDiv",
   "#pratikabuSTTDiv2",
-  '[id*="pratikabu"]',
-  '[class*="pratikabu"]',
-  '[id^="pratikabuSTT"]',
-  '[class^="pratikabuSTT"]',
+  '[id*="pratikabu" i]',
+  '[class*="pratikabu" i]',
+  '[id^="pratikabuSTT" i]',
+  '[class^="pratikabuSTT" i]',
   "#scroll-to-top",
   ".scroll-to-top",
   ".scroll-to-top-button",
@@ -17,6 +17,12 @@ const OVERLAY_SELECTORS = [
   ".stt-button",
   "[data-stt]",
   "[data-scroll-to-top]",
+  '[id*="scrolltop" i]',
+  '[class*="scrolltop" i]',
+  '[id*="scroll-top" i]',
+  '[class*="scroll-top" i]',
+  '[id*="stt" i]',
+  '[class*="stt" i]',
 ].join(", ");
 
 export default function ThirdPartyOverlayGuard() {
@@ -31,8 +37,26 @@ export default function ThirdPartyOverlayGuard() {
         elements.forEach((el) => {
           el.remove();
         });
+
+        // Check direct children of body/html for custom elements or injected extension containers
+        document.querySelectorAll("body > *").forEach((el) => {
+          const id = el.id || "";
+          const className = typeof el.className === "string" ? el.className : "";
+          if (
+            (id && /pratikabu|stt|scroll.*top/i.test(id)) ||
+            (className && /pratikabu|stt|scroll.*top/i.test(className))
+          ) {
+            if (id !== "__next" && !el.hasAttribute("data-radix-portal") && !el.querySelector("#__next")) {
+              el.remove();
+            }
+          }
+          if (el.shadowRoot) {
+            const shadowMatches = el.shadowRoot.querySelectorAll(OVERLAY_SELECTORS);
+            shadowMatches.forEach((sEl) => sEl.remove());
+          }
+        });
       } catch {
-        // Silently ignore if query selector fails or DOM is in transient state
+        // Silently ignore transient DOM errors
       }
     };
 
@@ -47,8 +71,11 @@ export default function ThirdPartyOverlayGuard() {
       subtree: true,
     });
 
+    window.addEventListener("scroll", cleanOverlays, { passive: true });
+
     return () => {
       observer.disconnect();
+      window.removeEventListener("scroll", cleanOverlays);
     };
   }, []);
 

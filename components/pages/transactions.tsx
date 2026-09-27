@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import {
-  Search, EyeOff, Edit, Ban, Printer, ChevronRight, X, QrCode, CalendarIcon,
+  Search, EyeOff, Edit, Ban, Printer, ChevronRight, ChevronDown, X, QrCode, CalendarIcon,
   AlertTriangle, Plus, User, Star, Camera,
   ChevronLeft, Check, RefreshCw, Inbox, MoreHorizontal, Download, Sparkles,
   Receipt, Clock, CheckCircle2, PackageCheck, ArrowRight,
@@ -1323,6 +1323,13 @@ export default function TransactionsPage({
   const [mobileStatusBusyTicket, setMobileStatusBusyTicket] = useState<string | null>(null);
   const [mobileActionTxn, setMobileActionTxn] = useState<Transaction | null>(null);
   const [mobileShowScanner, setMobileShowScanner] = useState(false);
+  const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
+  const toggleCardExpand = (ticketId: string) => {
+    setExpandedCards((prev) => ({
+      ...prev,
+      [ticketId]: !prev[ticketId],
+    }));
+  };
   const [busy, setBusy] = useState(false);
 
   // Toast
@@ -2050,6 +2057,34 @@ export default function TransactionsPage({
           <button
             type="button"
             role="tab"
+            aria-selected={activeTab === "all"}
+            onClick={() => {
+              setActiveTab("all");
+              setFilterStatus("all");
+              setSortBy("newest");
+            }}
+            className={cn(
+              "flex-1 min-w-[55px] sm:min-w-0 py-1.5 px-1.5 sm:px-2 rounded-lg font-semibold text-[11px] sm:text-xs flex items-center justify-center gap-1 shrink-0 transition-all active:scale-95",
+              activeTab === "all"
+                ? "bg-primary text-primary-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <span className="truncate">All</span>
+            <span
+              className={cn(
+                "px-1.5 py-0.2 rounded-full text-[9px] sm:text-[10px] font-bold tabular-nums shrink-0",
+                activeTab === "all"
+                  ? "bg-white/20 text-primary-foreground"
+                  : "bg-muted text-muted-foreground"
+              )}
+            >
+              {allOrdersCount}
+            </span>
+          </button>
+          <button
+            type="button"
+            role="tab"
             aria-selected={activeTab === "transactions"}
             onClick={() => {
               setActiveTab("transactions");
@@ -2101,34 +2136,6 @@ export default function TransactionsPage({
               )}
             >
               {claimedOrdersCount}
-            </span>
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "all"}
-            onClick={() => {
-              setActiveTab("all");
-              setFilterStatus("all");
-              setSortBy("newest");
-            }}
-            className={cn(
-              "flex-1 min-w-[55px] sm:min-w-0 py-1.5 px-1.5 sm:px-2 rounded-lg font-semibold text-[11px] sm:text-xs flex items-center justify-center gap-1 shrink-0 transition-all active:scale-95",
-              activeTab === "all"
-                ? "bg-primary text-primary-foreground shadow-xs"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <span className="truncate">All</span>
-            <span
-              className={cn(
-                "px-1.5 py-0.2 rounded-full text-[9px] sm:text-[10px] font-bold tabular-nums shrink-0",
-                activeTab === "all"
-                  ? "bg-white/20 text-primary-foreground"
-                  : "bg-muted text-muted-foreground"
-              )}
-            >
-              {allOrdersCount}
             </span>
           </button>
           <button
@@ -2416,161 +2423,213 @@ export default function TransactionsPage({
               ? "bg-sky-500"
               : "bg-primary";
 
+            const isExpanded = Boolean(expandedCards[txn.ticketId]);
+
             return (
               <ContextMenu key={`mobile-${txn.id}`}>
                 <ContextMenuTrigger asChild>
                   <div
                     role="button"
                     tabIndex={0}
-                    onClick={() => setViewTxn(txn)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    const target = e.target as HTMLElement;
-                    if (target.closest("button, a, input, select, textarea, [role='menuitem']")) return;
-                    e.preventDefault();
-                    setViewTxn(txn);
-                  }
-                }}
-                className={cn(
-                  "relative overflow-hidden rounded-2xl bg-card border border-border/80 shadow-xs flex flex-col transition-all active:scale-[0.99] cursor-pointer",
-                  isVoided && "opacity-60 bg-muted/20",
-                  isClaimed && "bg-muted/10"
-                )}
-                aria-label={`Ticket #${txn.ticketId} — ${txn.customerName}`}
-              >
-                {/* Left Colored Accent Status Edge */}
-                <div className={cn("absolute left-0 top-0 bottom-0 w-1.5", accentColor)} />
+                    aria-expanded={isExpanded}
+                    onClick={() => toggleCardExpand(txn.ticketId)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        const target = e.target as HTMLElement;
+                        if (target.closest("button, a, input, select, textarea, [role='menuitem']")) return;
+                        e.preventDefault();
+                        toggleCardExpand(txn.ticketId);
+                      }
+                    }}
+                    className={cn(
+                      "relative overflow-hidden rounded-2xl bg-card border border-border/80 shadow-xs flex flex-col transition-all cursor-pointer",
+                      isVoided && "opacity-60 bg-muted/20",
+                      isClaimed && "bg-muted/10"
+                    )}
+                    aria-label={`Ticket #${txn.ticketId} — ${txn.customerName}`}
+                  >
+                    {/* Left Colored Accent Status Edge */}
+                    <div className={cn("absolute left-0 top-0 bottom-0 w-1.5", accentColor)} />
 
-                <div className="p-3.5 pl-4 flex flex-col gap-2">
-                  {/* Card Top Bar: Ticket Pill, Date, Price */}
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5">
-                      <span className={cn(
-                        "px-2 py-0.5 rounded-lg font-mono text-xs font-bold tracking-tight",
-                        isVoided
-                          ? "bg-muted text-muted-foreground line-through"
-                          : "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-foreground"
-                      )}>
-                        #{txn.ticketId}
-                      </span>
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-muted-foreground/70" />
-                        {formatDateDisplay(txn.arrivalDateTime || txn.dropOffDate)}
-                      </span>
-                    </div>
-                    <div className="flex flex-col items-end">
-                      <span className={cn(
-                        "text-base font-extrabold text-foreground leading-none tabular-nums",
-                        isVoided && "line-through text-muted-foreground"
-                      )}>
-                        ₱{txn.fee.toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Customer & Service Details Line */}
-                  <div className="flex items-start justify-between gap-2 pt-0.5">
-                    <div className="flex flex-col min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className={cn(
-                          "font-bold text-sm text-foreground truncate",
-                          isVoided && "line-through text-muted-foreground"
-                        )}>
-                          {txn.customerName}
-                        </span>
-                        {loyaltyEnabled && Boolean(getLoyaltyMemberForTxn(txn)) && (
-                          <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 px-1.5 py-0.2 text-[10px] font-semibold shrink-0">
-                            <Sparkles className="w-2.5 h-2.5 text-amber-500 fill-amber-500" />
-                            Loyalty
+                    <div className="p-3.5 pl-4 flex flex-col gap-2">
+                      {/* Card Top Bar: Ticket Pill, Date, Price */}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className={cn(
+                              "px-2 py-0.5 rounded-lg font-mono text-xs font-bold tracking-tight",
+                              isVoided
+                                ? "bg-muted text-muted-foreground line-through"
+                                : "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-foreground"
+                            )}
+                          >
+                            #{txn.ticketId}
                           </span>
-                        )}
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-muted-foreground/70" />
+                            {formatDateDisplay(txn.arrivalDateTime || txn.dropOffDate)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span
+                            className={cn(
+                              "text-base font-extrabold text-foreground leading-none tabular-nums",
+                              isVoided && "line-through text-muted-foreground"
+                            )}
+                          >
+                            ₱{txn.fee.toLocaleString()}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground truncate mt-0.5">
-                        <span>{txn.washType}</span>
-                        {txn.weight ? (
-                          <>
-                            <span>•</span>
-                            <span className="font-medium text-foreground">{txn.weight} kg</span>
-                          </>
-                        ) : null}
-                        {txn.addOns && txn.addOns.length > 0 ? (
-                          <>
-                            <span>•</span>
-                            <span className="text-muted-foreground font-medium">{txn.addOns.join(", ")}</span>
-                          </>
-                        ) : null}
-                        {txn.machineNumber ? (
-                          <>
-                            <span>•</span>
-                            <span className="text-primary font-medium">Machine #{txn.machineNumber}</span>
-                          </>
-                        ) : null}
+
+                      {/* Summary Row (Always visible): Name, Phone, StatusBadge, Chevron */}
+                      <div className="flex items-center justify-between gap-2 pt-0.5">
+                        <div className="flex items-center gap-1.5 min-w-0 flex-1 flex-wrap">
+                          <span
+                            className={cn(
+                              "font-bold text-sm text-foreground truncate",
+                              isVoided && "line-through text-muted-foreground"
+                            )}
+                          >
+                            {txn.customerName}
+                          </span>
+                          {txn.phone && (
+                            <span className="text-xs text-muted-foreground font-mono truncate">
+                              ({txn.phone})
+                            </span>
+                          )}
+                          {loyaltyEnabled && Boolean(getLoyaltyMemberForTxn(txn)) && (
+                            <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 px-1.5 py-0.2 text-[10px] font-semibold shrink-0">
+                              <Sparkles className="w-2.5 h-2.5 text-amber-500 fill-amber-500" />
+                              Loyalty
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-1 shrink-0">
+                          <StatusBadge status={txn.status} />
+                          <ChevronDown
+                            className={cn(
+                              "w-4 h-4 text-muted-foreground transition-transform duration-200 ml-0.5",
+                              isExpanded && "rotate-180 text-foreground"
+                            )}
+                          />
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Status Indicators Pill Column */}
-                    <div className="flex flex-col items-end gap-1 shrink-0">
-                      <StatusBadge status={txn.status} />
-                      {terminalInfo && (
-                        <span className="text-[11px] text-muted-foreground whitespace-nowrap font-medium text-right">
-                          {terminalInfo.label} {terminalInfo.dateText}
-                        </span>
-                      )}
-                      {isVoided && txn.voidReason && (
-                        <span className="text-[10px] text-destructive/90 font-medium truncate max-w-[160px] text-right">
-                          Reason: {txn.voidReason}
-                        </span>
-                      )}
-                      <PaymentBadge paymentStatus={txn.paymentStatus} />
-                    </div>
-                  </div>
-
-                  {/* Action Tray */}
-                  <div className="mt-1 pt-2 border-t border-border/40 flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5">
-                      {isReady && txn.paymentStatus === "paid" && (
-                        <Button
-                          size="sm"
-                          className="h-7 px-2.5 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            void handleQuickClaim(txn);
-                          }}
+                      {/* Expanded Section: Services, Payment, Lifecycle, Actions, Go to bottom sheet button */}
+                      {isExpanded && (
+                        <div
+                          className="pt-2 mt-0.5 border-t border-border/40 flex flex-col gap-2.5 animate-in fade-in-50 duration-200"
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          <PackageCheck className="w-3.5 h-3.5 mr-1" />
-                          <span>Claim</span>
-                        </Button>
+                          {/* Service Details Line */}
+                          <div className="flex items-center justify-between gap-2 flex-wrap text-xs text-muted-foreground">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span>{txn.washType}</span>
+                              {txn.weight ? (
+                                <>
+                                  <span>•</span>
+                                  <span className="font-medium text-foreground">{txn.weight} kg</span>
+                                </>
+                              ) : null}
+                              {txn.addOns && txn.addOns.length > 0 ? (
+                                <>
+                                  <span>•</span>
+                                  <span className="text-muted-foreground font-medium">{txn.addOns.join(", ")}</span>
+                                </>
+                              ) : null}
+                              {txn.machineNumber ? (
+                                <>
+                                  <span>•</span>
+                                  <span className="text-primary font-medium">Machine #{txn.machineNumber}</span>
+                                </>
+                              ) : null}
+                            </div>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <PaymentBadge paymentStatus={txn.paymentStatus} />
+                            </div>
+                          </div>
+
+                          {/* Lifecycle info (Claimed timestamp or Void reason) */}
+                          {(terminalInfo || (isVoided && txn.voidReason)) && (
+                            <div className="flex items-center justify-between gap-2 text-xs">
+                              {terminalInfo && (
+                                <span className="text-[11px] text-muted-foreground font-medium">
+                                  {terminalInfo.label} {terminalInfo.dateText}
+                                </span>
+                              )}
+                              {isVoided && txn.voidReason && (
+                                <span className="text-[10px] text-destructive/90 font-medium truncate max-w-[220px]">
+                                  Reason: {txn.voidReason}
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Action Tray */}
+                          <div className="pt-1 flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1.5">
+                              {isReady && txn.paymentStatus === "paid" && (
+                                <Button
+                                  size="sm"
+                                  className="h-7 px-2.5 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    void handleQuickClaim(txn);
+                                  }}
+                                >
+                                  <PackageCheck className="w-3.5 h-3.5 mr-1" />
+                                  <span>Claim</span>
+                                </Button>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground"
+                                aria-label={`Print receipt for ticket ${txn.ticketId}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPrintTxn(txn);
+                                  setPrintPostCreate(false);
+                                }}
+                              >
+                                <Printer className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground"
+                                aria-label="More options"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setMobileActionTxn(txn);
+                                }}
+                              >
+                                <MoreHorizontal className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Go to bottom sheet button */}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="w-full h-8 text-xs font-semibold rounded-xl border-purple-200/80 bg-purple-50/70 hover:bg-purple-100 text-purple-900 dark:border-purple-800/60 dark:bg-purple-950/40 dark:text-purple-200 dark:hover:bg-purple-900/60 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setViewTxn(txn);
+                            }}
+                          >
+                            <Receipt className="w-3.5 h-3.5 text-purple-700 dark:text-purple-300" />
+                            <span>Go to bottom sheet for full ticket details</span>
+                          </Button>
+                        </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground"
-                        aria-label={`Print receipt for ticket ${txn.ticketId}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setPrintTxn(txn);
-                          setPrintPostCreate(false);
-                        }}
-                      >
-                        <Printer className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground"
-                        aria-label="More options"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setMobileActionTxn(txn);
-                        }}
-                      >
-                        <MoreHorizontal className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
               </div>
             </ContextMenuTrigger>
             {renderTransactionContextMenu(txn)}
