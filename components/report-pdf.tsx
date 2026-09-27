@@ -83,6 +83,18 @@ const S = StyleSheet.create({
     flex: 1,
     color: "#111",
   },
+  totalRow: {
+    flexDirection: "row",
+    borderTop: "1.5px solid #1d4ed8",
+    backgroundColor: "#eff6ff",
+  },
+  totalCell: {
+    fontSize: 8,
+    fontFamily: "Helvetica-Bold",
+    padding: 5,
+    flex: 1,
+    color: "#1d4ed8",
+  },
   // Fixed-width columns
   colSm:  { flex: 0.7 },
   colMd:  { flex: 1 },
@@ -132,11 +144,13 @@ const Table = ({
   rows,
   flexes,
   aligns,
+  boldLastRow,
 }: {
   headers: string[];
   rows: string[][];
   flexes?: number[];
   aligns?: Array<"left" | "center" | "right">;
+  boldLastRow?: boolean;
 }) => (
   <View style={S.table}>
     {/* Header */}
@@ -155,22 +169,34 @@ const Table = ({
       ))}
     </View>
     {/* Rows */}
-    {rows.map((row, ri) => (
-      <View key={ri} style={ri % 2 === 0 ? S.tableRow : S.tableRowEven}>
-        {row.map((cell, ci) => (
-          <Text
-            key={ci}
-            style={[
-              S.td,
-              flexes ? { flex: flexes[ci] } : {},
-              aligns && aligns[ci] ? { textAlign: aligns[ci] } : {},
-            ]}
-          >
-            {cell}
-          </Text>
-        ))}
-      </View>
-    ))}
+    {rows.map((row, ri) => {
+      const isLast = Boolean(boldLastRow && ri === rows.length - 1);
+      return (
+        <View
+          key={ri}
+          style={
+            isLast
+              ? S.totalRow
+              : ri % 2 === 0
+              ? S.tableRow
+              : S.tableRowEven
+          }
+        >
+          {row.map((cell, ci) => (
+            <Text
+              key={ci}
+              style={[
+                isLast ? S.totalCell : S.td,
+                flexes ? { flex: flexes[ci] } : {},
+                aligns && aligns[ci] ? { textAlign: aligns[ci] } : {},
+              ]}
+            >
+              {cell}
+            </Text>
+          ))}
+        </View>
+      );
+    })}
   </View>
 );
 
@@ -178,22 +204,82 @@ const Table = ({
 export interface ReportPdfProps {
   exportFrom: string;
   exportTo: string;
+  shopName?: string;
+  enablePaymentOption?: boolean;
   sections: ("transactions" | "analytics" | "customers")[];
   transactions: Transaction[];
   serviceRevenue: typeof SRDType;
+  totalCollectedRevenue?: number;
+  totalOutstandingBalance?: number;
+  totalPaidOrders?: number;
+  totalWeight?: number;
+  averageOrderValue?: number;
+  voidedCount?: number;
 }
 
-function ReportDocument({ exportFrom, exportTo, sections, transactions, serviceRevenue }: ReportPdfProps) {
-  // Build customer rows from transactions
+function ReportDocument({
+  exportFrom,
+  exportTo,
+  shopName = "LaundryTrack",
+  enablePaymentOption = true,
+  sections,
+  transactions,
+  serviceRevenue,
+  totalCollectedRevenue,
+  totalOutstandingBalance,
+  totalPaidOrders,
+  totalWeight,
+  averageOrderValue,
+  voidedCount,
+}: ReportPdfProps) {
+  const displayName = shopName?.trim() || "LaundryTrack";
+
+  // Derive metrics if not explicitly passed
+  const nonVoidTxns = transactions.filter((t) => t.status !== "Voided");
+  const voidCount = voidedCount ?? transactions.filter((t) => t.status === "Voided").length;
+  const processedWeight = totalWeight ?? transactions.reduce((sum, t) => sum + (t.weight || 0), 0);
+
+  const collectedRev =
+    totalCollectedRevenue ??
+    (enablePaymentOption
+      ? transactions.filter((t) => t.paymentStatus === "paid" && t.status !== "Voided").reduce((sum, t) => sum + t.fee, 0)
+      : nonVoidTxns.reduce((sum, t) => sum + t.fee, 0));
+
+  const outstandingBal =
+    totalOutstandingBalance ??
+    (enablePaymentOption
+      ? transactions.filter((t) => t.paymentStatus === "unpaid" && t.status !== "Voided").reduce((sum, t) => sum + t.fee, 0)
+      : 0);
+
+  const paidCount =
+    totalPaidOrders ??
+    (enablePaymentOption
+      ? transactions.filter((t) => t.paymentStatus === "paid" && t.status !== "Voided").length
+      : nonVoidTxns.length);
+
+  const aov =
+    averageOrderValue ??
+    (paidCount > 0 ? Math.round(collectedRev / paidCount) : 0);
+
+  // Build customer rows with grand totals
   const seen = new Set<string>();
-  const custRows: string[][] = [];
+  const rawCustRows: string[][] = [];
+  let grandTotalSpent = 0;
+  let grandTotalVisits = 0;
+
   transactions.forEach((t) => {
-    const key = t.phone || t.customerName;
+    const key = t.phone?.trim() || t.customerName.trim().toLowerCase();
     if (!seen.has(key)) {
       seen.add(key);
-      const ct = transactions.filter((x) => (t.phone ? x.phone === t.phone : x.customerName === t.customerName));
+      const ct = transactions.filter((x) =>
+        t.phone?.trim()
+          ? x.phone?.trim() === t.phone.trim()
+          : x.customerName.trim().toLowerCase() === t.customerName.trim().toLowerCase()
+      );
       const totalSpent = ct.reduce((s, x) => s + x.fee, 0);
-      custRows.push([
+      grandTotalSpent += totalSpent;
+      grandTotalVisits += ct.length;
+      rawCustRows.push([
         t.customerName || "Customer",
         t.phone || "-",
         String(ct.length),
@@ -202,13 +288,161 @@ function ReportDocument({ exportFrom, exportTo, sections, transactions, serviceR
     }
   });
 
+  const fullCustRows: string[][] = [
+    ...rawCustRows,
+    [
+      `TOTAL (${rawCustRows.length} Customers)`,
+      "—",
+      `${grandTotalVisits} orders`,
+      formatPhp(grandTotalSpent),
+    ],
+  ];
+
+  // Transactions table rows with grand total
+  const totalTxnWeight = transactions.reduce((s, t) => s + (t.weight || 0), 0);
+  const totalTxnFee = transactions.reduce((s, t) => s + (t.fee || 0), 0);
+  const fullTxnRows: string[][] = [
+    ...transactions.map((t) => [
+      t.ticketId,
+      t.customerName,
+      t.phone || "-",
+      t.dropOffDate,
+      t.washType,
+      `${t.weight} kg`,
+      formatPhp(t.fee),
+      t.status,
+    ]),
+    [
+      "TOTAL",
+      `${transactions.length} orders`,
+      "—",
+      "—",
+      "—",
+      `${totalTxnWeight.toFixed(1)} kg`,
+      formatPhp(totalTxnFee),
+      "—",
+    ],
+  ];
+
+  // Analytics table rows with grand total
+  const totalAnalyticsCount = serviceRevenue.reduce((s, r) => s + r.count, 0);
+  const totalAnalyticsRevenue = serviceRevenue.reduce((s, r) => s + r.revenue, 0);
+  const overallAvg = totalAnalyticsCount > 0 ? Math.round(totalAnalyticsRevenue / totalAnalyticsCount) : 0;
+  const fullAnalyticsRows: string[][] = [
+    ...serviceRevenue.map((r) => [
+      r.service,
+      String(r.count),
+      formatPhp(r.revenue),
+      formatPhp(r.count > 0 ? Math.round(r.revenue / r.count) : 0),
+    ]),
+    [
+      "TOTAL",
+      `${totalAnalyticsCount} orders`,
+      formatPhp(totalAnalyticsRevenue),
+      formatPhp(overallAvg),
+    ],
+  ];
+
   return (
-    <Document title={`LaundryTrack_Report_${exportFrom}`}>
+    <Document title={`${displayName.replace(/\s+/g, "_")}_Report_${exportFrom}`}>
+      {/* ── Page 0: Executive Summary ── */}
+      <Page size="A4" style={S.page}>
+        <View style={S.headerBand}>
+          <Text style={S.headerTitle}>{displayName} — Business Summary Report</Text>
+          <Text style={S.headerMeta}>
+            Date range: {exportFrom} to {exportTo}{"   "}|{"   "}Generated: {new Date().toLocaleDateString()}
+          </Text>
+        </View>
+        <View style={S.body}>
+          <Text style={S.sectionTitle}>Executive Performance Overview</Text>
+          <View style={S.summaryGrid}>
+            {enablePaymentOption ? (
+              <>
+                <View style={S.summaryCard}>
+                  <Text style={S.summaryLabel}>Total Collected Revenue</Text>
+                  <Text style={S.summaryValue}>{formatPhp(collectedRev)}</Text>
+                  <Text style={S.summaryLabel}>From {paidCount} paid transactions</Text>
+                </View>
+                <View style={S.summaryCard}>
+                  <Text style={S.summaryLabel}>Outstanding Receivables</Text>
+                  <Text style={[S.summaryValue, outstandingBal > 0 ? { color: "#b91c1c" } : { color: "#166534" }]}>
+                    {formatPhp(outstandingBal)}
+                  </Text>
+                  <Text style={S.summaryLabel}>Unpaid orders balance</Text>
+                </View>
+                <View style={S.summaryCard}>
+                  <Text style={S.summaryLabel}>Total Orders Processed</Text>
+                  <Text style={S.summaryValue}>{nonVoidTxns.length}</Text>
+                  <Text style={S.summaryLabel}>{transactions.length} total tickets in range</Text>
+                </View>
+                <View style={S.summaryCard}>
+                  <Text style={S.summaryLabel}>Average Order Value (AOV)</Text>
+                  <Text style={S.summaryValue}>{formatPhp(aov)}</Text>
+                  <Text style={S.summaryLabel}>Per paid transaction</Text>
+                </View>
+              </>
+            ) : (
+              <>
+                <View style={S.summaryCard}>
+                  <Text style={S.summaryLabel}>Total Revenue</Text>
+                  <Text style={S.summaryValue}>{formatPhp(collectedRev)}</Text>
+                  <Text style={S.summaryLabel}>All recorded sales</Text>
+                </View>
+                <View style={S.summaryCard}>
+                  <Text style={S.summaryLabel}>Total Orders</Text>
+                  <Text style={S.summaryValue}>{nonVoidTxns.length}</Text>
+                  <Text style={S.summaryLabel}>Total transactions recorded</Text>
+                </View>
+                <View style={S.summaryCard}>
+                  <Text style={S.summaryLabel}>Total Weight Processed</Text>
+                  <Text style={S.summaryValue}>{processedWeight.toFixed(1)} kg</Text>
+                  <Text style={S.summaryLabel}>Operational laundry volume</Text>
+                </View>
+                <View style={S.summaryCard}>
+                  <Text style={S.summaryLabel}>Average Order Value (AOV)</Text>
+                  <Text style={S.summaryValue}>{formatPhp(aov)}</Text>
+                  <Text style={S.summaryLabel}>Average spend per order</Text>
+                </View>
+              </>
+            )}
+          </View>
+
+          {enablePaymentOption && (
+            <View style={S.insightBox}>
+              <Text style={S.insightText}>
+                Settlement Status: {formatPhp(collectedRev)} collected from {paidCount} order{paidCount === 1 ? "" : "s"}
+                {outstandingBal > 0 ? ` · ${formatPhp(outstandingBal)} pending collection` : " · All orders settled"}
+              </Text>
+            </View>
+          )}
+
+          <Text style={S.sectionTitle}>Operational Summary</Text>
+          <View style={S.summaryGrid}>
+            <View style={S.summaryCard}>
+              <Text style={S.summaryLabel}>Total Laundry Volume</Text>
+              <Text style={S.summaryValue}>{processedWeight.toFixed(1)} kg</Text>
+              <Text style={S.summaryLabel}>Across all service lines</Text>
+            </View>
+            <View style={S.summaryCard}>
+              <Text style={S.summaryLabel}>Active Service Offerings</Text>
+              <Text style={S.summaryValue}>{serviceRevenue.length}</Text>
+              <Text style={S.summaryLabel}>Service categories utilized</Text>
+            </View>
+          </View>
+
+          {voidCount > 0 && (
+            <Text style={[S.td, { color: "#6b7280", marginTop: 4 }]}>
+              * Note: {voidCount} voided order{voidCount > 1 ? "s" : ""} excluded from active revenue calculations.
+            </Text>
+          )}
+        </View>
+      </Page>
+
       {/* ── Page 1: Header + Transactions ── */}
       {sections.includes("transactions") && (
         <Page size="A4" style={S.page} orientation="landscape">
           <View style={S.headerBand}>
-            <Text style={S.headerTitle}>LaundryTrack — Export Report</Text>
+            <Text style={S.headerTitle}>{displayName} — Export Report</Text>
             <Text style={S.headerMeta}>
               Date range: {exportFrom} to {exportTo}{"   "}|{"   "}Generated: {new Date().toLocaleDateString()}
             </Text>
@@ -217,18 +451,10 @@ function ReportDocument({ exportFrom, exportTo, sections, transactions, serviceR
             <Text style={S.sectionTitle}>Transactions</Text>
             <Table
               headers={["Ticket ID", "Customer", "Phone", "Drop-off", "Type", "Weight", "Fee (PHP)", "Status"]}
-              rows={transactions.map((t) => [
-                t.ticketId,
-                t.customerName,
-                t.phone || "-",
-                t.dropOffDate,
-                t.washType,
-                `${t.weight} kg`,
-                formatPhp(t.fee),
-                t.status,
-              ])}
+              rows={fullTxnRows}
               flexes={[0.9, 1.4, 1.1, 0.9, 0.9, 0.7, 1.1, 0.9]}
               aligns={["left", "left", "left", "center", "left", "right", "right", "center"]}
+              boldLastRow={transactions.length > 0}
             />
           </View>
         </Page>
@@ -238,7 +464,7 @@ function ReportDocument({ exportFrom, exportTo, sections, transactions, serviceR
       {sections.includes("analytics") && (
         <Page size="A4" style={S.page}>
           <View style={S.headerBand}>
-            <Text style={S.headerTitle}>LaundryTrack — Export Report</Text>
+            <Text style={S.headerTitle}>{displayName} — Export Report</Text>
             <Text style={S.headerMeta}>
               Date range: {exportFrom} to {exportTo}{"   "}|{"   "}Generated: {new Date().toLocaleDateString()}
             </Text>
@@ -247,14 +473,10 @@ function ReportDocument({ exportFrom, exportTo, sections, transactions, serviceR
             <Text style={S.sectionTitle}>Revenue by Service Type</Text>
             <Table
               headers={["Service", "Transactions", "Revenue (PHP)", "Avg per Order (PHP)"]}
-              rows={serviceRevenue.map((r) => [
-                r.service,
-                String(r.count),
-                formatPhp(r.revenue),
-                formatPhp(r.count > 0 ? Math.round(r.revenue / r.count) : 0),
-              ])}
+              rows={fullAnalyticsRows}
               flexes={[1.4, 1, 1.2, 1.2]}
               aligns={["left", "center", "right", "right"]}
+              boldLastRow={serviceRevenue.length > 0}
             />
           </View>
         </Page>
@@ -264,7 +486,7 @@ function ReportDocument({ exportFrom, exportTo, sections, transactions, serviceR
       {sections.includes("customers") && (
         <Page size="A4" style={S.page}>
           <View style={S.headerBand}>
-            <Text style={S.headerTitle}>LaundryTrack — Export Report</Text>
+            <Text style={S.headerTitle}>{displayName} — Export Report</Text>
             <Text style={S.headerMeta}>
               Date range: {exportFrom} to {exportTo}{"   "}|{"   "}Generated: {new Date().toLocaleDateString()}
             </Text>
@@ -273,9 +495,10 @@ function ReportDocument({ exportFrom, exportTo, sections, transactions, serviceR
             <Text style={S.sectionTitle}>Loyalty Customer Records</Text>
             <Table
               headers={["Customer Name", "Phone", "Total Transactions", "Total Spent (PHP)"]}
-              rows={custRows}
+              rows={fullCustRows}
               flexes={[1.4, 1.1, 1.1, 1.3]}
               aligns={["left", "left", "center", "right"]}
+              boldLastRow={rawCustRows.length > 0}
             />
           </View>
         </Page>

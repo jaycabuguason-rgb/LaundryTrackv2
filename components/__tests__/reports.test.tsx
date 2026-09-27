@@ -158,4 +158,30 @@ describe("ReportsPage Responsiveness and Mobile Concept Layout", () => {
     expect(screen.getByText("0 total transactions")).toBeInTheDocument();
     expect(screen.queryByText("0 total")).not.toBeInTheDocument();
   });
+
+  it("shows Payment Split chart in analytics when enablePaymentOption is true", () => {
+    render(<ReportsPage transactions={mockTransactions} enablePaymentOption={true} />);
+
+    // Switch to Sales Analytics tab
+    const tabs = screen.getAllByRole("tab");
+    const analyticsTab = tabs.find((tab) => tab.textContent?.includes("Sales Analytics"));
+    expect(analyticsTab).toBeDefined();
+    if (analyticsTab) {
+      fireEvent.click(analyticsTab);
+      expect(screen.getAllByText("Payment Split").length).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it("hides Payment Split chart in analytics when enablePaymentOption is false", () => {
+    render(<ReportsPage transactions={mockTransactions} enablePaymentOption={false} />);
+
+    // Switch to Sales Analytics tab
+    const tabs = screen.getAllByRole("tab");
+    const analyticsTab = tabs.find((tab) => tab.textContent?.includes("Sales Analytics"));
+    expect(analyticsTab).toBeDefined();
+    if (analyticsTab) {
+      fireEvent.click(analyticsTab);
+      expect(screen.queryByText("Payment Split")).not.toBeInTheDocument();
+    }
+  });
 });

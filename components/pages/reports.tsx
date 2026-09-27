@@ -51,6 +51,7 @@ import type { Transaction } from "@/lib/data";
 import { StatusBadge, PaymentBadge, STATUS_ICONS } from "@/components/status-badge";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { cn } from "@/lib/utils";
+import { loadPricingConfig } from "@/lib/settings-store";
 
 type ExportSection = "transactions" | "analytics" | "customers";
 type ForecastRange = "7d" | "30d" | "3m" | "6m" | "custom";
@@ -58,6 +59,7 @@ type RangePreset = "day" | "week" | "month" | "year" | "custom";
 type ReportsPageProps = {
   transactions: Transaction[];
   shopName?: string;
+  enablePaymentOption?: boolean;
   onRefresh?: () => Promise<void> | void;
   loading?: boolean;
 };
@@ -331,7 +333,34 @@ function getCustomerSummaryRows(transactions: Transaction[]) {
   return [...customerMap.values()].sort((a, b) => b.spent - a.spent);
 }
 
-export default function ReportsPage({ transactions, shopName = "LaundryTrack", onRefresh, loading = false }: ReportsPageProps) {
+export default function ReportsPage({
+  transactions,
+  shopName = "LaundryTrack",
+  enablePaymentOption: propEnablePaymentOption,
+  onRefresh,
+  loading = false,
+}: ReportsPageProps) {
+  const [enablePaymentOption, setEnablePaymentOption] = useState<boolean>(() => {
+    if (typeof propEnablePaymentOption === "boolean") return propEnablePaymentOption;
+    return loadPricingConfig().enablePaymentOption ?? true;
+  });
+
+  useEffect(() => {
+    if (typeof propEnablePaymentOption === "boolean") {
+      setEnablePaymentOption(propEnablePaymentOption);
+    }
+  }, [propEnablePaymentOption]);
+
+  useEffect(() => {
+    const handleStorage = () => {
+      if (typeof propEnablePaymentOption !== "boolean") {
+        setEnablePaymentOption(loadPricingConfig().enablePaymentOption ?? true);
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, [propEnablePaymentOption]);
+
   const [activeTab, setActiveTab] = useState<string>("overview");
   const [mobileStatusFilter, setMobileStatusFilter] = useState<string>("all");
   const [summaryDate, setSummaryDate] = useState<Date>(new Date());
@@ -465,26 +494,29 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack", o
   const recognizedRevenueTransactions = useMemo(
     () =>
       transactions.filter((transaction) => {
-        if (transaction.paymentStatus !== "paid" || transaction.status === "Voided") {
+        if (transaction.status === "Voided") return false;
+        if (enablePaymentOption && transaction.paymentStatus !== "paid") {
           return false;
         }
         const payDateKey = getPaymentDateKey(transaction);
         if (!payDateKey) return false;
         return payDateKey >= exportFrom && payDateKey <= exportTo;
       }),
-    [exportFrom, exportTo, transactions],
+    [exportFrom, exportTo, transactions, enablePaymentOption],
   );
 
   const outstandingTransactions = useMemo(
-    () =>
-      transactions.filter((transaction) => {
+    () => {
+      if (!enablePaymentOption) return [];
+      return transactions.filter((transaction) => {
         if (transaction.paymentStatus !== "unpaid" || transaction.status === "Voided") {
           return false;
         }
         const dateKey = getDateKey(transaction);
         return dateKey >= exportFrom && dateKey <= exportTo;
-      }),
-    [exportFrom, exportTo, transactions],
+      });
+    },
+    [exportFrom, exportTo, transactions, enablePaymentOption],
   );
 
   const totalRecognizedRevenue = useMemo(
@@ -611,6 +643,16 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack", o
 
   const customerRows = useMemo(() => getCustomerSummaryRows(filteredTransactions), [filteredTransactions]);
 
+  const filteredWeight = useMemo(
+    () => filteredTransactions.reduce((sum, t) => sum + (t.weight || 0), 0),
+    [filteredTransactions],
+  );
+
+  const voidedCount = useMemo(
+    () => filteredTransactions.filter((t) => t.status === "Voided").length,
+    [filteredTransactions],
+  );
+
   const totalFilteredRevenue = totalRecognizedRevenue;
   const totalFilteredTransactions = totalPaidTransactions;
   const averageOrderValue = totalFilteredTransactions > 0 ? totalFilteredRevenue / totalFilteredTransactions : 0;
@@ -626,9 +668,13 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack", o
 
     if (selectedExports.includes("transactions")) {
       rows.push(["Transactions"]);
-      rows.push(["Ticket ID", "Customer", "Phone", "Date", "Service", "Fee", "Status", "Payment"]);
+      const headers = ["Ticket ID", "Customer", "Phone", "Date", "Service", "Fee", "Status"];
+      if (enablePaymentOption) {
+        headers.push("Payment");
+      }
+      rows.push(headers);
       for (const transaction of filteredTransactions) {
-        rows.push([
+        const row = [
           transaction.ticketId,
           transaction.customerName,
           transaction.phone || "-",
@@ -636,17 +682,25 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack", o
           transaction.washType,
           String(transaction.fee),
           transaction.status,
-          transaction.paymentStatus,
-        ]);
+        ];
+        if (enablePaymentOption) {
+          row.push(transaction.paymentStatus);
+        }
+        rows.push(row);
       }
       rows.push([]);
     }
 
     if (selectedExports.includes("analytics")) {
       rows.push(["Sales and Analytics"]);
-      rows.push(["Collected Revenue", String(totalRecognizedRevenue)]);
-      rows.push(["Paid Orders", String(totalPaidTransactions)]);
-      rows.push(["Outstanding Balance", String(totalOutstandingBalance)]);
+      if (enablePaymentOption) {
+        rows.push(["Collected Revenue", String(totalRecognizedRevenue)]);
+        rows.push(["Paid Orders", String(totalPaidTransactions)]);
+        rows.push(["Outstanding Balance", String(totalOutstandingBalance)]);
+      } else {
+        rows.push(["Total Revenue", String(totalRecognizedRevenue)]);
+        rows.push(["Total Orders", String(totalPaidTransactions)]);
+      }
       rows.push(["Average Order Value", String(Math.round(averageOrderValue))]);
       for (const row of serviceRevenue) {
         rows.push([`Service: ${row.service}`, `${row.count} txns / ${row.revenue}`]);
@@ -684,9 +738,17 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack", o
       await downloadReportPdf({
         exportFrom,
         exportTo,
+        shopName,
+        enablePaymentOption,
         sections: selectedExports,
         transactions: filteredTransactions,
         serviceRevenue,
+        totalCollectedRevenue: totalRecognizedRevenue,
+        totalOutstandingBalance,
+        totalPaidOrders: totalPaidTransactions,
+        totalWeight: filteredWeight,
+        averageOrderValue,
+        voidedCount,
       });
     } finally {
       setPdfGenerating(false);
@@ -1338,32 +1400,34 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack", o
 
           {/* Mobile Payment & Status Split Grid */}
           <div className="grid grid-cols-1 gap-3">
-            <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm space-y-2">
-              <h4 className="text-xs font-bold text-foreground">Payment Split</h4>
-              <div className="h-[170px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={paymentMixData} dataKey="value" nameKey="name" outerRadius={68}>
-                      <Cell fill="hsl(142 71% 45%)" />
-                      <Cell fill="hsl(0 84% 60%)" />
-                    </Pie>
-                    <Tooltip formatter={(value: number) => [formatCurrency(value), "Revenue"]} />
-                  </PieChart>
-                </ResponsiveContainer>
+            {enablePaymentOption && (
+              <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm space-y-2">
+                <h4 className="text-xs font-bold text-foreground">Payment Split</h4>
+                <div className="h-[170px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={paymentMixData} dataKey="value" nameKey="name" outerRadius={68}>
+                        <Cell fill="hsl(142 71% 45%)" />
+                        <Cell fill="hsl(0 84% 60%)" />
+                      </Pie>
+                      <Tooltip formatter={(value: number) => [formatCurrency(value), "Revenue"]} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex items-center justify-center gap-4 text-xs font-semibold">
+                  {paymentMixData.map((item) => (
+                    <div key={item.name} className="flex items-center gap-1.5">
+                      {item.name === "Paid" ? (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      ) : (
+                        <AlertCircle className="w-3.5 h-3.5 text-red-500 dark:text-red-400 shrink-0" />
+                      )}
+                      <span>{item.name}: {formatCurrency(item.value)}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="flex items-center justify-center gap-4 text-xs font-semibold">
-                {paymentMixData.map((item) => (
-                  <div key={item.name} className="flex items-center gap-1.5">
-                    {item.name === "Paid" ? (
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    ) : (
-                      <AlertCircle className="w-3.5 h-3.5 text-red-500 dark:text-red-400 shrink-0" />
-                    )}
-                    <span>{item.name}: {formatCurrency(item.value)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            )}
 
             <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm space-y-2">
               <h4 className="text-xs font-bold text-foreground">Status Distribution</h4>
@@ -1585,39 +1649,41 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack", o
             </Card>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-            <Card className="border border-border shadow-none">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold">Payment Split</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="h-[200px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={paymentMixData} dataKey="value" nameKey="name" outerRadius={78}>
-                        <Cell fill="hsl(142 71% 45%)" />
-                        <Cell fill="hsl(0 84% 60%)" />
-                      </Pie>
-                      <Tooltip formatter={(value: number) => [formatCurrency(value), "Revenue"]} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
+          <div className={cn("grid grid-cols-1 gap-4", enablePaymentOption ? "xl:grid-cols-3" : "xl:grid-cols-2")}>
+            {enablePaymentOption && (
+              <Card className="border border-border shadow-none">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold">Payment Split</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="h-[200px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie data={paymentMixData} dataKey="value" nameKey="name" outerRadius={78}>
+                          <Cell fill="hsl(142 71% 45%)" />
+                          <Cell fill="hsl(0 84% 60%)" />
+                        </Pie>
+                        <Tooltip formatter={(value: number) => [formatCurrency(value), "Revenue"]} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
 
-                {/* Icon Legend for Payment Split */}
-                <div className="flex flex-wrap items-center justify-center gap-4 pt-1">
-                  {paymentMixData.map((item) => (
-                    <div key={item.name} className="flex items-center gap-1.5 text-xs text-foreground font-medium">
-                      {item.name === "Paid" ? (
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                      ) : (
-                        <AlertCircle className="w-3.5 h-3.5 text-red-500 dark:text-red-400 shrink-0" />
-                      )}
-                      <span>{item.name}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                  {/* Icon Legend for Payment Split */}
+                  <div className="flex flex-wrap items-center justify-center gap-4 pt-1">
+                    {paymentMixData.map((item) => (
+                      <div key={item.name} className="flex items-center gap-1.5 text-xs text-foreground font-medium">
+                        {item.name === "Paid" ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        ) : (
+                          <AlertCircle className="w-3.5 h-3.5 text-red-500 dark:text-red-400 shrink-0" />
+                        )}
+                        <span>{item.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             <Card className="border border-border shadow-none">
               <CardHeader className="pb-3">
