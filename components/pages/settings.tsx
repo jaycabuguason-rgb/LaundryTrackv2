@@ -5,7 +5,7 @@ import {
   Plus, Trash2, Edit, Save, Upload, Clock, Download, Loader2, CheckCircle2,
   Scale, ShoppingBasket, Package, X, Eye, EyeOff, Tag, Undo2, Redo2, AlertTriangle,
   Coins, Building2, Gift, Database, CreditCard,
-  Sliders, Sparkles, Droplets, Leaf, Zap, Check
+  Sliders, Droplets, Check, Shirt, Tags
 } from "lucide-react";
 import DataImportPage from "@/components/pages/data-import";
 import { Button } from "@/components/ui/button";
@@ -399,10 +399,6 @@ function PricingSettings() {
                 );
               })}
             </div>
-            <p className="text-[11px] text-primary flex items-center gap-1 mt-1 bg-primary/5 border border-primary/10 px-2.5 py-1.5 rounded-lg">
-              <Sparkles className="w-3.5 h-3.5 shrink-0" />
-              <span>Staff selects appropriate pricing mode at intake checkout.</span>
-            </p>
           </div>
 
           {/* Kilogram Pricing Details */}
@@ -666,7 +662,7 @@ function PricingSettings() {
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-cyan-600 dark:bg-cyan-400" />
+                <Shirt className="w-4 h-4 text-cyan-600 dark:text-cyan-400 shrink-0" />
                 <h2 className="text-base font-bold text-foreground">Service Types</h2>
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
@@ -682,64 +678,70 @@ function PricingSettings() {
 
           {svcEnabled && (
             <div className="flex flex-col gap-2.5">
-              {services.map((s) => {
-                const lower = s.name.toLowerCase();
-                const SvcIcon = lower.includes("delicate") ? Leaf : lower.includes("express") ? Zap : lower.includes("bulk") ? Package : Droplets;
-                return (
-                  <div
-                    key={s.id}
-                    className={cn(
-                      "p-3 bg-muted/30 border border-border/60 rounded-xl flex items-center justify-between gap-2 transition-opacity",
-                      !s.active && "opacity-60"
-                    )}
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                        <SvcIcon className="w-4 h-4" />
-                      </div>
-                      <div className="flex flex-col min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-xs font-bold text-foreground truncate">
-                            {s.name}
-                          </span>
-                          <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
-                            ₱{s.price} / {s.pricingType === "per-kg" ? "kg" : s.pricingType === "per-load" ? "load" : "pc"}
-                          </span>
-                        </div>
-                        {s.description && (
-                          <span className="text-[11px] text-muted-foreground truncate">
-                            {s.description}
-                          </span>
-                        )}
-                      </div>
+              {services.map((s) => (
+                <div
+                  key={s.id}
+                  className={cn(
+                    "p-3 bg-muted/30 border border-border/60 rounded-xl flex items-center justify-between gap-2 transition-opacity",
+                    !s.active && "opacity-60"
+                  )}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                      <Shirt className="w-4 h-4" />
                     </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 rounded-full bg-background border border-border/50 text-muted-foreground hover:text-foreground"
-                        onClick={() => openSvcEdit(s)}
-                      >
-                        <Edit className="w-3 h-3" />
-                      </Button>
-                      <Switch
-                        checked={s.active}
-                        onCheckedChange={(v) =>
-                          updateServices(
-                            services.map((x) =>
-                              x.id === s.id
-                                ? { ...x, active: v, showPrice: v ? (x.showPrice ?? true) : false }
-                                : x
-                            )
-                          )
-                        }
-                        className="scale-90"
-                      />
+                    <div className="flex flex-col min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-xs font-bold text-foreground truncate">
+                          {s.name}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
+                          ₱{s.price} / {s.pricingType === "per-kg" ? "kg" : s.pricingType === "per-load" ? "load" : "pc"}
+                        </span>
+                      </div>
+                      {s.description && (
+                        <span className="text-[11px] text-muted-foreground truncate">
+                          {s.description}
+                        </span>
+                      )}
                     </div>
                   </div>
-                );
-              })}
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 rounded-full bg-background border border-border/50 text-muted-foreground hover:text-foreground"
+                      onClick={() => openSvcEdit(s)}
+                      title="Edit service"
+                    >
+                      <Edit className="w-3 h-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 rounded-full bg-background border border-border/50 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => updateServices(services.filter((x) => x.id !== s.id))}
+                      title="Delete service"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                    <Switch
+                      checked={s.active}
+                      onCheckedChange={(v) =>
+                        updateServices(
+                          services.map((x) =>
+                            x.id === s.id
+                              ? { ...x, active: v, showPrice: v ? (x.showPrice ?? true) : false }
+                              : x
+                          )
+                        )
+                      }
+                      className="scale-90"
+                    />
+                  </div>
+                </div>
+              ))}
 
               {!showAddSvc ? (
                 <Button
@@ -851,7 +853,7 @@ function PricingSettings() {
         <div className="bg-card rounded-2xl p-4 border border-border/70 shadow-xs flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+              <Tags className="w-4 h-4 text-amber-500 shrink-0" />
               <h2 className="text-base font-bold text-foreground">Add-on Rates</h2>
             </div>
             <span className="text-[11px] text-muted-foreground font-medium">Extras &amp; Detergents</span>
@@ -864,7 +866,6 @@ function PricingSettings() {
                 className="p-2.5 bg-muted/30 border border-border/60 rounded-xl flex items-center justify-between gap-1"
               >
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />
                   <span className="text-xs font-semibold text-foreground truncate">{a.name}</span>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">

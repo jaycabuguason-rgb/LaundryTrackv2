@@ -7,7 +7,7 @@ import {
   ChevronRight,
   User,
   Phone,
-  Sparkles,
+  Star,
   Scale,
   Package,
   Calendar,
@@ -318,7 +318,7 @@ export default function NewOrderPage({
             {matchedMember && (
               <div className="flex items-center justify-between p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200">
                 <div className="flex items-center gap-2.5">
-                  <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
+                  <Star className="w-4 h-4 text-amber-500 shrink-0" />
                   <div>
                     <p className="text-xs font-bold">Loyalty Member Recognized: {matchedMember.name}</p>
                     <p className="text-[11px] opacity-85">
@@ -735,7 +735,7 @@ export default function NewOrderPage({
               {matchedMember && (
                 <div className="flex items-center justify-between py-2 bg-amber-500/10 px-2 rounded-lg text-amber-900 dark:text-amber-200">
                   <span className="font-medium flex items-center gap-1">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-500" /> Loyalty Stamp
+                    <Star className="w-3.5 h-3.5 text-amber-500" /> Loyalty Stamp
                   </span>
                   <span className="font-bold">+1 Pending Stamp (Auto-awarded on Claim)</span>
                 </div>

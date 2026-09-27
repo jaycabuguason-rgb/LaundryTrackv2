@@ -35,7 +35,6 @@ describe("Mobile Responsive Navigation & Modern Sidebar Dock", () => {
     );
 
     expect(screen.getByText("Collapse")).toBeInTheDocument();
-    expect(screen.getByText("⌘B")).toBeInTheDocument();
 
     const collapseBtn = screen.getByText("Collapse").closest("button");
     expect(collapseBtn).toBeInTheDocument();

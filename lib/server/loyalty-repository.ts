@@ -2,7 +2,8 @@ import "server-only";
 
 import { loyaltyMembers as seedMembers, type LoyaltyMember } from "@/lib/data";
 import { getPublicSupabaseConfig } from "@/lib/supabase/config";
-import { listTransactions, getBusinessProfile } from "@/lib/server/laundry-repository";
+import { listTransactions, getBusinessProfile, getSettings } from "@/lib/server/laundry-repository";
+import type { LoyaltySettings } from "@/lib/settings-store";
 import type { PublicLoyaltyMemberRecord, PublicShopProfile } from "@/lib/transaction-contracts";
 
 export type StampAwardResult =
@@ -283,15 +284,13 @@ export async function addStampsToMember(
 }
 
 export async function getLoyaltySettings(): Promise<{ loyalty_enabled: boolean; washes_per_reward: number; reward_description: string }> {
-  if (!hasSupabaseConfig()) return { loyalty_enabled: true, washes_per_reward: 7, reward_description: "Free wash" };
   try {
-    const rows = await restRequest<Array<{ key: string; value: { enabled?: boolean; washesPerReward?: number; rewardDescription?: string } }>>("settings?key=eq.loyalty&select=key,value&limit=1");
-    if (rows && rows[0]?.value) {
-      const val = rows[0].value;
+    const settings = await getSettings<LoyaltySettings>("loyalty_settings");
+    if (settings) {
       return {
-        loyalty_enabled: val.enabled ?? true,
-        washes_per_reward: Number(val.washesPerReward) || 7,
-        reward_description: val.rewardDescription || "Free wash",
+        loyalty_enabled: Boolean(settings.enabled),
+        washes_per_reward: Number(settings.washesPerReward) || 7,
+        reward_description: settings.rewardDescription || "Free wash",
       };
     }
   } catch {

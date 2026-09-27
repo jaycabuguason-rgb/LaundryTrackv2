@@ -14,15 +14,12 @@ import {
   CheckCircle2,
   Circle,
   Edit,
-  Sparkles,
+  Star,
   X,
   Printer,
   QrCode,
   Store,
-  ChevronDown,
   Check,
-  RotateCw,
-  Banknote,
   Receipt,
   FileText,
   Inbox,
@@ -123,28 +120,6 @@ export function TransactionDetailModal({
     await handlePrintSlip();
   };
 
-  const handleAdvance = () => {
-    if (onAdvanceStage) {
-      onAdvanceStage(transaction);
-      return;
-    }
-    if (onEditStatus) {
-      onOpenChange(false);
-      onEditStatus(transaction.ticketId);
-    }
-  };
-
-  const handlePayment = () => {
-    if (onReceivePayment) {
-      onReceivePayment(transaction);
-      return;
-    }
-    if (onEditStatus) {
-      onOpenChange(false);
-      onEditStatus(transaction.ticketId);
-    }
-  };
-
   // Split drop-off datetime into readable date and time
   const arrivalFormatted = formatReadableDateTime(transaction.arrivalDateTime) || transaction.arrivalDateTime || "";
   const [dropoffDate, dropoffTime] = arrivalFormatted.includes(",")
@@ -213,7 +188,7 @@ export function TransactionDetailModal({
                     Current Stage
                   </span>
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-200/70 dark:bg-purple-800 text-purple-900 dark:text-purple-100 text-[11px] font-bold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-purple-700 dark:bg-purple-300" />
+                    <Inbox className="w-3 h-3 text-purple-700 dark:text-purple-300" />
                     {transaction.status}
                   </span>
                 </div>
@@ -362,7 +337,7 @@ export function TransactionDetailModal({
                     </span>
                     {loyaltyEnabled && isLoyaltyMember && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/25 px-1.5 py-0.2 text-[9px] font-semibold mt-1">
-                        <Sparkles className="w-2.5 h-2.5 text-amber-500 fill-amber-500" /> Member
+                        <Star className="w-2.5 h-2.5 text-amber-500 fill-amber-500" /> Member
                       </span>
                     )}
                   </div>
@@ -504,56 +479,15 @@ export function TransactionDetailModal({
 
             {/* 5. Operational Action Controls */}
             <div className="w-full flex flex-col gap-2 pt-1">
-              {/* Primary Stage Advancement Button */}
-              {!isVoided && !isClaimed && (
-                <Button
-                  onClick={handleAdvance}
-                  className="w-full h-11 sm:h-12 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] transition-all"
-                >
-                  <RotateCw className="w-4 h-4" />
-                  <span>
-                    {transaction.status === "Received"
-                      ? "Advance to Washing →"
-                      : transaction.status === "Washing"
-                        ? "Advance to Ready (Drying Complete) →"
-                        : "Mark as Claimed (Hand Over) →"}
-                  </span>
-                </Button>
-              )}
-
-
-              {/* Secondary Buttons Grid: Payment + Thermal Receipt */}
-              <div className="grid grid-cols-2 gap-2">
-                {!isPaid ? (
-                  <Button
-                    onClick={handlePayment}
-                    variant="outline"
-                    className="h-10 sm:h-11 rounded-xl font-bold text-xs sm:text-sm bg-purple-100 hover:bg-purple-200 text-purple-900 border-purple-200 dark:bg-purple-950/60 dark:hover:bg-purple-900 dark:text-purple-200 dark:border-purple-800 flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98] transition-all"
-                  >
-                    <Banknote className="w-4 h-4" />
-                    <span>Receive ₱{transaction.fee}</span>
-                  </Button>
-                ) : (
-                  <Button
-                    variant="outline"
-                    disabled
-                    className="h-10 sm:h-11 rounded-xl font-bold text-xs sm:text-sm bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 flex items-center justify-center gap-1.5 opacity-80"
-                  >
-                    <Check className="w-4 h-4" />
-                    <span>Payment Received</span>
-                  </Button>
-                )}
-
-                <Button
-                  onClick={handleReprint}
-                  variant="outline"
-                  disabled={printing}
-                  className="h-10 sm:h-11 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98] transition-all"
-                >
-                  {printing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4 text-primary" />}
-                  <span>Thermal Receipt</span>
-                </Button>
-              </div>
+              <Button
+                onClick={handleReprint}
+                variant="outline"
+                disabled={printing}
+                className="w-full h-11 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98] transition-all"
+              >
+                {printing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4 text-primary" />}
+                <span>Thermal Receipt</span>
+              </Button>
 
               {/* Edit full details action */}
               {onEditStatus && !isVoided && !isClaimed && (
@@ -569,18 +503,6 @@ export function TransactionDetailModal({
                   <Edit className="w-3.5 h-3.5 mr-1" /> Edit Full Order Details
                 </Button>
               )}
-            </div>
-
-            {/* 6. Swipe Down or Tap to Collapse */}
-            <div className="pt-1 flex flex-col items-center justify-center">
-              <button
-                type="button"
-                onClick={() => onOpenChange(false)}
-                className="w-full py-2.5 rounded-xl bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground font-semibold text-xs flex items-center justify-center gap-1 transition-colors cursor-pointer active:scale-[0.99]"
-              >
-                <ChevronDown className="w-4 h-4" />
-                <span>Swipe down or tap to collapse</span>
-              </button>
             </div>
           </div>
         </DrawerContent>

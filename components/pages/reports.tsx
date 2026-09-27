@@ -14,7 +14,6 @@ import {
   TrendingUp,
   CheckCircle2,
   AlertCircle,
-  Sparkles,
   Receipt,
   Banknote,
   Scale,
@@ -93,10 +92,6 @@ const forecastRangeOptions: Array<{ value: ForecastRange; label: string }> = [
 
 function formatCurrency(value: number) {
   return `₱${value.toLocaleString()}`;
-}
-
-function getServiceIcon(_service: string) {
-  return <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />;
 }
 
 function getStatusIconComponent(status: string) {
@@ -1013,9 +1008,8 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack", o
                       <Clock className="w-3 h-3 text-muted-foreground/70" />
                       <span>{formatReadableTime(transaction.arrivalDateTime) || transaction.arrivalDateTime}</span>
                     </span>
-                    <span className="flex items-center gap-1 truncate">
-                      <Sparkles className="w-3 h-3 text-primary/70 shrink-0" />
-                      <span className="truncate">{transaction.washType} ({transaction.weight} kg)</span>
+                    <span className="truncate">
+                      {transaction.washType} ({transaction.weight} kg)
                     </span>
                   </div>
                   <span className="font-bold text-foreground shrink-0 text-xs">{formatCurrency(transaction.fee)}</span>
@@ -1318,11 +1312,13 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack", o
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 pt-1">
-              {serviceMixData.map((entry) => (
-                <div key={entry.name} className="flex items-center gap-1 text-[11px] text-foreground font-medium">
-                  <span className="p-0.5 rounded bg-muted/60">
-                    {getServiceIcon(entry.name)}
-                  </span>
+              {serviceMixData.map((entry, index) => (
+                <div key={entry.name} className="flex items-center gap-1.5 text-[11px] text-foreground font-medium">
+                  <span
+                    className="w-2.5 h-2.5 rounded-full shrink-0"
+                    style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
+                    aria-hidden="true"
+                  />
                   <span>{entry.name} ({entry.count})</span>
                 </div>
               ))}
@@ -1566,11 +1562,13 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack", o
 
                 {/* Icon Legend for Services */}
                 <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 pt-1">
-                  {serviceMixData.map((entry) => (
+                  {serviceMixData.map((entry, index) => (
                     <div key={entry.name} className="flex items-center gap-1.5 text-xs text-foreground font-medium">
-                      <span className="p-0.5 rounded-md bg-muted/60">
-                        {getServiceIcon(entry.name)}
-                      </span>
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
+                        aria-hidden="true"
+                      />
                       <span>{entry.name}</span>
                     </div>
                   ))}
@@ -2186,9 +2184,8 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack", o
                         <Clock className="w-3 h-3 text-muted-foreground/70" />
                         <span>{formatReadableTime(transaction.arrivalDateTime) || transaction.arrivalDateTime}</span>
                       </span>
-                      <span className="flex items-center gap-1 truncate">
-                        <Sparkles className="w-3 h-3 text-primary/70 shrink-0" />
-                        <span className="truncate">{transaction.washType} ({transaction.weight} kg)</span>
+                      <span className="truncate">
+                        {transaction.washType} ({transaction.weight} kg)
                       </span>
                     </div>
                     <span className="font-bold text-foreground shrink-0 text-xs">{formatCurrency(transaction.fee)}</span>

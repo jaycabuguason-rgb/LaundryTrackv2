@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import {
   Search, EyeOff, Edit, Ban, Printer, ChevronRight, ChevronDown, X, QrCode, CalendarIcon,
   AlertTriangle, Plus, User, Star, Camera,
-  ChevronLeft, Check, RefreshCw, Inbox, MoreHorizontal, Download, Sparkles,
+  ChevronLeft, Check, RefreshCw, Inbox, MoreHorizontal, Download, Droplets,
   Receipt, Clock, CheckCircle2, PackageCheck, ArrowRight,
   Undo2, Redo2
 } from "lucide-react";
@@ -1458,48 +1458,54 @@ export default function TransactionsPage({
     }
   };
 
-  const saveInstructions = async () => {
+  const saveInstructions = () => {
     if (!editTxn) return;
     if (editStatus === "Claimed" && editPaymentStatus === "unpaid") {
       showToast("Mark payment as Paid first before claiming this ticket.");
       return;
     }
-    setBusy(true);
-    try {
-      const prevStatus = editTxn.status;
-      const prevPayment = editTxn.paymentStatus;
-      const res = await onUpdateTransaction(editTxn.ticketId, {
-        washInstructions: editInstructions,
-        status: editStatus,
-        paymentStatus: editPaymentStatus,
-      });
-      if (editStatus !== prevStatus || editPaymentStatus !== prevPayment) {
-        setUndoStack((prev) => [
-          ...prev,
-          {
-            ticketId: editTxn.ticketId,
-            fromStatus: prevStatus,
-            toStatus: editStatus,
-            fromPaymentStatus: prevPayment,
-            toPaymentStatus: editPaymentStatus,
-          },
-        ]);
-        setRedoStack([]);
+    const targetTxn = editTxn;
+    const targetInstructions = editInstructions;
+    const targetStatus = editStatus;
+    const targetPaymentStatus = editPaymentStatus;
+
+    // Immediately close modal and show success feedback
+    setEditTxn(null);
+    onEditComplete?.();
+    showToast(`Ticket #${targetTxn.ticketId} updated successfully`);
+
+    // Perform save asynchronously in the background
+    (async () => {
+      try {
+        const prevStatus = targetTxn.status;
+        const prevPayment = targetTxn.paymentStatus;
+        const res = await onUpdateTransaction(targetTxn.ticketId, {
+          washInstructions: targetInstructions,
+          status: targetStatus,
+          paymentStatus: targetPaymentStatus,
+        });
+        if (targetStatus !== prevStatus || targetPaymentStatus !== prevPayment) {
+          setUndoStack((prev) => [
+            ...prev,
+            {
+              ticketId: targetTxn.ticketId,
+              fromStatus: prevStatus,
+              toStatus: targetStatus,
+              fromPaymentStatus: prevPayment,
+              toPaymentStatus: targetPaymentStatus,
+            },
+          ]);
+          setRedoStack([]);
+        }
+        if (loyaltyEnabled && res.loyaltyResult?.stamped && res.loyaltyResult.rewarded) {
+          showToast(`Reward Unlocked! 🎉 Customer earned a free wash! They now have ${res.loyaltyResult.newStampCount} stamps.`);
+        } else if (loyaltyEnabled && res.loyaltyResult?.stamped) {
+          showToast(`Stamp Added 🌟 Customer now has ${res.loyaltyResult.newStampCount} stamps.`);
+        }
+      } catch {
+        showToast("Unable to save ticket changes right now");
       }
-      showToast(`Ticket #${editTxn.ticketId} updated successfully`);
-      if (loyaltyEnabled && res.loyaltyResult?.stamped && res.loyaltyResult.rewarded) {
-        showToast(`Reward Unlocked! 🎉 Customer earned a free wash! They now have ${res.loyaltyResult.newStampCount} stamps.`);
-      } else if (loyaltyEnabled && res.loyaltyResult?.stamped) {
-        showToast(`Stamp Added 🌟 Customer now has ${res.loyaltyResult.newStampCount} stamps.`);
-      }
-      setEditTxn(null);
-      onEditComplete?.();
-      return;
-    } catch {
-      showToast("Unable to save ticket changes right now");
-    } finally {
-      setBusy(false);
-    }
+    })();
   };
 
   const markAsClaimed = async () => {
@@ -1972,7 +1978,7 @@ export default function TransactionsPage({
                 <RefreshCw className="w-3.5 h-3.5 mr-2" /> Change Status
               </ContextMenuSubTrigger>
               <ContextMenuSubContent className="w-44 shadow-lg border border-border bg-popover text-popover-foreground">
-                {(["Received", "Washing", "Drying", "Ready", "Claimed"] as const).map((s) => {
+                {(["Received", "Washing", "Ready"] as const).map((s) => {
                   const isCurrent = txn.status === s;
                   return (
                     <ContextMenuItem
@@ -1986,17 +1992,10 @@ export default function TransactionsPage({
                       )}
                     >
                       <div className="flex items-center gap-2">
-                        <span
-                          className={cn(
-                            "w-2 h-2 rounded-full",
-                            s === "Received" && "bg-purple-500",
-                            s === "Washing" && "bg-blue-500",
-                            s === "Drying" && "bg-amber-500",
-                            s === "Ready" && "bg-green-500",
-                            s === "Claimed" && "bg-slate-500"
-                          )}
-                        />
-                        <span>{s === "Claimed" ? "Claim Order" : s}</span>
+                        {s === "Received" && <Inbox className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0" />}
+                        {s === "Washing" && <Droplets className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />}
+                        {s === "Ready" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />}
+                        <span>{s}</span>
                       </div>
                       {isCurrent && <Check className="w-3.5 h-3.5 text-primary ml-auto" />}
                     </ContextMenuItem>
@@ -2223,32 +2222,36 @@ export default function TransactionsPage({
           {/* Horizontal Scrolling Filter Chips */}
           <div className="flex items-center gap-1.5 overflow-x-auto py-1 no-scrollbar -mx-1 px-1">
             {/* Undo / Redo chips */}
-            <button
-              type="button"
-              onClick={handleUndo}
-              disabled={undoStack.length === 0 || busy}
-              title="Undo status change"
-              className={cn(
-                "h-8 px-2.5 rounded-full text-xs font-semibold shrink-0 flex items-center gap-1 shadow-xs border transition-colors",
-                undoStack.length > 0 ? "bg-card border-border/80 text-foreground active:scale-95" : "opacity-40 pointer-events-none"
-              )}
-            >
-              <Undo2 className="w-3.5 h-3.5" />
-              <span>Undo</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleRedo}
-              disabled={redoStack.length === 0 || busy}
-              title="Redo status change"
-              className={cn(
-                "h-8 px-2.5 rounded-full text-xs font-semibold shrink-0 flex items-center gap-1 shadow-xs border transition-colors",
-                redoStack.length > 0 ? "bg-card border-border/80 text-foreground active:scale-95" : "opacity-40 pointer-events-none"
-              )}
-            >
-              <Redo2 className="w-3.5 h-3.5" />
-              <span>Redo</span>
-            </button>
+            {activeTab !== "claimed" && activeTab !== "voided" && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleUndo}
+                  disabled={undoStack.length === 0 || busy}
+                  title="Undo status change"
+                  className={cn(
+                    "h-8 px-2.5 rounded-full text-xs font-semibold shrink-0 flex items-center gap-1 shadow-xs border transition-colors",
+                    undoStack.length > 0 ? "bg-card border-border/80 text-foreground active:scale-95" : "opacity-40 pointer-events-none"
+                  )}
+                >
+                  <Undo2 className="w-3.5 h-3.5" />
+                  <span>Undo</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRedo}
+                  disabled={redoStack.length === 0 || busy}
+                  title="Redo status change"
+                  className={cn(
+                    "h-8 px-2.5 rounded-full text-xs font-semibold shrink-0 flex items-center gap-1 shadow-xs border transition-colors",
+                    redoStack.length > 0 ? "bg-card border-border/80 text-foreground active:scale-95" : "opacity-40 pointer-events-none"
+                  )}
+                >
+                  <Redo2 className="w-3.5 h-3.5" />
+                  <span>Redo</span>
+                </button>
+              </>
+            )}
 
             {/* Status Chip */}
             {(activeTab === "transactions" || activeTab === "all") && (
@@ -2512,7 +2515,7 @@ export default function TransactionsPage({
                               )}
                               {loyaltyEnabled && Boolean(getLoyaltyMemberForTxn(txn)) && (
                                 <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 px-1.5 py-0.2 text-[9px] font-semibold shrink-0">
-                                  <Sparkles className="w-2 h-2 text-amber-500 fill-amber-500" />
+                                  <Star className="w-2 h-2 text-amber-500 fill-amber-500" />
                                   Loyalty
                                 </span>
                               )}
@@ -2670,21 +2673,6 @@ export default function TransactionsPage({
                               </Button>
                             </div>
                           </div>
-
-                          {/* Dedicated Bottom Sheet Button */}
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="w-full h-8 text-xs font-semibold rounded-xl border-purple-200/80 bg-purple-50/70 hover:bg-purple-100 text-purple-900 dark:border-purple-800/60 dark:bg-purple-950/40 dark:text-purple-200 dark:hover:bg-purple-900/60 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setViewTxn(txn);
-                            }}
-                          >
-                            <Receipt className="w-3.5 h-3.5 text-purple-700 dark:text-purple-300" />
-                            <span>Go to bottom sheet for full ticket details</span>
-                          </Button>
                         </div>
                       )}
                     </div>
@@ -2892,32 +2880,34 @@ export default function TransactionsPage({
 
             {/* Filter Dropdowns */}
             <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-              <div className="flex items-center gap-1 border-r border-border/60 pr-2 mr-0.5">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleUndo}
-                  disabled={undoStack.length === 0 || busy}
-                  className="h-10 md:h-9 px-2.5 text-xs font-semibold gap-1.5 cursor-pointer"
-                  title={undoStack.length > 0 ? `Undo: Revert #${undoStack[undoStack.length - 1].ticketId}` : "Nothing to undo"}
-                  aria-label="Undo status change"
-                >
-                  <Undo2 className="w-3.5 h-3.5" />
-                  <span className="hidden xl:inline">Undo</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleRedo}
-                  disabled={redoStack.length === 0 || busy}
-                  className="h-10 md:h-9 px-2.5 text-xs font-semibold gap-1.5 cursor-pointer"
-                  title={redoStack.length > 0 ? `Redo: Advance #${redoStack[redoStack.length - 1].ticketId}` : "Nothing to redo"}
-                  aria-label="Redo status change"
-                >
-                  <Redo2 className="w-3.5 h-3.5" />
-                  <span className="hidden xl:inline">Redo</span>
-                </Button>
-              </div>
+              {activeTab !== "claimed" && activeTab !== "voided" && (
+                <div className="flex items-center gap-1 border-r border-border/60 pr-2 mr-0.5">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleUndo}
+                    disabled={undoStack.length === 0 || busy}
+                    className="h-10 md:h-9 px-2.5 text-xs font-semibold gap-1.5 cursor-pointer"
+                    title={undoStack.length > 0 ? `Undo: Revert #${undoStack[undoStack.length - 1].ticketId}` : "Nothing to undo"}
+                    aria-label="Undo status change"
+                  >
+                    <Undo2 className="w-3.5 h-3.5" />
+                    <span className="hidden xl:inline">Undo</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRedo}
+                    disabled={redoStack.length === 0 || busy}
+                    className="h-10 md:h-9 px-2.5 text-xs font-semibold gap-1.5 cursor-pointer"
+                    title={redoStack.length > 0 ? `Redo: Advance #${redoStack[redoStack.length - 1].ticketId}` : "Nothing to redo"}
+                    aria-label="Redo status change"
+                  >
+                    <Redo2 className="w-3.5 h-3.5" />
+                    <span className="hidden xl:inline">Redo</span>
+                  </Button>
+                </div>
+              )}
 
               {(activeTab === "transactions" || activeTab === "all") && (
                 <Select value={filterStatus} onValueChange={setFilterStatus}>
@@ -3146,7 +3136,7 @@ export default function TransactionsPage({
                           className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/25 px-2 py-0.5 text-[10px] font-semibold shrink-0"
                           title="Registered Loyalty Member"
                         >
-                          <Sparkles className="w-2.5 h-2.5 text-amber-500 fill-amber-500" aria-hidden="true" />
+                          <Star className="w-2.5 h-2.5 text-amber-500 fill-amber-500" aria-hidden="true" />
                           Loyalty Member
                         </span>
                       )}
@@ -3240,7 +3230,7 @@ export default function TransactionsPage({
                                   <RefreshCw className="w-3.5 h-3.5 mr-2" /> Change Status
                                 </DropdownMenuSubTrigger>
                                 <DropdownMenuSubContent className="w-44 shadow-lg border border-border bg-popover text-popover-foreground">
-                                  {(["Received", "Washing", "Drying", "Ready", "Claimed"] as const).map((s) => {
+                                  {(["Received", "Washing", "Ready"] as const).map((s) => {
                                     const isCurrent = txn.status === s;
                                     return (
                                       <DropdownMenuItem
@@ -3254,17 +3244,10 @@ export default function TransactionsPage({
                                         )}
                                       >
                                         <div className="flex items-center gap-2">
-                                          <span
-                                            className={cn(
-                                              "w-2 h-2 rounded-full",
-                                              s === "Received" && "bg-purple-500",
-                                              s === "Washing" && "bg-blue-500",
-                                              s === "Drying" && "bg-amber-500",
-                                              s === "Ready" && "bg-green-500",
-                                              s === "Claimed" && "bg-slate-500"
-                                            )}
-                                          />
-                                          <span>{s === "Claimed" ? "Claim Order" : s}</span>
+                                          {s === "Received" && <Inbox className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0" />}
+                                          {s === "Washing" && <Droplets className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />}
+                                          {s === "Ready" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />}
+                                          <span>{s}</span>
                                         </div>
                                         {isCurrent && <Check className="w-3.5 h-3.5 text-primary ml-auto" />}
                                       </DropdownMenuItem>
@@ -3730,7 +3713,7 @@ export default function TransactionsPage({
                           className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/25 px-1.5 py-0.5 text-[9px] font-semibold shrink-0"
                           title="Registered Loyalty Member"
                         >
-                          <Sparkles className="w-2.5 h-2.5 text-amber-500 fill-amber-500" aria-hidden="true" />
+                          <Star className="w-2.5 h-2.5 text-amber-500 fill-amber-500" aria-hidden="true" />
                           Loyalty Member
                         </span>
                       )}
@@ -3851,25 +3834,37 @@ export default function TransactionsPage({
               )}
 
               {/* Edit actions */}
-              <div className="flex flex-col gap-2.5 pt-3 border-t border-border/40 mt-2">
-                {editStatus === "Ready" && (!enablePaymentOption || editPaymentStatus === "paid") && (
-                  <Button size="lg" onClick={markAsClaimed} className="w-full gap-2 transition-all duration-200 hover:scale-[1.02] bg-green-600 hover:bg-green-700 text-white shadow-sm font-bold text-sm h-12 rounded-xl">
-                    <Check className="w-4 h-4" /> Claim Order
+              <div className="flex flex-col gap-2 pt-3 border-t border-border/40 mt-2">
+                <div className="grid grid-cols-2 gap-2 w-full">
+                  {editStatus === "Ready" && (!enablePaymentOption || editPaymentStatus === "paid") ? (
+                    <Button
+                      type="button"
+                      size="lg"
+                      onClick={() => setClaimConfirmTxn(editTxn)}
+                      className="w-full gap-1.5 transition-all duration-200 hover:scale-[1.02] bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs font-bold text-sm h-11 rounded-xl cursor-pointer"
+                    >
+                      <Check className="w-4 h-4" /> Claim Order
+                    </Button>
+                  ) : null}
+                  <Button
+                    type="button"
+                    size="lg"
+                    variant="default"
+                    onClick={saveInstructions}
+                    className={cn(
+                      "transition-all duration-200 hover:scale-[1.02] shadow-xs font-bold text-sm h-11 rounded-xl cursor-pointer",
+                      !(editStatus === "Ready" && (!enablePaymentOption || editPaymentStatus === "paid")) && "col-span-2 w-full"
+                    )}
+                  >
+                    Save Changes
                   </Button>
-                )}
+                </div>
                 <Button
-                  size="lg"
-                  variant="default"
-                  onClick={saveInstructions}
-                  className="w-full transition-all duration-200 hover:scale-[1.02] shadow-sm font-bold text-sm h-12 rounded-xl"
-                >
-                  Save Changes
-                </Button>
-                <Button
+                  type="button"
                   size="lg"
                   variant="outline"
                   onClick={() => { setEditTxn(null); onEditComplete?.(); }}
-                  className="w-full transition-all duration-200 hover:bg-muted cursor-pointer font-bold text-sm h-12 rounded-xl border-border/60"
+                  className="w-full transition-all duration-200 hover:bg-muted cursor-pointer font-semibold text-sm h-11 rounded-xl border-border/60 text-muted-foreground hover:text-foreground"
                 >
                   <X className="w-4 h-4 mr-1.5 opacity-70" /> Cancel
                 </Button>
@@ -4143,25 +4138,19 @@ export default function TransactionsPage({
             </AlertDialogCancel>
             <AlertDialogAction
               className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl cursor-pointer"
-              disabled={claimBusy}
-              onClick={async (e) => {
+              onClick={(e) => {
                 e.preventDefault();
                 if (!claimConfirmTxn) return;
                 const target = claimConfirmTxn;
-                setClaimBusy(true);
-                try {
-                  await handleQuickClaim(target);
-                  setClaimConfirmTxn(null);
-                  if (editTxn?.ticketId === target.ticketId) {
-                    setEditTxn(null);
-                    onEditComplete?.();
-                  }
-                } finally {
-                  setClaimBusy(false);
+                setClaimConfirmTxn(null);
+                if (editTxn?.ticketId === target.ticketId) {
+                  setEditTxn(null);
+                  onEditComplete?.();
                 }
+                void handleQuickClaim(target);
               }}
             >
-              {claimBusy ? "Claiming..." : "Move to Claimed"}
+              Move to Claimed
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

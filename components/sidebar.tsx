@@ -236,7 +236,7 @@ export default function Sidebar({ activePage, onNavigate, onPreload, loyaltyEnab
       <div className="p-2.5 bg-gradient-to-t from-black/25 via-sidebar/60 to-transparent border-t border-sidebar-border/50 shrink-0 hidden lg:block">
         <button
           onClick={() => setCollapsed((prev) => !prev)}
-          title={effectiveCollapsed ? "Expand sidebar (⌘B)" : "Collapse sidebar (⌘B)"}
+          title={effectiveCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           className={cn(
             "w-full flex items-center rounded-xl py-2 text-xs font-medium text-sidebar-foreground/75 hover:text-white bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 transition-all duration-200 cursor-pointer min-h-[40px] shadow-xs active:scale-[0.98]",
             effectiveCollapsed ? "justify-center px-2" : "justify-between px-3"
@@ -245,15 +245,10 @@ export default function Sidebar({ activePage, onNavigate, onPreload, loyaltyEnab
           {effectiveCollapsed ? (
             <PanelLeftOpen className="w-4 h-4 text-sidebar-foreground/90 hover:text-white transition-transform hover:scale-110" />
           ) : (
-            <>
-              <div className="flex items-center gap-2.5">
-                <PanelLeftClose className="w-4 h-4 text-sidebar-foreground/90" />
-                <span className="font-medium tracking-tight">Collapse</span>
-              </div>
-              <kbd className="hidden xl:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-sidebar-foreground/50 bg-white/5 border border-white/10 rounded">
-                ⌘B
-              </kbd>
-            </>
+            <div className="flex items-center gap-2.5">
+              <PanelLeftClose className="w-4 h-4 text-sidebar-foreground/90" />
+              <span className="font-medium tracking-tight">Collapse</span>
+            </div>
           )}
         </button>
       </div>

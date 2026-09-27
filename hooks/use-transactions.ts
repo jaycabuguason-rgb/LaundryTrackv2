@@ -205,7 +205,9 @@ export function useTransactions() {
       return;
     }
 
-    setLoading(true);
+    if (transactionsRef.current.length === 0) {
+      setLoading(true);
+    }
     try {
       const queue = await readOfflineQueue();
       let headers: Record<string, string>;

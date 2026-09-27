@@ -208,20 +208,20 @@ describe("TransactionsPage Mobile Concept Layout", () => {
     const card27 = screen.getByLabelText(/Ticket #TKT-0027/i);
     expect(card27).toBeInTheDocument();
 
-    // In collapsed state, service specifics and bottom sheet trigger are hidden
-    expect(within(card27).queryByText(/Go to bottom sheet for full ticket details/i)).not.toBeInTheDocument();
+    // In collapsed state, service specifics are hidden
+    expect(within(card27).queryByText(/Full record/i)).not.toBeInTheDocument();
 
     // Tap card to expand
     fireEvent.click(card27);
 
-    // Expanded state reveals service details and the bottom sheet trigger button
-    const bottomSheetBtn = within(card27).getByRole("button", {
-      name: /Go to bottom sheet for full ticket details/i,
+    // Expanded state reveals service details and the Full record trigger button
+    const fullRecordBtn = within(card27).getByRole("button", {
+      name: /full record/i,
     });
-    expect(bottomSheetBtn).toBeInTheDocument();
+    expect(fullRecordBtn).toBeInTheDocument();
 
-    // Click Go to bottom sheet button
-    fireEvent.click(bottomSheetBtn);
+    // Click Full record button
+    fireEvent.click(fullRecordBtn);
 
     // Ticket details bottom sheet modal should be open
     expect(screen.getByText("Ticket Details")).toBeInTheDocument();
@@ -357,4 +357,32 @@ describe("TransactionsPage Mobile Concept Layout", () => {
 
     expect(screen.queryByRole("link", { name: /^track$/i })).not.toBeInTheDocument();
   });
+
+  it("hides Undo and Redo buttons on Claimed and Voided tabs", () => {
+    render(
+      <TransactionsPage
+        transactions={mockTransactions}
+        onCreateTransaction={onCreateTransaction}
+        onUpdateTransaction={onUpdateTransaction}
+      />
+    );
+
+    // On Active tab, undo/redo buttons are rendered
+    expect(screen.getAllByRole("button", { name: /undo status change/i }).length).toBeGreaterThanOrEqual(1);
+
+    // Switch to Claimed tab
+    const claimedTab = screen.getByRole("tab", { name: /claimed/i });
+    fireEvent.click(claimedTab);
+
+    expect(screen.queryByRole("button", { name: /undo status change/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /redo status change/i })).not.toBeInTheDocument();
+
+    // Switch to Voided tab
+    const voidedTab = screen.getByRole("tab", { name: /voided/i });
+    fireEvent.click(voidedTab);
+
+    expect(screen.queryByRole("button", { name: /undo status change/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /redo status change/i })).not.toBeInTheDocument();
+  });
 });
+

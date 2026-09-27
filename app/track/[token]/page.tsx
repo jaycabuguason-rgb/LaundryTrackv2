@@ -8,7 +8,6 @@ import {
   ShieldCheck,
   Star,
   Gift,
-  Sparkles,
   Flame,
   QrCode,
   ExternalLink,
@@ -73,13 +72,13 @@ export default async function PublicTrackingPage(
     : null;
 
   return (
-    <div className="min-h-screen force-light bg-[#f8f9ff] py-6 px-3 sm:px-6 text-slate-800 antialiased">
+    <div className="min-h-screen force-light bg-[#f7f6f4] py-6 px-3 sm:px-6 text-slate-800 antialiased">
       {/* Constrained max width perfectly suited for Mobile viewing */}
       <main className="max-w-[480px] mx-auto space-y-4" data-purpose="mobile-tracking-container">
         {/* BEGIN: BrandHeader */}
-        <header className="text-center pt-2 pb-1" data-purpose="shop-brand-header">
+        <header className="text-center pt-2 pb-2" data-purpose="shop-brand-header">
           {/* Centered Shop Avatar/Badge */}
-          <div className="inline-flex items-center justify-center p-1.5 bg-white rounded-2xl shadow-xs border border-border/80 mb-2">
+          <div className="inline-flex items-center justify-center p-1.5 bg-white rounded-2xl shadow-sm border border-stone-200/80 mb-2.5">
             {record.shopProfile.logoDataUrl ? (
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
@@ -88,7 +87,7 @@ export default async function PublicTrackingPage(
                 className="w-14 h-14 object-cover rounded-xl"
               />
             ) : (
-              <div className="w-14 h-14 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold text-lg">
+              <div className="w-14 h-14 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-lg">
                 {record.shopProfile.shopName.slice(0, 2).toUpperCase()}
               </div>
             )}
@@ -97,71 +96,17 @@ export default async function PublicTrackingPage(
             {record.shopProfile.shopName}
           </h1>
           <p className="text-xs text-slate-500 font-medium tracking-wide mt-0.5">
-            Powered by <span className="text-primary font-semibold">LaundryTrack</span>
+            Powered by <span className="text-purple-700 font-semibold">LaundryTrack</span>
           </p>
         </header>
         {/* END: BrandHeader */}
 
-        {/* Dynamic Live Customer Tracking & Pickup QR Code (Zero-Reload) */}
+        {/* Dynamic Live Customer Tracking (5 Cards: Overview, QR Pass, Laundry Details, Payment, Pickup Instructions) */}
         <CustomerTrackingView
           initialRecord={record}
           token={token}
           pickupQrUrl={pickupQrUrl}
         />
-
-        {/* BEGIN: PickupInstructionsAndContact */}
-        <section
-          className="bg-white rounded-3xl p-4 sm:p-5 shadow-[0_10px_30px_rgba(11,28,48,0.06)] border border-border/70"
-          data-purpose="pickup-instructions-section"
-        >
-          <div className="flex items-center gap-2 mb-3">
-            <Store className="w-4 h-4 text-primary" />
-            <h2 className="text-sm font-bold text-slate-800 tracking-tight">Pickup & Store Information</h2>
-          </div>
-
-          {/* Shop Info Container */}
-          <div className="bg-[#eff4ff]/60 dark:bg-muted/20 border border-border/60 rounded-2xl p-3.5 space-y-2 text-xs">
-            <h3 className="font-bold text-slate-800">{record.shopProfile.shopName}</h3>
-            {record.shopProfile.address && (
-              <div className="flex items-center gap-2 text-slate-600">
-                <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
-                <span>{record.shopProfile.address}</span>
-              </div>
-            )}
-            {record.shopProfile.contactNumber && (
-              <div className="flex items-center gap-2 text-slate-600">
-                <Phone className="w-3.5 h-3.5 text-primary shrink-0" />
-                <a className="hover:underline text-slate-700 font-medium" href={`tel:${record.shopProfile.contactNumber}`}>
-                  {record.shopProfile.contactNumber}
-                </a>
-              </div>
-            )}
-            {record.shopProfile.email && (
-              <div className="flex items-center gap-2 text-slate-600">
-                <Mail className="w-3.5 h-3.5 text-primary shrink-0" />
-                <a className="hover:underline text-primary font-medium" href={`mailto:${record.shopProfile.email}`}>
-                  {record.shopProfile.email}
-                </a>
-              </div>
-            )}
-          </div>
-
-          {/* Before Pickup Note */}
-          <div className="mt-3 bg-[#eff4ff]/60 dark:bg-muted/20 border border-border/60 rounded-2xl p-3 text-xs">
-            <h4 className="font-bold text-slate-800 text-[11px] mb-0.5">Before Pickup</h4>
-            <p className="text-slate-600 text-[11px] leading-relaxed">
-              {record.shopProfile.pickupInstructions || "Present your ticket number or QR pass upon claiming at the counter."}
-            </p>
-          </div>
-
-          {/* Warm Closing Salutation */}
-          <div className="mt-3.5 text-center">
-            <p className="text-xs text-slate-500 font-medium italic">
-              {record.shopProfile.receiptFooter || "Maraming salamat po!"}
-            </p>
-          </div>
-        </section>
-        {/* END: PickupInstructionsAndContact */}
 
         {/* Loyalty & Rewards Section (Shown at bottom for members) */}
         {isLoyaltyEnabled && loyaltyRecord && (
@@ -180,7 +125,7 @@ export default async function PublicTrackingPage(
                   <div className="flex items-center gap-2">
                     <h2 className="text-sm font-bold text-slate-900">{loyaltyRecord.name}</h2>
                     <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2 py-0.5 text-[10px] font-bold border border-primary/20">
-                      <Sparkles className="w-3 h-3" /> Loyalty Member
+                      <Star className="w-3 h-3" /> Loyalty Member
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-400 font-mono mt-0.5">
@@ -325,7 +270,7 @@ export default async function PublicTrackingPage(
         {isLoyaltyEnabled && !loyaltyRecord && (
           <section className="bg-white rounded-3xl border border-primary/20 p-5 shadow-[0_10px_30px_rgba(11,28,48,0.06)] text-center space-y-2">
             <div className="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-primary/10 text-primary">
-              <Sparkles className="w-5 h-5" />
+              <Gift className="w-5 h-5" />
             </div>
             <h3 className="text-sm font-bold text-slate-900">Earn Free Laundries With Every Wash!</h3>
             <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">

@@ -102,31 +102,39 @@ describe("TransactionDetailModal - Mobile View Ticket Concept", () => {
     expect(screen.getAllByText(/Counter Terminal/i).length).toBeGreaterThan(0);
   });
 
-  it("triggers stage advancement, quick payment settlement, and bottom collapse", () => {
-    const handleAdvance = vi.fn();
-    const handlePay = vi.fn();
+  it("renders thermal receipt and edit details while omitting advance, payment, and bottom collapse buttons", () => {
+    const handleEdit = vi.fn();
     const handleClose = vi.fn();
+    const handleReprint = vi.fn();
 
     render(
       <TransactionDetailModal
         open={true}
         onOpenChange={handleClose}
         transaction={mockTransaction}
-        onAdvanceStage={handleAdvance}
-        onReceivePayment={handlePay}
+        onEditStatus={handleEdit}
+        onReprintQr={handleReprint}
       />
     );
 
-    const advanceBtn = screen.getByText(/Advance to Ready/i);
-    fireEvent.click(advanceBtn);
-    expect(handleAdvance).toHaveBeenCalledWith(mockTransaction);
+    // Assert that the removed elements are not in the document
+    expect(screen.queryByText(/Advance to/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Mark as Claimed/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Receive ₱/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Payment Received/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Swipe down or tap to collapse/i)).not.toBeInTheDocument();
 
-    const payBtn = screen.getByText(/Receive ₱40/i);
-    fireEvent.click(payBtn);
-    expect(handlePay).toHaveBeenCalledWith(mockTransaction);
+    // Assert that Thermal Receipt is rendered and clickable
+    const receiptBtn = screen.getByText("Thermal Receipt");
+    expect(receiptBtn).toBeInTheDocument();
+    fireEvent.click(receiptBtn);
+    expect(handleReprint).toHaveBeenCalledWith(mockTransaction);
 
-    const collapseBtn = screen.getByText(/Swipe down or tap to collapse/i);
-    fireEvent.click(collapseBtn);
+    // Assert that Edit Full Order Details is rendered and clickable
+    const editBtn = screen.getByText("Edit Full Order Details");
+    expect(editBtn).toBeInTheDocument();
+    fireEvent.click(editBtn);
     expect(handleClose).toHaveBeenCalledWith(false);
+    expect(handleEdit).toHaveBeenCalledWith(mockTransaction.ticketId);
   });
 });

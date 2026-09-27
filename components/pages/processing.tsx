@@ -6,6 +6,7 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
+  Clock,
   Droplet,
   Inbox,
   Loader2,
@@ -151,6 +152,19 @@ function formatTimeInStage(arrivalDateTime: string): string {
   if (hours > 0 && mins > 0) return `${hours}h ${mins}m`;
   if (hours > 0) return `${hours} hr${hours > 1 ? "s" : ""}`;
   return `${mins} min`;
+}
+
+function formatStageDuration(hours: number): string {
+  const totalHours = Math.floor(hours);
+  if (totalHours < 24) {
+    return `${totalHours}h`;
+  }
+  const days = Math.floor(totalHours / 24);
+  const remHours = totalHours % 24;
+  if (remHours > 0) {
+    return `${days}d ${remHours}h`;
+  }
+  return `${days}d`;
 }
 
 function getTimeInStageColor(arrivalDateTime: string): string {
@@ -620,16 +634,16 @@ export default function ProcessingPage({
                       {isPriorityReady ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 text-[11px] font-bold">
                           <AlertTriangle className="w-3 h-3" />
-                          Waiting {Math.floor(hoursInStage)}h
+                          Waiting {formatStageDuration(hoursInStage)}
                         </span>
                       ) : isLongWaiting ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 text-[11px] font-bold animate-pulse">
                           <AlertTriangle className="w-3 h-3" />
-                          {Math.floor(hoursInStage)}h in stage
+                          {formatStageDuration(hoursInStage)} in stage
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground text-[11px] font-medium">
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                          <Clock className="w-3 h-3 text-primary shrink-0" />
                           {formatTimeInStage(txn.arrivalDateTime)}
                         </span>
                       )}
@@ -767,22 +781,6 @@ export default function ProcessingPage({
                           >
                             {txn.ticketId}
                           </button>
-                          {isPriorityReady && (
-                            <span
-                              className="ml-1.5 inline-block rounded bg-amber-100 px-1 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
-                              title={`Waiting for pickup for ${Math.floor(hoursInStage)} hrs`}
-                            >
-                              Waiting {Math.floor(hoursInStage)}h
-                            </span>
-                          )}
-                          {isLongWaiting && (
-                            <span
-                              className="ml-1.5 inline-block rounded bg-amber-500/10 px-1 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-300"
-                              title={`In stage for ${Math.floor(hoursInStage)} hrs`}
-                            >
-                              {Math.floor(hoursInStage)}h
-                            </span>
-                          )}
                         </td>
                         <td className="px-3 py-3 text-xs font-medium text-foreground">{txn.customerName}</td>
                         <td className="px-3 py-3 text-xs text-muted-foreground whitespace-nowrap">{formatReadableDateTime(txn.arrivalDateTime) || txn.arrivalDateTime}</td>
@@ -1038,7 +1036,7 @@ export default function ProcessingPage({
         )}
 
         {/* Loading */}
-        {loading ? (
+        {loading && transactions.length === 0 ? (
           <Card className="border border-border shadow-none">
             <CardContent className="p-6 text-sm text-muted-foreground">
               Loading transactions…

@@ -43,6 +43,15 @@
   --status-ready: hsl(142 42% 46%);
 }
 
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.15); }
+}
+
+.status-pulse {
+  animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
 .dark {
   --background: hsl(255 25% 7%);
   --foreground: hsl(255 15% 90%);
@@ -289,7 +298,13 @@
 [id*="stt" i],
 [class*="stt" i],
 [id*="scroll-button" i],
-[class*="scroll-button" i] {
+[class*="scroll-button" i],
+[id*="scroll_to_top" i],
+[class*="scroll_to_top" i],
+[id*="scroll_button" i],
+[class*="scroll_button" i],
+button[title*="scroll" i],
+a[title*="scroll" i] {
   display: none !important;
   visibility: hidden !important;
   opacity: 0 !important;

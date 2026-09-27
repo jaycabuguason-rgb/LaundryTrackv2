@@ -9,7 +9,8 @@ import {
   CheckCircle2,
   Banknote,
   ListTodo,
-  Sparkles,
+  Droplets,
+  PackageCheck,
   UserPlus,
   Users,
   Package,
@@ -129,9 +130,6 @@ export default function DashboardPage({
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               <span className="text-xl font-bold tracking-tight text-foreground">Today at a glance</span>
-              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-secondary text-secondary-foreground text-xs font-bold" aria-hidden="true">
-                ✨
-              </span>
             </div>
             <p className="text-xs text-muted-foreground truncate mt-0.5">
               Live operational summary for {businessProfile.shopName || "Sunshine Laundry"}
@@ -194,7 +192,7 @@ export default function DashboardPage({
           isLoyaltyOn ? "sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5" : "sm:grid-cols-2 lg:grid-cols-4"
         )}>
           {/* 1. Today's Orders */}
-          <Card className="snap-start shrink-0 w-[148px] sm:w-auto border border-border/70 rounded-2xl shadow-xs bg-card">
+          <Card className="snap-start shrink-0 w-[164px] sm:w-auto border border-border/70 rounded-2xl shadow-xs bg-card">
             <CardContent className="p-3.5 sm:p-5">
               <div className="flex items-start justify-between gap-1.5 sm:gap-2">
                 <div className="space-y-0.5 min-w-0">
@@ -214,7 +212,7 @@ export default function DashboardPage({
           </Card>
 
           {/* 2. In Progress */}
-          <Card className="snap-start shrink-0 w-[148px] sm:w-auto border border-border/70 rounded-2xl shadow-xs bg-card">
+          <Card className="snap-start shrink-0 w-[164px] sm:w-auto border border-border/70 rounded-2xl shadow-xs bg-card">
             <CardContent className="p-3.5 sm:p-5">
               <div className="flex items-start justify-between gap-1.5 sm:gap-2">
                 <div className="space-y-0.5 min-w-0">
@@ -234,7 +232,7 @@ export default function DashboardPage({
           </Card>
 
           {/* 3. Ready for Pickup */}
-          <Card className="snap-start shrink-0 w-[148px] sm:w-auto border border-border/70 rounded-2xl shadow-xs bg-card">
+          <Card className="snap-start shrink-0 w-[164px] sm:w-auto border border-border/70 rounded-2xl shadow-xs bg-card">
             <CardContent className="p-3.5 sm:p-5">
               <div className="flex items-start justify-between gap-1.5 sm:gap-2">
                 <div className="space-y-0.5 min-w-0">
@@ -247,21 +245,21 @@ export default function DashboardPage({
                   <p className="text-[11px] sm:text-xs text-muted-foreground truncate">waiting for customers</p>
                 </div>
                 <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0">
-                  <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
+                  <PackageCheck className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* 4. Revenue */}
-          <Card className="snap-start shrink-0 w-[148px] sm:w-auto border border-border/70 rounded-2xl shadow-xs bg-card">
+          <Card className="snap-start shrink-0 w-[164px] sm:w-auto border border-border/70 rounded-2xl shadow-xs bg-card">
             <CardContent className="p-3.5 sm:p-5">
               <div className="flex items-start justify-between gap-1.5 sm:gap-2">
                 <div className="space-y-0.5 min-w-0">
                   <p className="text-xs font-semibold text-muted-foreground truncate">
                     Revenue
                   </p>
-                  <p className="text-2xl font-bold tracking-tight text-foreground font-mono tabular-nums truncate">
+                  <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground font-mono tabular-nums whitespace-nowrap">
                     ₱{paidRevenue.toLocaleString()}
                   </p>
                   <p className="text-[11px] sm:text-xs text-muted-foreground truncate">paid transactions</p>
@@ -275,7 +273,7 @@ export default function DashboardPage({
 
           {/* 5. Loyalty Members — Only rendered when loyalty is enabled */}
           {isLoyaltyOn && (
-            <Card className="snap-start shrink-0 w-[148px] sm:w-auto border border-border/70 rounded-2xl shadow-xs bg-card">
+            <Card className="snap-start shrink-0 w-[164px] sm:w-auto border border-border/70 rounded-2xl shadow-xs bg-card">
               <CardContent className="p-3.5 sm:p-5">
                 <div className="flex items-start justify-between gap-1.5 sm:gap-2">
                   <div className="space-y-0.5 min-w-0">
@@ -416,7 +414,7 @@ export default function DashboardPage({
                   className="group rounded-xl border border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 p-2 sm:p-2.5 transition-all cursor-pointer flex flex-col justify-between items-center text-center space-y-1"
                 >
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" aria-hidden="true" />
+                    <Inbox className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0" aria-hidden="true" />
                     <span className="text-xs text-foreground font-semibold truncate">Received</span>
                   </div>
                   <span className="text-lg sm:text-xl font-bold text-foreground tabular-nums leading-tight">
@@ -436,7 +434,7 @@ export default function DashboardPage({
                   className="group rounded-xl border border-blue-500/20 bg-blue-500/5 hover:bg-blue-500/10 p-2 sm:p-2.5 transition-all cursor-pointer flex flex-col justify-between items-center text-center space-y-1"
                 >
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" aria-hidden="true" />
+                    <Droplets className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" aria-hidden="true" />
                     <span className="text-xs text-foreground font-semibold truncate">Washing</span>
                   </div>
                   <span className="text-lg sm:text-xl font-bold text-foreground tabular-nums leading-tight">
@@ -456,7 +454,7 @@ export default function DashboardPage({
                   className="group rounded-xl border border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 p-2 sm:p-2.5 transition-all cursor-pointer flex flex-col justify-between items-center text-center space-y-1"
                 >
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" aria-hidden="true" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
                     <span className="text-xs text-foreground font-semibold truncate">Ready</span>
                   </div>
                   <span className="text-lg sm:text-xl font-bold text-foreground tabular-nums leading-tight">
