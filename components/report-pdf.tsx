@@ -231,7 +231,7 @@ function ReportDocument({ exportFrom, exportTo, sections, transactions, serviceR
         </Page>
       )}
 
-      {/* ── Page 3: Customer List ── */}
+      {/* ── Page 3: Loyalty Customer Records ── */}
       {sections.includes("customers") && (
         <Page size="A4" style={S.page}>
           <View style={S.headerBand}>
@@ -241,7 +241,7 @@ function ReportDocument({ exportFrom, exportTo, sections, transactions, serviceR
             </Text>
           </View>
           <View style={S.body}>
-            <Text style={S.sectionTitle}>Customer List</Text>
+            <Text style={S.sectionTitle}>Loyalty Customer Records</Text>
             <Table
               headers={["Name", "Phone", "Total Transactions", "Total Spent (₱)"]}
               rows={custRows}

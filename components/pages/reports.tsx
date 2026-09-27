@@ -71,7 +71,7 @@ type ServiceRevenueRow = {
 const exportOptions: Array<{ id: ExportSection; label: string }> = [
   { id: "transactions", label: "Transactions" },
   { id: "analytics", label: "Sales and Analytics" },
-  { id: "customers", label: "Customer Summary" },
+  { id: "customers", label: "Loyalty Customer Records" },
 ];
 
 const PIE_COLORS = ["hsl(257 58% 49%)", "hsl(142 71% 45%)", "hsl(214 62% 59%)", "hsl(39 79% 54%)", "hsl(266 17% 53%)", "hsl(44 83% 61%)"];
@@ -655,7 +655,7 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack", o
     }
 
     if (selectedExports.includes("customers")) {
-      rows.push(["Customers"]);
+      rows.push(["Loyalty Customer Records"]);
       rows.push(["Name", "Phone", "Transactions", "Spent"]);
       for (const customer of customerRows) {
         rows.push([customer.name, customer.phone, String(customer.count), String(customer.spent)]);
@@ -2325,7 +2325,7 @@ export default function ReportsPage({ transactions, shopName = "LaundryTrack", o
             </div>
 
             <div className="rounded-xl border border-border bg-muted/20 p-4 text-xs text-muted-foreground">
-              This export uses your current live transactions, sales analytics, and customer summary for the selected date range.
+              This export uses your current live transactions, sales analytics, and loyalty customer records for the selected date range.
             </div>
 
             <Button
