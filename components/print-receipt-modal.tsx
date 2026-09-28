@@ -122,7 +122,7 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
         </div>
         <div class="row">
           <span class="label">${transaction.weight > 0 ? "Weight:" : "Load:"}</span>
-          <span class="value">${transaction.weight > 0 ? `${transaction.weight} kg` : "Per Load"}</span>
+          <span class="value">${transaction.weight > 0 ? `${transaction.weight} kg` : `${transaction.loads && transaction.loads > 0 ? transaction.loads : 1} load${(transaction.loads && transaction.loads > 0 ? transaction.loads : 1) > 1 ? "s" : ""}`}</span>
         </div>
         ${transaction.addOns && transaction.addOns.length > 0 ? `
           <div class="row">
@@ -185,10 +185,12 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
           <span class="label">Status:</span>
           <span class="value bold">${transaction.status}</span>
         </div>
-        <div class="row">
-          <span class="label">Est. Ready:</span>
-          <span class="value">${transaction.eta ? formatReadableDateTime(transaction.eta) : "Pending Schedule"}</span>
-        </div>
+        ${transaction.eta ? `
+          <div class="row">
+            <span class="label">Est. Ready:</span>
+            <span class="value">${formatReadableDateTime(transaction.eta)}</span>
+          </div>
+        ` : ""}
 
         <!-- Tracking QR Code -->
         ${showQr ? `
@@ -561,7 +563,11 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
               </div>
               <div className="flex justify-between text-[11px] my-0.5">
                 <span className="text-neutral-700">{transaction.weight > 0 ? "Weight:" : "Load:"}</span>
-                <span>{transaction.weight > 0 ? `${transaction.weight} kg` : "Per Load"}</span>
+                <span>
+                  {transaction.weight > 0
+                    ? `${transaction.weight} kg`
+                    : `${transaction.loads && transaction.loads > 0 ? transaction.loads : 1} load${(transaction.loads && transaction.loads > 0 ? transaction.loads : 1) > 1 ? "s" : ""}`}
+                </span>
               </div>
               {transaction.addOns && transaction.addOns.length > 0 && (
                 <div className="flex justify-between text-[11px] my-0.5">
@@ -626,12 +632,14 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
                 <span className="text-neutral-700">Status:</span>
                 <span className="font-bold">{transaction.status}</span>
               </div>
-              <div className="flex justify-between text-[11px] my-0.5">
-                <span className="text-neutral-700">Est. Ready:</span>
-                <span className="text-right">
-                  {transaction.eta ? formatReadableDateTime(transaction.eta) : "Pending Schedule"}
-                </span>
-              </div>
+              {transaction.eta && (
+                <div className="flex justify-between text-[11px] my-0.5">
+                  <span className="text-neutral-700">Est. Ready:</span>
+                  <span className="text-right">
+                    {formatReadableDateTime(transaction.eta)}
+                  </span>
+                </div>
+              )}
 
               {/* QR Code */}
               {showQr && (

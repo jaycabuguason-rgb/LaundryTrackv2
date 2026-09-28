@@ -31,6 +31,7 @@ import {
   type ServiceType,
   type LoadTier,
   type AddOn,
+  type PricingMode,
 } from "@/lib/settings-store";
 import type { CreateTransactionInput } from "@/lib/transaction-contracts";
 import type { Transaction, PaymentStatus } from "@/lib/data";
@@ -84,8 +85,19 @@ export default function NewOrderPage({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Pricing configuration loaded from settings
+  const [pricingMode, setPricingMode] = useState<PricingMode>(() => loadPricingConfig().pricingMode || "both");
+  const [enablePaymentOption, setEnablePaymentOption] = useState<boolean>(true);
+  const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
+  const [loadTiers, setLoadTiers] = useState<LoadTier[]>([]);
+  const [addOns, setAddOns] = useState<AddOn[]>([]);
+  const [basePricePerKg, setBasePricePerKg] = useState<string>("30");
+
   // Service Details State
-  const [billBy, setBillBy] = useState<"per-kg" | "per-load">("per-kg");
+  const [billBy, setBillBy] = useState<"per-kg" | "per-load">(() => {
+    const mode = loadPricingConfig().pricingMode || "both";
+    return mode === "per-load" ? "per-load" : "per-kg";
+  });
   const [selectedServiceId, setSelectedServiceId] = useState<string>("");
   const [weight, setWeight] = useState<string>("");
   const [selectedTierId, setSelectedTierId] = useState<string>("");
@@ -96,17 +108,18 @@ export default function NewOrderPage({
   // Summary State
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("unpaid");
 
-  // Pricing configuration loaded from settings
-  const [enablePaymentOption, setEnablePaymentOption] = useState<boolean>(true);
-  const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
-  const [loadTiers, setLoadTiers] = useState<LoadTier[]>([]);
-  const [addOns, setAddOns] = useState<AddOn[]>([]);
-  const [basePricePerKg, setBasePricePerKg] = useState<string>("30");
-
   useEffect(() => {
     const cfg = loadPricingConfig();
     const svc = loadServiceTypes().filter((s) => s.active);
     const ads = loadAddOns();
+
+    const mode = cfg.pricingMode || "both";
+    setPricingMode(mode);
+    if (mode === "per-load") {
+      setBillBy("per-load");
+    } else if (mode === "per-kg") {
+      setBillBy("per-kg");
+    }
 
     setServiceTypes(svc);
     setLoadTiers(cfg.loadTiers || []);
@@ -216,6 +229,7 @@ export default function NewOrderPage({
         paymentStatus,
         addOns: selectedAddOns,
         washInstructions: specialNotes.trim() || "",
+        loads: billBy === "per-load" ? numLoads : undefined,
       });
 
       toast({
@@ -462,31 +476,35 @@ export default function NewOrderPage({
             {/* Bill By Selector */}
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-muted-foreground">Bill by</Label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setBillBy("per-kg")}
-                  className={cn(
-                    "py-2 px-3 text-xs font-bold rounded-lg border transition-all cursor-pointer",
-                    billBy === "per-kg"
-                      ? "bg-primary/10 border-primary text-primary shadow-xs"
-                      : "border-border text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  By the kilo
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setBillBy("per-load")}
-                  className={cn(
-                    "py-2 px-3 text-xs font-bold rounded-lg border transition-all cursor-pointer",
-                    billBy === "per-load"
-                      ? "bg-primary/10 border-primary text-primary shadow-xs"
-                      : "border-border text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  By the load
-                </button>
+              <div className={cn("grid gap-2", pricingMode === "both" ? "grid-cols-2" : "grid-cols-1 sm:max-w-xs")}>
+                {(pricingMode === "both" || pricingMode === "per-kg") && (
+                  <button
+                    type="button"
+                    onClick={() => setBillBy("per-kg")}
+                    className={cn(
+                      "py-2 px-3 text-xs font-bold rounded-lg border transition-all cursor-pointer",
+                      billBy === "per-kg"
+                        ? "bg-primary/10 border-primary text-primary shadow-xs"
+                        : "border-border text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    By the kilo
+                  </button>
+                )}
+                {(pricingMode === "both" || pricingMode === "per-load") && (
+                  <button
+                    type="button"
+                    onClick={() => setBillBy("per-load")}
+                    className={cn(
+                      "py-2 px-3 text-xs font-bold rounded-lg border transition-all cursor-pointer",
+                      billBy === "per-load"
+                        ? "bg-primary/10 border-primary text-primary shadow-xs"
+                        : "border-border text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    By the load
+                  </button>
+                )}
               </div>
               <p className="text-[11px] text-muted-foreground">
                 {billBy === "per-kg" ? "Charging per kilogram of laundry" : "Charging per batch/load size"}

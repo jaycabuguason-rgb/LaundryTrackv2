@@ -8,6 +8,7 @@ export type CreateTransactionInput = Pick<
   | "arrivalDateTime"
   | "washType"
   | "weight"
+  | "loads"
   | "fee"
   | "status"
   | "paymentStatus"
@@ -16,6 +17,7 @@ export type CreateTransactionInput = Pick<
 > & {
   dropOffDate?: string;
   eta?: string | null;
+  offlineTicketId?: string;
 };
 
 export interface UpdateTransactionInput {

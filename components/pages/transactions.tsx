@@ -6,7 +6,7 @@ import {
   AlertTriangle, Plus, User, Star, Camera,
   ChevronLeft, Check, RefreshCw, Inbox, MoreHorizontal, Download, Droplets,
   Receipt, Clock, CheckCircle2, PackageCheck, ArrowRight,
-  Undo2, Redo2
+  Undo2, Redo2, Trash2
 } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
@@ -471,6 +471,7 @@ function NewTransactionWizard({
       dropOffDate: form.arrivalDateTime.split(" ")[0],
       washType: displayWashType,
       weight: effectiveMode === "per-load" ? 0 : parseFloat(form.weight),
+      loads: effectiveMode === "per-load" ? numberOfLoads : undefined,
       fee,
       status: "Received",
       paymentStatus: form.paymentStatus,
@@ -1178,6 +1179,8 @@ interface TransactionsPageProps {
   loyaltyEnabled?: boolean;
   onCreateTransaction: (input: CreateTransactionInput) => Promise<Transaction>;
   onUpdateTransaction: (ticketId: string, updates: UpdateTransactionInput) => Promise<{ transaction: Transaction; loyaltyResult?: import("@/lib/transaction-contracts").StampAwardResult }>;
+  onDeleteTransaction?: (ticketId: string) => Promise<void>;
+  role?: "admin" | "staff";
   editTicketId?: string;
   onEditComplete?: () => void;
   initialWizardOpen?: boolean;
@@ -1198,6 +1201,8 @@ export default function TransactionsPage({
   loyaltyEnabled = true,
   onCreateTransaction,
   onUpdateTransaction,
+  onDeleteTransaction,
+  role = "staff",
   editTicketId,
   onEditComplete,
   onNavigate,
@@ -1356,6 +1361,22 @@ export default function TransactionsPage({
     }));
   };
   const [busy, setBusy] = useState(false);
+  const [deleteConfirmTxn, setDeleteConfirmTxn] = useState<Transaction | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmTxn || !onDeleteTransaction) return;
+    setIsDeleting(true);
+    try {
+      await onDeleteTransaction(deleteConfirmTxn.ticketId);
+      showToast(`Transaction #${deleteConfirmTxn.ticketId} deleted successfully.`);
+      setDeleteConfirmTxn(null);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to delete transaction.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // Toast
   const [toast, setToast] = useState<string | null>(null);
@@ -2015,6 +2036,18 @@ export default function TransactionsPage({
               className="text-destructive focus:text-destructive cursor-pointer"
             >
               <Ban className="w-3.5 h-3.5 mr-2" /> Void Order
+            </ContextMenuItem>
+          </>
+        )}
+        {role === "admin" && (
+          <>
+            <ContextMenuSeparator />
+            <ContextMenuItem
+              onSelect={() => setDeleteConfirmTxn(txn)}
+              onClick={() => setDeleteConfirmTxn(txn)}
+              className="text-destructive focus:text-destructive cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete Record
             </ContextMenuItem>
           </>
         )}
@@ -3263,6 +3296,17 @@ export default function TransactionsPage({
                               </DropdownMenuItem>
                             </>
                           )}
+                          {role === "admin" && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => setDeleteConfirmTxn(txn)}
+                                className="text-destructive focus:text-destructive cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete Record
+                              </DropdownMenuItem>
+                            </>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -3583,6 +3627,34 @@ export default function TransactionsPage({
                         <div className="min-w-0">
                           <p className="text-xs font-bold text-destructive">Void Order</p>
                           <p className="text-[11px] text-destructive/80 truncate">Cancel ticket and mark invalid</p>
+                        </div>
+                      </div>
+                      <AlertTriangle className="w-4 h-4 text-destructive" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Group 4: Delete Record (Admin Only) */}
+              {role === "admin" && (
+                <div className="space-y-1.5">
+                  <div className="bg-destructive/10 rounded-xl p-1 border border-destructive/20">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const t = mobileActionTxn;
+                        setMobileActionTxn(null);
+                        setDeleteConfirmTxn(t);
+                      }}
+                      className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-destructive/20 active:bg-destructive/25 transition-colors text-left text-destructive cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-destructive text-destructive-foreground flex items-center justify-center shadow-xs">
+                          <Trash2 className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-destructive">Delete Record</p>
+                          <p className="text-[11px] text-destructive/80 truncate">Permanently remove this transaction</p>
                         </div>
                       </div>
                       <AlertTriangle className="w-4 h-4 text-destructive" />
@@ -3925,6 +3997,38 @@ export default function TransactionsPage({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* ── DELETE TRANSACTION CONFIRMATION MODAL ───────────────────────────── */}
+      <AlertDialog open={!!deleteConfirmTxn} onOpenChange={(open) => { if (!open && !isDeleting) setDeleteConfirmTxn(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5 text-destructive" />
+              </div>
+              <AlertDialogTitle>Delete Transaction Record</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription>
+              Are you sure you want to permanently delete transaction <strong className="text-foreground">#{deleteConfirmTxn?.ticketId}</strong> for <strong className="text-foreground">{deleteConfirmTxn?.customerName}</strong>? This action cannot be undone and will be permanently recorded in audit logs.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting} onClick={() => setDeleteConfirmTxn(null)} className="cursor-pointer">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isDeleting}
+              onClick={(e) => {
+                e.preventDefault();
+                void handleConfirmDelete();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 cursor-pointer"
+            >
+              {isDeleting ? "Deleting..." : "Permanently Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* ── NEW TRANSACTION WIZARD ───────────────────────────────────────────── */}
       <NewTransactionWizard

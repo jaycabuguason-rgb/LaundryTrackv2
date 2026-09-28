@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
 
 declare global {
   interface BeforeInstallPromptEvent extends Event {
@@ -16,6 +17,8 @@ const DISMISS_KEY = "laundrytrack-install-banner-dismissed";
 const LAST_PROFILE_KEY = "laundrytrack-last-profile";
 
 export default function PwaInit() {
+  const pathname = usePathname();
+  const isCustomerTrackingPage = pathname?.startsWith("/track") || pathname?.startsWith("/member");
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [visible, setVisible] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -48,7 +51,7 @@ export default function PwaInit() {
   }, []);
 
   useEffect(() => {
-    if (isStandalone) {
+    if (isCustomerTrackingPage || isStandalone) {
       return;
     }
 
@@ -79,7 +82,7 @@ export default function PwaInit() {
       window.removeEventListener("appinstalled", onInstalled);
       window.clearTimeout(timer);
     };
-  }, [isStandalone]);
+  }, [isCustomerTrackingPage, isStandalone]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -108,7 +111,7 @@ export default function PwaInit() {
     };
   }, []);
 
-  if (!visible || isStandalone || hasActiveAppProfile) {
+  if (isCustomerTrackingPage || !visible || isStandalone || hasActiveAppProfile) {
     return null;
   }
 

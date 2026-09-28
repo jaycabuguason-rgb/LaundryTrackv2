@@ -245,7 +245,9 @@ export function ReceiptDocument({ transaction, profile, qrUrl }: ReceiptDocument
           <View style={S.row}>
             <Text style={S.label}>{transaction.weight > 0 ? "Weight:" : "Load:"}</Text>
             <Text style={S.value}>
-              {transaction.weight > 0 ? `${transaction.weight} kg` : "Per Load"}
+              {transaction.weight > 0
+                ? `${transaction.weight} kg`
+                : `${transaction.loads && transaction.loads > 0 ? transaction.loads : 1} load${(transaction.loads && transaction.loads > 0 ? transaction.loads : 1) > 1 ? "s" : ""}`}
             </Text>
           </View>
           {transaction.addOns && transaction.addOns.length > 0 ? (

@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 
 import { createAuditLog } from "@/lib/server/audit-log-repository";
-import { getTransactionByTicketId, updateTransaction } from "@/lib/server/laundry-repository";
+import { deleteTransaction, getTransactionByTicketId, updateTransaction } from "@/lib/server/laundry-repository";
 import { awardClaimStamp, type StampAwardResult } from "@/lib/server/loyalty-repository";
-import { getAuthErrorStatus, requireAuthRequest } from "@/lib/server/request-auth";
+import { getAuthErrorStatus, requireAdminRequest, requireAuthRequest } from "@/lib/server/request-auth";
 import { getRequestIp } from "@/lib/server/request-meta";
 import type { UpdateTransactionInput } from "@/lib/transaction-contracts";
 
@@ -135,6 +135,54 @@ export async function PATCH(
     }
 
     const message = error instanceof Error ? error.message : "Unable to update transaction.";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  context: { params: Promise<{ ticketId: string }> },
+) {
+  try {
+    const actor = await requireAdminRequest(request);
+    const { ticketId } = await context.params;
+
+    const existing = await getTransactionByTicketId(ticketId);
+    if (!existing) {
+      return NextResponse.json({ error: `Transaction ${ticketId} was not found.` }, { status: 404 });
+    }
+
+    const deleted = await deleteTransaction(ticketId);
+    if (!deleted) {
+      return NextResponse.json({ error: `Failed to delete transaction ${ticketId}.` }, { status: 500 });
+    }
+
+    await createAuditLog({
+      action: "transaction_deleted",
+      summary: `Permanently deleted transaction ${existing.ticketId}`,
+      details: `Customer: ${existing.customerName} | Status: ${existing.status} | Total: ₱${existing.total.toFixed(2)} | Deleted by Admin`,
+      ticketId: existing.ticketId,
+      transactionId: existing.id,
+      customerName: existing.customerName,
+      paymentStatus: existing.paymentStatus,
+      staffProfileId: actor?.id ?? null,
+      staffName: actor?.name ?? null,
+      staffRole: actor?.role ?? null,
+      ipAddress: getRequestIp(request),
+      metadata: {
+        source: "api/transactions#delete",
+      },
+    }).catch(() => undefined);
+
+    return NextResponse.json({ success: true, ticketId: existing.ticketId });
+  } catch (error) {
+    const authStatus = getAuthErrorStatus(error);
+    if (authStatus) {
+      const message = error instanceof Error ? error.message : "Unauthorized.";
+      return NextResponse.json({ error: message }, { status: authStatus });
+    }
+
+    const message = error instanceof Error ? error.message : "Unable to delete transaction.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

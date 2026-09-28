@@ -57,7 +57,8 @@ export function getReceiptCostBreakdown(transaction: Transaction): ReceiptCostBr
 
     serviceDetail = `${transaction.weight} kg @ ₱${effectiveRate.toFixed(2)}/kg`;
   } else {
-    serviceDetail = "Per Load";
+    const loadsCount = transaction.loads && transaction.loads > 0 ? transaction.loads : 1;
+    serviceDetail = `${loadsCount} load${loadsCount > 1 ? "s" : ""}`;
   }
 
   const subtotal = serviceAmount + addOnsTotal;

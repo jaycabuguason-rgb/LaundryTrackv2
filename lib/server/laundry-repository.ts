@@ -161,6 +161,11 @@ function mapRowToTransaction(row: TransactionRow): Transaction {
   const voidedTimestamp = row.voided_at;
   const paidTimestamp = row.paid_at;
 
+  const rawInstructions = row.special_instructions ?? undefined;
+  const washInstructions = rawInstructions
+    ? rawInstructions.replace(/\[OFFLINE_REF:[^\]]+\]/g, "").trim() || undefined
+    : undefined;
+
   return {
     id: row.id,
     ticketId: row.ticket_id,
@@ -177,7 +182,7 @@ function mapRowToTransaction(row: TransactionRow): Transaction {
     status,
     paymentStatus: normalizePaymentStatus(row.payment_status),
     addOns: row.addons ?? [],
-    washInstructions: row.special_instructions ?? undefined,
+    washInstructions,
     publicTrackingToken: row.public_tracking_token ?? undefined,
     updatedAt: row.updated_at ?? row.created_at ?? undefined,
     eta: row.eta ?? undefined,
@@ -288,7 +293,13 @@ async function getSupabaseTransactionByTicket(ticketId: string): Promise<Transac
   try {
     const query = `transactions?select=${getTransactionSelect()}&ticket_id=eq.${encodeURIComponent(ticketId)}&limit=1`;
     const rows = await restRequest<TransactionRow[]>(query);
-    return rows[0] ?? null;
+    if (rows[0]) return rows[0];
+    if (ticketId.startsWith("OFF-")) {
+      const offlineQuery = `transactions?select=${getTransactionSelect()}&special_instructions=like.*[OFFLINE_REF:${encodeURIComponent(ticketId)}]*&limit=1`;
+      const offlineRows = await restRequest<TransactionRow[]>(offlineQuery).catch(() => []);
+      if (offlineRows[0]) return offlineRows[0];
+    }
+    return null;
   } catch (error) {
     let retried = false;
     if (hasPaidAtColumn && isMissingPaidAtError(error)) {
@@ -302,7 +313,13 @@ async function getSupabaseTransactionByTicket(ticketId: string): Promise<Transac
     if (retried) {
       const fallbackQuery = `transactions?select=${getTransactionSelect()}&ticket_id=eq.${encodeURIComponent(ticketId)}&limit=1`;
       const rows = await restRequest<TransactionRow[]>(fallbackQuery);
-      return rows[0] ?? null;
+      if (rows[0]) return rows[0];
+      if (ticketId.startsWith("OFF-")) {
+        const offlineFallbackQuery = `transactions?select=${getTransactionSelect()}&special_instructions=like.*[OFFLINE_REF:${encodeURIComponent(ticketId)}]*&limit=1`;
+        const offlineRows = await restRequest<TransactionRow[]>(offlineFallbackQuery).catch(() => []);
+        if (offlineRows[0]) return offlineRows[0];
+      }
+      return null;
     }
     throw error;
   }
@@ -341,6 +358,11 @@ async function getNextSupabaseTicketId(): Promise<string> {
 }
 
 async function createSupabaseTransaction(input: CreateTransactionInput): Promise<TransactionRow> {
+  const instructions = [
+    input.washInstructions?.trim() || null,
+    input.offlineTicketId ? `[OFFLINE_REF:${input.offlineTicketId.trim()}]` : null,
+  ].filter(Boolean).join(" ") || null;
+
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const ticketId = await getNextSupabaseTicketId();
     const now = new Date().toISOString();
@@ -352,7 +374,7 @@ async function createSupabaseTransaction(input: CreateTransactionInput): Promise
       wash_type: input.washType,
       weight_kg: input.weight || null,
       addons: input.addOns ?? [],
-      special_instructions: input.washInstructions?.trim() || null,
+      special_instructions: instructions,
       fee: input.fee,
       status: input.status ?? "Received",
       payment_status: input.paymentStatus ?? "unpaid",
@@ -433,7 +455,7 @@ async function updateSupabaseTransaction(ticketId: string, updates: UpdateTransa
   if (updates.eta !== undefined) payload.eta = normalizeLocalDateTime(updates.eta ?? null);
   if (updates.voidReason !== undefined) payload.void_reason = updates.voidReason?.trim() || null;
 
-  const query = `transactions?ticket_id=eq.${encodeURIComponent(ticketId)}&select=${getTransactionSelect()}`;
+  const query = `transactions?ticket_id=eq.${encodeURIComponent(existing.ticket_id)}&select=${getTransactionSelect()}`;
   try {
     const rows = await restRequest<TransactionRow[]>(query, {
       method: "PATCH",
@@ -452,7 +474,7 @@ async function updateSupabaseTransaction(ticketId: string, updates: UpdateTransa
     if (hasPaidAtColumn && isMissingPaidAtError(error)) {
       hasPaidAtColumn = false;
       delete payload.paid_at;
-      const fallbackQuery = `transactions?ticket_id=eq.${encodeURIComponent(ticketId)}&select=${getTransactionSelect()}`;
+      const fallbackQuery = `transactions?ticket_id=eq.${encodeURIComponent(existing.ticket_id)}&select=${getTransactionSelect()}`;
       const rows = await restRequest<TransactionRow[]>(fallbackQuery, {
         method: "PATCH",
         headers: {
@@ -470,7 +492,7 @@ async function updateSupabaseTransaction(ticketId: string, updates: UpdateTransa
     if (hasVoidedAtColumn && isMissingVoidedAtError(error)) {
       hasVoidedAtColumn = false;
       delete payload.voided_at;
-      const fallbackQuery = `transactions?ticket_id=eq.${encodeURIComponent(ticketId)}&select=${TRANSACTION_SELECT_NO_VOIDED_AT}`;
+      const fallbackQuery = `transactions?ticket_id=eq.${encodeURIComponent(existing.ticket_id)}&select=${TRANSACTION_SELECT_NO_VOIDED_AT}`;
       const rows = await restRequest<TransactionRow[]>(fallbackQuery, {
         method: "PATCH",
         headers: {
@@ -487,6 +509,20 @@ async function updateSupabaseTransaction(ticketId: string, updates: UpdateTransa
     }
     throw error;
   }
+}
+
+async function deleteSupabaseTransaction(ticketId: string): Promise<boolean> {
+  const existing = await getSupabaseTransactionByTicket(ticketId);
+  if (!existing) {
+    return false;
+  }
+  await restRequest(`transactions?ticket_id=eq.${encodeURIComponent(existing.ticket_id)}`, {
+    method: "DELETE",
+    headers: {
+      Prefer: "return=representation",
+    },
+  });
+  return true;
 }
 
 async function getSupabaseSettings<T>(key: string, fallback: T): Promise<T> {
@@ -546,7 +582,14 @@ function listMockRows(): TransactionRow[] {
 }
 
 function getMockTransactionByTicket(ticketId: string): TransactionRow | null {
-  return mockTransactions.find((transaction) => transaction.ticket_id === ticketId) ?? null;
+  return (
+    mockTransactions.find(
+      (transaction) =>
+        transaction.ticket_id === ticketId ||
+        (ticketId.startsWith("OFF-") &&
+          transaction.special_instructions?.includes(`[OFFLINE_REF:${ticketId}]`))
+    ) ?? null
+  );
 }
 
 function getMockTransactionByToken(token: string): TransactionRow | null {
@@ -565,6 +608,11 @@ function getNextMockTicketId(): string {
 function createMockTransaction(input: CreateTransactionInput): TransactionRow {
   const now = new Date().toISOString();
   const isPaid = input.paymentStatus === "paid";
+  const instructions = [
+    input.washInstructions?.trim() || null,
+    input.offlineTicketId ? `[OFFLINE_REF:${input.offlineTicketId.trim()}]` : null,
+  ].filter(Boolean).join(" ") || null;
+
   const row: TransactionRow = {
     id: randomUUID(),
     ticket_id: getNextMockTicketId(),
@@ -573,7 +621,7 @@ function createMockTransaction(input: CreateTransactionInput): TransactionRow {
     wash_type: input.washType,
     weight_kg: input.weight || null,
     addons: input.addOns ?? [],
-    special_instructions: input.washInstructions?.trim() || null,
+    special_instructions: instructions,
     fee: input.fee,
     status: input.status ?? "Received",
     payment_status: input.paymentStatus ?? "unpaid",
@@ -590,6 +638,19 @@ function createMockTransaction(input: CreateTransactionInput): TransactionRow {
 
   mockTransactions = [row, ...mockTransactions];
   return row;
+}
+
+function deleteMockTransaction(ticketId: string): boolean {
+  const existing = getMockTransactionByTicket(ticketId);
+  if (!existing) {
+    return false;
+  }
+  const index = mockTransactions.findIndex((t) => t.ticket_id === existing.ticket_id);
+  if (index === -1) {
+    return false;
+  }
+  mockTransactions.splice(index, 1);
+  return true;
 }
 
 function updateMockTransaction(ticketId: string, updates: UpdateTransactionInput): TransactionRow {
@@ -712,6 +773,15 @@ export async function updateTransaction(ticketId: string, updates: UpdateTransac
 
   transactionListCache.delete("transactions");
   return mapRowToTransaction(row);
+}
+
+export async function deleteTransaction(ticketId: string): Promise<boolean> {
+  const deleted = hasSupabaseConfig()
+    ? await deleteSupabaseTransaction(ticketId)
+    : deleteMockTransaction(ticketId);
+
+  transactionListCache.delete("transactions");
+  return deleted;
 }
 
 export async function resolveScannedTransaction(value: string): Promise<Transaction | null> {

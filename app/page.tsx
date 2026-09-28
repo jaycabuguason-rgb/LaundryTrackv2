@@ -198,9 +198,6 @@ export default function Home() {
               </div>
             </div>
             <p className="text-sm font-semibold text-foreground">Loading LaundryTrack...</p>
-            <p className="text-xs text-muted-foreground mt-2">
-              Checking your Supabase admin session.
-            </p>
           </div>
         </div>
       </div>

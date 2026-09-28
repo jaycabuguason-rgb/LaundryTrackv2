@@ -233,6 +233,7 @@ export function useTransactions() {
             return pendingEntry ? pendingEntry.optimisticTx : serverTx;
           });
         }
+        mergedTransactions = mergedTransactions.filter((tx) => !tx.ticketId.startsWith("OFF-"));
         await persistTransactions(mergedTransactions);
       } else {
         // Keep local optimistic view until queued items are acknowledged.
@@ -297,7 +298,28 @@ export function useTransactions() {
               body: JSON.stringify(item.createInput),
             });
 
-            await readJson<TransactionResponse>(response);
+            const data = await readJson<TransactionResponse>(response);
+            const serverTx = data.transaction;
+            const offlineTicketId = item.ticketId;
+            const localId = item.localId;
+
+            updateTransactions((current) => {
+              const withoutOffline = current.filter((t) =>
+                (offlineTicketId ? t.ticketId !== offlineTicketId : true) &&
+                (localId ? t.id !== localId : true) &&
+                t.ticketId !== serverTx.ticketId &&
+                t.id !== serverTx.id
+              );
+              return [serverTx, ...withoutOffline];
+            });
+
+            if (offlineTicketId) {
+              for (const nextItem of queue) {
+                if (nextItem.ticketId === offlineTicketId) {
+                  nextItem.ticketId = serverTx.ticketId;
+                }
+              }
+            }
           } else if (item.type === "update" && item.ticketId && item.updateInput) {
             const response = await fetch(`/api/transactions/${encodeURIComponent(item.ticketId)}`, {
               method: "PATCH",
@@ -466,9 +488,10 @@ export function useTransactions() {
   const createTransaction = useCallback(async (input: CreateTransactionInput) => {
     if (!isOnline()) {
       const localId = `offline-${Date.now()}`;
+      const offlineTicketId = `OFF-${Date.now().toString().slice(-6)}`;
       const optimistic: Transaction = {
         id: localId,
-        ticketId: `OFF-${Date.now().toString().slice(-6)}`,
+        ticketId: offlineTicketId,
         customerName: input.customerName,
         phone: input.phone,
         arrivalDateTime: input.arrivalDateTime,
@@ -483,7 +506,15 @@ export function useTransactions() {
         washInstructions: input.washInstructions,
         eta: input.eta ?? null,
       };
-      await enqueueOfflineMutation({ type: "create", createInput: input, localId });
+      await enqueueOfflineMutation({
+        type: "create",
+        createInput: {
+          ...input,
+          offlineTicketId,
+        },
+        localId,
+        ticketId: offlineTicketId,
+      });
       setPendingChangesCount((await readOfflineQueue()).length);
       setSyncStatus("offline");
       updateTransactions((current) => [optimistic, ...current]);
@@ -607,6 +638,26 @@ export function useTransactions() {
     }
   }, [updateTransactions]);
 
+  const deleteTransaction = useCallback(async (ticketId: string) => {
+    const originalTransactions = transactionsRef.current;
+    updateTransactions((current) =>
+      current.filter((t) => t.ticketId !== ticketId && t.id !== ticketId),
+    );
+
+    try {
+      const headers = await getAuthHeaders();
+      const response = await fetch(`/api/transactions/${encodeURIComponent(ticketId)}`, {
+        method: "DELETE",
+        headers,
+      });
+
+      await readJson<{ success: boolean; ticketId: string }>(response);
+    } catch (err) {
+      await persistTransactions(originalTransactions);
+      throw err;
+    }
+  }, [updateTransactions, persistTransactions]);
+
   const resolveScannedValue = useCallback(async (value: string) => {
     const response = await fetch("/api/qr/resolve", {
       method: "POST",
@@ -631,6 +682,7 @@ export function useTransactions() {
     refresh,
     createTransaction,
     updateTransaction,
+    deleteTransaction,
     resolveScannedValue,
   };
 }

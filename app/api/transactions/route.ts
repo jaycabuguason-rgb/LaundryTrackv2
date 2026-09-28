@@ -59,6 +59,8 @@ export async function POST(request: Request) {
       washInstructions: raw.washInstructions != null ? String(raw.washInstructions).trim().slice(0, 500) : undefined,
       dropOffDate: raw.dropOffDate != null ? String(raw.dropOffDate).trim() : undefined,
       eta: raw.eta != null ? String(raw.eta).trim() : null,
+      loads: typeof raw.loads === "number" && raw.loads > 0 ? Number(raw.loads) : undefined,
+      offlineTicketId: typeof raw.offlineTicketId === "string" ? String(raw.offlineTicketId).trim() : undefined,
     };
     const transaction = await createTransaction(body);
 

@@ -118,6 +118,7 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
     refresh,
     createTransaction,
     updateTransaction,
+    deleteTransaction,
     resolveScannedValue,
   } = useTransactions();
 
@@ -231,6 +232,8 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
             loyaltyEnabled={loyaltyEnabled}
             onCreateTransaction={createTransaction}
             onUpdateTransaction={updateTransaction}
+            onDeleteTransaction={deleteTransaction}
+            role={adminProfile.role}
             editTicketId={editOpen ? editTxn?.ticketId : undefined}
             onEditComplete={handleEditComplete}
             onNavigate={handleNavigate}

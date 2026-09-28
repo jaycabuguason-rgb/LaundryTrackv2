@@ -59,11 +59,36 @@ describe("getReceiptCostBreakdown", () => {
     const breakdown = getReceiptCostBreakdown(tx);
 
     expect(breakdown.serviceName).toBe("Comforter Heavy");
-    expect(breakdown.serviceDetail).toBe("Per Load");
+    expect(breakdown.serviceDetail).toBe("1 load");
     expect(breakdown.serviceAmount).toBe(150);
     expect(breakdown.addOns).toHaveLength(0);
     expect(breakdown.addOnsTotal).toBe(0);
     expect(breakdown.total).toBe(150);
+  });
+
+  it("handles transaction with multiple loads", () => {
+    const tx: Transaction = {
+      id: "2b",
+      ticketId: "T1002B",
+      customerName: "John Doe",
+      phone: "09181234567",
+      washType: "Comforter Heavy",
+      weight: 0,
+      loads: 2,
+      addOns: [],
+      fee: 300,
+      paymentStatus: "paid",
+      status: "Received",
+      arrivalDateTime: "2026-04-05 11:00",
+      dropOffDate: "2026-04-05",
+    };
+
+    const breakdown = getReceiptCostBreakdown(tx);
+
+    expect(breakdown.serviceName).toBe("Comforter Heavy");
+    expect(breakdown.serviceDetail).toBe("2 loads");
+    expect(breakdown.serviceAmount).toBe(300);
+    expect(breakdown.total).toBe(300);
   });
 
   it("handles transaction without add-ons", () => {

@@ -13,6 +13,7 @@ export interface Transaction {
   paidAt?: string | null; // Date customer paid
   washType: string;
   weight: number;
+  loads?: number;
   fee: number;
   status: TransactionStatus;
   paymentStatus: PaymentStatus;
