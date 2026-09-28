@@ -15,6 +15,7 @@ import type { UserProfile } from "@/lib/auth";
 import { setBrowserSessionCache } from "@/lib/supabase/browser-session";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { isOnline } from "@/lib/network-status";
+import { syncServerSettingsToClient } from "@/lib/settings-store";
 
 // Legacy type alias kept for ChangePasswordPage compat
 export interface AdminProfile {
@@ -109,6 +110,10 @@ export default function Home() {
       window.localStorage.removeItem(LAST_PROFILE_KEY);
     }
 
+    if (effectiveProfile && isOnline()) {
+      await syncServerSettingsToClient().catch(() => false);
+    }
+
     setView(effectiveProfile ? "app" : initialView);
     setUserProfile(effectiveProfile);
     setAuthLoading(false);
@@ -123,6 +128,9 @@ export default function Home() {
     setUserProfile(profile);
     if (typeof window !== "undefined") {
       window.localStorage.setItem(LAST_PROFILE_KEY, JSON.stringify(profile));
+    }
+    if (isOnline()) {
+      await syncServerSettingsToClient().catch(() => false);
     }
     setView("app");
     setStoredView("app");
@@ -163,6 +171,9 @@ export default function Home() {
     setUserProfile(profile);
     if (typeof window !== "undefined") {
       window.localStorage.setItem(LAST_PROFILE_KEY, JSON.stringify(profile));
+    }
+    if (isOnline()) {
+      await syncServerSettingsToClient().catch(() => false);
     }
     setView("app");
     setStoredView("app");

@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import ClaimVerificationPage from "@/components/pages/claim-verification";
 import { type Transaction } from "@/lib/data";
+import { persistPricingConfig, loadPricingConfig } from "@/lib/settings-store";
 
 const mockTransactions: Transaction[] = [
   {
@@ -272,4 +273,53 @@ describe("ClaimVerificationPage Name Suggestions", () => {
     expect(screen.queryByRole("button", { name: /Confirm Claim & Release/i })).not.toBeInTheDocument();
   });
 });
+
+describe("ClaimVerificationPage Payment Option Visibility", () => {
+  it("hides UPDATE PAYMENT STATUS and allows direct claim when enablePaymentOption is false", async () => {
+    persistPricingConfig({
+      ...loadPricingConfig(),
+      enablePaymentOption: false,
+    });
+
+    const onUpdateTransaction = vi.fn().mockResolvedValue({
+      transaction: {
+        ...mockTransactions[0],
+        status: "Claimed",
+        paymentStatus: "paid",
+      },
+    });
+    render(
+      <ClaimVerificationPage
+        transactions={mockTransactions}
+        onUpdateTransaction={onUpdateTransaction}
+        onResolveScannedValue={vi.fn().mockResolvedValue("TKT-0030")}
+      />
+    );
+
+    const input = screen.getByPlaceholderText(/claim code, ticket id, or customer name/i);
+    fireEvent.change(input, { target: { value: "TKT-0030" } });
+    const searchButton = screen.getByRole("button", { name: /^Search$/i });
+    fireEvent.click(searchButton);
+
+    const matches = await screen.findAllByText(/Juan Dela Cruz/);
+    expect(matches.length).toBeGreaterThan(0);
+
+    // UPDATE PAYMENT STATUS box should NOT be present
+    expect(screen.queryByText(/UPDATE PAYMENT STATUS/i)).not.toBeInTheDocument();
+
+    // Confirm Claim & Release button should be clickable and directly claim
+    const claimButton = screen.getByRole("button", { name: /Confirm Claim & Release/i });
+    expect(claimButton).toBeInTheDocument();
+    fireEvent.click(claimButton);
+
+    expect(onUpdateTransaction).toHaveBeenCalledWith(
+      "TKT-0030",
+      expect.objectContaining({
+        status: "Claimed",
+        paymentStatus: "paid",
+      })
+    );
+  });
+});
+
 

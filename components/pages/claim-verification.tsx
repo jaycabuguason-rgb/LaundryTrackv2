@@ -16,6 +16,12 @@ import type { UpdateTransactionInput } from "@/lib/transaction-contracts";
 import { cn } from "@/lib/utils";
 import { playScanSuccessFeedback } from "@/lib/scanner-feedback";
 import { useAuditLogs } from "@/hooks/use-audit-logs";
+import {
+  loadPricingConfig,
+  subscribeSettingsSync,
+  LS_PRICING_CONFIG,
+  type PricingConfig,
+} from "@/lib/settings-store";
 
 function highlightMatch(text: string, query: string) {
   const trimmed = query.trim();
@@ -109,6 +115,20 @@ export default function ClaimVerificationPage({
   const [denyReason, setDenyReason] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [paymentToggle, setPaymentToggle] = useState<PaymentStatus>("unpaid");
+  const [enablePaymentOption, setEnablePaymentOption] = useState<boolean>(
+    () => loadPricingConfig().enablePaymentOption ?? true
+  );
+
+  useEffect(() => {
+    return subscribeSettingsSync((detail) => {
+      if (detail.key === LS_PRICING_CONFIG && detail.value) {
+        const cfg = detail.value as PricingConfig;
+        if (typeof cfg.enablePaymentOption === "boolean") {
+          setEnablePaymentOption(cfg.enablePaymentOption);
+        }
+      }
+    });
+  }, []);
   const [reprintModalOpen, setReprintModalOpen] = useState(false);
   const [reprintTransaction, setReprintTransaction] = useState<Transaction | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -237,7 +257,7 @@ export default function ClaimVerificationPage({
 
   const selectTransaction = (transaction: Transaction, notes: string) => {
     setResult(transaction);
-    setPaymentToggle(transaction.paymentStatus);
+    setPaymentToggle(enablePaymentOption ? transaction.paymentStatus : "paid");
     setNotFound(false);
     addLog(transaction.ticketId, "Scanned", notes, transaction.paymentStatus, transaction.customerName);
     if (notes !== "Via QR Scan") {
@@ -362,7 +382,7 @@ export default function ClaimVerificationPage({
 
   const handleClaim = async () => {
     if (!result) return;
-    if (paymentToggle === "unpaid") {
+    if (enablePaymentOption && paymentToggle === "unpaid") {
       setSuccessMessage("Mark payment as Paid first before claiming this ticket.");
       return;
     }
@@ -665,11 +685,15 @@ export default function ClaimVerificationPage({
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-xs font-medium text-muted-foreground">Status:</span>
                     <StatusBadge status={result.status} />
-                    <span className="ml-2 text-xs font-medium text-muted-foreground">Payment:</span>
-                    <PaymentBadge paymentStatus={result.paymentStatus} className="font-bold uppercase" />
+                    {enablePaymentOption && (
+                      <>
+                        <span className="ml-2 text-xs font-medium text-muted-foreground">Payment:</span>
+                        <PaymentBadge paymentStatus={result.paymentStatus} className="font-bold uppercase" />
+                      </>
+                    )}
                   </div>
 
-                  {!isAlreadyClaimed && (
+                  {enablePaymentOption && !isAlreadyClaimed && (
                     <div className="rounded-xl border border-border bg-background p-3">
                       <p className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Update Payment Status</p>
                       <div className="flex gap-2">
@@ -710,7 +734,7 @@ export default function ClaimVerificationPage({
                   </div>
                 )}
 
-                {isUnpaid && !isAlreadyClaimed && (
+                {enablePaymentOption && isUnpaid && !isAlreadyClaimed && (
                   <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-900 dark:text-amber-200">
                     <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
                     <div>
@@ -821,20 +845,22 @@ export default function ClaimVerificationPage({
                       )}
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 rounded-lg bg-muted/30 p-2.5 border border-border/50">
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Payment</p>
-                      {log.paymentStatus ? (
-                        <PaymentBadge paymentStatus={log.paymentStatus} className="mt-0.5 text-xs font-bold uppercase" />
-                      ) : (
-                        <p className="text-xs text-muted-foreground">-</p>
-                      )}
-                    </div>
+                  <div className={`grid ${enablePaymentOption ? "grid-cols-2" : "grid-cols-1"} gap-2 rounded-lg bg-muted/30 p-2.5 border border-border/50`}>
+                    {enablePaymentOption && (
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Payment</p>
+                        {log.paymentStatus ? (
+                          <PaymentBadge paymentStatus={log.paymentStatus} className="mt-0.5 text-xs font-bold uppercase" />
+                        ) : (
+                          <p className="text-xs text-muted-foreground">-</p>
+                        )}
+                      </div>
+                    )}
                     <div>
                       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Staff</p>
                       <p className="mt-0.5 text-xs font-medium text-foreground">{log.staff}</p>
                     </div>
-                    <div className="col-span-2">
+                    <div className={enablePaymentOption ? "col-span-2" : "col-span-1"}>
                       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Notes</p>
                       <p className="mt-0.5 text-xs text-foreground">{log.notes || "-"}</p>
                     </div>

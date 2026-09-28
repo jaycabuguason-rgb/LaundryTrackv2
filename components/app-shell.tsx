@@ -12,6 +12,7 @@ import {
   loadLoyaltySettings,
   loadBusinessProfile,
   subscribeSettingsSync,
+  syncServerSettingsToClient,
   LS_BUSINESS_PROFILE,
   LS_LOYALTY_SETTINGS,
   type BusinessProfile,
@@ -21,6 +22,7 @@ import { useTransactions } from "@/hooks/use-transactions";
 import { toast } from "@/hooks/use-toast";
 import { processSettingsQueue } from "@/lib/offline-settings-sync";
 import { getBrowserAccessToken } from "@/lib/supabase/browser-session";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { isOnline, subscribeNetworkStatus } from "@/lib/network-status";
 import { useStaffPresence } from "@/hooks/use-staff-presence";
 
@@ -344,12 +346,37 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
     return subscribeNetworkStatus((online) => {
       if (online) {
         void process();
+        void syncServerSettingsToClient().catch(() => false);
         toast({
           title: "Back Online",
           description: "Queued changes are syncing in the background.",
         });
       }
     });
+  }, []);
+
+  useEffect(() => {
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
+
+    const channel = supabase
+      .channel("laundrytrack-settings-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "settings",
+        },
+        () => {
+          void syncServerSettingsToClient().catch(() => false);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
   }, []);
 
   useEffect(() => {

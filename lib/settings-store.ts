@@ -3,6 +3,7 @@
 import { z } from "zod";
 
 import { DEFAULT_BUSINESS_PROFILE, type BusinessProfile } from "@/lib/business-profile";
+import { getBrowserAccessToken } from "@/lib/supabase/browser-session";
 
 // ─── Shared types ────────────────────────────────────────────────────────────
 
@@ -247,3 +248,47 @@ export function loadLoyaltySettings(): LoyaltySettings {
 export function persistLoyaltySettings(settings: LoyaltySettings): void {
   persist(LS_LOYALTY_SETTINGS, settings);
 }
+
+export async function syncServerSettingsToClient(
+  customHeaders?: Record<string, string> | (() => Promise<Record<string, string>>)
+): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  try {
+    let headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (typeof customHeaders === "function") {
+      headers = await customHeaders();
+    } else if (customHeaders) {
+      headers = customHeaders;
+    } else {
+      const accessToken = await getBrowserAccessToken().catch(() => null);
+      if (accessToken) {
+        headers.Authorization = `Bearer ${accessToken}`;
+      }
+    }
+
+    const res = await fetch("/api/settings", { cache: "no-store", headers });
+    if (!res.ok) return false;
+    const data = await res.json().catch(() => null);
+    if (!data) return false;
+
+    if (data.pricingConfig) {
+      persistPricingConfig(data.pricingConfig);
+    }
+    if (Array.isArray(data.serviceTypes)) {
+      persistServiceTypes(data.serviceTypes);
+    }
+    if (Array.isArray(data.addOns)) {
+      persistAddOns(data.addOns);
+    }
+    if (data.loyaltySettings) {
+      persistLoyaltySettings(data.loyaltySettings);
+    }
+    if (data.businessProfile) {
+      persistBusinessProfile(data.businessProfile);
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
