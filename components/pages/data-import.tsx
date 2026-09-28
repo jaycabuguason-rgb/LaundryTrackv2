@@ -184,24 +184,7 @@ export default function DataImportPage({ onViewTransactions }: DataImportProps) 
   const [importResult, setImportResult] = useState({ total: 0, skipped: 0, dupsSkipped: 0, seconds: 0 });
 
   // History
-  const [history, setHistory]          = useState<ImportHistoryEntry[]>([
-    {
-      id: "h1",
-      timestamp: new Date(2025, 2, 10, 9, 15),
-      fileName: "march_records.csv",
-      dataType: "transactions",
-      recordsImported: 312,
-      status: "Success",
-    },
-    {
-      id: "h2",
-      timestamp: new Date(2025, 1, 14, 14, 30),
-      fileName: "feb_customers.xlsx",
-      dataType: "customers",
-      recordsImported: 88,
-      status: "Partial",
-    },
-  ]);
+  const [history, setHistory]          = useState<ImportHistoryEntry[]>([]);
 
   // ── File parsing ────────────────────────────────────────────────────────────
 
