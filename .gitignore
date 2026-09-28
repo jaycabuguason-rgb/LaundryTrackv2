@@ -40,3 +40,4 @@ blob-report/
 .claude/
 .codex/
 .pnpm-store/
+backups/

@@ -195,7 +195,7 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\app\\api\\settings\\pricing\\route.ts": {
-    "mtime": 1790559626.5295417,
+    "mtime": 1790561072.31706,
     "ast_hash": "e4bcb52627daf71847b05f94cf9645de",
     "semantic_hash": ""
   },
@@ -800,7 +800,7 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\server\\loyalty-repository.ts": {
-    "mtime": 1790560849.4050226,
+    "mtime": 1790561072.321067,
     "ast_hash": "35d9356f5716f4630e18c0062b56870a",
     "semantic_hash": ""
   },
@@ -1887,6 +1887,31 @@
   "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\server\\__tests__\\loyalty-settings.test.ts": {
     "mtime": 1790560975.2624836,
     "ast_hash": "10692e903017650c29409a3ae59f26d6",
+    "semantic_hash": ""
+  },
+  "E:\\sample project\\LaundryTrackv2-pr-11\\backups\\backup_prereset_1790563318226.json": {
+    "mtime": 1790563318.2306135,
+    "ast_hash": "a947741f9dbfa55e9bf804e0f41c8d82",
+    "semantic_hash": ""
+  },
+  "E:\\sample project\\LaundryTrackv2-pr-11\\backups\\backup_prereset_1790563378151.json": {
+    "mtime": 1790563378.1595404,
+    "ast_hash": "cf94582f2e56485ba5014d85c2e238cc",
+    "semantic_hash": ""
+  },
+  "E:\\sample project\\LaundryTrackv2-pr-11\\scripts\\clean-and-reset-database.mjs": {
+    "mtime": 1790563372.62922,
+    "ast_hash": "839d017676a2bd5f3408d610f62c9fe8",
+    "semantic_hash": ""
+  },
+  "E:\\sample project\\LaundryTrackv2-pr-11\\scripts\\reset_database.sql": {
+    "mtime": 1790563281.8629575,
+    "ast_hash": "575e5b2117ff5c39808a0333d6ddaca1",
+    "semantic_hash": ""
+  },
+  "E:\\sample project\\LaundryTrackv2-pr-11\\plan\\super admin implementation.md": {
+    "mtime": 1790561796.5312665,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
     "semantic_hash": ""
   }
 }
