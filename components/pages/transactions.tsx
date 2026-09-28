@@ -1364,18 +1364,21 @@ export default function TransactionsPage({
   const [deleteConfirmTxn, setDeleteConfirmTxn] = useState<Transaction | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = () => {
     if (!deleteConfirmTxn || !onDeleteTransaction) return;
-    setIsDeleting(true);
-    try {
-      await onDeleteTransaction(deleteConfirmTxn.ticketId);
-      showToast(`Transaction #${deleteConfirmTxn.ticketId} deleted successfully.`);
-      setDeleteConfirmTxn(null);
-    } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to delete transaction.");
-    } finally {
-      setIsDeleting(false);
-    }
+    const ticketId = deleteConfirmTxn.ticketId;
+
+    // Instantly close dialog without waiting for network response
+    setDeleteConfirmTxn(null);
+    setIsDeleting(false);
+
+    // Immediate optimistic confirmation toast
+    showToast(`Transaction #${ticketId} deleted.`);
+
+    // Perform background deletion with rollback error handling
+    void onDeleteTransaction(ticketId).catch((err) => {
+      showToast(err instanceof Error ? err.message : `Failed to delete transaction #${ticketId}.`);
+    });
   };
 
   // Toast
@@ -3729,6 +3732,11 @@ export default function TransactionsPage({
           setViewTxn(null);
           setUndoPromptTxn({ txn, action: "unvoid" });
         }}
+        role={role}
+        onDelete={(txn) => {
+          setViewTxn(null);
+          setDeleteConfirmTxn(txn);
+        }}
       />
 
       {/* ── EDIT MODAL ────────���────────────────────────────────────────────── */}
@@ -4013,18 +4021,17 @@ export default function TransactionsPage({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting} onClick={() => setDeleteConfirmTxn(null)} className="cursor-pointer">
+            <AlertDialogCancel onClick={() => setDeleteConfirmTxn(null)} className="cursor-pointer">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              disabled={isDeleting}
               onClick={(e) => {
                 e.preventDefault();
-                void handleConfirmDelete();
+                handleConfirmDelete();
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90 cursor-pointer"
             >
-              {isDeleting ? "Deleting..." : "Permanently Delete"}
+              Permanently Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -160,7 +160,7 @@ export async function DELETE(
     await createAuditLog({
       action: "transaction_deleted",
       summary: `Permanently deleted transaction ${existing.ticketId}`,
-      details: `Customer: ${existing.customerName} | Status: ${existing.status} | Total: ₱${existing.total.toFixed(2)} | Deleted by Admin`,
+      details: `Customer: ${existing.customerName} | Status: ${existing.status} | Total: ₱${(existing.fee ?? 0).toFixed(2)} | Deleted by Admin`,
       ticketId: existing.ticketId,
       transactionId: existing.id,
       customerName: existing.customerName,

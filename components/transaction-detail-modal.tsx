@@ -27,6 +27,7 @@ import {
   Undo2,
   Loader2,
   XCircle,
+  Trash2,
 } from "lucide-react";
 import { useLoyaltyMembers } from "@/hooks/use-loyalty-members";
 import { formatReadableDateTime, formatLifecycleDateTime } from "@/lib/date-format";
@@ -46,6 +47,8 @@ interface TransactionDetailModalProps {
   onReprintQr?: (txn: Transaction) => void;
   onUndoClaim?: (txn: Transaction) => void;
   onUndoVoid?: (txn: Transaction) => void;
+  onDelete?: (txn: Transaction) => void;
+  role?: "admin" | "staff";
 }
 
 const STATUS_STEPS: TransactionStatus[] = ["Received", "Washing", "Ready", "Claimed"];
@@ -68,6 +71,8 @@ export function TransactionDetailModal({
   onReprintQr,
   onUndoClaim,
   onUndoVoid,
+  onDelete,
+  role = "staff",
 }: TransactionDetailModalProps) {
   const { members: loyaltyMembers } = useLoyaltyMembers();
   const [printing, setPrinting] = useState(false);
@@ -541,6 +546,21 @@ export function TransactionDetailModal({
                   className="w-full text-xs text-muted-foreground hover:text-foreground h-8"
                 >
                   <Edit className="w-3.5 h-3.5 mr-1" /> Edit Full Order Details
+                </Button>
+              )}
+
+              {/* Admin Delete Action */}
+              {role === "admin" && onDelete && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    onOpenChange(false);
+                    onDelete(transaction);
+                  }}
+                  className="w-full text-xs text-destructive hover:text-destructive hover:bg-destructive/10 h-8 cursor-pointer gap-1"
+                >
+                  <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete Transaction Record
                 </Button>
               )}
             </div>

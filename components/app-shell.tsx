@@ -454,6 +454,7 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
       transaction={detailTxn}
       onEditStatus={handleEditTransaction}
       loyaltyEnabled={loyaltyEnabled}
+      role={adminProfile.role}
     />
     </>
   );

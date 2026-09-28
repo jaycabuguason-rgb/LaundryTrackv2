@@ -18,6 +18,21 @@ const mockTransactions: Transaction[] = [
     dropOffDate: "2026-09-09",
     addOns: ["Fabcon"],
   },
+  {
+    id: "tx-void",
+    ticketId: "TKT-0099",
+    customerName: "Void Customer",
+    phone: "09181112222",
+    washType: "Comforter",
+    weight: 5.0,
+    fee: 250,
+    status: "Voided",
+    paymentStatus: "unpaid",
+    arrivalDateTime: "2026-09-09 11:00",
+    dropOffDate: "2026-09-09",
+    voidReason: "Customer changed mind",
+    voidedAt: "2026-09-09 11:30",
+  },
 ];
 
 describe("TransactionsPage Admin Delete Record Feature", () => {
@@ -48,8 +63,12 @@ describe("TransactionsPage Admin Delete Record Feature", () => {
     expect(screen.queryByText(/Delete Record/i)).not.toBeInTheDocument();
   });
 
-  it("renders Delete Record option and triggers onDeleteTransaction after confirmation when role is admin", async () => {
-    const onDeleteMock = vi.fn().mockResolvedValue(undefined);
+  it("renders Delete Record option, dismisses modal immediately on click, and triggers onDeleteTransaction in background", async () => {
+    let resolveDeletePromise!: () => void;
+    const deletePromise = new Promise<void>((resolve) => {
+      resolveDeletePromise = resolve;
+    });
+    const onDeleteMock = vi.fn().mockImplementation(() => deletePromise);
 
     render(
       <TransactionsPage
@@ -84,8 +103,55 @@ describe("TransactionsPage Admin Delete Record Feature", () => {
     const confirmBtn = screen.getByRole("button", { name: /Permanently Delete/i });
     fireEvent.click(confirmBtn);
 
+    // MODAL MUST DISMISS IMMEDIATELY without waiting for deletePromise!
     await waitFor(() => {
-      expect(onDeleteMock).toHaveBeenCalledWith("TKT-0027");
+      expect(screen.queryByText(/Are you sure you want to permanently delete transaction/i)).not.toBeInTheDocument();
+    });
+
+    // Check that onDeleteTransaction was called
+    expect(onDeleteMock).toHaveBeenCalledWith("TKT-0027");
+
+    // Resolve the background promise
+    resolveDeletePromise();
+  });
+
+  it("allows deleting voided transactions from the voided section", async () => {
+    const onDeleteMock = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <TransactionsPage
+        transactions={mockTransactions}
+        role="admin"
+        onCreateTransaction={vi.fn()}
+        onUpdateTransaction={vi.fn()}
+        onDeleteTransaction={onDeleteMock}
+      />
+    );
+
+    // Switch to Voided tab
+    const voidedTabs = screen.getAllByRole("tab", { name: /voided/i });
+    fireEvent.click(voidedTabs[0]);
+
+    // Find voided card
+    const cardVoid = screen.getByLabelText(/Ticket #TKT-0099/i);
+    fireEvent.click(cardVoid);
+
+    // Click more options
+    const moreBtn = screen.getByRole("button", { name: /more options/i });
+    fireEvent.click(moreBtn);
+
+    // Should see Delete Record button
+    const deleteBtn = await screen.findByRole("button", { name: /Delete Record/i });
+    expect(deleteBtn).toBeInTheDocument();
+
+    fireEvent.click(deleteBtn);
+
+    // Confirm deletion
+    const confirmBtn = screen.getByRole("button", { name: /Permanently Delete/i });
+    fireEvent.click(confirmBtn);
+
+    await waitFor(() => {
+      expect(onDeleteMock).toHaveBeenCalledWith("TKT-0099");
     });
   });
 });
