@@ -859,7 +859,7 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
                 <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <Download className="w-3.5 h-3.5 text-primary" /> Digital Copies & Downloads
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <Button
                     type="button"
                     variant="outline"

@@ -250,6 +250,7 @@ export default function ProcessingPage({
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [tick, setTick] = useState(0); // force re-render for relative time
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [justRefreshed, setJustRefreshed] = useState(false);
   const [updatingTicket, setUpdatingTicket] = useState<string | null>(null);
   const [sheetTxn, setSheetTxn] = useState<Transaction | null>(null);
   const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -345,6 +346,8 @@ export default function ProcessingPage({
       if (onRefresh) {
         await onRefresh();
       }
+      setJustRefreshed(true);
+      setTimeout(() => setJustRefreshed(false), 900);
     } finally {
       setIsRefreshing(false);
       setLastUpdated(new Date());
@@ -537,7 +540,7 @@ export default function ProcessingPage({
             </CardTitle>
 
             {items.length > 0 && (
-              <div className="flex items-center gap-2">
+              <div className="hidden md:flex items-center gap-2">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -609,18 +612,18 @@ export default function ProcessingPage({
                     />
 
                     {/* Top Row: Checkbox, Ticket ID, Wash Type, Time badge */}
-                    <div className="flex items-center justify-between pl-1">
+                    <div className="flex items-center justify-between gap-2 pl-1">
                       <div className="flex items-center gap-2 min-w-0">
                         <Checkbox
                           checked={isSelected}
                           onCheckedChange={() => handleToggleSelectTicket(txn.ticketId)}
                           aria-label={`Select ticket ${txn.ticketId}`}
-                          className="cursor-pointer"
+                          className="cursor-pointer shrink-0"
                         />
                         <button
                           type="button"
                           onClick={() => handleViewTicket(txn)}
-                          className="font-mono text-xs font-bold text-primary hover:underline cursor-pointer tracking-tight"
+                          className="font-mono text-xs font-bold text-primary hover:underline cursor-pointer tracking-tight shrink-0 whitespace-nowrap"
                           title="View ticket details"
                         >
                           #{txn.ticketId}
@@ -776,7 +779,7 @@ export default function ProcessingPage({
                         <td className="px-3 py-3">
                           <button
                             onClick={() => handleViewTicket(txn)}
-                            className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 font-mono text-xs font-semibold text-primary hover:underline cursor-pointer"
+                            className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 font-mono text-xs font-semibold text-primary hover:underline cursor-pointer whitespace-nowrap"
                             title="View ticket details"
                           >
                             {txn.ticketId}
@@ -934,11 +937,18 @@ export default function ProcessingPage({
                 size="sm"
                 onClick={() => void handleManualRefresh()}
                 disabled={loading || isRefreshing}
-                className="h-9 gap-1.5 text-xs cursor-pointer"
+                className={cn(
+                  "h-9 gap-1.5 text-xs cursor-pointer transition-all duration-300",
+                  justRefreshed && "border-primary/60 ring-2 ring-primary/25 bg-primary/10 text-primary font-semibold shadow-xs"
+                )}
                 aria-label="Refresh"
               >
-                <RefreshCw className={cn("h-3.5 w-3.5", (loading || isRefreshing) && "animate-spin text-primary")} />
-                {isRefreshing ? "Refreshing…" : "Refresh"}
+                {justRefreshed ? (
+                  <Check className="h-3.5 w-3.5 text-primary animate-in fade-in zoom-in-75 duration-200" />
+                ) : (
+                  <RefreshCw className={cn("h-3.5 w-3.5", (loading || isRefreshing) && "animate-spin text-primary")} />
+                )}
+                <span>{isRefreshing ? "Refreshing…" : justRefreshed ? "Updated!" : "Refresh"}</span>
               </Button>
             </div>
           </div>
@@ -960,11 +970,18 @@ export default function ProcessingPage({
               size="sm"
               onClick={() => void handleManualRefresh()}
               disabled={loading || isRefreshing}
-              className="h-8 gap-1 rounded-full text-xs font-semibold px-3 cursor-pointer shadow-xs"
+              className={cn(
+                "h-8 gap-1 rounded-full text-xs font-semibold px-3 cursor-pointer shadow-xs transition-all duration-300",
+                justRefreshed && "border-primary/60 ring-2 ring-primary/25 bg-primary/10 text-primary"
+              )}
               aria-label="Refresh"
             >
-              <RefreshCw className={cn("h-3.5 w-3.5", (loading || isRefreshing) && "animate-spin text-primary")} />
-              <span>{isRefreshing ? "Refreshing…" : formatLastUpdated(lastUpdated)}</span>
+              {justRefreshed ? (
+                <Check className="h-3.5 w-3.5 text-primary animate-in fade-in zoom-in-75 duration-200" />
+              ) : (
+                <RefreshCw className={cn("h-3.5 w-3.5", (loading || isRefreshing) && "animate-spin text-primary")} />
+              )}
+              <span>{isRefreshing ? "Refreshing…" : justRefreshed ? "Updated!" : formatLastUpdated(lastUpdated)}</span>
             </Button>
           </div>
 
@@ -1043,7 +1060,7 @@ export default function ProcessingPage({
             </CardContent>
           </Card>
         ) : (
-          <>
+          <div className={cn("space-y-4 transition-opacity duration-300", isRefreshing && "opacity-60")}>
             {/* Stage cards — 3 operational process stages (Desktop) */}
             <div className="hidden md:grid grid-cols-1 gap-3 sm:grid-cols-3">
               {filteredGrouped.map(({ stage, label, badgeColor, accent, items }) => {
@@ -1115,7 +1132,7 @@ export default function ProcessingPage({
                   </CardContent>
                 </Card>
               )}
-          </>
+          </div>
         )}
       </div>
 

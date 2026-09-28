@@ -92,22 +92,28 @@ export function TransactionEditModal({ open, onOpenChange, transaction, onSave }
       });
       return;
     }
+
+    const ticketId = transaction.ticketId;
+    const updates = {
+      status,
+      paymentStatus,
+      washInstructions,
+    };
+
+    // Instant optimistic UX: toast immediately even while running in the background
     setSaving(true);
+    setHasChanges(false);
+    toast({
+      title: "Transaction Saved",
+      description: `${ticketId} updated successfully.`,
+    });
+
     try {
-      await onSave(transaction.ticketId, {
-        status,
-        paymentStatus,
-        washInstructions,
-      });
-      setHasChanges(false);
-      toast({
-        title: "Transaction Updated",
-        description: `${transaction.ticketId} has been updated successfully.`,
-      });
-      setTimeout(() => onOpenChange(false), 100);
+      await onSave(ticketId, updates);
+      onOpenChange(false);
     } catch (error) {
       const parsed = showAppErrorToast(error, {
-        fallbackMessage: "Failed to update transaction. Please try again.",
+        fallbackMessage: `Failed to update transaction. Please try again.`,
         onRetry: () => void handleSave(),
       });
       setEditError(`${parsed.title}: ${parsed.message}`);
@@ -119,23 +125,28 @@ export function TransactionEditModal({ open, onOpenChange, transaction, onSave }
   const handleMoveToClaimed = async () => {
     if (!transaction) return;
     setEditError(null);
+    const ticketId = transaction.ticketId;
+    const updates = {
+      status: "Claimed" as const,
+      paymentStatus: "paid" as const,
+      washInstructions,
+    };
+
+    // Instant optimistic UX: toast immediately & dismiss confirm dialog
     setSaving(true);
+    setHasChanges(false);
+    toast({
+      title: "Order Claimed",
+      description: `${ticketId} marked as Claimed!`,
+    });
+    setShowClaimConfirm(false);
+
     try {
-      await onSave(transaction.ticketId, {
-        status: "Claimed",
-        paymentStatus: "paid",
-        washInstructions,
-      });
-      setHasChanges(false);
-      toast({
-        title: "Success",
-        description: `${transaction.ticketId} has been marked as Claimed!`,
-      });
-      setShowClaimConfirm(false);
-      setTimeout(() => onOpenChange(false), 100);
+      await onSave(ticketId, updates);
+      onOpenChange(false);
     } catch (error) {
       const parsed = showAppErrorToast(error, {
-        fallbackMessage: "Failed to mark as claimed. Please try again.",
+        fallbackMessage: `Failed to mark as claimed. Please try again.`,
         onRetry: () => void handleMoveToClaimed(),
       });
       setEditError(`${parsed.title}: ${parsed.message}`);

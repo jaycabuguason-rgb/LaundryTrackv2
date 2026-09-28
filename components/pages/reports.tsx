@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   CalendarIcon,
+  Check,
   Clock,
   CloudRain,
   Download,
@@ -375,12 +376,15 @@ export default function ReportsPage({
   const [forecastPdfGenerating, setForecastPdfGenerating] = useState(false);
   const [rangePreset, setRangePreset] = useState<RangePreset>("month");
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [justRefreshed, setJustRefreshed] = useState(false);
 
   const handleManualRefresh = useCallback(async () => {
     if (isRefreshing) return;
     try {
       setIsRefreshing(true);
       await onRefresh?.();
+      setJustRefreshed(true);
+      setTimeout(() => setJustRefreshed(false), 900);
     } finally {
       setIsRefreshing(false);
     }
@@ -803,10 +807,17 @@ export default function ReportsPage({
             size="sm"
             onClick={() => void handleManualRefresh()}
             disabled={loading || isRefreshing}
-            className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+            className={cn(
+              "h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground cursor-pointer transition-all duration-300",
+              justRefreshed && "border-primary/60 ring-2 ring-primary/25 bg-primary/10 text-primary font-semibold shadow-xs"
+            )}
           >
-            <RotateCw className={cn("w-3.5 h-3.5", (loading || isRefreshing) && "animate-spin text-primary")} />
-            <span>{isRefreshing ? "Refreshing…" : "Refresh"}</span>
+            {justRefreshed ? (
+              <Check className="w-3.5 h-3.5 text-primary animate-in fade-in zoom-in-75 duration-200" />
+            ) : (
+              <RotateCw className={cn("w-3.5 h-3.5", (loading || isRefreshing) && "animate-spin text-primary")} />
+            )}
+            <span>{isRefreshing ? "Refreshing…" : justRefreshed ? "Updated!" : "Refresh"}</span>
           </Button>
           <p className="text-xs text-muted-foreground">{transactions.length} total transactions</p>
         </div>
@@ -830,10 +841,17 @@ export default function ReportsPage({
           size="sm"
           onClick={() => void handleManualRefresh()}
           disabled={loading || isRefreshing}
-          className="h-8 px-2.5 gap-1.5 text-xs text-muted-foreground hover:text-foreground shrink-0 cursor-pointer"
+          className={cn(
+            "h-8 px-2.5 gap-1.5 text-xs text-muted-foreground hover:text-foreground shrink-0 cursor-pointer transition-all duration-300",
+            justRefreshed && "border-primary/60 ring-2 ring-primary/25 bg-primary/10 text-primary font-semibold shadow-xs"
+          )}
         >
-          <RotateCw className={cn("w-3.5 h-3.5", (loading || isRefreshing) && "animate-spin text-primary")} />
-          <span className="hidden sm:inline">{isRefreshing ? "Refreshing…" : "Refresh"}</span>
+          {justRefreshed ? (
+            <Check className="w-3.5 h-3.5 text-primary animate-in fade-in zoom-in-75 duration-200" />
+          ) : (
+            <RotateCw className={cn("w-3.5 h-3.5", (loading || isRefreshing) && "animate-spin text-primary")} />
+          )}
+          <span className="hidden sm:inline">{isRefreshing ? "Refreshing…" : justRefreshed ? "Updated!" : "Refresh"}</span>
         </Button>
       </div>
 
@@ -845,7 +863,7 @@ export default function ReportsPage({
         </Card>
       )}
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className={cn("space-y-4 transition-opacity duration-300", isRefreshing && "opacity-60")}>
         {/* Mobile Horizontal Pill Navigation Bar */}
         <div className="w-full overflow-x-auto no-scrollbar py-0.5 flex items-center gap-1.5 md:hidden">
           {[

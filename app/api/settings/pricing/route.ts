@@ -59,6 +59,7 @@ export async function PUT(request: Request) {
     }
     if (body.loyaltySettings) {
       updates.push(saveSettings("loyalty_settings", body.loyaltySettings));
+      updates.push(saveSettings("loyalty", body.loyaltySettings));
     }
 
     await Promise.all(updates);

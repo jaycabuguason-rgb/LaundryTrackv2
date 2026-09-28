@@ -26,9 +26,10 @@ import {
   Clock,
   Undo2,
   Loader2,
+  XCircle,
 } from "lucide-react";
 import { useLoyaltyMembers } from "@/hooks/use-loyalty-members";
-import { formatReadableDateTime } from "@/lib/date-format";
+import { formatReadableDateTime, formatLifecycleDateTime } from "@/lib/date-format";
 import { getQrCodeImageUrl, printQrTicketOnly } from "@/lib/qr-ticket";
 import { loadBusinessProfile } from "@/lib/settings-store";
 import { cn } from "@/lib/utils";
@@ -125,6 +126,14 @@ export function TransactionDetailModal({
   const [dropoffDate, dropoffTime] = arrivalFormatted.includes(",")
     ? arrivalFormatted.split(",").map((s) => s.trim())
     : [arrivalFormatted, ""];
+
+  const claimDateTimeFormatted = isClaimed
+    ? formatLifecycleDateTime(transaction.claimedAt || transaction.updatedAt) || "Time not recorded"
+    : null;
+
+  const voidDateTimeFormatted = isVoided
+    ? formatLifecycleDateTime(transaction.voidedAt || transaction.updatedAt) || "Time not recorded"
+    : null;
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
@@ -302,11 +311,18 @@ export function TransactionDetailModal({
                 </div>
               </div>
             ) : (
-              <div className="w-full bg-destructive/10 rounded-2xl p-3 border border-destructive/20 text-destructive flex items-center gap-2">
-                <Circle className="w-4 h-4 shrink-0" />
-                <span className="text-xs font-semibold">
-                  This transaction has been voided. {transaction.voidReason ? `Reason: ${transaction.voidReason}` : ""}
-                </span>
+              <div className="w-full bg-destructive/10 rounded-2xl p-3 border border-destructive/20 text-destructive flex items-center gap-2.5">
+                <Circle className="w-4 h-4 shrink-0 text-destructive" />
+                <div className="text-xs font-semibold flex flex-col">
+                  <span>
+                    This transaction was cancelled and voided{voidDateTimeFormatted ? ` on ${voidDateTimeFormatted}` : ""}.
+                  </span>
+                  {transaction.voidReason && (
+                    <span className="text-[11px] font-normal opacity-90 mt-0.5">
+                      Reason: <strong className="font-semibold">{transaction.voidReason}</strong>
+                    </span>
+                  )}
+                </div>
               </div>
             )}
 
@@ -396,38 +412,23 @@ export function TransactionDetailModal({
                 </div>
 
                 {/* Total Bill */}
-                <div className="bg-purple-50 dark:bg-purple-950/20 rounded-xl p-2.5 flex flex-col justify-between border border-purple-200/50 dark:border-purple-900/30">
+                <div className="col-span-2 bg-purple-50 dark:bg-purple-950/20 rounded-xl p-2.5 flex items-baseline justify-between border border-purple-200/50 dark:border-purple-900/30">
                   <span className="text-[10px] text-purple-900 dark:text-purple-200 uppercase tracking-wider font-bold">
                     Total Bill
                   </span>
-                  <div className="mt-1 flex items-baseline justify-between gap-1">
+                  <div className="flex items-baseline gap-2">
                     <span className="text-base sm:text-lg font-extrabold text-foreground tabular-nums">
                       ₱{transaction.fee.toLocaleString()}
                     </span>
                     <span
                       className={cn(
-                        "text-[10px] font-bold px-1.5 py-0.2 rounded-full",
+                        "text-[10px] font-bold px-2 py-0.5 rounded-full",
                         isPaid
                           ? "text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/50"
                           : "text-rose-700 dark:text-rose-300 bg-rose-100 dark:bg-rose-950/50",
                       )}
                     >
                       {isPaid ? "Paid" : "Collect at Pickup"}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Estimated Completion */}
-                <div className="bg-muted/40 rounded-xl p-2.5 flex flex-col justify-between">
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
-                    Completion ETA
-                  </span>
-                  <div className="mt-1">
-                    <div className="font-bold text-foreground text-xs sm:text-sm truncate">
-                      {transaction.eta ? formatReadableDateTime(transaction.eta) : "Est. 45–60 mins"}
-                    </div>
-                    <span className="text-[11px] text-muted-foreground block truncate">
-                      Standard cycle
                     </span>
                   </div>
                 </div>
@@ -444,38 +445,77 @@ export function TransactionDetailModal({
               </div>
             </div>
 
-            {/* 4. Pickup Verification QR Code Card */}
-            <div className="w-full bg-card rounded-2xl p-3.5 sm:p-4 border border-border/70 shadow-xs flex flex-col items-center text-center">
-              <div className="w-full flex items-center justify-between mb-2 px-1">
-                <div className="flex items-center gap-1.5">
-                  <QrCode className="w-4 h-4 text-primary" />
-                  <span className="text-xs font-bold text-foreground">Pickup Verification</span>
+            {/* 4. Terminal Lifecycle Status or Pickup Verification QR Code Card */}
+            {isClaimed ? (
+              <div className="w-full bg-card rounded-2xl p-4 border border-emerald-500/25 bg-emerald-500/5 shadow-xs flex flex-col items-center text-center">
+                <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-2 shadow-xs">
+                  <CheckCircle2 className="w-5 h-5" />
                 </div>
-                <span className="text-[10px] text-muted-foreground font-mono bg-muted px-2 py-0.5 rounded-full">
-                  {transaction.ticketId}
-                </span>
+                <span className="text-sm font-bold text-foreground">Order Claimed &amp; Completed</span>
+                <div className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <span>Claimed on:</span>
+                  <strong className="text-foreground font-semibold">{claimDateTimeFormatted}</strong>
+                </div>
+                <p className="text-[11px] sm:text-xs text-muted-foreground mt-1 max-w-xs leading-snug">
+                  Laundry was handed over to the customer. Pickup verification is fulfilled and closed.
+                </p>
+                <div className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted text-muted-foreground text-[10px] sm:text-xs font-medium">
+                  <Store className="w-3.5 h-3.5 text-primary" />
+                  <span>{businessProfile.shopName || "Sunshine Laundry"} • Counter Terminal</span>
+                </div>
               </div>
+            ) : isVoided ? (
+              <div className="w-full bg-card rounded-2xl p-4 border border-destructive/20 bg-destructive/5 shadow-xs flex flex-col items-center text-center">
+                <div className="w-10 h-10 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mb-2 shadow-xs">
+                  <XCircle className="w-5 h-5" />
+                </div>
+                <span className="text-sm font-bold text-destructive">Transaction Cancelled &amp; Voided</span>
+                <div className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <span>Voided on:</span>
+                  <strong className="text-foreground font-semibold">{voidDateTimeFormatted}</strong>
+                </div>
+                {transaction.voidReason && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Reason: <strong className="text-foreground font-semibold">{transaction.voidReason}</strong>
+                  </p>
+                )}
+                <p className="text-[11px] sm:text-xs text-muted-foreground mt-1 max-w-xs leading-snug">
+                  This transaction was cancelled. QR verification code has been deactivated.
+                </p>
+              </div>
+            ) : (
+              <div className="w-full bg-card rounded-2xl p-3.5 sm:p-4 border border-border/70 shadow-xs flex flex-col items-center text-center">
+                <div className="w-full flex items-center justify-between mb-2 px-1">
+                  <div className="flex items-center gap-1.5">
+                    <QrCode className="w-4 h-4 text-primary" />
+                    <span className="text-xs font-bold text-foreground">Pickup Verification</span>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground font-mono bg-muted px-2 py-0.5 rounded-full">
+                    {transaction.ticketId}
+                  </span>
+                </div>
 
-              {/* QR Image Container */}
-              <div className="p-2.5 bg-muted/30 rounded-2xl my-1 border border-border/60 shadow-inner flex items-center justify-center">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={getQrCodeImageUrl(transaction, 160)}
-                  alt={`QR Verification for ${transaction.ticketId}`}
-                  width={140}
-                  height={140}
-                  className="rounded-lg shadow-xs"
-                  crossOrigin="anonymous"
-                />
+                {/* QR Image Container */}
+                <div className="p-2.5 bg-muted/30 rounded-2xl my-1 border border-border/60 shadow-inner flex items-center justify-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={getQrCodeImageUrl(transaction, 160)}
+                    alt={`QR Verification for ${transaction.ticketId}`}
+                    width={140}
+                    height={140}
+                    className="rounded-lg shadow-xs"
+                    crossOrigin="anonymous"
+                  />
+                </div>
+                <p className="text-[11px] sm:text-xs text-muted-foreground max-w-xs mt-1 leading-snug">
+                  Scan QR code at counter terminal or tracking portal for hand-over.
+                </p>
+                <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted text-muted-foreground text-[10px] sm:text-xs font-medium">
+                  <Store className="w-3.5 h-3.5 text-primary" />
+                  <span>{businessProfile.shopName || "Sunshine Laundry"} • Counter Terminal</span>
+                </div>
               </div>
-              <p className="text-[11px] sm:text-xs text-muted-foreground max-w-xs mt-1 leading-snug">
-                Scan QR code at counter terminal or tracking portal for hand-over.
-              </p>
-              <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted text-muted-foreground text-[10px] sm:text-xs font-medium">
-                <Store className="w-3.5 h-3.5 text-primary" />
-                <span>{businessProfile.shopName || "Sunshine Laundry"} • Counter Terminal</span>
-              </div>
-            </div>
+            )}
 
             {/* 5. Operational Action Controls */}
             <div className="w-full flex flex-col gap-2 pt-1">

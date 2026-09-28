@@ -137,4 +137,56 @@ describe("TransactionDetailModal - Mobile View Ticket Concept", () => {
     expect(handleClose).toHaveBeenCalledWith(false);
     expect(handleEdit).toHaveBeenCalledWith(mockTransaction.ticketId);
   });
+
+  it("does NOT render QR code for Claimed ticket and displays claim date & time", () => {
+    const claimedTxn: Transaction = {
+      ...mockTransaction,
+      status: "Claimed",
+      paymentStatus: "paid",
+      claimedAt: "2026-09-18 14:34",
+    };
+
+    render(
+      <TransactionDetailModal
+        open={true}
+        onOpenChange={vi.fn()}
+        transaction={claimedTxn}
+      />
+    );
+
+    // QR code is hidden
+    expect(screen.queryByText("Pickup Verification")).not.toBeInTheDocument();
+    expect(screen.queryByAltText("QR Verification for TKT-0027")).not.toBeInTheDocument();
+
+    // Claimed info is displayed
+    expect(screen.getByText("Order Claimed & Completed")).toBeInTheDocument();
+    expect(screen.getByText(/Sep 18, 2026/i)).toBeInTheDocument();
+    expect(screen.getByText(/Handed Over to Customer/i)).toBeInTheDocument();
+  });
+
+  it("does NOT render QR code for Voided ticket and displays void date, time & reason", () => {
+    const voidedTxn: Transaction = {
+      ...mockTransaction,
+      status: "Voided",
+      voidedAt: "2026-09-18 15:08",
+      voidReason: "Customer requested cancellation",
+    };
+
+    render(
+      <TransactionDetailModal
+        open={true}
+        onOpenChange={vi.fn()}
+        transaction={voidedTxn}
+      />
+    );
+
+    // QR code is hidden
+    expect(screen.queryByText("Pickup Verification")).not.toBeInTheDocument();
+    expect(screen.queryByAltText("QR Verification for TKT-0027")).not.toBeInTheDocument();
+
+    // Voided info is displayed
+    expect(screen.getByText("Transaction Cancelled & Voided")).toBeInTheDocument();
+    expect(screen.getAllByText(/Customer requested cancellation/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Sep 18, 2026/i).length).toBeGreaterThan(0);
+  });
 });

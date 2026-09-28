@@ -2,8 +2,9 @@ import "server-only";
 
 import { loyaltyMembers as seedMembers, type LoyaltyMember } from "@/lib/data";
 import { getPublicSupabaseConfig } from "@/lib/supabase/config";
-import { listTransactions, getBusinessProfile } from "@/lib/server/laundry-repository";
+import { listTransactions, getBusinessProfile, getSettings, saveSettings } from "@/lib/server/laundry-repository";
 import type { PublicLoyaltyMemberRecord, PublicShopProfile } from "@/lib/transaction-contracts";
+import type { LoyaltySettings } from "@/lib/settings-store";
 
 export type StampAwardResult =
   | { stamped: false; reason: string }
@@ -283,20 +284,22 @@ export async function addStampsToMember(
 }
 
 export async function getLoyaltySettings(): Promise<{ loyalty_enabled: boolean; washes_per_reward: number; reward_description: string }> {
-  if (!hasSupabaseConfig()) return { loyalty_enabled: true, washes_per_reward: 7, reward_description: "Free wash" };
   try {
-    const rows = await restRequest<Array<{ key: string; value: { enabled?: boolean; washesPerReward?: number; rewardDescription?: string } }>>("settings?key=eq.loyalty&select=key,value&limit=1");
-    if (rows && rows[0]?.value) {
-      const val = rows[0].value;
+    const stored =
+      (await getSettings<LoyaltySettings | { enabled?: boolean; washesPerReward?: number | string; rewardDescription?: string }>("loyalty_settings")) ||
+      (await getSettings<LoyaltySettings | { enabled?: boolean; washesPerReward?: number | string; rewardDescription?: string }>("loyalty"));
+
+    if (stored && typeof stored.enabled === "boolean") {
       return {
-        loyalty_enabled: val.enabled ?? true,
-        washes_per_reward: Number(val.washesPerReward) || 7,
-        reward_description: val.rewardDescription || "Free wash",
+        loyalty_enabled: stored.enabled,
+        washes_per_reward: Number(stored.washesPerReward) || 7,
+        reward_description: stored.rewardDescription || "Free wash",
       };
     }
-  } catch {
-    // fallback if error
+  } catch (error) {
+    console.error("Failed to load loyalty settings:", error);
   }
+
   return { loyalty_enabled: true, washes_per_reward: 7, reward_description: "Free wash" };
 }
 
@@ -357,13 +360,13 @@ export async function awardClaimStamp(
   phone: string | null,
   email: string | null
 ): Promise<StampAwardResult> {
-  if (!hasSupabaseConfig()) return { stamped: false, reason: "Supabase not configured" };
-
   // 1. Check if loyalty is enabled
   const settings = await getLoyaltySettings();
   if (!settings.loyalty_enabled) {
     return { stamped: false, reason: "Loyalty program is disabled" };
   }
+
+  if (!hasSupabaseConfig()) return { stamped: false, reason: "Supabase not configured" };
 
   // 2. Find member by phone or email
   let memberQuery = "";

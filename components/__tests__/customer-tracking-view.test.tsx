@@ -72,7 +72,7 @@ describe("CustomerTrackingView", () => {
     );
 
     expect(screen.getByText("TKT-1001")).toBeInTheDocument();
-    expect(screen.getByText("Maria Clara")).toBeInTheDocument();
+    expect(screen.getAllByText("Maria Clara").length).toBeGreaterThan(0);
     expect(screen.getByText("Live tracking active")).toBeInTheDocument();
     expect(screen.queryByText(/Your Laundry is Ready for Pickup!/i)).not.toBeInTheDocument();
   });

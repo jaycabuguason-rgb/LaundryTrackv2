@@ -301,7 +301,14 @@ function PricingSettings() {
     persistServiceTypes(services);
     if (typeof window !== "undefined") localStorage.setItem("laundrytrack_svc_enabled", String(svcEnabled));
     
-    // Save to database
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
+    toast({
+      title: "Pricing Saved",
+      description: "Pricing and services updated successfully.",
+    });
+
+    // Background sync to database
     try {
       if (!isOnline()) {
         await enqueueSettingsMutation({
@@ -312,10 +319,6 @@ function PricingSettings() {
             serviceTypes: services,
             addOns,
           },
-        });
-        toast({
-          title: "Saved Offline",
-          description: "Pricing changes were queued and will sync when online.",
         });
       } else {
         const response = await fetch("/api/settings/pricing", {
@@ -329,22 +332,17 @@ function PricingSettings() {
         });
         if (!response.ok) {
           const data = await response.json().catch(() => ({}));
-          throw new Error(data.error || "Failed to save settings.");
+          throw new Error(data.error || "Failed to sync pricing settings to cloud.");
         }
       }
     } catch (error) {
-      console.error("Failed to save settings to database:", error);
+      console.error("Failed to sync settings to database:", error);
       toast({
-        title: "Save Failed",
-        description: error instanceof Error ? error.message : "Failed to save settings.",
+        title: "Cloud Sync Failed",
+        description: error instanceof Error ? error.message : "Changes saved locally.",
         variant: "destructive",
       });
-      setSaved(false);
-      return;
     }
-    
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
   };
 
   return (
@@ -1822,15 +1820,25 @@ function BusinessProfileSettings({ onSave }: { onSave?: (profile: BusinessProfil
     setSaving(true);
     setSaveError(null);
     try {
+      const result = profile as BusinessProfile;
+      persistBusinessProfile(result);
+      onSave?.(result);
+      setProfile(result);
+      setCommittedProfile(result);
+      setErrors({});
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+      toast({
+        title: "Settings Saved",
+        description: "Business profile updated successfully.",
+      });
+
+      // Background network sync
       if (!isOnline()) {
         await enqueueSettingsMutation({
           endpoint: "/api/settings/business-profile",
           method: "PUT",
           body: profile,
-        });
-        toast({
-          title: "Saved Offline",
-          description: "Business profile changes were queued and will sync when online.",
         });
       } else {
         const response = await fetch("/api/settings/business-profile", {
@@ -1843,23 +1851,17 @@ function BusinessProfileSettings({ onSave }: { onSave?: (profile: BusinessProfil
           const message =
             typeof data.error === "string" && data.error.trim().length > 0
               ? data.error
-              : "Failed to save business profile. Please try again.";
-          throw new Error(message);
+              : "Failed to sync business profile to cloud.";
+          toast({
+            title: "Cloud Sync Failed",
+            description: `${message} Changes remain saved locally.`,
+            variant: "destructive",
+          });
         }
       }
-
-      const result = profile as BusinessProfile;
-      persistBusinessProfile(result);
-      onSave?.(result);
-      setProfile(result);
-      setCommittedProfile(result);
-      setErrors({});
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to save business profile.";
       setSaveError(message);
-      setSaved(false);
     } finally {
       setSaving(false);
     }
@@ -2340,6 +2342,13 @@ function LoyaltyProgramSettings({ loyaltyEnabled, onLoyaltyEnabledChange }: Loya
     persistLoyaltySettings({ enabled, washesPerReward, rewardDescription });
     onLoyaltyEnabledChange(enabled);
     
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
+    toast({
+      title: "Loyalty Settings Saved",
+      description: "Loyalty configuration updated successfully.",
+    });
+
     // Save to database
     try {
       if (!isOnline()) {
@@ -2349,10 +2358,6 @@ function LoyaltyProgramSettings({ loyaltyEnabled, onLoyaltyEnabledChange }: Loya
           body: {
             loyaltySettings: { enabled, washesPerReward, rewardDescription },
           },
-        });
-        toast({
-          title: "Saved Offline",
-          description: "Loyalty settings were queued and will sync when online.",
         });
       } else {
         const response = await fetch("/api/settings/pricing", {
@@ -2364,21 +2369,17 @@ function LoyaltyProgramSettings({ loyaltyEnabled, onLoyaltyEnabledChange }: Loya
         });
         if (!response.ok) {
           const data = await response.json().catch(() => ({}));
-          throw new Error(data.error || "Failed to save loyalty settings.");
+          throw new Error(data.error || "Failed to sync loyalty settings.");
         }
       }
     } catch (error) {
       console.error("Failed to save loyalty settings to database:", error);
       toast({
-        title: "Save Failed",
-        description: error instanceof Error ? error.message : "Failed to save settings.",
+        title: "Cloud Sync Failed",
+        description: error instanceof Error ? error.message : "Changes saved locally.",
         variant: "destructive",
       });
-      return;
     }
-    
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
   };
 
   return (
