@@ -3,6 +3,7 @@
 import type { Transaction } from "@/lib/data";
 import type { BusinessProfile } from "@/lib/settings-store";
 import { maskPhoneNumber } from "@/lib/phone-mask";
+import { printThermalDocument } from "@/lib/thermal-printer";
 
 export function getTrackingUrl(transaction: Transaction): string {
   const origin = typeof window !== "undefined" ? window.location.origin : "https://laundrytrack.ph";
@@ -192,69 +193,6 @@ export async function printQrTicketOnly(
 </body>
 </html>`;
 
-  try {
-    let iframe = document.getElementById("thermal-print-frame") as HTMLIFrameElement | null;
-    if (!iframe) {
-      iframe = document.createElement("iframe");
-      iframe.id = "thermal-print-frame";
-      iframe.style.position = "fixed";
-      iframe.style.right = "0";
-      iframe.style.bottom = "0";
-      iframe.style.width = "0";
-      iframe.style.height = "0";
-      iframe.style.border = "none";
-      iframe.style.visibility = "hidden";
-      document.body.appendChild(iframe);
-    }
-
-    const doc = iframe.contentWindow?.document;
-    if (!doc) throw new Error("Unable to access print frame");
-
-    doc.open();
-    doc.write(html);
-    doc.close();
-
-    const images = Array.from(doc.images);
-    if (images.length > 0) {
-      await Promise.all(
-        images.map(
-          (img) =>
-            new Promise<void>((resolve) => {
-              if (img.complete) resolve();
-              else {
-                img.onload = () => resolve();
-                img.onerror = () => resolve();
-                setTimeout(resolve, 1500);
-              }
-            })
-        )
-      );
-    }
-
-    setTimeout(() => {
-      try {
-        iframe?.contentWindow?.focus();
-        iframe?.contentWindow?.print();
-      } catch {
-        const win = window.open("", "_blank", "width=380,height=550");
-        if (win) {
-          win.document.open();
-          win.document.write(html);
-          win.document.close();
-          win.focus();
-          setTimeout(() => win.print(), 350);
-        }
-      }
-    }, 200);
-  } catch {
-    const win = window.open("", "_blank", "width=380,height=550");
-    if (win) {
-      win.document.open();
-      win.document.write(html);
-      win.document.close();
-      win.focus();
-      setTimeout(() => win.print(), 350);
-    }
-  }
+  await printThermalDocument(html);
 }
 

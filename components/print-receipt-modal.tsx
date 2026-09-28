@@ -10,6 +10,8 @@ import { loadBusinessProfile, type BusinessProfile } from "@/lib/settings-store"
 import { downloadQrCodeImage, printQrTicketOnly } from "@/lib/qr-ticket";
 import { getReceiptCostBreakdown } from "@/lib/receipt-breakdown";
 import { maskPhoneNumber } from "@/lib/phone-mask";
+import { toast } from "sonner";
+import { printThermalDocument } from "@/lib/thermal-printer";
 
 interface PrintReceiptModalProps {
   open: boolean;
@@ -418,86 +420,21 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
 </html>`;
   };
 
-  // Hidden Iframe Printing (Industry standard for POS: zero popups, instant, exact thermal dimensions)
+  // Thermal Printing via off-screen rendered iframe (reliable across Chrome, Edge, Safari)
   const handlePrint = async () => {
     setIsPrinting(true);
     try {
       const html = generatePrintableHtml();
-
-      let iframe = document.getElementById("thermal-print-frame") as HTMLIFrameElement | null;
-      if (!iframe) {
-        iframe = document.createElement("iframe");
-        iframe.id = "thermal-print-frame";
-        iframe.style.position = "fixed";
-        iframe.style.right = "0";
-        iframe.style.bottom = "0";
-        iframe.style.width = "0";
-        iframe.style.height = "0";
-        iframe.style.border = "none";
-        iframe.style.visibility = "hidden";
-        document.body.appendChild(iframe);
+      const success = await printThermalDocument(html);
+      if (!success) {
+        toast.error("Unable to open print dialog. Please check your printer settings or try again.");
       }
-
-      const doc = iframe.contentWindow?.document;
-      if (!doc) {
-        throw new Error("Unable to access print frame document");
-      }
-
-      doc.open();
-      doc.write(html);
-      doc.close();
-
-      // Wait for any images (logo or QR code) to finish loading before invoking print
-      const images = Array.from(doc.images);
-      if (images.length > 0) {
-        await Promise.all(
-          images.map(
-            (img) =>
-              new Promise<void>((resolve) => {
-                if (img.complete) {
-                  resolve();
-                } else {
-                  img.onload = () => resolve();
-                  img.onerror = () => resolve();
-                  setTimeout(resolve, 1500);
-                }
-              })
-          )
-        );
-      }
-
-      // Allow DOM repaint, then trigger print
-      setTimeout(() => {
-        try {
-          iframe?.contentWindow?.focus();
-          iframe?.contentWindow?.print();
-        } catch (e) {
-          console.error("Iframe print error, falling back to window print", e);
-          fallbackPrintWindow(html);
-        } finally {
-          setIsPrinting(false);
-        }
-      }, 200);
     } catch (err) {
       console.error("Print failed:", err);
-      fallbackPrintWindow(generatePrintableHtml());
+      toast.error("An error occurred while preparing the print job.");
+    } finally {
       setIsPrinting(false);
     }
-  };
-
-  const fallbackPrintWindow = (html: string) => {
-    const win = window.open("", "_blank", "width=420,height=750");
-    if (!win) {
-      alert("Please allow popups for this site so the receipt can be printed.");
-      return;
-    }
-    win.document.open();
-    win.document.write(html);
-    win.document.close();
-    win.focus();
-    setTimeout(() => {
-      win.print();
-    }, 350);
   };
 
   const handleDownloadReceipt = async () => {
