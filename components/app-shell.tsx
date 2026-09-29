@@ -232,6 +232,7 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
             loading={transactionsLoading}
             error={transactionsError}
             loyaltyEnabled={loyaltyEnabled}
+            onRefresh={refresh}
             onCreateTransaction={createTransaction}
             onUpdateTransaction={updateTransaction}
             onDeleteTransaction={deleteTransaction}
@@ -440,7 +441,7 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
           ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
       >
-        <Sidebar activePage={activePage} onNavigate={handleNavigate} onPreload={preloadPage} loyaltyEnabled={loyaltyEnabled} role={adminProfile.role} processingCount={txns.filter((t) => ["Received","Washing","Drying","Ready"].includes(t.status)).length} />
+        <Sidebar activePage={activePage} onNavigate={handleNavigate} onPreload={preloadPage} loyaltyEnabled={loyaltyEnabled} role={adminProfile.role} processingCount={txns.filter((t) => ["Received","Washing","Drying","Ready"].includes(t.status)).length} adminProfile={adminProfile} onSignOut={onSignOut} />
       </div>
 
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">

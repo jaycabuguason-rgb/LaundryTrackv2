@@ -3,6 +3,10 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import MobileBottomNav from "../mobile-bottom-nav";
 import Sidebar from "../sidebar";
 
+vi.mock("next-themes", () => ({
+  useTheme: () => ({ resolvedTheme: "light", setTheme: vi.fn() }),
+}));
+
 describe("Mobile Responsive Navigation & Modern Sidebar Dock", () => {
   it("renders mobile bottom navigation items without collision or raw 'New order' casing", () => {
     const handleNavigate = vi.fn();
@@ -31,6 +35,8 @@ describe("Mobile Responsive Navigation & Modern Sidebar Dock", () => {
         activePage="dashboard"
         onNavigate={vi.fn()}
         loyaltyEnabled={true}
+        adminProfile={{ name: "Test Admin", email: "admin@test.com", role: "admin" }}
+        onSignOut={vi.fn()}
       />
     );
 

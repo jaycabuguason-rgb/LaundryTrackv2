@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { useTheme } from "next-themes";
+import { cn, getUserInitials } from "@/lib/utils";
 import {
   LayoutDashboard,
   Receipt,
@@ -9,22 +10,17 @@ import {
   QrCode,
   BarChart3,
   Settings,
-  ChevronDown,
-  ChevronRight,
-  Coins,
-  Building2,
-  Database,
   Star,
   PanelLeftClose,
   PanelLeftOpen,
   WashingMachine,
-  Upload,
-  Gift,
   Users,
-  ScrollText,
   PlusCircle,
+  Moon,
+  LogOut,
 } from "lucide-react";
-import type { UserRole } from "@/lib/auth";
+import { Switch } from "@/components/ui/switch";
+import type { UserRole, UserProfile } from "@/lib/auth";
 
 export type Page =
   | "dashboard"
@@ -52,62 +48,130 @@ interface SidebarProps {
   loyaltyEnabled: boolean;
   role?: UserRole;
   processingCount?: number;
+  adminProfile: UserProfile;
+  onSignOut: () => void;
 }
 
-// Top-level nav pages hidden from staff
+// Pages hidden from staff
 const ADMIN_ONLY_NAV_PAGES: Page[] = ["reports", "staff-management", "audit-logs"];
 
-// Settings sub-pages hidden from staff
-const ADMIN_ONLY_SETTINGS: Page[] = ["settings-backup", "settings-data-import"];
-
-const allNavItems = [
+// Sidebar sections definition
+const OPERATE_ITEMS = [
   { id: "dashboard" as Page, label: "Dashboard", icon: LayoutDashboard },
   { id: "processing" as Page, label: "Processing", icon: ListTodo },
   { id: "new-transaction" as Page, label: "New Order", icon: PlusCircle },
-  { id: "transactions" as Page, label: "Transactions", icon: Receipt },
   { id: "claim-verification" as Page, label: "Claim Verification", icon: QrCode },
-  { id: "reports" as Page, label: "Reports", icon: BarChart3 },
-  { id: "audit-logs" as Page, label: "Staff & Audit Logs", icon: Users },
-  { id: "loyalty" as Page, label: "Loyalty Members", icon: Star },
 ];
 
-const settingsSubItems = [
-  { id: "settings-pricing" as Page, label: "Pricing", icon: Coins },
-  { id: "settings-business-profile" as Page, label: "Business Profile", icon: Building2 },
-  { id: "settings-loyalty" as Page, label: "Loyalty Program", icon: Gift },
-  { id: "settings-backup" as Page, label: "Backup & Restore", icon: Database },
-  { id: "settings-data-import" as Page, label: "Data Import", icon: Upload },
+const CUSTOMER_ITEMS = [
+  { id: "transactions" as Page, label: "Transactions", icon: Receipt },
+  { id: "loyalty" as Page, label: "Loyalty Members", icon: Star, requiresLoyalty: true },
 ];
 
-export default function Sidebar({ activePage, onNavigate, onPreload, loyaltyEnabled, role = "admin", processingCount = 0 }: SidebarProps) {
-  // On desktop: user can collapse to icon-only. On tablet (md): starts collapsed.
+const SYSTEM_ITEMS = [
+  { id: "audit-logs" as Page, label: "Staff & Audit Logs", icon: Users, adminOnly: true },
+  { id: "reports" as Page, label: "Reports", icon: BarChart3, adminOnly: true },
+  { id: "settings-pricing" as Page, label: "Settings", icon: Settings },
+];
+
+export default function Sidebar({
+  activePage,
+  onNavigate,
+  onPreload,
+  loyaltyEnabled,
+  role = "admin",
+  processingCount = 0,
+  adminProfile,
+  onSignOut,
+}: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(activePage.startsWith("settings"));
+  const { resolvedTheme, setTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
-  useEffect(() => {
-    if (activePage.startsWith("settings")) {
-      setSettingsOpen(true);
-    }
-  }, [activePage]);
-
-  const isSettingsActive = activePage.startsWith("settings");
   const isStaff = role === "staff";
-
-  // Filter nav items based on role and loyalty
-  const navItems = (
-    isStaff
-      ? allNavItems.filter((item) => !ADMIN_ONLY_NAV_PAGES.includes(item.id))
-      : allNavItems
-  ).filter((item) => (item.id === "loyalty" ? loyaltyEnabled : true));
-
-  // Filter settings sub-items based on role
-  const visibleSettingsSubItems = isStaff
-    ? settingsSubItems.filter((item) => !ADMIN_ONLY_SETTINGS.includes(item.id))
-    : settingsSubItems;
-
-  // On mobile the sidebar is shown as a full slide-in drawer (controlled by app-shell)
-  // On md (tablet) it starts icon-only; on lg it defaults to full
   const effectiveCollapsed = collapsed;
+
+  // Filter helpers
+  const filterItems = <T extends { adminOnly?: boolean; requiresLoyalty?: boolean; id: Page }>(
+    items: T[]
+  ) =>
+    items.filter((item) => {
+      if (item.adminOnly && isStaff) return false;
+      if (item.requiresLoyalty && !loyaltyEnabled) return false;
+      if (ADMIN_ONLY_NAV_PAGES.includes(item.id) && isStaff) return false;
+      return true;
+    });
+
+  const operateItems = filterItems(OPERATE_ITEMS);
+  const customerItems = filterItems(CUSTOMER_ITEMS);
+  const systemItems = filterItems(SYSTEM_ITEMS);
+
+  const isActive = (id: Page) =>
+    activePage === id ||
+    (id === "audit-logs" && activePage === "staff-management") ||
+    (id === "settings-pricing" && activePage.startsWith("settings"));
+
+  const initials = getUserInitials(adminProfile.name);
+
+  const NavButton = ({
+    id,
+    label,
+    icon: Icon,
+    showBadge,
+  }: {
+    id: Page;
+    label: string;
+    icon: React.ElementType;
+    showBadge?: boolean;
+  }) => {
+    const active = isActive(id);
+    return (
+      <li>
+        <button
+          onPointerDown={() => onPreload?.(id)}
+          onPointerEnter={() => onPreload?.(id)}
+          onFocus={() => onPreload?.(id)}
+          onClick={() => onNavigate(id)}
+          title={effectiveCollapsed ? label : undefined}
+          className={cn(
+            "relative w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors min-h-[44px]",
+            active
+              ? "bg-sidebar-accent text-white"
+              : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-white"
+          )}
+        >
+          <Icon className="w-5 h-5 shrink-0" />
+          {effectiveCollapsed ? (
+            showBadge && processingCount > 0 ? (
+              <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                {processingCount > 99 ? "99+" : processingCount}
+              </span>
+            ) : null
+          ) : (
+            <span className="flex-1 flex items-center gap-2 truncate">
+              <span className="truncate">{label}</span>
+              {showBadge && processingCount > 0 && (
+                <span className="shrink-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-xs font-bold text-primary-foreground">
+                  {processingCount > 99 ? "99+" : processingCount}
+                </span>
+              )}
+            </span>
+          )}
+        </button>
+      </li>
+    );
+  };
+
+  const SectionLabel = ({ label }: { label: string }) =>
+    effectiveCollapsed ? (
+      <div className="my-1 h-px bg-sidebar-border/50 mx-2" />
+    ) : (
+      <li className="px-3 pt-4 pb-1">
+        <span className="text-[10px] font-semibold tracking-widest text-sidebar-foreground/40 uppercase">
+          {label}
+        </span>
+      </li>
+    );
 
   return (
     <aside
@@ -129,128 +193,103 @@ export default function Sidebar({ activePage, onNavigate, onPreload, loyaltyEnab
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 py-4 overflow-y-auto [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.15)_transparent] hover:[scrollbar-color:rgba(255,255,255,0.3)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/15 hover:[&::-webkit-scrollbar-thumb]:bg-white/25">
-        <ul className="space-y-1 px-2">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const active = activePage === item.id || (item.id === "audit-logs" && activePage === "staff-management");
-            return (
-              <li key={item.id}>
-                <button
-                  onPointerDown={() => onPreload?.(item.id)}
-                  onPointerEnter={() => onPreload?.(item.id)}
-                  onFocus={() => onPreload?.(item.id)}
-                  onClick={() => onNavigate(item.id)}
-                  title={effectiveCollapsed ? item.label : undefined}
-                  className={cn(
-                    "relative w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors min-h-[44px]",
-                    active
-                      ? "bg-sidebar-accent text-white"
-                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-white"
-                  )}
-                >
-                  <Icon className="w-5 h-5 shrink-0" />
-                  {effectiveCollapsed ? (
-                    item.id === "processing" && processingCount > 0 ? (
-                      <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                        {processingCount > 99 ? "99+" : processingCount}
-                      </span>
-                    ) : null
-                  ) : (
-                    <span className="flex-1 flex items-center gap-2 truncate">
-                      <span className="truncate">{item.label}</span>
-                      {item.id === "processing" && processingCount > 0 && (
-                        <span className="shrink-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-xs font-bold text-primary-foreground">
-                          {processingCount > 99 ? "99+" : processingCount}
-                        </span>
-                      )}
-                    </span>
-                  )}
-                </button>
-              </li>
-            );
-          })}
+      <nav className="flex-1 py-3 overflow-y-auto [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.15)_transparent] hover:[scrollbar-color:rgba(255,255,255,0.3)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/15 hover:[&::-webkit-scrollbar-thumb]:bg-white/25">
+        <ul className="space-y-0.5 px-2">
+          {/* OPERATE */}
+          <SectionLabel label="Operate" />
+          {operateItems.map((item) => (
+            <NavButton
+              key={item.id}
+              id={item.id}
+              label={item.label}
+              icon={item.icon}
+              showBadge={item.id === "processing"}
+            />
+          ))}
 
-          {/* Settings with sub-menu — filtered by role */}
-          <li>
-            <button
-              onPointerDown={() => onPreload?.("settings-pricing")}
-              onPointerEnter={() => onPreload?.("settings-pricing")}
-              onFocus={() => onPreload?.("settings-pricing")}
-              onClick={() => {
-                if (!effectiveCollapsed) setSettingsOpen((prev) => !prev);
-                else onNavigate("settings-pricing");
-              }}
-              title={effectiveCollapsed ? "Settings" : undefined}
-              className={cn(
-                "w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors min-h-[44px]",
-                isSettingsActive
-                  ? "bg-sidebar-accent text-white"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-white"
-              )}
-            >
-              <Settings className="w-5 h-5 shrink-0" />
-              {!effectiveCollapsed && (
-                <>
-                  <span className="flex-1 text-left truncate">Settings</span>
-                  {settingsOpen ? (
-                    <ChevronDown className="w-4 h-4 shrink-0" />
-                  ) : (
-                    <ChevronRight className="w-4 h-4 shrink-0" />
-                  )}
-                </>
-              )}
-            </button>
-            {!effectiveCollapsed && settingsOpen && (
-              <ul className="mt-1 ml-3 pl-3 border-l border-sidebar-border space-y-1">
-                {visibleSettingsSubItems.map((sub) => {
-                  const Icon = sub.icon;
-                  const active = activePage === sub.id;
-                  return (
-                    <li key={sub.id}>
-                      <button
-                        onPointerDown={() => onPreload?.(sub.id)}
-                        onPointerEnter={() => onPreload?.(sub.id)}
-                        onFocus={() => onPreload?.(sub.id)}
-                        onClick={() => onNavigate(sub.id)}
-                        className={cn(
-                          "w-full flex items-center gap-2.5 rounded-md px-2.5 py-2 text-xs font-medium transition-colors min-h-[44px]",
-                          active
-                            ? "bg-primary/20 text-white"
-                            : "text-sidebar-foreground/60 hover:bg-sidebar-accent/60 hover:text-white"
-                        )}
-                      >
-                        <Icon className="w-3.5 h-3.5 shrink-0" />
-                        <span className="truncate">{sub.label}</span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </li>
+          {/* CUSTOMERS */}
+          <SectionLabel label="Customers" />
+          {customerItems.map((item) => (
+            <NavButton key={item.id} id={item.id} label={item.label} icon={item.icon} />
+          ))}
+
+          {/* SYSTEM */}
+          <SectionLabel label="System" />
+          {systemItems.map((item) => (
+            <NavButton key={item.id} id={item.id} label={item.label} icon={item.icon} />
+          ))}
         </ul>
       </nav>
 
-      {/* Modern Refined Dock - Collapse toggle (desktop only) */}
-      <div className="p-2.5 bg-gradient-to-t from-black/25 via-sidebar/60 to-transparent border-t border-sidebar-border/50 shrink-0 hidden lg:block">
-        <button
-          onClick={() => setCollapsed((prev) => !prev)}
-          title={effectiveCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className={cn(
-            "w-full flex items-center rounded-xl py-2 text-xs font-medium text-sidebar-foreground/75 hover:text-white bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 transition-all duration-200 cursor-pointer min-h-[40px] shadow-xs active:scale-[0.98]",
-            effectiveCollapsed ? "justify-center px-2" : "justify-between px-3"
-          )}
-        >
-          {effectiveCollapsed ? (
-            <PanelLeftOpen className="w-4 h-4 text-sidebar-foreground/90 hover:text-white transition-transform hover:scale-110" />
-          ) : (
-            <div className="flex items-center gap-2.5">
-              <PanelLeftClose className="w-4 h-4 text-sidebar-foreground/90" />
-              <span className="font-medium tracking-tight">Collapse</span>
+      {/* Footer Dock */}
+      <div className="border-t border-sidebar-border/50 bg-gradient-to-t from-black/25 via-sidebar/60 to-transparent shrink-0">
+        {/* Dark Mode Toggle */}
+        {!effectiveCollapsed && (
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-sidebar-border/30">
+            <Moon className="w-4 h-4 text-sidebar-foreground/60 shrink-0" />
+            <span className="flex-1 text-sm text-sidebar-foreground/70">Dark Mode</span>
+            <Switch
+              checked={isDark}
+              onCheckedChange={(v) => setTheme(v ? "dark" : "light")}
+              aria-label="Toggle dark mode"
+            />
+          </div>
+        )}
+
+        {/* User row + Sign Out */}
+        {!effectiveCollapsed ? (
+          <div className="flex items-center gap-2.5 px-3 py-3">
+            {/* Avatar */}
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/80 text-white text-xs font-bold shrink-0 select-none">
+              {initials}
             </div>
-          )}
-        </button>
+            {/* Name */}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-white truncate">{adminProfile.name}</p>
+              <p className="text-xs text-sidebar-foreground/50 truncate capitalize">{adminProfile.role}</p>
+            </div>
+            {/* Sign Out */}
+            <button
+              onClick={onSignOut}
+              title="Sign out"
+              className="p-1.5 rounded-md text-sidebar-foreground/50 hover:text-white hover:bg-white/10 transition-colors shrink-0"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          /* Collapsed: just sign out icon */
+          <div className="flex flex-col items-center gap-1 py-2">
+            <button
+              onClick={onSignOut}
+              title="Sign out"
+              className="p-2 rounded-md text-sidebar-foreground/50 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        {/* Collapse toggle (desktop only) */}
+        <div className="p-2 hidden lg:block">
+          <button
+            onClick={() => setCollapsed((prev) => !prev)}
+            title={effectiveCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className={cn(
+              "w-full flex items-center rounded-xl py-2 text-xs font-medium text-sidebar-foreground/75 hover:text-white bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 transition-all duration-200 cursor-pointer min-h-[40px] shadow-xs active:scale-[0.98]",
+              effectiveCollapsed ? "justify-center px-2" : "justify-between px-3"
+            )}
+          >
+            {effectiveCollapsed ? (
+              <PanelLeftOpen className="w-4 h-4 text-sidebar-foreground/90 hover:text-white transition-transform hover:scale-110" />
+            ) : (
+              <div className="flex items-center gap-2.5">
+                <PanelLeftClose className="w-4 h-4 text-sidebar-foreground/90" />
+                <span className="font-medium tracking-tight">Collapse</span>
+              </div>
+            )}
+          </button>
+        </div>
       </div>
     </aside>
   );
