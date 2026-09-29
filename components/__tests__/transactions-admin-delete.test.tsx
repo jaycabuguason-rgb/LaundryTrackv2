@@ -32,6 +32,7 @@ const mockTransactions: Transaction[] = [
     dropOffDate: "2026-09-09",
     voidReason: "Customer changed mind",
     voidedAt: "2026-09-09 11:30",
+    addOns: [],
   },
 ];
 
