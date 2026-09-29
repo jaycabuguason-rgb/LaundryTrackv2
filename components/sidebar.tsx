@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTheme } from "next-themes";
-import { cn, getUserInitials } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   Receipt,
@@ -17,7 +17,6 @@ import {
   Users,
   PlusCircle,
   Moon,
-  LogOut,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import type { UserRole, UserProfile } from "@/lib/auth";
@@ -48,8 +47,8 @@ interface SidebarProps {
   loyaltyEnabled: boolean;
   role?: UserRole;
   processingCount?: number;
-  adminProfile: UserProfile;
-  onSignOut: () => void;
+  adminProfile?: UserProfile;
+  onSignOut?: () => void;
 }
 
 // Pages hidden from staff
@@ -81,8 +80,6 @@ export default function Sidebar({
   loyaltyEnabled,
   role = "admin",
   processingCount = 0,
-  adminProfile,
-  onSignOut,
 }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const { resolvedTheme, setTheme } = useTheme();
@@ -110,8 +107,6 @@ export default function Sidebar({
     activePage === id ||
     (id === "audit-logs" && activePage === "staff-management") ||
     (id === "settings-pricing" && activePage.startsWith("settings"));
-
-  const initials = getUserInitials(adminProfile.name);
 
   const NavButton = ({
     id,
@@ -224,7 +219,7 @@ export default function Sidebar({
       {/* Footer Dock */}
       <div className="border-t border-sidebar-border/50 bg-gradient-to-t from-black/25 via-sidebar/60 to-transparent shrink-0">
         {/* Dark Mode Toggle */}
-        {!effectiveCollapsed && (
+        {!effectiveCollapsed ? (
           <div className="flex items-center gap-3 px-4 py-3 border-b border-sidebar-border/30">
             <Moon className="w-4 h-4 text-sidebar-foreground/60 shrink-0" />
             <span className="flex-1 text-sm text-sidebar-foreground/70">Dark Mode</span>
@@ -234,38 +229,15 @@ export default function Sidebar({
               aria-label="Toggle dark mode"
             />
           </div>
-        )}
-
-        {/* User row + Sign Out */}
-        {!effectiveCollapsed ? (
-          <div className="flex items-center gap-2.5 px-3 py-3">
-            {/* Avatar */}
-            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/80 text-white text-xs font-bold shrink-0 select-none">
-              {initials}
-            </div>
-            {/* Name */}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">{adminProfile.name}</p>
-              <p className="text-xs text-sidebar-foreground/50 truncate capitalize">{adminProfile.role}</p>
-            </div>
-            {/* Sign Out */}
-            <button
-              onClick={onSignOut}
-              title="Sign out"
-              className="p-1.5 rounded-md text-sidebar-foreground/50 hover:text-white hover:bg-white/10 transition-colors shrink-0"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
         ) : (
-          /* Collapsed: just sign out icon */
-          <div className="flex flex-col items-center gap-1 py-2">
+          <div className="flex flex-col items-center py-2 border-b border-sidebar-border/30">
             <button
-              onClick={onSignOut}
-              title="Sign out"
+              onClick={() => setTheme(isDark ? "light" : "dark")}
+              title={isDark ? "Switch to light mode" : "Switch to dark mode"}
               className="p-2 rounded-md text-sidebar-foreground/50 hover:text-white hover:bg-white/10 transition-colors"
+              aria-label="Toggle dark mode"
             >
-              <LogOut className="w-4 h-4" />
+              <Moon className="w-4 h-4" />
             </button>
           </div>
         )}

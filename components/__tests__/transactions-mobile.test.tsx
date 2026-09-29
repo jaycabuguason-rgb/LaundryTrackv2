@@ -384,5 +384,22 @@ describe("TransactionsPage Mobile Concept Layout", () => {
     expect(screen.queryByRole("button", { name: /undo status change/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /redo status change/i })).not.toBeInTheDocument();
   });
+
+  it("calls onRefresh when clicking the refresh button", async () => {
+    const handleRefresh = vi.fn();
+    render(
+      <TransactionsPage
+        transactions={mockTransactions}
+        onCreateTransaction={vi.fn()}
+        onUpdateTransaction={vi.fn()}
+        onRefresh={handleRefresh}
+      />
+    );
+
+    const refreshBtn = screen.getByRole("button", { name: /refresh transactions/i });
+    expect(refreshBtn).toBeInTheDocument();
+    fireEvent.click(refreshBtn);
+    expect(handleRefresh).toHaveBeenCalled();
+  });
 });
 

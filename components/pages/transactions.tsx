@@ -1177,6 +1177,7 @@ interface TransactionsPageProps {
   loading?: boolean;
   error?: string | null;
   loyaltyEnabled?: boolean;
+  onRefresh?: () => Promise<void> | void;
   onCreateTransaction: (input: CreateTransactionInput) => Promise<Transaction>;
   onUpdateTransaction: (ticketId: string, updates: UpdateTransactionInput) => Promise<{ transaction: Transaction; loyaltyResult?: import("@/lib/transaction-contracts").StampAwardResult }>;
   onDeleteTransaction?: (ticketId: string) => Promise<void>;
@@ -1186,6 +1187,14 @@ interface TransactionsPageProps {
   initialWizardOpen?: boolean;
   onWizardClose?: () => void;
   onNavigate?: (page: Page) => void;
+}
+
+function formatLastUpdated(date: Date): string {
+  const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (diffSec < 5) return "just now";
+  if (diffSec < 60) return `${diffSec} sec ago`;
+  const mins = Math.floor(diffSec / 60);
+  return `${mins} min ago`;
 }
 
 const MOBILE_STATUS_OPTIONS: StatusOption[] = [
@@ -1199,6 +1208,7 @@ export default function TransactionsPage({
   loading = false,
   error = null,
   loyaltyEnabled = true,
+  onRefresh,
   onCreateTransaction,
   onUpdateTransaction,
   onDeleteTransaction,
@@ -1207,6 +1217,25 @@ export default function TransactionsPage({
   onEditComplete,
   onNavigate,
 }: TransactionsPageProps) {
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [justRefreshed, setJustRefreshed] = useState(false);
+
+  const handleManualRefresh = useCallback(async () => {
+    if (isRefreshing) return;
+    try {
+      setIsRefreshing(true);
+      if (onRefresh) {
+        await onRefresh();
+      }
+      setJustRefreshed(true);
+      setTimeout(() => setJustRefreshed(false), 2000);
+    } finally {
+      setIsRefreshing(false);
+      setLastUpdated(new Date());
+    }
+  }, [onRefresh, isRefreshing]);
+
   const { members: loyaltyMemberList } = useLoyaltyMembers();
 
   const getLoyaltyMemberForTxn = useCallback(
@@ -2083,6 +2112,25 @@ export default function TransactionsPage({
               type="button"
               variant="outline"
               size="icon"
+              className={cn(
+                "w-9 h-9 rounded-full bg-secondary/10 border-border text-foreground hover:bg-secondary/20 shadow-xs cursor-pointer transition-all duration-300",
+                justRefreshed && "border-primary/60 ring-2 ring-primary/25 bg-primary/10 text-primary"
+              )}
+              onClick={() => void handleManualRefresh()}
+              disabled={loading || isRefreshing}
+              aria-label="Refresh transactions"
+              title={isRefreshing ? "Refreshing…" : justRefreshed ? "Updated!" : `Last updated: ${formatLastUpdated(lastUpdated)}`}
+            >
+              {justRefreshed ? (
+                <Check className="h-4 w-4 text-primary animate-in fade-in zoom-in-75 duration-200" />
+              ) : (
+                <RefreshCw className={cn("h-4 w-4", (loading || isRefreshing) && "animate-spin text-primary")} />
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
               className="w-9 h-9 rounded-full bg-secondary/10 border-border text-foreground hover:bg-secondary/20 shadow-xs cursor-pointer"
               onClick={() => (onNavigate ? onNavigate("claim-verification") : setMobileShowScanner((prev) => !prev))}
               aria-label="Claim Verification"
@@ -2772,14 +2820,38 @@ export default function TransactionsPage({
             Monitor laundry orders, track stage progress, and manage customer payments
           </p>
         </div>
-        <Button
-          size="default"
-          className="gap-2 shrink-0 shadow-xs cursor-pointer self-start sm:self-auto"
-          onClick={() => (onNavigate ? onNavigate("new-transaction") : setShowWizard(true))}
-          disabled={busy || loading}
-        >
-          <Plus className="w-4 h-4" /> New Transaction
-        </Button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            Last updated: {formatLastUpdated(lastUpdated)}
+          </span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => void handleManualRefresh()}
+            disabled={loading || isRefreshing}
+            className={cn(
+              "h-9 gap-1.5 text-xs cursor-pointer transition-all duration-300",
+              justRefreshed && "border-primary/60 ring-2 ring-primary/25 bg-primary/10 text-primary font-semibold shadow-xs"
+            )}
+            aria-label="Refresh"
+          >
+            {justRefreshed ? (
+              <Check className="h-3.5 w-3.5 text-primary animate-in fade-in zoom-in-75 duration-200" />
+            ) : (
+              <RefreshCw className={cn("h-3.5 w-3.5", (loading || isRefreshing) && "animate-spin text-primary")} />
+            )}
+            <span>{isRefreshing ? "Refreshing…" : justRefreshed ? "Updated!" : "Refresh"}</span>
+          </Button>
+          <Button
+            size="default"
+            className="gap-2 shrink-0 shadow-xs cursor-pointer"
+            onClick={() => (onNavigate ? onNavigate("new-transaction") : setShowWizard(true))}
+            disabled={busy || loading}
+          >
+            <Plus className="w-4 h-4" /> New Transaction
+          </Button>
+        </div>
       </div>
 
       {/* Tabs — All Transactions, Active Orders, Claimed, Voided */}
