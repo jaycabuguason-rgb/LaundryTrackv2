@@ -8,6 +8,7 @@ import { type Transaction } from "@/lib/data";
 import { formatReadableDateTime } from "@/lib/date-format";
 import { loadBusinessProfile, type BusinessProfile } from "@/lib/settings-store";
 import { downloadQrCodeImage, printQrTicketOnly } from "@/lib/qr-ticket";
+import { generateQrSvgString } from "@/lib/qr-generator";
 import { getReceiptCostBreakdown } from "@/lib/receipt-breakdown";
 import { maskPhoneNumber } from "@/lib/phone-mask";
 import { toast } from "sonner";
@@ -61,15 +62,16 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
 
   if (!transaction) return null;
 
+  const is58 = paperWidth === "58mm";
+  const previewWidthPx = is58 ? 210 : 290;
+  const qrPixelSize = is58 ? 85 : 105;
+
   const breakdown = getReceiptCostBreakdown(transaction);
   const origin = typeof window !== "undefined" ? window.location.origin : "https://laundrytrack.ph";
   const trackingPath = transaction.publicTrackingToken
     ? `/track/${transaction.publicTrackingToken}`
     : `/ticket/${transaction.ticketId}`;
   const trackingFullUrl = `${origin}${trackingPath}`;
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=0&data=${encodeURIComponent(
-    trackingFullUrl
-  )}`;
 
   // Generate HTML for a single thermal slip
   const generateSlipHtml = (copyLabel?: string) => {
@@ -196,7 +198,9 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
         ${showQr ? `
           <div class="divider-dashed"></div>
           <div class="center qr-section">
-            <img src="${qrUrl}" alt="QR for #${transaction.ticketId}" class="qr-code-img" crossOrigin="anonymous" />
+            <div class="qr-code-wrapper">
+              ${generateQrSvgString(trackingFullUrl, { size: qrPixelSize, margin: 1 })}
+            </div>
             <div class="qr-caption">Scan with camera to track order status</div>
             <div class="qr-caption bold">Ticket: ${transaction.ticketId}</div>
           </div>
@@ -366,6 +370,20 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
     }
     .qr-section {
       margin: 6px 0;
+      text-align: center;
+    }
+    .qr-code-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0 auto;
+    }
+    .qr-code-wrapper svg {
+      display: block;
+      margin: 0 auto;
+      width: ${qrSize} !important;
+      height: ${qrSize} !important;
+      shape-rendering: crispEdges;
     }
     .qr-code-img {
       display: block;
@@ -451,9 +469,6 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
       setIsDownloadingPdf(false);
     }
   };
-
-  const is58 = paperWidth === "58mm";
-  const previewWidthPx = is58 ? 210 : 290;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -646,14 +661,15 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
                 <>
                   <div className="border-t border-dashed border-black my-1.5" />
                   <div className="text-center my-2">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={qrUrl}
-                      alt={`QR for ${transaction.ticketId}`}
-                      width={is58 ? 85 : 105}
-                      height={is58 ? 85 : 105}
-                      className="mx-auto block"
-                      crossOrigin="anonymous"
+                    <div
+                      className="mx-auto flex justify-center items-center [&>svg]:block [&>svg]:mx-auto"
+                      style={{ width: qrPixelSize, height: qrPixelSize }}
+                      dangerouslySetInnerHTML={{
+                        __html: generateQrSvgString(trackingFullUrl, {
+                          size: qrPixelSize,
+                          margin: 1,
+                        }),
+                      }}
                     />
                     <div className="text-[9px] text-neutral-800 mt-1">Scan with camera to track order</div>
                   </div>

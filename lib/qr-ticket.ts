@@ -4,6 +4,11 @@ import type { Transaction } from "@/lib/data";
 import type { BusinessProfile } from "@/lib/settings-store";
 import { maskPhoneNumber } from "@/lib/phone-mask";
 import { printThermalDocument } from "@/lib/thermal-printer";
+import {
+  generateQrSvgString,
+  generateQrDataUrl,
+  generateQrMatrix,
+} from "@/lib/qr-generator";
 
 export function getTrackingUrl(transaction: Transaction): string {
   const origin = typeof window !== "undefined" ? window.location.origin : "https://laundrytrack.ph";
@@ -13,43 +18,87 @@ export function getTrackingUrl(transaction: Transaction): string {
   return `${origin}${path}`;
 }
 
+/**
+ * Returns a synchronous Data URL containing the vector SVG QR code.
+ * Safe for immediate display with 0ms network latency.
+ */
 export function getQrCodeImageUrl(transaction: Transaction, size = 300): string {
   const fullUrl = getTrackingUrl(transaction);
-  return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=1&data=${encodeURIComponent(fullUrl)}`;
+  return generateQrDataUrl(fullUrl, { size });
 }
 
 /**
  * Download the QR code as a PNG image directly to the user's computer.
+ * Generated 100% locally via Canvas / SVG without external server dependencies.
  */
 export async function downloadQrCodeImage(transaction: Transaction, size = 600): Promise<void> {
-  const qrUrl = getQrCodeImageUrl(transaction, size);
+  const fullUrl = getTrackingUrl(transaction);
+
+  if (typeof document === "undefined") return;
+
   try {
-    const res = await fetch(qrUrl);
-    if (!res.ok) throw new Error("Failed to fetch QR image");
-    const blob = await res.blob();
+    const matrix = generateQrMatrix(fullUrl, "M");
+    const margin = 2;
+    const totalModules = matrix.size + margin * 2;
+    const modulePx = Math.max(1, Math.floor(size / totalModules));
+    const canvasSize = totalModules * modulePx;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = canvasSize;
+    canvas.height = canvasSize;
+    const ctx = canvas.getContext("2d");
+
+    if (ctx) {
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvasSize, canvasSize);
+      ctx.fillStyle = "#000000";
+
+      for (let r = 0; r < matrix.size; r++) {
+        for (let c = 0; c < matrix.size; c++) {
+          if (matrix.modules[r][c]) {
+            ctx.fillRect((c + margin) * modulePx, (r + margin) * modulePx, modulePx, modulePx);
+          }
+        }
+      }
+
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `QR-${transaction.ticketId}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, "image/png");
+      return;
+    }
+  } catch (err) {
+    console.error("Canvas QR export error, falling back to SVG blob:", err);
+  }
+
+  // Fallback: direct SVG blob download
+  try {
+    const svgStr = generateQrSvgString(fullUrl, { size, margin: 2 });
+    const blob = new Blob([svgStr], { type: "image/svg+xml;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `QR-${transaction.ticketId}.png`;
+    a.download = `QR-${transaction.ticketId}.svg`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  } catch {
-    // Fallback: direct download link or new tab
-    const a = document.createElement("a");
-    a.href = qrUrl;
-    a.download = `QR-${transaction.ticketId}.png`;
-    a.target = "_blank";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+  } catch (err) {
+    console.error("Failed to download QR code image:", err);
   }
 }
 
 /**
  * Print a compact QR Ticket (bag tag / claim slip) WITHOUT the full sales receipt.
  * Perfectly formatted for 80mm or 58mm thermal printers.
+ * Uses inline vector SVG so the QR code renders instantly with zero network delay.
  */
 export async function printQrTicketOnly(
   transaction: Transaction,
@@ -59,7 +108,8 @@ export async function printQrTicketOnly(
   const is58 = paperWidth === "58mm";
   const printableWidth = is58 ? "48mm" : "72mm";
   const qrSizePx = is58 ? 140 : 180;
-  const qrSrc = getQrCodeImageUrl(transaction, qrSizePx * 2);
+  const fullUrl = getTrackingUrl(transaction);
+  const qrSvg = generateQrSvgString(fullUrl, { size: qrSizePx, margin: 1 });
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -132,11 +182,12 @@ export async function printQrTicketOnly(
       margin: 8px auto 4px auto;
       text-align: center;
     }
-    .qr-img {
-      width: ${qrSizePx}px;
-      height: ${qrSizePx}px;
+    .qr-box svg {
+      width: ${qrSizePx}px !important;
+      height: ${qrSizePx}px !important;
       display: block;
       margin: 0 auto;
+      shape-rendering: crispEdges;
     }
     .caption {
       font-size: ${is58 ? "9px" : "10px"};
@@ -181,7 +232,9 @@ export async function printQrTicketOnly(
   <div class="divider-dashed"></div>
 
   <div class="qr-box">
-    <img src="${qrSrc}" alt="QR code" class="qr-img" crossOrigin="anonymous" />
+    <div style="display:flex; justify-content:center; align-items:center;">
+      ${qrSvg}
+    </div>
     <div class="caption bold">SCAN TO TRACK STATUS</div>
     <div class="caption">Attach this tag to bag or give to customer</div>
   </div>
@@ -195,4 +248,3 @@ export async function printQrTicketOnly(
 
   await printThermalDocument(html);
 }
-

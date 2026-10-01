@@ -22,7 +22,7 @@ export async function printThermalDocument(
     return false;
   }
 
-  const { imageWaitTimeoutMs = 300 } = options;
+  const { imageWaitTimeoutMs = 1500 } = options;
 
   // 1. Clean up any previous print iframe to avoid stale document state
   const existingFrame = document.getElementById("thermal-print-frame");
@@ -62,14 +62,13 @@ export async function printThermalDocument(
     doc.write(html);
     doc.close();
 
-    // 3. Wait for any embedded images (logo or QR code) with a tight timeout
-    // to preserve transient user activation for printing
+    // 3. Wait for any embedded images (logo or remote images) with a safe timeout
     const images = Array.from(doc.images);
     if (images.length > 0) {
       await Promise.race([
         Promise.all(
           images.map((img) => {
-            if (img.complete) return Promise.resolve();
+            if (img.complete && img.naturalWidth > 0) return Promise.resolve();
             return new Promise<void>((resolve) => {
               img.onload = () => resolve();
               img.onerror = () => resolve();
@@ -103,8 +102,22 @@ export async function printThermalDocument(
           // Fallback cleanup if onafterprint is unsupported or cancelled
           setTimeout(cleanup, 60000);
 
-          win.focus();
-          win.print();
+          if (typeof win.focus === "function") {
+            try {
+              win.focus();
+            } catch {
+              // ignore environments without focus
+            }
+          }
+
+          if (typeof win.print === "function") {
+            try {
+              win.print();
+            } catch {
+              // ignore environments without print
+            }
+          }
+
           resolve(true);
         } catch (err) {
           console.error("Thermal print failed:", err);
