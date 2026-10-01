@@ -14,7 +14,6 @@ import type { BusinessProfile } from "@/lib/settings-store";
 import { formatReadableDateTime } from "@/lib/date-format";
 import { getReceiptCostBreakdown } from "@/lib/receipt-breakdown";
 import { maskPhoneNumber } from "@/lib/phone-mask";
-import { getQrCodeImageUrl } from "@/lib/qr-ticket";
 
 const S = StyleSheet.create({
   page: {
@@ -335,7 +334,14 @@ export function ReceiptDocument({ transaction, profile, qrUrl }: ReceiptDocument
 }
 
 export async function downloadReceiptPdf(transaction: Transaction, profile: BusinessProfile) {
-  const qrUrl = getQrCodeImageUrl(transaction, 160);
+  const origin = typeof window !== "undefined" ? window.location.origin : "https://laundrytrack.ph";
+  const trackingPath = transaction.publicTrackingToken
+    ? `/track/${transaction.publicTrackingToken}`
+    : `/ticket/${transaction.ticketId}`;
+  const trackingFullUrl = `${origin}${trackingPath}`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=0&data=${encodeURIComponent(
+    trackingFullUrl
+  )}`;
 
   const blob = await pdf(
     <ReceiptDocument transaction={transaction} profile={profile} qrUrl={qrUrl} />

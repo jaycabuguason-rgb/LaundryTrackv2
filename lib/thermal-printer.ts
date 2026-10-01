@@ -22,7 +22,7 @@ export async function printThermalDocument(
     return false;
   }
 
-  const { imageWaitTimeoutMs = 1500 } = options;
+  const { imageWaitTimeoutMs = 3500 } = options;
 
   // 1. Clean up any previous print iframe to avoid stale document state
   const existingFrame = document.getElementById("thermal-print-frame");
@@ -62,15 +62,31 @@ export async function printThermalDocument(
     doc.write(html);
     doc.close();
 
-    // 3. Wait for any embedded images (logo or remote images) with a safe timeout
+    // 3. Wait for any embedded images (logo or QR code) with adequate timeout
+    // and decoding to ensure the image is painted before the print dialog opens
     const images = Array.from(doc.images);
     if (images.length > 0) {
       await Promise.race([
         Promise.all(
           images.map((img) => {
-            if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+            if (img.complete && img.naturalWidth > 0) {
+              if (typeof img.decode === "function") {
+                return img.decode().catch(() => {});
+              }
+              return Promise.resolve();
+            }
             return new Promise<void>((resolve) => {
-              img.onload = () => resolve();
+              const onDone = async () => {
+                if (typeof img.decode === "function") {
+                  try {
+                    await img.decode();
+                  } catch {
+                    // ignore
+                  }
+                }
+                resolve();
+              };
+              img.onload = onDone;
               img.onerror = () => resolve();
             });
           })

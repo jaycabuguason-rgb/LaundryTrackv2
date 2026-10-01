@@ -8,7 +8,6 @@ import { type Transaction } from "@/lib/data";
 import { formatReadableDateTime } from "@/lib/date-format";
 import { loadBusinessProfile, type BusinessProfile } from "@/lib/settings-store";
 import { downloadQrCodeImage, printQrTicketOnly } from "@/lib/qr-ticket";
-import { generateQrSvgString } from "@/lib/qr-generator";
 import { getReceiptCostBreakdown } from "@/lib/receipt-breakdown";
 import { maskPhoneNumber } from "@/lib/phone-mask";
 import { toast } from "sonner";
@@ -72,6 +71,9 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
     ? `/track/${transaction.publicTrackingToken}`
     : `/ticket/${transaction.ticketId}`;
   const trackingFullUrl = `${origin}${trackingPath}`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=0&data=${encodeURIComponent(
+    trackingFullUrl
+  )}`;
 
   // Generate HTML for a single thermal slip
   const generateSlipHtml = (copyLabel?: string) => {
@@ -198,9 +200,7 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
         ${showQr ? `
           <div class="divider-dashed"></div>
           <div class="center qr-section">
-            <div class="qr-code-wrapper">
-              ${generateQrSvgString(trackingFullUrl, { size: qrPixelSize, margin: 1 })}
-            </div>
+            <img src="${qrUrl}" alt="QR for #${transaction.ticketId}" class="qr-code-img" crossOrigin="anonymous" />
             <div class="qr-caption">Scan with camera to track order status</div>
             <div class="qr-caption bold">Ticket: ${transaction.ticketId}</div>
           </div>
@@ -370,20 +370,6 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
     }
     .qr-section {
       margin: 6px 0;
-      text-align: center;
-    }
-    .qr-code-wrapper {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin: 0 auto;
-    }
-    .qr-code-wrapper svg {
-      display: block;
-      margin: 0 auto;
-      width: ${qrSize} !important;
-      height: ${qrSize} !important;
-      shape-rendering: crispEdges;
     }
     .qr-code-img {
       display: block;
@@ -444,6 +430,25 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
   const handlePrint = async () => {
     setIsPrinting(true);
     try {
+      // Ensure the QR code image is ready before generating the print frame
+      if (showQr && qrUrl) {
+        const previewImg = receiptPreviewRef.current?.querySelector("img[alt*='QR'], .qr-section img") as HTMLImageElement | null;
+        if (!previewImg || !previewImg.complete || previewImg.naturalWidth === 0) {
+          await new Promise<void>((resolve) => {
+            const preloader = new Image();
+            preloader.crossOrigin = "anonymous";
+            preloader.onload = () => resolve();
+            preloader.onerror = () => resolve();
+            preloader.src = qrUrl;
+            if (preloader.complete && preloader.naturalWidth > 0) {
+              resolve();
+              return;
+            }
+            setTimeout(resolve, 800);
+          });
+        }
+      }
+
       const html = generatePrintableHtml();
       const success = await printThermalDocument(html);
       if (!success) {
@@ -661,15 +666,14 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
                 <>
                   <div className="border-t border-dashed border-black my-1.5" />
                   <div className="text-center my-2">
-                    <div
-                      className="mx-auto flex justify-center items-center [&>svg]:block [&>svg]:mx-auto"
-                      style={{ width: qrPixelSize, height: qrPixelSize }}
-                      dangerouslySetInnerHTML={{
-                        __html: generateQrSvgString(trackingFullUrl, {
-                          size: qrPixelSize,
-                          margin: 1,
-                        }),
-                      }}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={qrUrl}
+                      alt={`QR for ${transaction.ticketId}`}
+                      width={is58 ? 85 : 105}
+                      height={is58 ? 85 : 105}
+                      className="mx-auto block"
+                      crossOrigin="anonymous"
                     />
                     <div className="text-[9px] text-neutral-800 mt-1">Scan with camera to track order</div>
                   </div>

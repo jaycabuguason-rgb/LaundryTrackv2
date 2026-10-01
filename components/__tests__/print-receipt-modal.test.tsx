@@ -45,8 +45,8 @@ describe("PrintReceiptModal QR Code Integration", () => {
     vi.clearAllMocks();
   });
 
-  it("renders the thermal receipt preview with inline QR code SVG", () => {
-    const { container } = render(
+  it("renders the thermal receipt preview with original QR code image from api.qrserver.com", () => {
+    render(
       <PrintReceiptModal
         open={true}
         onOpenChange={vi.fn()}
@@ -58,18 +58,15 @@ describe("PrintReceiptModal QR Code Integration", () => {
     expect(screen.getAllByText("#TKT-0008").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Jayson").length).toBeGreaterThan(0);
 
-    // Verify vector QR SVG is rendered in the live preview (rendered in portal)
-    const svgs = document.querySelectorAll("svg");
-    expect(svgs.length).toBeGreaterThan(0);
-    // Find the QR code SVG with crispEdges
-    const qrSvg = Array.from(svgs).find((svg) =>
-      svg.getAttribute("shape-rendering") === "crispEdges"
-    );
-    expect(qrSvg).toBeDefined();
+    // Verify QR code image is rendered with original api.qrserver.com source
+    const qrImg = screen.getByAltText("QR for TKT-0008") as HTMLImageElement;
+    expect(qrImg).toBeInTheDocument();
+    expect(qrImg.src).toContain("api.qrserver.com");
+    expect(qrImg.src).toContain("tk_test_tkt0008");
     expect(screen.getByText("Scan with camera to track order")).toBeInTheDocument();
   });
 
-  it("sends thermal document HTML containing inline vector QR code SVG to printThermalDocument", async () => {
+  it("sends thermal document HTML containing the QR code image to printThermalDocument", async () => {
     const printSpy = vi.spyOn(thermalPrinter, "printThermalDocument").mockResolvedValue(true);
 
     render(
@@ -89,13 +86,12 @@ describe("PrintReceiptModal QR Code Integration", () => {
     });
 
     const printedHtml = printSpy.mock.calls[0][0];
-    // Check that printed HTML contains the ticket ID, inline vector SVG, and qr-code-wrapper
+    // Check that printed HTML contains the ticket ID, QR code img, and api.qrserver.com source
     expect(printedHtml).toContain("#TKT-0008");
-    expect(printedHtml).toContain("qr-code-wrapper");
-    expect(printedHtml).toContain("<svg");
-    expect(printedHtml).toContain('shape-rendering="crispEdges"');
-    // Ensure no broken remote api.qrserver.com URL is used
-    expect(printedHtml).not.toContain("api.qrserver.com");
+    expect(printedHtml).toContain("qr-code-img");
+    expect(printedHtml).toContain("api.qrserver.com");
+    expect(printedHtml).toContain("tk_test_tkt0008");
+    expect(printedHtml).toContain("Scan with camera to track order status");
   });
 
   it("toggling off 'Include QR Code' removes the QR code from print payload", async () => {
@@ -124,7 +120,7 @@ describe("PrintReceiptModal QR Code Integration", () => {
     });
 
     const printedHtml = printSpy.mock.calls[0][0];
-    expect(printedHtml).not.toContain('<div class="qr-code-wrapper">');
+    expect(printedHtml).not.toContain("api.qrserver.com");
     expect(printedHtml).not.toContain("Scan with camera to track order status");
   });
 });
