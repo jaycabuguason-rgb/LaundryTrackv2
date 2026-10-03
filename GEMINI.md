@@ -1,30 +1,41 @@
-# Repository Guardrails & AI Modification Policies
+# Codebase Guardrails & Modification Policy (STRICT)
 
-## CRITICAL DIRECTIVE: STRICT NON-DESTRUCTIVE MODIFICATION
-
-All existing functionality, components, workflows, and integrations in this codebase are considered working, tested, and intentional. Any AI agent (Antigravity, Gemini, Claude, Cursor, Cline, etc.) operating in this repository MUST strictly follow these rules:
+> **CRITICAL DIRECTIVE FOR ALL AI AGENTS & CODING ASSISTANTS:**
+> This codebase contains production-ready, working features. You must **NEVER** modify, refactor, replace, or "re-invent" any existing working functionality unless explicitly and directly commanded by the user.
 
 ---
 
-### Rule 1: Surgical Fixes Only — Do Not Refactor Working Code
-- **Fix the exact defect only**: Focus exclusively on the narrow bug or task requested by the user.
-- **No unsolicited refactoring or "modernization"**: Never rewrite, re-architect, replace, or "optimize" working functions, utilities, or components under the assumption of "best practices".
-- **Minimal Diff Principle**: Always make the smallest, safest diff necessary to fix the problem. If a 3-line timing or CSS fix resolves an issue, do not replace entire modules or algorithms.
+## 1. Zero Unsolicited Modification Rule (Strictly Enforced)
 
-### Rule 2: Preserve Working External APIs, Libraries & Contracts
-- **Do not replace working third-party services or APIs**: If the app uses a specific service (e.g. `api.qrserver.com`, Supabase, `@react-pdf/renderer`), keep it intact unless the user explicitly requests a migration.
-- **Do not modify working shared utilities**: Shared helpers (in `lib/`, `hooks/`, etc.) must not be rewritten if multiple parts of the system rely on their existing behavior and output format.
-- **Do not alter function signatures or return types**: Maintain strict backward compatibility for all existing functions and props.
+1. **Touch Only What Was Explicitly Asked**:
+   - Confine changes **strictly** to the exact file, component, or function requested by the user.
+   - If the user asks to fix an issue in feature X (e.g., thermal printing dialog), **NEVER** touch feature Y (e.g., QR generation API, data formats, tracking routes, PDF generation, or state stores).
 
-### Rule 3: Isolate Action-Specific Issues
-- If an issue occurs during a specific lifecycle step (e.g., thermal printing, PDF export, or modal open), fix **only that step's execution pipeline** (e.g. timing, rendering buffer, styling, print lifecycle).
-- **Never touch the data-generation or source-of-truth logic** that is already working properly elsewhere in the UI.
+2. **Never Replace Working Implementations**:
+   - Do **NOT** replace working third-party services, APIs, libraries, or utilities with custom or rewritten implementations unless the user explicitly asks to replace that service.
+   - Do **NOT** "improve", rewrite, optimize, or modernize code outside the immediate task. Working code must remain working.
 
-### Rule 4: Implementation Plans Must Declare Strict Scoping
-Whenever asked to create an implementation plan:
-1. Identify the root cause precisely without making broad assumptions.
-2. Propose the most minimal, surgical solution possible.
-3. Explicitly declare what will **NOT** be touched, ensuring working subsystems remain completely undisturbed.
+3. **Preserve Existing Data Contracts & APIs**:
+   - Never alter function signatures, return types, public API routes, tracking URLs, or database schemas that other parts of the app depend on.
+   - Any external integration (e.g., `api.qrserver.com`, Supabase schemas, localStorage keys, routing tokens) is considered frozen and must be preserved.
 
-### Rule 5: Immediate Reversion on Regressions
-If any change unintentionally affects working behavior outside the user's specific request, revert the affected files immediately back to their previous working commit.
+4. **Preserve Surrounding Code & Comments**:
+   - Do not delete comments, remove features, simplify logic, or change formatting/styling of unrelated sections of files you are editing.
+
+---
+
+## 2. Bug Fix Protocol: Minimal Blast Radius
+
+When fixing a bug:
+1. **Identify the exact line or timing causing the failure** (e.g., race conditions, missing timeouts, CSS margins, event listener cleanup).
+2. **Apply the surgical fix only at that failure point**.
+3. **DO NOT refactor the architecture** or change the data-flow of working components upstream or downstream from the bug.
+
+---
+
+## 3. Plan & Verify Requirement
+
+Before modifying any code:
+1. **Verify Scope**: Confirm which exact files and functions will be modified.
+2. **Regression Check**: Ensure no existing feature, contract, or behavior is broken or altered.
+3. **Test Integrity**: Run relevant tests (`pnpm test`) after modifications to ensure existing functionality remains 100% operational.

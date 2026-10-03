@@ -13,14 +13,28 @@ Rules:
 
 ---
 
-## Repository Guardrails & Non-Destructive Code Modification Policy
+## Codebase Safety & Modification Guardrails (STRICT)
 
-### CRITICAL DIRECTIVE: DO NOT TOUCH WORKING CODE
-All existing features, APIs, external integrations, and components are assumed to be working, intentional, and tested. AI assistants MUST adhere to the following:
+> **CRITICAL DIRECTIVE FOR ALL AI AGENTS & CODING ASSISTANTS:**
+> This codebase contains production-ready, working features. You must **NEVER** modify, refactor, replace, or "re-invent" any existing working functionality unless explicitly and directly commanded by the user.
 
-1. **Surgical Fixes Only**: Fix only the specific bug or task explicitly requested by the user. Do not expand scope.
-2. **No Unsolicited Refactoring**: Never rewrite, re-architect, replace, or "modernize" working functions, components, or libraries under the assumption of "best practices".
-3. **Preserve External APIs & Contracts**: Keep existing third-party services (e.g. `api.qrserver.com`, Supabase, `@react-pdf/renderer`) and data models intact unless the user explicitly requests a replacement.
-4. **Isolate Lifecycle/Action Issues**: If an issue occurs during a specific step (e.g., printing or downloading), modify ONLY that step's execution pipeline. Never alter the underlying source of truth or shared generators that work elsewhere.
-5. **Minimal Diff Principle**: Always implement the smallest, least intrusive fix possible.
-6. **Implementation Plans**: Every plan must state what will be changed AND explicitly confirm what will NOT be touched.
+1. **Touch Only What Was Explicitly Asked**:
+   - Confine changes **strictly** to the exact file, component, or function requested by the user.
+   - If the user asks to fix an issue in feature X (e.g., thermal printing dialog), **NEVER** touch feature Y (e.g., QR generation API, data formats, tracking routes, PDF generation, or state stores).
+
+2. **Never Replace Working Implementations**:
+   - Do **NOT** replace working third-party services, APIs, libraries, or utilities with custom or rewritten implementations unless the user explicitly asks to replace that service.
+   - Do **NOT** "improve", rewrite, optimize, or modernize code outside the immediate task. Working code must remain working.
+
+3. **Preserve Existing Data Contracts & APIs**:
+   - Never alter function signatures, return types, public API routes, tracking URLs, or database schemas that other parts of the app depend on.
+   - Any external integration (e.g., `api.qrserver.com`, Supabase schemas, localStorage keys, routing tokens) is considered frozen and must be preserved.
+
+4. **Preserve Surrounding Code & Comments**:
+   - Do not delete comments, remove features, simplify logic, or change formatting/styling of unrelated sections of files you are editing.
+
+5. **Bug Fix Protocol (Minimal Blast Radius)**:
+   - Identify the exact line or timing causing the failure (e.g., race conditions, missing timeouts, CSS margins, event listener cleanup).
+   - Apply the surgical fix only at that failure point.
+   - DO NOT refactor the architecture or change the data-flow of working components upstream or downstream from the bug.
+
