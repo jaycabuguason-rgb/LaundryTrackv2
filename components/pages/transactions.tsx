@@ -6,8 +6,9 @@ import {
   AlertTriangle, Plus, User, Star, Camera,
   ChevronLeft, Check, RefreshCw, Inbox, MoreHorizontal, Download, Droplets,
   Receipt, Clock, CheckCircle2, PackageCheck, ArrowRight,
-  Undo2, Redo2, Trash2
+  Undo2, Redo2, Trash2, Loader2
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -1189,14 +1190,6 @@ interface TransactionsPageProps {
   onNavigate?: (page: Page) => void;
 }
 
-function formatLastUpdated(date: Date): string {
-  const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
-  if (diffSec < 5) return "just now";
-  if (diffSec < 60) return `${diffSec} sec ago`;
-  const mins = Math.floor(diffSec / 60);
-  return `${mins} min ago`;
-}
-
 const MOBILE_STATUS_OPTIONS: StatusOption[] = [
   { status: "Received", label: "Received" },
   { status: "Washing", label: "Washing" },
@@ -1208,7 +1201,6 @@ export default function TransactionsPage({
   loading = false,
   error = null,
   loyaltyEnabled = true,
-  onRefresh,
   onCreateTransaction,
   onUpdateTransaction,
   onDeleteTransaction,
@@ -1217,25 +1209,6 @@ export default function TransactionsPage({
   onEditComplete,
   onNavigate,
 }: TransactionsPageProps) {
-  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [justRefreshed, setJustRefreshed] = useState(false);
-
-  const handleManualRefresh = useCallback(async () => {
-    if (isRefreshing) return;
-    try {
-      setIsRefreshing(true);
-      if (onRefresh) {
-        await onRefresh();
-      }
-      setJustRefreshed(true);
-      setTimeout(() => setJustRefreshed(false), 2000);
-    } finally {
-      setIsRefreshing(false);
-      setLastUpdated(new Date());
-    }
-  }, [onRefresh, isRefreshing]);
-
   const { members: loyaltyMemberList } = useLoyaltyMembers();
 
   const getLoyaltyMemberForTxn = useCallback(
@@ -1408,6 +1381,55 @@ export default function TransactionsPage({
     void onDeleteTransaction(ticketId).catch((err) => {
       showToast(err instanceof Error ? err.message : `Failed to delete transaction #${ticketId}.`);
     });
+  };
+
+  // Admin Multiselect Delete State
+  const [selectedTicketIds, setSelectedTicketIds] = useState<Set<string>>(new Set());
+  const [batchDeleteOpen, setBatchDeleteOpen] = useState(false);
+  const [isBatchDeleting, setIsBatchDeleting] = useState(false);
+
+  const toggleSelectTicket = (ticketId: string) => {
+    setSelectedTicketIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(ticketId)) {
+        next.delete(ticketId);
+      } else {
+        next.add(ticketId);
+      }
+      return next;
+    });
+  };
+
+  const clearSelection = () => {
+    setSelectedTicketIds(new Set());
+  };
+
+  const handleBatchDelete = async () => {
+    if (!onDeleteTransaction || selectedTicketIds.size === 0) return;
+    setIsBatchDeleting(true);
+    const idsToDelete = Array.from(selectedTicketIds);
+    let deletedCount = 0;
+    let failCount = 0;
+
+    try {
+      for (const ticketId of idsToDelete) {
+        try {
+          await onDeleteTransaction(ticketId);
+          deletedCount++;
+        } catch {
+          failCount++;
+        }
+      }
+      setSelectedTicketIds(new Set());
+      setBatchDeleteOpen(false);
+      if (failCount === 0) {
+        showToast(`Successfully deleted ${deletedCount} transaction(s).`);
+      } else {
+        showToast(`Deleted ${deletedCount} transaction(s). ${failCount} failed.`);
+      }
+    } finally {
+      setIsBatchDeleting(false);
+    }
   };
 
   // Toast
@@ -1939,6 +1961,20 @@ export default function TransactionsPage({
   const totalFilteredRevenue = filtered.reduce((acc, t) => acc + (t.status === "Voided" ? 0 : t.fee), 0);
   const totalFilteredWeight = filtered.reduce((acc, t) => acc + (t.status === "Voided" ? 0 : (t.weight || 0)), 0);
 
+  const isAllFilteredSelected = filtered.length > 0 && filtered.every((t) => selectedTicketIds.has(t.ticketId));
+
+  const toggleSelectAllFiltered = () => {
+    setSelectedTicketIds((prev) => {
+      const next = new Set(prev);
+      if (isAllFilteredSelected) {
+        filtered.forEach((t) => next.delete(t.ticketId));
+      } else {
+        filtered.forEach((t) => next.add(t.ticketId));
+      }
+      return next;
+    });
+  };
+
   const activeOrdersCount = useMemo(
     () => txns.filter((t) => t.status === "Received" || t.status === "Washing" || t.status === "Ready").length,
     [txns]
@@ -2108,25 +2144,6 @@ export default function TransactionsPage({
             </p>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className={cn(
-                "w-9 h-9 rounded-full bg-secondary/10 border-border text-foreground hover:bg-secondary/20 shadow-xs cursor-pointer transition-all duration-300",
-                justRefreshed && "border-primary/60 ring-2 ring-primary/25 bg-primary/10 text-primary"
-              )}
-              onClick={() => void handleManualRefresh()}
-              disabled={loading || isRefreshing}
-              aria-label="Refresh transactions"
-              title={isRefreshing ? "Refreshing…" : justRefreshed ? "Updated!" : `Last updated: ${formatLastUpdated(lastUpdated)}`}
-            >
-              {justRefreshed ? (
-                <Check className="h-4 w-4 text-primary animate-in fade-in zoom-in-75 duration-200" />
-              ) : (
-                <RefreshCw className={cn("h-4 w-4", (loading || isRefreshing) && "animate-spin text-primary")} />
-              )}
-            </Button>
             <Button
               type="button"
               variant="outline"
@@ -2519,6 +2536,30 @@ export default function TransactionsPage({
           </div>
         </div>
 
+        {/* Admin Mobile Selection Toolbar */}
+        {role === "admin" && filtered.length > 0 && (
+          <div className="flex items-center justify-between px-2 py-1.5 text-xs bg-muted/30 rounded-lg border border-border/50">
+            <label className="flex items-center gap-2 cursor-pointer select-none font-semibold text-foreground">
+              <Checkbox
+                checked={isAllFilteredSelected}
+                onCheckedChange={toggleSelectAllFiltered}
+                aria-label="Select all transactions"
+                className="cursor-pointer"
+              />
+              <span>{isAllFilteredSelected ? "Deselect All" : `Select All (${filtered.length})`}</span>
+            </label>
+            {selectedTicketIds.size > 0 && (
+              <button
+                type="button"
+                onClick={clearSelection}
+                className="text-[11px] font-medium text-primary hover:underline cursor-pointer"
+              >
+                Clear ({selectedTicketIds.size})
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Mobile Interactive Orders Stream */}
         <div className="space-y-3 pt-1">
           {filtered.map((txn) => {
@@ -2560,7 +2601,8 @@ export default function TransactionsPage({
                     className={cn(
                       "relative overflow-hidden rounded-2xl bg-card border border-border/80 shadow-xs flex flex-col transition-all cursor-pointer",
                       isVoided && "opacity-60 bg-muted/20",
-                      isClaimed && "bg-muted/10"
+                      isClaimed && "bg-muted/10",
+                      selectedTicketIds.has(txn.ticketId) && "ring-2 ring-primary/50 bg-primary/5"
                     )}
                     aria-label={`Ticket #${txn.ticketId} — ${txn.customerName}`}
                   >
@@ -2568,6 +2610,19 @@ export default function TransactionsPage({
                     <div className="p-3.5 flex flex-col gap-2">
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          {role === "admin" && (
+                            <div
+                              className="shrink-0 flex items-center pr-0.5"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Checkbox
+                                checked={selectedTicketIds.has(txn.ticketId)}
+                                onCheckedChange={() => toggleSelectTicket(txn.ticketId)}
+                                aria-label={`Select ticket ${txn.ticketId}`}
+                                className="cursor-pointer"
+                              />
+                            </div>
+                          )}
                           {/* Avatar Circle with Initials */}
                           <div
                             className={cn(
@@ -2820,38 +2875,14 @@ export default function TransactionsPage({
             Monitor laundry orders, track stage progress, and manage customer payments
           </p>
         </div>
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <span className="text-xs text-muted-foreground whitespace-nowrap">
-            Last updated: {formatLastUpdated(lastUpdated)}
-          </span>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => void handleManualRefresh()}
-            disabled={loading || isRefreshing}
-            className={cn(
-              "h-9 gap-1.5 text-xs cursor-pointer transition-all duration-300",
-              justRefreshed && "border-primary/60 ring-2 ring-primary/25 bg-primary/10 text-primary font-semibold shadow-xs"
-            )}
-            aria-label="Refresh"
-          >
-            {justRefreshed ? (
-              <Check className="h-3.5 w-3.5 text-primary animate-in fade-in zoom-in-75 duration-200" />
-            ) : (
-              <RefreshCw className={cn("h-3.5 w-3.5", (loading || isRefreshing) && "animate-spin text-primary")} />
-            )}
-            <span>{isRefreshing ? "Refreshing…" : justRefreshed ? "Updated!" : "Refresh"}</span>
-          </Button>
-          <Button
-            size="default"
-            className="gap-2 shrink-0 shadow-xs cursor-pointer"
-            onClick={() => (onNavigate ? onNavigate("new-transaction") : setShowWizard(true))}
-            disabled={busy || loading}
-          >
-            <Plus className="w-4 h-4" /> New Transaction
-          </Button>
-        </div>
+        <Button
+          size="default"
+          className="gap-2 shrink-0 shadow-xs cursor-pointer self-start sm:self-auto"
+          onClick={() => (onNavigate ? onNavigate("new-transaction") : setShowWizard(true))}
+          disabled={busy || loading}
+        >
+          <Plus className="w-4 h-4" /> New Transaction
+        </Button>
       </div>
 
       {/* Tabs — All Transactions, Active Orders, Claimed, Voided */}
@@ -3158,6 +3189,20 @@ export default function TransactionsPage({
         {/* Summary subheader line */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 px-0.5 text-xs text-muted-foreground font-medium">
           <div className="flex items-center gap-2.5 flex-wrap">
+            {role === "admin" && filtered.length > 0 && (
+              <>
+                <label className="flex items-center gap-1.5 cursor-pointer select-none text-foreground font-semibold">
+                  <Checkbox
+                    checked={isAllFilteredSelected}
+                    onCheckedChange={toggleSelectAllFiltered}
+                    aria-label="Select all transactions"
+                    className="cursor-pointer"
+                  />
+                  <span>{isAllFilteredSelected ? "Deselect All" : "Select All"}</span>
+                </label>
+                <span className="text-border">•</span>
+              </>
+            )}
             <span className="inline-flex items-center gap-1">
               <span className="font-semibold text-foreground">{totalFilteredOrders}</span>
               <span>{totalFilteredOrders === 1 ? "order" : "orders"}</span>
@@ -3209,12 +3254,26 @@ export default function TransactionsPage({
                   "group relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 rounded-xl md:rounded-2xl border border-border/80 bg-card px-4 py-3 md:px-5 md:py-3.5 transition-all duration-150 hover:border-primary/40 hover:shadow-xs hover:bg-muted/15 dark:hover:bg-muted/20 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
                   isVoided && "opacity-60 bg-muted/20",
                   isClaimed && "bg-muted/10",
+                  selectedTicketIds.has(txn.ticketId) && "ring-2 ring-primary/50 bg-primary/5",
                   rowVisualClass(txn)
                 )}
                 aria-label={`View details for ticket ${txn.ticketId}`}
               >
                 {/* Left Section: Ticket ID Pill & Customer/Service info */}
                 <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                  {role === "admin" && (
+                    <div
+                      className="shrink-0 flex items-center pr-1"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Checkbox
+                        checked={selectedTicketIds.has(txn.ticketId)}
+                        onCheckedChange={() => toggleSelectTicket(txn.ticketId)}
+                        aria-label={`Select ticket ${txn.ticketId}`}
+                        className="cursor-pointer"
+                      />
+                    </div>
+                  )}
                   {/* Ticket ID Pill */}
                   <button
                     type="button"
@@ -4104,6 +4163,84 @@ export default function TransactionsPage({
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90 cursor-pointer"
             >
               Permanently Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ── ADMIN FLOATING BULK ACTIONS BAR ─────────────────────────────────── */}
+      {role === "admin" && selectedTicketIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-neutral-900 text-neutral-100 dark:bg-neutral-800 px-4 py-2.5 rounded-full shadow-2xl border border-neutral-700 animate-in fade-in slide-in-from-bottom-4">
+          <span className="text-xs font-semibold whitespace-nowrap pl-1">
+            {selectedTicketIds.size} selected
+          </span>
+          <div className="h-4 w-[1px] bg-neutral-700" />
+          <Button
+            size="sm"
+            variant="destructive"
+            className="h-8 gap-1.5 rounded-full px-3 text-xs font-bold cursor-pointer"
+            onClick={() => setBatchDeleteOpen(true)}
+            disabled={isBatchDeleting}
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Delete Selected
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 rounded-full px-2.5 text-xs text-neutral-300 hover:text-white hover:bg-neutral-800 dark:hover:bg-neutral-700 cursor-pointer"
+            onClick={clearSelection}
+            disabled={isBatchDeleting}
+          >
+            <X className="w-3.5 h-3.5 mr-1" /> Clear
+          </Button>
+        </div>
+      )}
+
+      {/* ── BATCH DELETE CONFIRMATION MODAL ───────────────────────────────────── */}
+      <AlertDialog open={batchDeleteOpen} onOpenChange={(open) => { if (!open && !isBatchDeleting) setBatchDeleteOpen(false); }}>
+        <AlertDialogContent className="w-[calc(100vw-2rem)] max-w-md rounded-2xl">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5 text-destructive" />
+              </div>
+              <div>
+                <AlertDialogTitle className="text-base font-bold text-foreground">
+                  Delete {selectedTicketIds.size} Transaction{selectedTicketIds.size === 1 ? "" : "s"}?
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-xs text-muted-foreground mt-0.5">
+                  This action is permanent and will remove selected transaction records.
+                </AlertDialogDescription>
+              </div>
+            </div>
+          </AlertDialogHeader>
+          <div className="bg-destructive/10 text-destructive text-xs p-3 rounded-lg border border-destructive/20 my-2">
+            You are about to permanently delete <strong>{selectedTicketIds.size}</strong> transaction record{selectedTicketIds.size === 1 ? "" : "s"}. This action cannot be undone.
+          </div>
+          <AlertDialogFooter className="flex-row gap-2 mt-2">
+            <AlertDialogCancel
+              onClick={() => setBatchDeleteOpen(false)}
+              className="flex-1 mt-0 rounded-xl cursor-pointer"
+              disabled={isBatchDeleting}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="flex-1 bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold rounded-xl cursor-pointer"
+              disabled={isBatchDeleting}
+              onClick={async (e) => {
+                e.preventDefault();
+                await handleBatchDelete();
+              }}
+            >
+              {isBatchDeleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Deleting...
+                </>
+              ) : (
+                `Delete ${selectedTicketIds.size} Record${selectedTicketIds.size === 1 ? "" : "s"}`
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -27,7 +27,7 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
   const receiptPreviewRef = useRef<HTMLDivElement>(null);
   const [profile, setProfile] = useState<BusinessProfile>(() => loadBusinessProfile());
   const [paperWidth, setPaperWidth] = useState<PaperWidth>("80mm");
-  const [copies, setCopies] = useState<1 | 2>(1);
+  const [copies, setCopies] = useState<1 | 2 | "combo">(1);
   const [showLogo, setShowLogo] = useState<boolean>(true);
   const [showQr, setShowQr] = useState<boolean>(true);
   const [isPrinting, setIsPrinting] = useState<boolean>(false);
@@ -221,6 +221,55 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
     `;
   };
 
+  // Generate HTML for standalone bag tag slip
+  const generateBagTagHtml = () => {
+    const is58 = paperWidth === "58mm";
+    const qrSize = is58 ? "95px" : "125px";
+    return `
+      <div class="receipt-slip bag-tag-slip">
+        <div class="center bold copy-tag">[ LAUNDRY BAG / CLAIM TAG ]</div>
+        ${profile.shopName ? `<div class="center bold shop-name" style="margin-top: 2px;">${profile.shopName}</div>` : ""}
+        ${profile.contactNumber ? `<div class="center shop-sub">Tel: ${profile.contactNumber}</div>` : ""}
+        <div class="divider-double"></div>
+
+        <div class="center" style="border: 2px solid #000; padding: 4px 2px; margin: 4px 0; background: #f9f9f9;">
+          <div class="bold ticket-id">#${transaction.ticketId}</div>
+          <div style="font-size: 9.5px;">${formatReadableDateTime(transaction.arrivalDateTime) || transaction.arrivalDateTime}</div>
+        </div>
+
+        <div class="row">
+          <span class="label">Customer:</span>
+          <span class="value bold">${transaction.customerName}</span>
+        </div>
+        ${transaction.phone ? `
+          <div class="row">
+            <span class="label">Contact:</span>
+            <span class="value">${maskPhoneNumber(transaction.phone)}</span>
+          </div>
+        ` : ""}
+        <div class="row">
+          <span class="label">Service:</span>
+          <span class="value bold">${transaction.washType}</span>
+        </div>
+        <div class="row">
+          <span class="label">${transaction.weight > 0 ? "Weight:" : "Load:"}</span>
+          <span class="value">${transaction.weight > 0 ? `${transaction.weight} kg` : `${transaction.loads && transaction.loads > 0 ? transaction.loads : 1} load${(transaction.loads && transaction.loads > 0 ? transaction.loads : 1) > 1 ? "s" : ""}`}</span>
+        </div>
+
+        <div class="divider-dashed"></div>
+
+        <div class="center qr-section">
+          <img src="${qrUrl}" alt="QR for #${transaction.ticketId}" class="qr-code-img" style="width: ${qrSize}; height: ${qrSize};" crossOrigin="anonymous" />
+          <div class="qr-caption bold">SCAN TO TRACK STATUS</div>
+          <div class="qr-caption">Attach this tag to laundry bag</div>
+        </div>
+
+        <div class="divider-dashed"></div>
+        <div class="center small-end-note">LaundryTrack Bag Tag</div>
+      </div>
+    `;
+  };
+
   // Generate full standalone printable HTML
   const generatePrintableHtml = () => {
     const is58 = paperWidth === "58mm";
@@ -233,7 +282,15 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
     const qrSize = is58 ? "85px" : "105px";
 
     const slipsHtml =
-      copies === 2
+      copies === "combo"
+        ? `
+        ${generateSlipHtml("CUSTOMER RECEIPT")}
+        <div class="tear-guide">
+          <span>✂ - - - - - TEAR HERE FOR BAG TAG - - - - - ✂</span>
+        </div>
+        ${generateBagTagHtml()}
+      `
+        : copies === 2
         ? `
         ${generateSlipHtml("CUSTOMER COPY")}
         <div class="tear-guide">
@@ -510,7 +567,7 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
                 <Receipt className="w-3.5 h-3.5 text-primary" /> Live Thermal Slip
               </span>
               <span className="font-mono text-[10px] bg-background px-1.5 py-0.5 rounded border">
-                {paperWidth} • {copies === 1 ? "1 Copy" : "2 Copies"}
+                {paperWidth} • {copies === "combo" ? "Combo Slip" : copies === 2 ? "2 Copies" : "1 Copy"}
               </span>
             </div>
 
@@ -696,6 +753,57 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
                 </div>
               )}
 
+              {copies === "combo" && (
+                <div className="mt-4 pt-3 border-t-2 border-dashed border-neutral-500 space-y-2">
+                  <div className="text-center font-mono text-[9px] text-neutral-600 bg-neutral-100 py-0.5 rounded border border-neutral-300">
+                    ✂ - - - - - TEAR HERE FOR BAG TAG - - - - - ✂
+                  </div>
+                  <div className="border border-neutral-300 p-2.5 rounded bg-neutral-50">
+                    <div className="text-center font-bold text-[10px] tracking-wider text-neutral-700 uppercase">
+                      [ LAUNDRY BAG / CLAIM TAG ]
+                    </div>
+                    {profile.shopName && (
+                      <div className="text-center font-bold text-xs mt-0.5">{profile.shopName}</div>
+                    )}
+                    <div className="border border-black text-center py-1 my-1.5 bg-white">
+                      <div className="font-bold text-sm">#{transaction.ticketId}</div>
+                      <div className="text-[9px] text-neutral-600">
+                        {formatReadableDateTime(transaction.arrivalDateTime) || transaction.arrivalDateTime}
+                      </div>
+                    </div>
+                    <div className="flex justify-between text-[10px] my-0.5">
+                      <span className="text-neutral-600">Customer:</span>
+                      <span className="font-bold">{transaction.customerName}</span>
+                    </div>
+                    <div className="flex justify-between text-[10px] my-0.5">
+                      <span className="text-neutral-600">Service:</span>
+                      <span className="font-semibold">{transaction.washType}</span>
+                    </div>
+                    <div className="flex justify-between text-[10px] my-0.5">
+                      <span className="text-neutral-600">{transaction.weight > 0 ? "Weight:" : "Load:"}</span>
+                      <span>
+                        {transaction.weight > 0
+                          ? `${transaction.weight} kg`
+                          : `${transaction.loads && transaction.loads > 0 ? transaction.loads : 1} load${(transaction.loads && transaction.loads > 0 ? transaction.loads : 1) > 1 ? "s" : ""}`}
+                      </span>
+                    </div>
+                    <div className="text-center my-1.5">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={qrUrl}
+                        alt={`QR Bag Tag for ${transaction.ticketId}`}
+                        width={is58 ? 75 : 90}
+                        height={is58 ? 75 : 90}
+                        className="mx-auto block"
+                        crossOrigin="anonymous"
+                      />
+                      <div className="text-[8.5px] font-bold mt-1 text-neutral-800">SCAN TO TRACK STATUS</div>
+                      <div className="text-[8px] text-neutral-600">Attach this tag to laundry bag</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="text-center text-[8px] text-neutral-500 mt-2 pb-1">
                 [ ~20mm Auto-Cutter Clearance Included ]
               </div>
@@ -744,29 +852,40 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
 
                 {/* Copies Selector */}
                 <div className="mt-3 space-y-1.5">
-                  <span className="text-xs font-semibold text-foreground">Number of Copies</span>
-                  <div className="grid grid-cols-2 gap-2">
+                  <span className="text-xs font-semibold text-foreground">Print Output Mode</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
                     <button
                       type="button"
                       onClick={() => setCopies(1)}
-                      className={`py-2 px-3 text-xs font-medium rounded-lg border text-center transition-all cursor-pointer ${
+                      className={`py-2 px-2 text-xs font-medium rounded-lg border text-center transition-all cursor-pointer ${
                         copies === 1
                           ? "border-primary bg-primary/10 text-primary font-semibold ring-1 ring-primary"
                           : "border-border hover:bg-muted/50 text-muted-foreground"
                       }`}
                     >
-                      1 Copy (Customer)
+                      1 Receipt
                     </button>
                     <button
                       type="button"
                       onClick={() => setCopies(2)}
-                      className={`py-2 px-3 text-xs font-medium rounded-lg border text-center transition-all cursor-pointer ${
+                      className={`py-2 px-2 text-xs font-medium rounded-lg border text-center transition-all cursor-pointer ${
                         copies === 2
                           ? "border-primary bg-primary/10 text-primary font-semibold ring-1 ring-primary"
                           : "border-border hover:bg-muted/50 text-muted-foreground"
                       }`}
                     >
-                      2 Copies (Store + Customer)
+                      2 Receipts
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCopies("combo")}
+                      className={`py-2 px-2 text-xs font-medium rounded-lg border text-center transition-all cursor-pointer ${
+                        copies === "combo"
+                          ? "border-primary bg-primary/10 text-primary font-semibold ring-1 ring-primary"
+                          : "border-border hover:bg-muted/50 text-muted-foreground"
+                      }`}
+                    >
+                      Receipt + Bag Tag
                     </button>
                   </div>
                 </div>
@@ -867,7 +986,10 @@ export function PrintReceiptModal({ open, onOpenChange, transaction, postCreate 
                   </>
                 ) : (
                   <>
-                    <Printer className="w-4 h-4" /> Print Thermal Receipt ({paperWidth})
+                    <Printer className="w-4 h-4" />{" "}
+                    {copies === "combo"
+                      ? `Print Receipt + Bag Tag Combo (${paperWidth})`
+                      : `Print Thermal Receipt (${paperWidth})`}
                   </>
                 )}
               </Button>

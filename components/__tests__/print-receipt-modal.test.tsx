@@ -4,8 +4,8 @@ import { PrintReceiptModal } from "@/components/print-receipt-modal";
 import { type Transaction } from "@/lib/data";
 import * as thermalPrinter from "@/lib/thermal-printer";
 
-vi.mock(import("@/lib/settings-store"), async (importOriginal) => {
-  const actual = await importOriginal();
+vi.mock("@/lib/settings-store", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/settings-store")>();
   return {
     ...actual,
     loadBusinessProfile: vi.fn(() => ({
@@ -16,9 +16,9 @@ vi.mock(import("@/lib/settings-store"), async (importOriginal) => {
       email: "admin@gmail.com",
       receiptFooter: "Thank you for choosing Blowing Bubbles Laundry Shop!",
       pickupInstructions: "Present this receipt or QR code upon claiming.",
-      receiptPaperWidth: "58mm",
+      receiptPaperWidth: "58mm" as const,
       receiptShowLogo: false,
-      logoDataUrl: null,
+      logoDataUrl: "",
     })),
   };
 });
@@ -35,9 +35,10 @@ const mockTransaction: Transaction = {
   paymentStatus: "paid",
   status: "Washing",
   arrivalDateTime: "2026-10-01 16:37",
+  dropOffDate: "2026-10-01",
+  addOns: [],
   eta: "2026-10-01 18:37",
   publicTrackingToken: "tk_test_tkt0008",
-  createdAt: "2026-10-01T16:37:00Z",
 };
 
 describe("PrintReceiptModal QR Code Integration", () => {
@@ -122,5 +123,40 @@ describe("PrintReceiptModal QR Code Integration", () => {
     const printedHtml = printSpy.mock.calls[0][0];
     expect(printedHtml).not.toContain("api.qrserver.com");
     expect(printedHtml).not.toContain("Scan with camera to track order status");
+  });
+
+  it("selects Combo (Receipt + Bag Tag) and prints customer receipt plus bag tag with tear guide", async () => {
+    const printSpy = vi.spyOn(thermalPrinter, "printThermalDocument").mockResolvedValue(true);
+
+    render(
+      <PrintReceiptModal
+        open={true}
+        onOpenChange={vi.fn()}
+        transaction={mockTransaction}
+      />
+    );
+
+    // Switch to Receipt + Bag Tag combo
+    const comboBtn = screen.getByRole("button", { name: /Receipt \+ Bag Tag/i });
+    fireEvent.click(comboBtn);
+
+    // Preview should display the tear guide
+    expect(screen.getByText(/TEAR HERE FOR BAG TAG/i)).toBeInTheDocument();
+    expect(screen.getByText(/LAUNDRY BAG \/ CLAIM TAG/i)).toBeInTheDocument();
+
+    // Primary button should reflect combo mode
+    const printComboBtn = screen.getByRole("button", { name: /Print Receipt \+ Bag Tag Combo/i });
+    expect(printComboBtn).toBeInTheDocument();
+    fireEvent.click(printComboBtn);
+
+    await waitFor(() => {
+      expect(printSpy).toHaveBeenCalledTimes(1);
+    });
+
+    const printedHtml = printSpy.mock.calls[0][0];
+    expect(printedHtml).toContain("CUSTOMER RECEIPT");
+    expect(printedHtml).toContain("TEAR HERE FOR BAG TAG");
+    expect(printedHtml).toContain("LAUNDRY BAG / CLAIM TAG");
+    expect(printedHtml).toContain("Attach this tag to laundry bag");
   });
 });

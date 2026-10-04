@@ -32,7 +32,7 @@ import {
 import { useLoyaltyMembers } from "@/hooks/use-loyalty-members";
 import { formatReadableDateTime, formatReadableDate, formatReadableTime, formatLifecycleDateTime } from "@/lib/date-format";
 import { getQrCodeImageUrl, printQrTicketOnly } from "@/lib/qr-ticket";
-import { loadBusinessProfile } from "@/lib/settings-store";
+import { loadBusinessProfile, loadPricingConfig } from "@/lib/settings-store";
 import { cn } from "@/lib/utils";
 
 interface TransactionDetailModalProps {
@@ -80,6 +80,20 @@ export function TransactionDetailModal({
   const businessProfile = useMemo(() => {
     return loadBusinessProfile();
   }, [open]);
+
+  const pricingConfig = useMemo(() => {
+    return loadPricingConfig();
+  }, [open]);
+
+  const isPerKg = Boolean(transaction && transaction.weight > 0);
+  const loadsCount = transaction?.loads && transaction.loads > 0 ? transaction.loads : 1;
+
+  const matchedTier = useMemo(() => {
+    if (!transaction || isPerKg || !pricingConfig?.loadTiers) return null;
+    return pricingConfig.loadTiers.find(
+      (tier) => tier.name.trim().toLowerCase() === transaction.washType.trim().toLowerCase()
+    );
+  }, [isPerKg, pricingConfig, transaction]);
 
   const isLoyaltyMember = useMemo(() => {
     if (!loyaltyEnabled || !transaction || !loyaltyMembers || loyaltyMembers.length === 0) return false;
@@ -380,22 +394,22 @@ export function TransactionDetailModal({
                   </div>
                 </div>
 
-                {/* Weight & Type */}
+                {/* Weight & Type / Load & Type */}
                 <div className="bg-muted/40 rounded-xl p-2.5 flex flex-col justify-between">
                   <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
-                    Weight &amp; Type
+                    {isPerKg ? "Weight & Type" : "Load & Type"}
                   </span>
                   <div className="mt-1">
                     <div className="flex items-baseline gap-1">
                       <span className="font-extrabold text-foreground text-sm sm:text-base">
-                        {transaction.weight > 0 ? transaction.weight : "Per load"}
+                        {isPerKg ? transaction.weight : loadsCount}
                       </span>
-                      {transaction.weight > 0 && (
-                        <span className="text-[10px] font-bold text-muted-foreground">kg</span>
-                      )}
+                      <span className="text-[10px] font-bold text-muted-foreground">
+                        {isPerKg ? "kg" : loadsCount === 1 ? "load" : "loads"}
+                      </span>
                     </div>
                     <span className="text-[11px] font-semibold text-primary block truncate">
-                      {transaction.washType}
+                      {transaction.washType}{matchedTier?.range ? ` • ${matchedTier.range}` : ""}
                     </span>
                   </div>
                 </div>

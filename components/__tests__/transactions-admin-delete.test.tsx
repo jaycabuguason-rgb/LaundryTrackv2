@@ -155,4 +155,60 @@ describe("TransactionsPage Admin Delete Record Feature", () => {
       expect(onDeleteMock).toHaveBeenCalledWith("TKT-0099");
     });
   });
+
+  it("does not render multiselect checkboxes or bulk action bar when role is staff", () => {
+    render(
+      <TransactionsPage
+        transactions={mockTransactions}
+        role="staff"
+        onCreateTransaction={vi.fn()}
+        onUpdateTransaction={vi.fn()}
+        onDeleteTransaction={vi.fn()}
+      />
+    );
+
+    // No select all checkboxes
+    expect(screen.queryByLabelText(/Select all transactions/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Select ticket TKT-0027/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Delete Selected/i)).not.toBeInTheDocument();
+  });
+
+  it("renders checkboxes for admin, supports Select All, and executes batch delete", async () => {
+    const onDeleteMock = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <TransactionsPage
+        transactions={mockTransactions}
+        role="admin"
+        onCreateTransaction={vi.fn()}
+        onUpdateTransaction={vi.fn()}
+        onDeleteTransaction={onDeleteMock}
+      />
+    );
+
+    // Should see checkboxes
+    const selectAllCheckboxes = screen.getAllByLabelText(/Select all transactions/i);
+    expect(selectAllCheckboxes.length).toBeGreaterThan(0);
+
+    // Click select all
+    fireEvent.click(selectAllCheckboxes[0]);
+
+    // Floating bulk action bar should appear
+    const deleteSelectedBtn = await screen.findByRole("button", { name: /Delete Selected/i });
+    expect(deleteSelectedBtn).toBeInTheDocument();
+
+    // Click Delete Selected
+    fireEvent.click(deleteSelectedBtn);
+
+    // Batch delete confirmation modal should appear
+    expect(await screen.findByText(/Delete 1 Transaction\?/i)).toBeInTheDocument();
+
+    // Confirm batch delete
+    const confirmBatchBtn = screen.getByRole("button", { name: /Delete 1 Record/i });
+    fireEvent.click(confirmBatchBtn);
+
+    await waitFor(() => {
+      expect(onDeleteMock).toHaveBeenCalledWith("TKT-0027");
+    });
+  });
 });

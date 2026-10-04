@@ -164,8 +164,16 @@ function mapRowToTransaction(row: TransactionRow): Transaction {
   const paidTimestamp = row.paid_at;
 
   const rawInstructions = row.special_instructions ?? undefined;
+  const loadsMatch = rawInstructions?.match(/\[LOADS:(\d+)\]/);
+  const loads = loadsMatch
+    ? parseInt(loadsMatch[1], 10)
+    : (!row.weight_kg || Number(row.weight_kg) === 0 ? 1 : undefined);
+
   const washInstructions = rawInstructions
-    ? rawInstructions.replace(/\[OFFLINE_REF:[^\]]+\]/g, "").trim() || undefined
+    ? rawInstructions
+        .replace(/\[OFFLINE_REF:[^\]]+\]/g, "")
+        .replace(/\[LOADS:\d+\]/g, "")
+        .trim() || undefined
     : undefined;
 
   return {
@@ -180,6 +188,7 @@ function mapRowToTransaction(row: TransactionRow): Transaction {
     paidAt: paidTimestamp ? formatCompactDateTime(paidTimestamp) : undefined,
     washType: row.wash_type,
     weight: Number(row.weight_kg ?? 0),
+    loads,
     fee: Number(row.fee ?? 0),
     status,
     paymentStatus: normalizePaymentStatus(row.payment_status),
@@ -364,6 +373,7 @@ async function createSupabaseTransaction(input: CreateTransactionInput): Promise
   const instructions = [
     input.washInstructions?.trim() || null,
     input.offlineTicketId ? `[OFFLINE_REF:${input.offlineTicketId.trim()}]` : null,
+    input.loads && input.loads > 0 ? `[LOADS:${input.loads}]` : null,
   ].filter(Boolean).join(" ") || null;
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -616,6 +626,7 @@ function createMockTransaction(input: CreateTransactionInput): TransactionRow {
   const instructions = [
     input.washInstructions?.trim() || null,
     input.offlineTicketId ? `[OFFLINE_REF:${input.offlineTicketId.trim()}]` : null,
+    input.loads && input.loads > 0 ? `[LOADS:${input.loads}]` : null,
   ].filter(Boolean).join(" ") || null;
 
   const row: TransactionRow = {

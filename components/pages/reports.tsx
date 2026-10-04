@@ -461,20 +461,19 @@ export default function ReportsPage({
   const washingPct = activeOrdersCount > 0 ? Math.round((washingCount / activeOrdersCount) * 100) : 0;
   const receivedPct = activeOrdersCount > 0 ? Math.max(0, 100 - readyPct - washingPct) : 0;
 
-  const summaryCards = useMemo(() => {
-    return [
-      { label: "Total Transactions", value: transactions.length.toLocaleString(), sub: "Realtime" },
-      { label: "Total Revenue", value: formatCurrency(totalRevenue), sub: "Realtime" },
-      { label: "Total Weight", value: `${totalWeight.toFixed(1)} kg`, sub: "Processed" },
-      { label: "Ready for Pickup", value: readyCount.toLocaleString(), sub: "Current queue" },
-    ];
-  }, [readyCount, totalRevenue, totalWeight, transactions.length]);
-
   const dailyTransactions = useMemo(
     () => transactions.filter((transaction) => transaction.dropOffDate === summaryDateKey),
     [summaryDateKey, transactions],
   );
 
+  const dailyTotalRevenue = useMemo(
+    () => dailyTransactions.reduce((sum, transaction) => sum + transaction.fee, 0),
+    [dailyTransactions],
+  );
+  const dailyTotalWeight = useMemo(
+    () => dailyTransactions.reduce((sum, transaction) => sum + (transaction.weight || 0), 0),
+    [dailyTransactions],
+  );
   const dailyReadyCount = useMemo(
     () => dailyTransactions.filter((t) => t.status === "Ready").length,
     [dailyTransactions],
@@ -487,6 +486,22 @@ export default function ReportsPage({
     () => dailyTransactions.filter((t) => t.status === "Received").length,
     [dailyTransactions],
   );
+
+  const dailyActiveOrdersCount = dailyReadyCount + dailyWashingCount + dailyReceivedCount;
+  const dailyReadyPct = dailyActiveOrdersCount > 0 ? Math.round((dailyReadyCount / dailyActiveOrdersCount) * 100) : 0;
+  const dailyWashingPct = dailyActiveOrdersCount > 0 ? Math.round((dailyWashingCount / dailyActiveOrdersCount) * 100) : 0;
+  const dailyReceivedPct = dailyActiveOrdersCount > 0 ? Math.max(0, 100 - dailyReadyPct - dailyWashingPct) : 0;
+
+  const formattedSummaryDate = useMemo(() => format(summaryDate, "MMM d, yyyy"), [summaryDate]);
+
+  const summaryCards = useMemo(() => {
+    return [
+      { label: "Total Transactions", value: dailyTransactions.length.toLocaleString(), sub: formattedSummaryDate },
+      { label: "Total Revenue", value: formatCurrency(dailyTotalRevenue), sub: formattedSummaryDate },
+      { label: "Total Weight", value: `${dailyTotalWeight.toFixed(1)} kg`, sub: "Processed" },
+      { label: "Ready for Pickup", value: dailyReadyCount.toLocaleString(), sub: "Orders ready" },
+    ];
+  }, [dailyReadyCount, dailyTotalRevenue, dailyTotalWeight, dailyTransactions.length, formattedSummaryDate]);
   const displayedDailyTransactions = useMemo(() => {
     if (mobileStatusFilter === "all") return dailyTransactions;
     if (mobileStatusFilter === "Washing") {
@@ -920,11 +935,11 @@ export default function ReportsPage({
               </div>
               <div className="mt-2.5">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-extrabold text-foreground tracking-tight">{transactions.length}</span>
+                  <span className="text-2xl font-extrabold text-foreground tracking-tight">{dailyTransactions.length}</span>
                 </div>
                 <div className="flex items-center gap-1 mt-0.5 text-[11px] text-muted-foreground">
                   <TrendingUp className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">Realtime</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold truncate">{formattedSummaryDate}</span>
                 </div>
               </div>
             </div>
@@ -938,10 +953,10 @@ export default function ReportsPage({
                 </div>
               </div>
               <div className="mt-2.5">
-                <span className="text-2xl font-extrabold text-primary tracking-tight">{formatCurrency(totalRevenue)}</span>
+                <span className="text-2xl font-extrabold text-primary tracking-tight">{formatCurrency(dailyTotalRevenue)}</span>
                 <div className="flex items-center gap-1 mt-0.5 text-[11px] text-muted-foreground">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                  <span>Realtime</span>
+                  <span className="truncate">{formattedSummaryDate}</span>
                 </div>
               </div>
             </div>
@@ -956,7 +971,7 @@ export default function ReportsPage({
               </div>
               <div className="mt-2.5">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-extrabold text-foreground tracking-tight">{totalWeight.toFixed(1)}</span>
+                  <span className="text-2xl font-extrabold text-foreground tracking-tight">{dailyTotalWeight.toFixed(1)}</span>
                   <span className="text-xs font-semibold text-foreground">kg</span>
                 </div>
                 <div className="flex items-center gap-1 mt-0.5 text-[11px] text-muted-foreground">
@@ -974,7 +989,7 @@ export default function ReportsPage({
                 </div>
               </div>
               <div className="mt-2.5">
-                <span className="text-2xl font-extrabold text-foreground tracking-tight">{readyCount}</span>
+                <span className="text-2xl font-extrabold text-foreground tracking-tight">{dailyReadyCount}</span>
                 <div className="flex items-center gap-1 mt-0.5 text-[11px] text-muted-foreground">
                   <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                   <span>Current queue</span>
@@ -986,28 +1001,28 @@ export default function ReportsPage({
           {/* Mobile Operational Flow Progress Visualizer */}
           <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm space-y-2 md:hidden">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-foreground">Daily Capacity & Wash Cycles</span>
+              <span className="text-xs font-bold text-foreground">Daily Capacity &amp; Wash Cycles</span>
               <span className="text-[11px] font-bold text-primary">
-                {activeOrdersCount > 0 ? `${Math.round((readyCount / activeOrdersCount) * 100)}% Ready` : "Idle"}
+                {dailyActiveOrdersCount > 0 ? `${Math.round((dailyReadyCount / dailyActiveOrdersCount) * 100)}% Ready` : "Idle"}
               </span>
             </div>
             <div className="w-full h-2.5 bg-muted/60 rounded-full overflow-hidden flex">
-              <div className="bg-emerald-500 transition-all duration-500" style={{ width: `${readyPct}%` }} title={`Ready: ${readyCount}`} />
-              <div className="bg-blue-500 transition-all duration-500" style={{ width: `${washingPct}%` }} title={`Washing: ${washingCount}`} />
-              <div className="bg-violet-500 transition-all duration-500" style={{ width: `${receivedPct}%` }} title={`Received: ${receivedCount}`} />
+              <div className="bg-emerald-500 transition-all duration-500" style={{ width: `${dailyReadyPct}%` }} title={`Ready: ${dailyReadyCount}`} />
+              <div className="bg-blue-500 transition-all duration-500" style={{ width: `${dailyWashingPct}%` }} title={`Washing: ${dailyWashingCount}`} />
+              <div className="bg-violet-500 transition-all duration-500" style={{ width: `${dailyReceivedPct}%` }} title={`Received: ${dailyReceivedCount}`} />
             </div>
             <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-0.5">
               <div className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                <span>Ready ({readyCount})</span>
+                <span>Ready ({dailyReadyCount})</span>
               </div>
               <div className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
-                <span>Wash ({washingCount})</span>
+                <span>Wash ({dailyWashingCount})</span>
               </div>
               <div className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-violet-500 shrink-0" />
-                <span>Received ({receivedCount})</span>
+                <span>Received ({dailyReceivedCount})</span>
               </div>
             </div>
           </div>
