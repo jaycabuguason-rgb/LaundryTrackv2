@@ -24,6 +24,7 @@ export async function GET(
         status: record.status,
         eta: record.eta ?? null,
         updatedAt: record.updatedAt ?? null,
+        claimedAt: record.claimedAt ?? null,
         paymentStatus: record.paymentStatus,
         balanceDue: record.balanceDue,
       },

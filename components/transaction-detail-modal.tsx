@@ -30,7 +30,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useLoyaltyMembers } from "@/hooks/use-loyalty-members";
-import { formatReadableDateTime, formatLifecycleDateTime } from "@/lib/date-format";
+import { formatReadableDateTime, formatReadableDate, formatReadableTime, formatLifecycleDateTime } from "@/lib/date-format";
 import { getQrCodeImageUrl, printQrTicketOnly } from "@/lib/qr-ticket";
 import { loadBusinessProfile } from "@/lib/settings-store";
 import { cn } from "@/lib/utils";
@@ -126,11 +126,9 @@ export function TransactionDetailModal({
     await handlePrintSlip();
   };
 
-  // Split drop-off datetime into readable date and time
-  const arrivalFormatted = formatReadableDateTime(transaction.arrivalDateTime) || transaction.arrivalDateTime || "";
-  const [dropoffDate, dropoffTime] = arrivalFormatted.includes(",")
-    ? arrivalFormatted.split(",").map((s) => s.trim())
-    : [arrivalFormatted, ""];
+  // Format drop-off date and time cleanly without fragile string splitting
+  const dropoffDate = formatReadableDate(transaction.arrivalDateTime) || "—";
+  const dropoffTime = formatReadableTime(transaction.arrivalDateTime) || "";
 
   const claimDateTimeFormatted = isClaimed
     ? formatLifecycleDateTime(transaction.claimedAt || transaction.updatedAt) || "Time not recorded"
@@ -262,23 +260,26 @@ export function TransactionDetailModal({
                   {STATUS_STEPS.map((step, idx) => {
                     const isDone = idx < stepIndex;
                     const isCurrent = idx === stepIndex;
+                    const updatedTime = formatReadableTime(transaction.updatedAt);
+                    const claimedTime = formatReadableTime(transaction.claimedAt);
+
                     const stepSubtext =
                       step === "Received"
                         ? dropoffTime || "Checked in"
                         : step === "Washing"
-                          ? isDone
-                            ? "Complete"
-                            : isCurrent
-                              ? "In drum"
+                          ? isCurrent
+                            ? updatedTime || "In drum"
+                            : isDone
+                              ? "Complete"
                               : "Queue"
                           : step === "Ready"
-                            ? isDone
-                              ? "Ready"
-                              : isCurrent
-                                ? "At counter"
+                            ? isCurrent
+                              ? updatedTime || "At counter"
+                              : isDone
+                                ? "Ready"
                                 : "Next"
                             : isDone || isCurrent
-                              ? "Claimed"
+                              ? claimedTime || "Claimed"
                               : "Pending";
 
                     return (

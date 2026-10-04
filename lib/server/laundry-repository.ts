@@ -139,8 +139,10 @@ function normalizePaymentStatus(value: string | null | undefined): Transaction["
 
 function normalizeLocalDateTime(value: string | null | undefined): string | null {
   if (!value) return null;
-  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(value)) {
-    return value.replace(" ", "T") + `:00${PH_OFFSET}`;
+  if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(:\d{2})?$/.test(value)) {
+    const [datePart, timePart] = value.split(/[ T]/);
+    const timeWithSec = timePart.length === 5 ? `${timePart}:00` : timePart;
+    return `${datePart}T${timeWithSec}${PH_OFFSET}`;
   }
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return `${value}T00:00:00${PH_OFFSET}`;
@@ -221,6 +223,7 @@ function mapRowToPublicRecord(row: TransactionRow, profile: BusinessProfile): Pu
     addOns: transaction.addOns,
     washInstructions: transaction.washInstructions ?? null,
     dropOffTime: transaction.arrivalDateTime,
+    claimedAt: transaction.claimedAt ?? null,
     shopProfile: mapProfileToPublic(profile),
   };
 }
@@ -429,7 +432,9 @@ async function updateSupabaseTransaction(ticketId: string, updates: UpdateTransa
     throw new Error("Cannot mark transaction as Claimed while payment is unpaid.");
   }
 
-  const payload: Record<string, unknown> = {};
+  const payload: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
 
   if (updates.status) {
     payload.status = updates.status;

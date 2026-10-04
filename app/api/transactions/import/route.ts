@@ -40,8 +40,18 @@ function normalizeStatus(value: string | undefined): string {
   return "Received";
 }
 
+const PH_OFFSET = "+08:00";
+
 function normalizeDateTime(value: string | undefined | null): string {
   if (!value) return new Date().toISOString();
+  if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(:\d{2})?$/.test(value)) {
+    const [datePart, timePart] = value.split(/[ T]/);
+    const timeWithSec = timePart.length === 5 ? `${timePart}:00` : timePart;
+    return `${datePart}T${timeWithSec}${PH_OFFSET}`;
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return `${value}T00:00:00${PH_OFFSET}`;
+  }
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
 }

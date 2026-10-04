@@ -73,6 +73,7 @@ export interface PublicTrackingRecord {
   addOns: string[];
   washInstructions: string | null;
   dropOffTime: string;
+  claimedAt?: string | null;
   shopProfile: PublicShopProfile;
 }
 

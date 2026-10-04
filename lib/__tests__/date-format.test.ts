@@ -67,4 +67,11 @@ describe("date-format (Asia/Manila)", () => {
     // 2026-04-05T16:00Z = 2026-04-06 00:00 Manila
     expect(formatCompactDate("2026-04-05T16:00:00.000Z")).toBe("2026-04-06");
   });
+
+  it("correctly extracts readable date and 12-hour time for order timestamps without comma-split bugs", () => {
+    const raw = "2026-10-04 17:35";
+    expect(formatReadableDate(raw)).toContain("Oct 4, 2026");
+    expect(formatReadableTime(raw)).toMatch(/5:35\s?PM/i);
+    expect(formatReadableDateTime(raw)).toMatch(/Oct 4, 2026, 5:35\s?PM/i);
+  });
 });

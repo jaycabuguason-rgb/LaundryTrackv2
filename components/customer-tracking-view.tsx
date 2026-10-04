@@ -47,6 +47,8 @@ export function CustomerTrackingView({
 }: CustomerTrackingViewProps) {
   const [status, setStatus] = useState<TransactionStatus>(initialRecord.status);
   const [eta, setEta] = useState<string | null>(initialRecord.eta);
+  const [updatedAt, setUpdatedAt] = useState<string | null>(initialRecord.updatedAt);
+  const [claimedAt, setClaimedAt] = useState<string | null>(initialRecord.claimedAt ?? null);
   const [lastSynced, setLastSynced] = useState<Date>(() => new Date());
   const [isPulsing, setIsPulsing] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -94,7 +96,7 @@ export function CustomerTrackingView({
           table: "transactions",
           filter: `ticket_id=eq.${initialRecord.ticketId}`,
         },
-        (payload: { new?: { status?: string; eta?: string | null } }) => {
+        (payload: { new?: { status?: string; eta?: string | null; updated_at?: string | null; claimed_at?: string | null } }) => {
           const newStatus = payload.new?.status;
           if (newStatus && typeof newStatus === "string" && newStatus !== statusRef.current) {
             setStatus(newStatus as TransactionStatus);
@@ -102,6 +104,12 @@ export function CustomerTrackingView({
           }
           if (payload.new?.eta !== undefined) {
             setEta(payload.new.eta);
+          }
+          if (payload.new?.updated_at !== undefined) {
+            setUpdatedAt(payload.new.updated_at);
+          }
+          if (payload.new?.claimed_at !== undefined) {
+            setClaimedAt(payload.new.claimed_at);
           }
         },
       )
@@ -133,6 +141,12 @@ export function CustomerTrackingView({
         }
         if (data?.eta !== undefined) {
           setEta(data.eta);
+        }
+        if (data?.updatedAt !== undefined) {
+          setUpdatedAt(data.updatedAt);
+        }
+        if (data?.claimedAt !== undefined) {
+          setClaimedAt(data.claimedAt);
         }
         setLastSynced(new Date());
       } catch {
@@ -407,14 +421,17 @@ export function CustomerTrackingView({
                       <h4 className={cn("text-xs leading-snug", isCurrent ? "font-bold text-purple-700" : isDone ? "font-bold text-slate-900" : "font-semibold text-slate-500")}>
                         {status === "Washing" || status === "Drying" ? "Washing" : "Washed"}
                       </h4>
-                      <p className="text-[11px] text-slate-500 mt-0.5">
-                        {isDone
-                          ? "Completed"
-                          : isCurrent
-                            ? "Active drum cycle"
-                            : "Queued for cycle"}
-                      </p>
+                      {(isCurrent || isDone) && updatedAt ? (
+                        <p className="text-[11px] text-slate-500 mt-0.5">
+                          {formatReadableDateTime(updatedAt)}
+                        </p>
+                      ) : (
+                        <p className="text-[11px] text-slate-500 mt-0.5">
+                          Queued for cycle
+                        </p>
+                      )}
                       <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
+                        {isCurrent ? "Active drum cycle • " : isDone ? "Cycle completed • " : ""}
                         {initialRecord.washType || "Regular"} wash cycle
                         {initialRecord.addOns && initialRecord.addOns.length > 0
                           ? ` & ${initialRecord.addOns.join(", ")}`
@@ -460,14 +477,21 @@ export function CustomerTrackingView({
                       <h4 className={cn("text-xs leading-snug", isCurrent ? "font-bold text-purple-700" : isDone ? "font-bold text-slate-900" : "font-semibold text-slate-500")}>
                         Ready for Pickup
                       </h4>
-                      <p className="text-[11px] text-slate-500 mt-0.5">
-                        {isCurrent
-                          ? "Package is ready at pickup counter"
-                          : eta
-                            ? `Est. ${formatReadableDateTime(eta)}`
-                            : "Awaiting cycle completion"}
-                      </p>
+                      {isCurrent && updatedAt ? (
+                        <p className="text-[11px] text-slate-500 mt-0.5">
+                          {formatReadableDateTime(updatedAt)}
+                        </p>
+                      ) : (
+                        <p className="text-[11px] text-slate-500 mt-0.5">
+                          {isDone
+                            ? "Completed & ready"
+                            : eta
+                              ? `Est. ${formatReadableDateTime(eta)}`
+                              : "Awaiting cycle completion"}
+                        </p>
+                      )}
                       <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
+                        {isCurrent ? "Package is ready at pickup counter • " : ""}
                         Folded, bagged &amp; tagged #{initialRecord.ticketId}
                       </p>
                     </div>
@@ -505,11 +529,17 @@ export function CustomerTrackingView({
                       <h4 className={cn("text-xs leading-snug", isDone ? "font-bold text-purple-700" : "font-semibold text-slate-500")}>
                         Claimed
                       </h4>
-                      <p className="text-[11px] text-slate-400 mt-0.5">
-                        {isDone ? "Released at counter" : "Expected upon arrival"}
-                      </p>
+                      {isDone && (claimedAt || updatedAt) ? (
+                        <p className="text-[11px] text-slate-500 mt-0.5">
+                          {formatReadableDateTime(claimedAt || updatedAt)}
+                        </p>
+                      ) : (
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                          Expected upon arrival
+                        </p>
+                      )}
                       <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
-                        Present QR pass at shop counter to release
+                        {isDone ? "Handed over to customer at counter" : "Present QR pass at shop counter to release"}
                       </p>
                     </div>
                     <span className={cn(
