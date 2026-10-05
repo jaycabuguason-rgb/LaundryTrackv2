@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import TransactionsPage from "@/components/pages/transactions";
 import type { Transaction } from "@/lib/data";
 import { persistPricingConfig, subscribeSettingsSync, LS_PRICING_CONFIG, DEFAULT_PRICING_CONFIG } from "@/lib/settings-store";
@@ -187,5 +187,23 @@ describe("TransactionsPage Enhanced Features", () => {
 
     expect(screen.getByRole("button", { name: /claim order/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /move to claimed/i })).not.toBeInTheDocument();
+  });
+
+  it("renders desktop refresh button with last updated ticker and calls onRefresh", () => {
+    const onRefresh = vi.fn().mockResolvedValue(undefined);
+    render(
+      <TransactionsPage
+        transactions={testTransactions}
+        onCreateTransaction={onCreateTransaction}
+        onUpdateTransaction={onUpdateTransaction}
+        onRefresh={onRefresh}
+      />
+    );
+
+    expect(screen.getByText(/Last updated:/i)).toBeInTheDocument();
+    const refreshBtn = screen.getByRole("button", { name: /^refresh$/i });
+    expect(refreshBtn).toBeInTheDocument();
+    fireEvent.click(refreshBtn);
+    expect(onRefresh).toHaveBeenCalledTimes(1);
   });
 });

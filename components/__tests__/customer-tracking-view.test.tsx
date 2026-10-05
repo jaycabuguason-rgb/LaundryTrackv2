@@ -150,4 +150,68 @@ describe("CustomerTrackingView", () => {
     expect(screen.getByText("Order completed")).toBeInTheDocument();
     expect(screen.queryByText("Live tracking active")).not.toBeInTheDocument();
   });
+
+  it("renders PAID AMOUNT when order is paid", () => {
+    const paidRecord: PublicTrackingRecord = {
+      ...mockInitialRecord,
+      paymentStatus: "paid",
+      totalAmount: 180,
+      balanceDue: 0,
+      enablePaymentOption: true,
+    };
+
+    render(
+      <CustomerTrackingView
+        initialRecord={paidRecord}
+        token="test-token-123"
+        pickupQrUrl="https://example.com/qr.png"
+      />
+    );
+
+    expect(screen.getByText("PAID AMOUNT")).toBeInTheDocument();
+    expect(screen.getByText("₱180")).toBeInTheDocument();
+    expect(screen.getByText(/Payment received in full/i)).toBeInTheDocument();
+  });
+
+  it("renders BALANCE DUE when payment option is enabled and order is unpaid", () => {
+    const unpaidRecord: PublicTrackingRecord = {
+      ...mockInitialRecord,
+      paymentStatus: "unpaid",
+      totalAmount: 220,
+      balanceDue: 220,
+      enablePaymentOption: true,
+    };
+
+    render(
+      <CustomerTrackingView
+        initialRecord={unpaidRecord}
+        token="test-token-123"
+        pickupQrUrl="https://example.com/qr.png"
+      />
+    );
+
+    expect(screen.getByText("BALANCE DUE")).toBeInTheDocument();
+    expect(screen.getByText("₱220")).toBeInTheDocument();
+    expect(screen.getByText(/Please settle any unpaid balance at the shop during pickup/i)).toBeInTheDocument();
+  });
+
+  it("renders Load Size instead of 0 kg for per-load orders", () => {
+    const perLoadRecord: PublicTrackingRecord = {
+      ...mockInitialRecord,
+      weight: 0,
+      loads: 2,
+    };
+
+    render(
+      <CustomerTrackingView
+        initialRecord={perLoadRecord}
+        token="test-token-123"
+        pickupQrUrl="https://example.com/qr.png"
+      />
+    );
+
+    expect(screen.getByText("Load Size")).toBeInTheDocument();
+    expect(screen.getByText("2 loads")).toBeInTheDocument();
+    expect(screen.queryByText("0 kg")).not.toBeInTheDocument();
+  });
 });

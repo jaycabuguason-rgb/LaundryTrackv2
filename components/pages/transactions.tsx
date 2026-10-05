@@ -1196,11 +1196,20 @@ const MOBILE_STATUS_OPTIONS: StatusOption[] = [
   { status: "Ready", label: "Ready" },
 ];
 
+function formatLastUpdated(date: Date): string {
+  const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (diffSec < 5) return "just now";
+  if (diffSec < 60) return `${diffSec} sec ago`;
+  const mins = Math.floor(diffSec / 60);
+  return `${mins} min ago`;
+}
+
 export default function TransactionsPage({
   transactions: txns,
   loading = false,
   error = null,
   loyaltyEnabled = true,
+  onRefresh,
   onCreateTransaction,
   onUpdateTransaction,
   onDeleteTransaction,
@@ -1210,6 +1219,34 @@ export default function TransactionsPage({
   onNavigate,
 }: TransactionsPageProps) {
   const { members: loyaltyMemberList } = useLoyaltyMembers();
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [justRefreshed, setJustRefreshed] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date>(() => new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setLastUpdated((prev) => new Date(prev));
+    }, 15000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const handleManualRefresh = async () => {
+    if (loading || isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      if (onRefresh) {
+        await onRefresh();
+      }
+      setLastUpdated(new Date());
+      setJustRefreshed(true);
+      setTimeout(() => setJustRefreshed(false), 900);
+    } catch {
+      // silently handle
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const getLoyaltyMemberForTxn = useCallback(
     (txn: Transaction | null | undefined): LoyaltyMember | null => {
@@ -1406,30 +1443,29 @@ export default function TransactionsPage({
 
   const handleBatchDelete = async () => {
     if (!onDeleteTransaction || selectedTicketIds.size === 0) return;
-    setIsBatchDeleting(true);
     const idsToDelete = Array.from(selectedTicketIds);
-    let deletedCount = 0;
-    let failCount = 0;
+    const count = idsToDelete.length;
 
-    try {
+    // Immediately dismiss modal & clear selection optimistically
+    setSelectedTicketIds(new Set());
+    setBatchDeleteOpen(false);
+    setIsBatchDeleting(false);
+    showToast(`Deleted ${count} transaction(s).`);
+
+    // Background deletions
+    void (async () => {
+      let failCount = 0;
       for (const ticketId of idsToDelete) {
         try {
           await onDeleteTransaction(ticketId);
-          deletedCount++;
         } catch {
           failCount++;
         }
       }
-      setSelectedTicketIds(new Set());
-      setBatchDeleteOpen(false);
-      if (failCount === 0) {
-        showToast(`Successfully deleted ${deletedCount} transaction(s).`);
-      } else {
-        showToast(`Deleted ${deletedCount} transaction(s). ${failCount} failed.`);
+      if (failCount > 0) {
+        showToast(`Failed to delete ${failCount} transaction(s).`);
       }
-    } finally {
-      setIsBatchDeleting(false);
-    }
+    })();
   };
 
   // Toast
@@ -1682,23 +1718,18 @@ export default function TransactionsPage({
   const handleMobileStatusSelect = async (status: Transaction["status"]) => {
     if (!mobileStatusTxn) return;
     const target = mobileStatusTxn;
-    setMobileStatusBusyTicket(target.ticketId);
-    try {
-      await handleDirectStatusSelect(target, status);
-      setMobileStatusTxn(null);
-    } finally {
-      setMobileStatusBusyTicket(null);
-    }
+    setMobileStatusTxn(null);
+    await handleDirectStatusSelect(target, status);
   };
 
   const handleQuickSettlePayment = async (txn: Transaction) => {
+    setMobileActionTxn(null);
+    showToast(`Payment settled for #${txn.ticketId} (₱${txn.fee.toLocaleString()})`);
     try {
       await onUpdateTransaction(txn.ticketId, {
         status: txn.status,
         paymentStatus: "paid",
       });
-      showToast(`Payment settled for #${txn.ticketId} (₱${txn.fee.toLocaleString()})`);
-      setMobileActionTxn(null);
     } catch {
       showToast("Unable to update payment status right now");
     }
@@ -2144,6 +2175,25 @@ export default function TransactionsPage({
             </p>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className={cn(
+                "w-9 h-9 rounded-full bg-secondary/10 border-border text-foreground hover:bg-secondary/20 shadow-xs cursor-pointer transition-all duration-300",
+                justRefreshed && "border-primary/60 ring-2 ring-primary/25 bg-primary/10 text-primary"
+              )}
+              onClick={() => void handleManualRefresh()}
+              disabled={loading || isRefreshing}
+              aria-label="Refresh transactions"
+              title={isRefreshing ? "Refreshing…" : justRefreshed ? "Updated!" : `Last updated: ${formatLastUpdated(lastUpdated)}`}
+            >
+              {justRefreshed ? (
+                <Check className="h-4 w-4 text-primary animate-in fade-in zoom-in-75 duration-200" />
+              ) : (
+                <RefreshCw className={cn("h-4 w-4", (loading || isRefreshing) && "animate-spin text-primary")} />
+              )}
+            </Button>
             <Button
               type="button"
               variant="outline"
@@ -2875,14 +2925,38 @@ export default function TransactionsPage({
             Monitor laundry orders, track stage progress, and manage customer payments
           </p>
         </div>
-        <Button
-          size="default"
-          className="gap-2 shrink-0 shadow-xs cursor-pointer self-start sm:self-auto"
-          onClick={() => (onNavigate ? onNavigate("new-transaction") : setShowWizard(true))}
-          disabled={busy || loading}
-        >
-          <Plus className="w-4 h-4" /> New Transaction
-        </Button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            Last updated: {formatLastUpdated(lastUpdated)}
+          </span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => void handleManualRefresh()}
+            disabled={loading || isRefreshing}
+            className={cn(
+              "h-9 gap-1.5 text-xs cursor-pointer transition-all duration-300",
+              justRefreshed && "border-primary/60 ring-2 ring-primary/25 bg-primary/10 text-primary font-semibold shadow-xs"
+            )}
+            aria-label="Refresh"
+          >
+            {justRefreshed ? (
+              <Check className="h-3.5 w-3.5 text-primary animate-in fade-in zoom-in-75 duration-200" />
+            ) : (
+              <RefreshCw className={cn("h-3.5 w-3.5", (loading || isRefreshing) && "animate-spin text-primary")} />
+            )}
+            <span>{isRefreshing ? "Refreshing…" : justRefreshed ? "Updated!" : "Refresh"}</span>
+          </Button>
+          <Button
+            size="default"
+            className="gap-2 shrink-0 shadow-xs cursor-pointer"
+            onClick={() => (onNavigate ? onNavigate("new-transaction") : setShowWizard(true))}
+            disabled={busy || loading}
+          >
+            <Plus className="w-4 h-4" /> New Transaction
+          </Button>
+        </div>
       </div>
 
       {/* Tabs — All Transactions, Active Orders, Claimed, Voided */}

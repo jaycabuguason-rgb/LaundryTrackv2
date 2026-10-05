@@ -27,6 +27,10 @@ export async function GET(
         claimedAt: record.claimedAt ?? null,
         paymentStatus: record.paymentStatus,
         balanceDue: record.balanceDue,
+        totalAmount: record.totalAmount,
+        paidAmount: record.paidAmount,
+        loads: record.loads,
+        enablePaymentOption: record.enablePaymentOption,
       },
       {
         headers: {

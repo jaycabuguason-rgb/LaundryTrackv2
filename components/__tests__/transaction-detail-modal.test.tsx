@@ -189,4 +189,44 @@ describe("TransactionDetailModal - Mobile View Ticket Concept", () => {
     expect(screen.getAllByText(/Customer requested cancellation/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Sep 18, 2026/i).length).toBeGreaterThan(0);
   });
+
+  it("displays updated date and time in header when updatedAt is present", () => {
+    const updatedTxn: Transaction = {
+      ...mockTransaction,
+      updatedAt: "2026-10-05 09:30:00",
+    };
+
+    render(
+      <TransactionDetailModal
+        open={true}
+        onOpenChange={vi.fn()}
+        transaction={updatedTxn}
+      />
+    );
+
+    expect(screen.getByText(/Updated Oct 5, 2026/i)).toBeInTheDocument();
+  });
+
+  it("omits kg range from per-load services in Order Breakdown", () => {
+    const perLoadTxn: Transaction = {
+      ...mockTransaction,
+      weight: 0,
+      loads: 2,
+      washType: "Comforter Wash",
+    };
+
+    render(
+      <TransactionDetailModal
+        open={true}
+        onOpenChange={vi.fn()}
+        transaction={perLoadTxn}
+      />
+    );
+
+    expect(screen.getByText("Load & Type")).toBeInTheDocument();
+    expect(screen.getAllByText("2").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("loads")).toBeInTheDocument();
+    expect(screen.getByText("Comforter Wash")).toBeInTheDocument();
+    expect(screen.queryByText(/kg/)).not.toBeInTheDocument();
+  });
 });

@@ -98,6 +98,23 @@ describe("TransactionsPage Mobile Concept Layout", () => {
       screen.getByRole("button", { name: /claim verification/i })
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /new order/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /refresh transactions/i })).toBeInTheDocument();
+  });
+
+  it("calls onRefresh when mobile refresh button is clicked", () => {
+    const onRefresh = vi.fn().mockResolvedValue(undefined);
+    render(
+      <TransactionsPage
+        transactions={mockTransactions}
+        onCreateTransaction={onCreateTransaction}
+        onUpdateTransaction={onUpdateTransaction}
+        onRefresh={onRefresh}
+      />
+    );
+
+    const refreshBtn = screen.getByRole("button", { name: /refresh transactions/i });
+    fireEvent.click(refreshBtn);
+    expect(onRefresh).toHaveBeenCalledTimes(1);
   });
 
   it("redirects to claim verification when QR button is clicked", () => {

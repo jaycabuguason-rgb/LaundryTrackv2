@@ -17,6 +17,7 @@ import type {
   PublicTrackingRecord,
   UpdateTransactionInput,
 } from "@/lib/transaction-contracts";
+import type { PricingConfig } from "@/lib/settings-store";
 
 type TransactionRow = {
   id: string;
@@ -214,8 +215,13 @@ function mapProfileToPublic(profile: BusinessProfile): PublicShopProfile {
   };
 }
 
-function mapRowToPublicRecord(row: TransactionRow, profile: BusinessProfile): PublicTrackingRecord {
+function mapRowToPublicRecord(
+  row: TransactionRow,
+  profile: BusinessProfile,
+  pricingConfig?: PricingConfig | null,
+): PublicTrackingRecord {
   const transaction = mapRowToTransaction(row);
+  const enablePaymentOption = pricingConfig?.enablePaymentOption ?? true;
 
   return {
     ticketId: transaction.ticketId,
@@ -227,13 +233,17 @@ function mapRowToPublicRecord(row: TransactionRow, profile: BusinessProfile): Pu
     paymentStatus: transaction.paymentStatus,
     paidAt: transaction.paidAt ?? null,
     balanceDue: transaction.paymentStatus === "paid" ? 0 : transaction.fee,
+    totalAmount: transaction.fee,
+    paidAmount: transaction.paymentStatus === "paid" ? transaction.fee : 0,
     weight: transaction.weight,
+    loads: transaction.loads,
     washType: transaction.washType,
     addOns: transaction.addOns,
     washInstructions: transaction.washInstructions ?? null,
     dropOffTime: transaction.arrivalDateTime,
     claimedAt: transaction.claimedAt ?? null,
     shopProfile: mapProfileToPublic(profile),
+    enablePaymentOption,
   };
 }
 
@@ -824,15 +834,16 @@ export async function getPublicTrackingRecord(token: string): Promise<PublicTrac
   const cleanToken = extractTrackingToken(token);
   if (!cleanToken && !cleanTicket) return null;
 
-  const [row, profile] = await Promise.all([
+  const [row, profile, pricingConfig] = await Promise.all([
     hasSupabaseConfig()
       ? (cleanToken ? getSupabaseTransactionByToken(cleanToken) : (cleanTicket ? getSupabaseTransactionByTicket(cleanTicket) : null))
       : Promise.resolve(cleanToken ? getMockTransactionByToken(cleanToken) : (cleanTicket ? getMockTransactionByTicket(cleanTicket) : null)),
     getBusinessProfile(),
+    getSettings<PricingConfig>("pricing_config").catch(() => null),
   ]);
 
   if (!row) return null;
-  return mapRowToPublicRecord(row, profile);
+  return mapRowToPublicRecord(row, profile, pricingConfig);
 }
 
 export async function getBusinessProfile(): Promise<BusinessProfile> {

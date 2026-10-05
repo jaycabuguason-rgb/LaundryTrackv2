@@ -107,6 +107,18 @@ export function formatReadableDate(value: string | null | undefined): string {
   }).format(date);
 }
 
+export function formatShortDate(value: string | Date | null | undefined): string {
+  if (!value) return "";
+  const date = typeof value === "string" ? toDate(value) : value;
+  if (!date || Number.isNaN(date.getTime())) return "";
+
+  return new Intl.DateTimeFormat("en-PH", {
+    timeZone: LAUNDRY_TIMEZONE,
+    month: "short",
+    day: "numeric",
+  }).format(date);
+}
+
 export function formatLifecycleDateTime(value: string | null | undefined): string {
   if (!value) return "";
   const formatted = formatReadableDateTime(value);

@@ -49,6 +49,11 @@ export function CustomerTrackingView({
   const [eta, setEta] = useState<string | null>(initialRecord.eta);
   const [updatedAt, setUpdatedAt] = useState<string | null>(initialRecord.updatedAt);
   const [claimedAt, setClaimedAt] = useState<string | null>(initialRecord.claimedAt ?? null);
+  const [paymentStatus, setPaymentStatus] = useState(initialRecord.paymentStatus);
+  const [balanceDue, setBalanceDue] = useState<number>(initialRecord.balanceDue);
+  const [totalAmount, setTotalAmount] = useState<number | undefined>(initialRecord.totalAmount);
+  const [loads, setLoads] = useState<number | undefined>(initialRecord.loads);
+  const [enablePaymentOption, setEnablePaymentOption] = useState<boolean>(initialRecord.enablePaymentOption ?? true);
   const [lastSynced, setLastSynced] = useState<Date>(() => new Date());
   const [isPulsing, setIsPulsing] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -59,7 +64,10 @@ export function CustomerTrackingView({
   }, [status]);
 
   const isActive = ACTIVE_TRACKING_STATUSES.includes(status);
-  const isPaid = initialRecord.paymentStatus === "paid";
+  const isPaid = paymentStatus === "paid";
+  const isFlexibleUnpaid = enablePaymentOption && !isPaid;
+  const displayFee = totalAmount ?? initialRecord.totalAmount ?? initialRecord.balanceDue ?? 0;
+  const currentBalance = balanceDue ?? initialRecord.balanceDue ?? 0;
   const activeStepIndex = getTrackingProgressIndex(status);
   const isClaimedOrCompleted = (status as string) === "Claimed" || (status as string) === "Completed";
 
@@ -96,7 +104,7 @@ export function CustomerTrackingView({
           table: "transactions",
           filter: `ticket_id=eq.${initialRecord.ticketId}`,
         },
-        (payload: { new?: { status?: string; eta?: string | null; updated_at?: string | null; claimed_at?: string | null } }) => {
+        (payload: { new?: { status?: string; eta?: string | null; updated_at?: string | null; claimed_at?: string | null; payment_status?: string | null } }) => {
           const newStatus = payload.new?.status;
           if (newStatus && typeof newStatus === "string" && newStatus !== statusRef.current) {
             setStatus(newStatus as TransactionStatus);
@@ -110,6 +118,9 @@ export function CustomerTrackingView({
           }
           if (payload.new?.claimed_at !== undefined) {
             setClaimedAt(payload.new.claimed_at);
+          }
+          if (payload.new?.payment_status) {
+            setPaymentStatus(payload.new.payment_status as any);
           }
         },
       )
@@ -147,6 +158,21 @@ export function CustomerTrackingView({
         }
         if (data?.claimedAt !== undefined) {
           setClaimedAt(data.claimedAt);
+        }
+        if (data?.paymentStatus !== undefined) {
+          setPaymentStatus(data.paymentStatus);
+        }
+        if (data?.balanceDue !== undefined) {
+          setBalanceDue(data.balanceDue);
+        }
+        if (data?.totalAmount !== undefined) {
+          setTotalAmount(data.totalAmount);
+        }
+        if (data?.loads !== undefined) {
+          setLoads(data.loads);
+        }
+        if (data?.enablePaymentOption !== undefined) {
+          setEnablePaymentOption(data.enablePaymentOption);
         }
         setLastSynced(new Date());
       } catch {
@@ -692,10 +718,21 @@ export function CustomerTrackingView({
               <dd className="text-slate-800 font-semibold">{initialRecord.customerPhone}</dd>
             </div>
           )}
-          <div className="flex justify-between py-2">
-            <dt className="text-slate-500 font-medium">Weight</dt>
-            <dd className="text-slate-800 font-semibold">{initialRecord.weight} kg</dd>
-          </div>
+          {initialRecord.weight > 0 ? (
+            <div className="flex justify-between py-2">
+              <dt className="text-slate-500 font-medium">Weight</dt>
+              <dd className="text-slate-800 font-semibold">{initialRecord.weight} kg</dd>
+            </div>
+          ) : (
+            <div className="flex justify-between py-2">
+              <dt className="text-slate-500 font-medium">Load Size</dt>
+              <dd className="text-slate-800 font-semibold">
+                {(loads ?? initialRecord.loads) && (loads ?? initialRecord.loads)! > 0
+                  ? `${loads ?? initialRecord.loads} ${(loads ?? initialRecord.loads) === 1 ? "load" : "loads"}`
+                  : "1 load"}
+              </dd>
+            </div>
+          )}
           <div className="flex justify-between py-2">
             <dt className="text-slate-500 font-medium">Wash Type</dt>
             <dd className="text-slate-800 font-semibold">{initialRecord.washType || "Regular"}</dd>
@@ -739,26 +776,39 @@ export function CustomerTrackingView({
                 Paid
               </span>
             ) : (
-              <span className="px-2 py-0.5 text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 rounded-md">
+              <span className="px-2 py-0.5 text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 rounded-md">
                 Unpaid
               </span>
             )}
           </div>
           <div className="flex items-baseline justify-between pt-1">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              BALANCE DUE
+              {isFlexibleUnpaid ? "BALANCE DUE" : "PAID AMOUNT"}
             </span>
-            <span className="text-xl font-extrabold text-purple-700">
-              ₱{isPaid ? 0 : initialRecord.balanceDue.toLocaleString()}
+            <span
+              className={cn(
+                "text-xl font-extrabold",
+                isFlexibleUnpaid ? "text-amber-700" : "text-emerald-700"
+              )}
+            >
+              ₱{isFlexibleUnpaid ? currentBalance.toLocaleString() : displayFee.toLocaleString()}
             </span>
           </div>
         </div>
 
-        <div className="mt-3 p-2.5 bg-purple-50/50 border border-purple-100 rounded-lg text-center">
-          <p className="text-[10px] text-purple-800 leading-normal">
-            Online payment is not available here. Please settle any unpaid balance at the shop during pickup.
-          </p>
-        </div>
+        {isFlexibleUnpaid ? (
+          <div className="mt-3 p-2.5 bg-amber-50/60 border border-amber-200/60 rounded-lg text-center">
+            <p className="text-[10px] text-amber-800 leading-normal">
+              Online payment is not available here. Please settle any unpaid balance at the shop during pickup.
+            </p>
+          </div>
+        ) : (
+          <div className="mt-3 p-2.5 bg-emerald-50/60 border border-emerald-200/60 rounded-lg text-center">
+            <p className="text-[10px] text-emerald-800 leading-normal font-medium">
+              Payment received in full. Your laundry is being taken care of.
+            </p>
+          </div>
+        )}
       </section>
 
       {/* ── CARD 5: PICKUP INSTRUCTIONS & CONTACT ─────────────────────────── */}

@@ -30,7 +30,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useLoyaltyMembers } from "@/hooks/use-loyalty-members";
-import { formatReadableDateTime, formatReadableDate, formatReadableTime, formatLifecycleDateTime } from "@/lib/date-format";
+import { formatReadableDateTime, formatReadableDate, formatShortDate, formatReadableTime, formatLifecycleDateTime } from "@/lib/date-format";
 import { getQrCodeImageUrl, printQrTicketOnly } from "@/lib/qr-ticket";
 import { loadBusinessProfile, loadPricingConfig } from "@/lib/settings-store";
 import { cn } from "@/lib/utils";
@@ -229,6 +229,11 @@ export function TransactionDetailModal({
                           ? "Cancelled & Voided"
                           : "Intake Checked • Ready for Wash"}
                 </span>
+                {transaction.updatedAt && (
+                  <span className="text-[10px] text-muted-foreground mt-0.5">
+                    Updated {formatReadableDateTime(transaction.updatedAt)}
+                  </span>
+                )}
               </div>
 
               <div className="flex flex-col items-end shrink-0 pl-2">
@@ -275,26 +280,44 @@ export function TransactionDetailModal({
                     const isDone = idx < stepIndex;
                     const isCurrent = idx === stepIndex;
                     const updatedTime = formatReadableTime(transaction.updatedAt);
+                    const updatedDate = formatShortDate(transaction.updatedAt);
                     const claimedTime = formatReadableTime(transaction.claimedAt);
+                    const claimedDate = formatShortDate(transaction.claimedAt);
+
+                    const stepDateTime =
+                      step === "Received"
+                        ? {
+                            date: formatShortDate(transaction.arrivalDateTime),
+                            time: dropoffTime,
+                          }
+                        : isCurrent && transaction.updatedAt
+                          ? {
+                              date: updatedDate,
+                              time: updatedTime,
+                            }
+                          : step === "Claimed" && (isDone || isCurrent) && (transaction.claimedAt || transaction.updatedAt)
+                            ? {
+                                date: claimedDate || updatedDate,
+                                time: claimedTime || updatedTime,
+                              }
+                            : null;
 
                     const stepSubtext =
                       step === "Received"
                         ? dropoffTime || "Checked in"
                         : step === "Washing"
-                          ? isCurrent
-                            ? updatedTime || "In drum"
-                            : isDone
-                              ? "Complete"
+                          ? isDone
+                            ? "Complete"
+                            : isCurrent
+                              ? "In drum"
                               : "Queue"
                           : step === "Ready"
-                            ? isCurrent
-                              ? updatedTime || "At counter"
-                              : isDone
-                                ? "Ready"
+                            ? isDone
+                              ? "Ready"
+                              : isCurrent
+                                ? "At counter"
                                 : "Next"
-                            : isDone || isCurrent
-                              ? claimedTime || "Claimed"
-                              : "Pending";
+                            : "Pending";
 
                     return (
                       <div key={step} className="flex flex-col items-center relative z-10">
@@ -322,9 +345,24 @@ export function TransactionDetailModal({
                         >
                           {step}
                         </span>
-                        <span className="text-[9px] sm:text-[10px] text-muted-foreground truncate max-w-[65px] text-center">
-                          {stepSubtext}
-                        </span>
+                        {stepDateTime && (stepDateTime.date || stepDateTime.time) ? (
+                          <div className="flex flex-col items-center mt-0.5 leading-tight">
+                            {stepDateTime.date && (
+                              <span className="text-[9px] sm:text-[10px] text-muted-foreground font-semibold whitespace-nowrap">
+                                {stepDateTime.date}
+                              </span>
+                            )}
+                            {stepDateTime.time && (
+                              <span className="text-[8px] sm:text-[9px] text-muted-foreground/80 font-medium whitespace-nowrap">
+                                {stepDateTime.time}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-[9px] sm:text-[10px] text-muted-foreground truncate max-w-[65px] text-center mt-0.5">
+                            {stepSubtext}
+                          </span>
+                        )}
                       </div>
                     );
                   })}
@@ -409,7 +447,7 @@ export function TransactionDetailModal({
                       </span>
                     </div>
                     <span className="text-[11px] font-semibold text-primary block truncate">
-                      {transaction.washType}{matchedTier?.range ? ` • ${matchedTier.range}` : ""}
+                      {transaction.washType}{isPerKg && matchedTier?.range ? ` • ${matchedTier.range}` : ""}
                     </span>
                   </div>
                 </div>

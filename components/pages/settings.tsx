@@ -230,6 +230,123 @@ function PricingSettings() {
   // Save state
   const [saved, setSaved] = useState(false);
 
+  const handleTogglePaymentOption = async (checked: boolean) => {
+    setEnablePaymentOption(checked);
+    const updatedPricingConfig = {
+      pricePerKg,
+      minWeight,
+      pricingMode,
+      loadTiers,
+      priceDisplayMode,
+      enablePaymentOption: checked,
+    };
+    persistPricingConfig(updatedPricingConfig);
+    toast({
+      title: checked ? "Flexible Settlement Mode" : "Direct Paid Mode",
+      description: checked
+        ? "Payment option enabled. Staff can select Paid or Unpaid for transactions."
+        : "Direct Paid mode enabled. New orders will automatically be recorded as Paid.",
+    });
+
+    try {
+      if (!isOnline()) {
+        await enqueueSettingsMutation({
+          endpoint: "/api/settings/pricing",
+          method: "PUT",
+          body: {
+            pricingConfig: updatedPricingConfig,
+            serviceTypes: services,
+            addOns,
+          },
+        });
+      } else {
+        const response = await fetch("/api/settings/pricing", {
+          method: "PUT",
+          headers: await buildAuthHeaders(),
+          body: JSON.stringify({
+            pricingConfig: updatedPricingConfig,
+            serviceTypes: services,
+            addOns,
+          }),
+        });
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data.error || "Failed to sync pricing settings to cloud.");
+        }
+      }
+    } catch (error) {
+      console.warn("Failed to sync payment option toggle to server, enqueuing:", error);
+      await enqueueSettingsMutation({
+        endpoint: "/api/settings/pricing",
+        method: "PUT",
+        body: {
+          pricingConfig: updatedPricingConfig,
+          serviceTypes: services,
+          addOns,
+        },
+      });
+    }
+  };
+
+  const handleSetPriceDisplayMode = async (mode: PriceDisplayMode) => {
+    setPriceDisplayMode(mode);
+    const updatedPricingConfig = {
+      pricePerKg,
+      minWeight,
+      pricingMode,
+      loadTiers,
+      priceDisplayMode: mode,
+      enablePaymentOption,
+    };
+    persistPricingConfig(updatedPricingConfig);
+
+    try {
+      if (!isOnline()) {
+        await enqueueSettingsMutation({
+          endpoint: "/api/settings/pricing",
+          method: "PUT",
+          body: {
+            pricingConfig: updatedPricingConfig,
+            serviceTypes: services,
+            addOns,
+          },
+        });
+      } else {
+        const response = await fetch("/api/settings/pricing", {
+          method: "PUT",
+          headers: await buildAuthHeaders(),
+          body: JSON.stringify({
+            pricingConfig: updatedPricingConfig,
+            serviceTypes: services,
+            addOns,
+          }),
+        });
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data.error || "Failed to sync price display mode to cloud.");
+        }
+      }
+    } catch (error) {
+      console.warn("Failed to sync price display mode to server, enqueuing:", error);
+      await enqueueSettingsMutation({
+        endpoint: "/api/settings/pricing",
+        method: "PUT",
+        body: {
+          pricingConfig: updatedPricingConfig,
+          serviceTypes: services,
+          addOns,
+        },
+      });
+    }
+  };
+
+  const handleToggleSvcEnabled = (checked: boolean) => {
+    setSvcEnabled(checked);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("laundrytrack_svc_enabled", String(checked));
+    }
+  };
+
   const addAddon = () => {
     if (!newName || !newRate) return;
     const next: AddOn[] = [...addOns, { id: Date.now().toString(), name: newName, rate: newRate }];
@@ -669,7 +786,7 @@ function PricingSettings() {
             </div>
             <Switch
               checked={svcEnabled}
-              onCheckedChange={setSvcEnabled}
+              onCheckedChange={handleToggleSvcEnabled}
               aria-label="Toggle all service types"
             />
           </div>
@@ -932,7 +1049,7 @@ function PricingSettings() {
             </div>
             <Switch
               checked={enablePaymentOption}
-              onCheckedChange={setEnablePaymentOption}
+              onCheckedChange={handleTogglePaymentOption}
               aria-label="Toggle payment options"
               className="mt-1"
             />
@@ -968,7 +1085,7 @@ function PricingSettings() {
                 <button
                   key={m.value}
                   type="button"
-                  onClick={() => setPriceDisplayMode(m.value)}
+                  onClick={() => void handleSetPriceDisplayMode(m.value)}
                   className={cn(
                     "p-2.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center",
                     active
@@ -1653,7 +1770,7 @@ function PricingSettings() {
                   return (
                     <button
                       key={value}
-                      onClick={() => setPriceDisplayMode(value)}
+                      onClick={() => void handleSetPriceDisplayMode(value)}
                       className={[
                         "flex flex-col items-start gap-2 rounded-xl border-2 p-4 text-left transition-all cursor-pointer",
                         active
@@ -1700,7 +1817,7 @@ function PricingSettings() {
             </div>
             <Switch
               checked={enablePaymentOption}
-              onCheckedChange={setEnablePaymentOption}
+              onCheckedChange={handleTogglePaymentOption}
               aria-label="Toggle payment options"
             />
           </div>

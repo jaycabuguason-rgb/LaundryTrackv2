@@ -387,30 +387,34 @@ export default function ClaimVerificationPage({
       return;
     }
     const finalPayment: PaymentStatus = "paid";
+    const pendingResult = result;
 
-    setSubmitting(true);
+    // 1. Optimistic immediate UI update
+    setPaymentToggle(finalPayment);
+    addLog(pendingResult.ticketId, "Claimed", "Via Claim Verification", finalPayment, pendingResult.customerName);
+    setSuccessMessage(
+      `Ticket #${pendingResult.ticketId} for ${pendingResult.customerName} has been successfully claimed and released.`,
+    );
+    setResult(null);
+    setQuery("");
+    setClaimedNotice(null);
+
+    setTimeout(() => {
+      setSuccessMessage((prev) =>
+        prev.includes(pendingResult.ticketId) ? "" : prev
+      );
+    }, 5000);
+
+    // 2. Background persistence with rollback on failure
     try {
-      const res = await onUpdateTransaction(result.ticketId, {
+      await onUpdateTransaction(pendingResult.ticketId, {
         status: "Claimed",
         paymentStatus: finalPayment,
       });
-      const updated = res.transaction;
-      setPaymentToggle(finalPayment);
-      addLog(updated.ticketId, "Claimed", "Via Claim Verification", finalPayment, updated.customerName);
-      setSuccessMessage(
-        `Ticket #${updated.ticketId} for ${updated.customerName} has been successfully claimed and released.`,
-      );
-      setResult(null);
-      setQuery("");
-      setClaimedNotice(null);
-
-      setTimeout(() => {
-        setSuccessMessage("");
-      }, 5000);
-    } catch {
+    } catch (err) {
+      console.error("Failed to claim transaction:", err);
+      setResult(pendingResult);
       setSuccessMessage("Unable to save the claim right now. Please try again.");
-    } finally {
-      setSubmitting(false);
     }
   };
 

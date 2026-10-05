@@ -68,13 +68,17 @@ export interface PublicTrackingRecord {
   paymentStatus: PaymentStatus;
   paidAt?: string | null;
   balanceDue: number;
+  totalAmount?: number;
+  paidAmount?: number;
   weight: number;
+  loads?: number;
   washType: string;
   addOns: string[];
   washInstructions: string | null;
   dropOffTime: string;
   claimedAt?: string | null;
   shopProfile: PublicShopProfile;
+  enablePaymentOption?: boolean;
 }
 
 export interface PublicLoyaltyMemberRecord {
