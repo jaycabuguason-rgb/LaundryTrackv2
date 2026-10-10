@@ -2455,6 +2455,45 @@ function LoyaltyProgramSettings({ loyaltyEnabled, onLoyaltyEnabledChange }: Loya
     };
   }, []);
 
+  const handleToggleLoyalty = async (checked: boolean) => {
+    setEnabled(checked);
+    const updated = { enabled: checked, washesPerReward, rewardDescription };
+    persistLoyaltySettings(updated);
+    onLoyaltyEnabledChange(checked);
+    toast({
+      title: checked ? "Loyalty Program Enabled" : "Loyalty Program Disabled",
+      description: checked
+        ? "Loyalty member recognition and stamps are now active."
+        : "Loyalty program is disabled across transactions.",
+    });
+
+    try {
+      if (!isOnline()) {
+        await enqueueSettingsMutation({
+          endpoint: "/api/settings/pricing",
+          method: "PUT",
+          body: {
+            loyaltySettings: updated,
+          },
+        });
+      } else {
+        const response = await fetch("/api/settings/pricing", {
+          method: "PUT",
+          headers: await buildAuthHeaders(),
+          body: JSON.stringify({
+            loyaltySettings: updated,
+          }),
+        });
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data.error || "Failed to sync loyalty settings.");
+        }
+      }
+    } catch (error) {
+      console.error("Failed to save loyalty settings toggle to database:", error);
+    }
+  };
+
   const handleSave = async () => {
     persistLoyaltySettings({ enabled, washesPerReward, rewardDescription });
     onLoyaltyEnabledChange(enabled);
@@ -2514,7 +2553,7 @@ function LoyaltyProgramSettings({ loyaltyEnabled, onLoyaltyEnabledChange }: Loya
             </div>
             <Switch
               checked={enabled}
-              onCheckedChange={setEnabled}
+              onCheckedChange={handleToggleLoyalty}
               aria-label="Enable loyalty program"
             />
           </div>

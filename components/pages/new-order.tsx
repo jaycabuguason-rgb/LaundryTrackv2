@@ -28,6 +28,9 @@ import {
   loadPricingConfig,
   loadServiceTypes,
   loadAddOns,
+  subscribeSettingsSync,
+  LS_PRICING_CONFIG,
+  type PricingConfig,
   type ServiceType,
   type LoadTier,
   type AddOn,
@@ -57,6 +60,7 @@ export default function NewOrderPage({
   const { members: loyaltyMembers } = useLoyaltyMembers();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [submitting, setSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
   const [createdTxn, setCreatedTxn] = useState<Transaction | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -136,6 +140,27 @@ export default function NewOrderPage({
     if (cfg.loadTiers && cfg.loadTiers.length > 0) setSelectedTierId(cfg.loadTiers[0].id);
   }, []);
 
+  // Instant cross-page settings sync (Payment Option, Pricing Mode, Load Tiers)
+  useEffect(() => {
+    return subscribeSettingsSync((detail) => {
+      if (detail.key === LS_PRICING_CONFIG && detail.value) {
+        const cfg = detail.value as PricingConfig;
+        const paymentOpt = cfg.enablePaymentOption ?? true;
+        setEnablePaymentOption(paymentOpt);
+        if (!paymentOpt) {
+          setPaymentStatus("paid");
+        }
+        if (cfg.pricingMode) {
+          setPricingMode(cfg.pricingMode);
+          if (cfg.pricingMode === "per-load") setBillBy("per-load");
+          else if (cfg.pricingMode === "per-kg") setBillBy("per-kg");
+        }
+        if (cfg.loadTiers) setLoadTiers(cfg.loadTiers);
+        if (cfg.pricePerKg) setBasePricePerKg(cfg.pricePerKg);
+      }
+    });
+  }, []);
+
   // Automatic Loyalty Member Detection
   const matchedMember = useMemo(() => {
     if (!loyaltyEnabled) return null;
@@ -209,6 +234,10 @@ export default function NewOrderPage({
   const step2Valid = billBy === "per-kg" ? numWeight > 0 : numLoads > 0 && !!selectedTierId;
 
   async function handleCreateOrder() {
+    if (isSubmittingRef.current || submitting) {
+      return;
+    }
+    isSubmittingRef.current = true;
     setFormError(null);
     setSubmitting(true);
     try {
@@ -239,6 +268,7 @@ export default function NewOrderPage({
 
       setCreatedTxn(newTxn);
     } catch (err) {
+      isSubmittingRef.current = false;
       const parsed = showAppErrorToast(err, {
         fallbackMessage: "Please check your details and try again.",
         onRetry: () => void handleCreateOrder(),
@@ -854,6 +884,7 @@ export default function NewOrderPage({
           if (!open) {
             const finishedTxn = createdTxn;
             setCreatedTxn(null);
+            isSubmittingRef.current = false;
             if (finishedTxn) {
               onOrderCreated?.(finishedTxn);
             }

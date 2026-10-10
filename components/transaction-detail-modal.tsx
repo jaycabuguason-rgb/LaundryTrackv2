@@ -33,6 +33,7 @@ import { useLoyaltyMembers } from "@/hooks/use-loyalty-members";
 import { formatReadableDateTime, formatReadableDate, formatShortDate, formatReadableTime, formatLifecycleDateTime } from "@/lib/date-format";
 import { getQrCodeImageUrl, printQrTicketOnly } from "@/lib/qr-ticket";
 import { loadBusinessProfile, loadPricingConfig } from "@/lib/settings-store";
+import { getReceiptCostBreakdown } from "@/lib/receipt-breakdown";
 import { cn } from "@/lib/utils";
 
 interface TransactionDetailModalProps {
@@ -94,6 +95,11 @@ export function TransactionDetailModal({
       (tier) => tier.name.trim().toLowerCase() === transaction.washType.trim().toLowerCase()
     );
   }, [isPerKg, pricingConfig, transaction]);
+
+  const costBreakdown = useMemo(() => {
+    if (!transaction) return null;
+    return getReceiptCostBreakdown(transaction);
+  }, [transaction, open]);
 
   const isLoyaltyMember = useMemo(() => {
     if (!loyaltyEnabled || !transaction || !loyaltyMembers || loyaltyMembers.length === 0) return false;
@@ -454,9 +460,16 @@ export function TransactionDetailModal({
 
                 {/* Add-ons */}
                 <div className="bg-muted/40 rounded-xl p-2.5 flex flex-col justify-between">
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
-                    Add-ons
-                  </span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
+                      Add-ons
+                    </span>
+                    {costBreakdown && costBreakdown.addOnsTotal > 0 && (
+                      <span className="text-[10px] sm:text-[11px] font-extrabold text-primary tabular-nums">
+                        +₱{costBreakdown.addOnsTotal.toLocaleString()}
+                      </span>
+                    )}
+                  </div>
                   <div className="mt-1">
                     <div className="font-bold text-foreground text-xs sm:text-sm truncate">
                       {transaction.addOns && transaction.addOns.length > 0
@@ -464,7 +477,9 @@ export function TransactionDetailModal({
                         : "None"}
                     </div>
                     <span className="text-[11px] text-muted-foreground block truncate">
-                      Standard Care
+                      {costBreakdown && costBreakdown.addOnsTotal > 0
+                        ? `Total add-ons: ₱${costBreakdown.addOnsTotal.toLocaleString()}`
+                        : "Standard Care"}
                     </span>
                   </div>
                 </div>

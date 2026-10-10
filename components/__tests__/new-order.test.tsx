@@ -83,4 +83,53 @@ describe("NewOrderPage Customer Suggestions", () => {
 
     expect(screen.queryByText(/Existing Loyalty Members/i)).not.toBeInTheDocument();
   });
+
+  it("prevents duplicate submissions when clicking Create Order rapidly", async () => {
+    let resolveOrder!: (txn: any) => void;
+    const onCreateTransaction = vi.fn().mockImplementation(() => {
+      return new Promise((resolve) => {
+        resolveOrder = resolve;
+      });
+    });
+
+    render(<NewOrderPage onCreateTransaction={onCreateTransaction} />);
+
+    // Step 1: fill customer name & advance
+    const nameInput = screen.getByPlaceholderText(/customer name/i);
+    fireEvent.change(nameInput, { target: { value: "Test Customer" } });
+    const nextBtn1 = screen.getByRole("button", { name: /next/i });
+    fireEvent.click(nextBtn1);
+
+    // Step 2: fill weight & advance
+    const weightInput = screen.getByLabelText(/weight/i);
+    fireEvent.change(weightInput, { target: { value: "2.5" } });
+    const nextBtn2 = screen.getByRole("button", { name: /next/i });
+    fireEvent.click(nextBtn2);
+
+    // Step 3: locate Create Order button
+    const createOrderBtn = screen.getByRole("button", { name: /create order/i });
+    expect(createOrderBtn).toBeInTheDocument();
+
+    // Rapid double click
+    fireEvent.click(createOrderBtn);
+    fireEvent.click(createOrderBtn);
+
+    // Expect onCreateTransaction called only once
+    expect(onCreateTransaction).toHaveBeenCalledTimes(1);
+
+    // Resolve the promise
+    resolveOrder({
+      id: "txn-1",
+      ticketId: "TKT-0099",
+      customerName: "Test Customer",
+      status: "Received",
+      paymentStatus: "unpaid",
+      fee: 75,
+      weight: 2.5,
+      washType: "Regular",
+      addOns: [],
+      arrivalDateTime: "2026-10-10 10:00",
+      dropOffDate: "2026-10-10",
+    });
+  });
 });

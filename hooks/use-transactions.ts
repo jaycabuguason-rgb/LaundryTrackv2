@@ -160,6 +160,7 @@ export function useTransactions() {
   // P0-E: stable refs to avoid realtime channel re-subscribe on refresh identity change (caching)
   const refreshRef = useRef<(() => Promise<void>) | null>(null);
   const processQueueRef = useRef<(() => Promise<void>) | null>(null);
+  const inFlightCreationsRef = useRef<Map<string, Promise<Transaction>>>(new Map());
 
   const persistTransactions = useCallback(async (next: Transaction[]) => {
     transactionsRef.current = next;
@@ -486,60 +487,77 @@ export function useTransactions() {
   }, []);
 
   const createTransaction = useCallback(async (input: CreateTransactionInput) => {
-    if (!isOnline()) {
-      const localId = `offline-${Date.now()}`;
-      const offlineTicketId = `OFF-${Date.now().toString().slice(-6)}`;
-      const optimistic: Transaction = {
-        id: localId,
-        ticketId: offlineTicketId,
-        customerName: input.customerName,
-        phone: input.phone,
-        arrivalDateTime: input.arrivalDateTime,
-        dropOffDate: input.dropOffDate ?? input.arrivalDateTime.split(" ")[0],
-        washType: input.washType,
-        weight: input.weight,
-        fee: input.fee,
-        status: input.status,
-        paymentStatus: input.paymentStatus,
-        paidAt: input.paymentStatus === "paid" ? (input.arrivalDateTime || formatCompactDateTime(new Date().toISOString())) : undefined,
-        addOns: input.addOns,
-        washInstructions: input.washInstructions,
-        eta: input.eta ?? null,
-      };
-      await enqueueOfflineMutation({
-        type: "create",
-        createInput: {
-          ...input,
-          offlineTicketId,
-        },
-        localId,
-        ticketId: offlineTicketId,
-      });
-      setPendingChangesCount((await readOfflineQueue()).length);
-      setSyncStatus("offline");
-      updateTransactions((current) => [optimistic, ...current]);
-      return optimistic;
+    const signature = `${input.customerName.trim()}_${input.phone?.trim() ?? ""}_${input.washType}_${input.fee}_${input.weight}_${input.arrivalDateTime}`;
+    const inFlight = inFlightCreationsRef.current.get(signature);
+    if (inFlight) {
+      return inFlight;
     }
 
-    const headers = await getAuthHeaders();
-    const response = await fetch("/api/transactions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...headers,
-      },
-      body: JSON.stringify(input),
-    });
+    const task = (async () => {
+      if (!isOnline()) {
+        const localId = `offline-${Date.now()}`;
+        const offlineTicketId = `OFF-${Date.now().toString().slice(-6)}`;
+        const optimistic: Transaction = {
+          id: localId,
+          ticketId: offlineTicketId,
+          customerName: input.customerName,
+          phone: input.phone,
+          arrivalDateTime: input.arrivalDateTime,
+          dropOffDate: input.dropOffDate ?? input.arrivalDateTime.split(" ")[0],
+          washType: input.washType,
+          weight: input.weight,
+          fee: input.fee,
+          status: input.status,
+          paymentStatus: input.paymentStatus,
+          paidAt: input.paymentStatus === "paid" ? (input.arrivalDateTime || formatCompactDateTime(new Date().toISOString())) : undefined,
+          addOns: input.addOns,
+          washInstructions: input.washInstructions,
+          eta: input.eta ?? null,
+        };
+        await enqueueOfflineMutation({
+          type: "create",
+          createInput: {
+            ...input,
+            offlineTicketId,
+          },
+          localId,
+          ticketId: offlineTicketId,
+        });
+        setPendingChangesCount((await readOfflineQueue()).length);
+        setSyncStatus("offline");
+        updateTransactions((current) => [optimistic, ...current]);
+        return optimistic;
+      }
 
-    const data = await readJson<TransactionResponse>(response);
-    const tx: Transaction = {
-      ...data.transaction,
-      ...(data.transaction.paymentStatus === "paid" && !data.transaction.paidAt
-        ? { paidAt: data.transaction.arrivalDateTime || formatCompactDateTime(new Date().toISOString()) }
-        : {}),
-    };
-    updateTransactions((current) => [tx, ...current]);
-    return tx;
+      const headers = await getAuthHeaders();
+      const response = await fetch("/api/transactions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...headers,
+        },
+        body: JSON.stringify(input),
+      });
+
+      const data = await readJson<TransactionResponse>(response);
+      const tx: Transaction = {
+        ...data.transaction,
+        ...(data.transaction.paymentStatus === "paid" && !data.transaction.paidAt
+          ? { paidAt: data.transaction.arrivalDateTime || formatCompactDateTime(new Date().toISOString()) }
+          : {}),
+      };
+      updateTransactions((current) => [tx, ...current]);
+      return tx;
+    })();
+
+    inFlightCreationsRef.current.set(signature, task);
+    try {
+      return await task;
+    } finally {
+      setTimeout(() => {
+        inFlightCreationsRef.current.delete(signature);
+      }, 800);
+    }
   }, [updateTransactions]);
 
   const updateTransaction = useCallback(async (ticketId: string, updates: UpdateTransactionInput) => {

@@ -153,15 +153,20 @@ describe("SettingsPage Mobile Concept Layout", () => {
     expect(paymentSwitches.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("renders save changes button and triggers save", async () => {
-    render(<SettingsPage page="settings-pricing" />);
+  it("renders loyalty program toggle and notifies immediately on change", async () => {
+    const onLoyaltyChange = vi.fn();
+    render(
+      <SettingsPage
+        page="settings-loyalty"
+        loyaltyEnabled={true}
+        onLoyaltyEnabledChange={onLoyaltyChange}
+      />
+    );
 
-    const saveBtns = screen.getAllByRole("button", { name: /Save Changes/i });
-    expect(saveBtns.length).toBeGreaterThanOrEqual(1);
+    const loyaltySwitch = screen.getByLabelText(/Enable loyalty program/i);
+    expect(loyaltySwitch).toBeInTheDocument();
 
-    fireEvent.click(saveBtns[0]);
-    await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalled();
-    });
+    fireEvent.click(loyaltySwitch);
+    expect(onLoyaltyChange).toHaveBeenCalledWith(false);
   });
 });

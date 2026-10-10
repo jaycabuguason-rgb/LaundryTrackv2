@@ -264,6 +264,8 @@ function NewTransactionWizard({
   );
 
   const [step, setStep] = useState(1);
+  const [submitting, setSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
   const [form, setForm] = useState<WizardForm>(() => {
     const paymentOpt = loadPricingConfig().enablePaymentOption ?? true;
     return {
@@ -310,6 +312,8 @@ function NewTransactionWizard({
       setPriceDisplayMode(pricingCfg.priceDisplayMode ?? "show");
 
       setStep(1);
+      setSubmitting(false);
+      isSubmittingRef.current = false;
       setForm({
         customerType: "walkin",
         customerName: "",
@@ -458,6 +462,9 @@ function NewTransactionWizard({
       : (weight > 0 && weight >= minWeightNum);
 
   const handleSubmit = () => {
+    if (isSubmittingRef.current || submitting) return;
+    isSubmittingRef.current = true;
+    setSubmitting(true);
     const fee = computeFee();
     // For per-load, the "wash type" shown in the summary is the tier name
     // For per-kg without service type, show "Per Kilogram"
@@ -1150,7 +1157,7 @@ function NewTransactionWizard({
             </Button>
           )}
           {step === 3 && (
-            <Button size="sm" onClick={handleSubmit} className="gap-1.5">
+            <Button size="sm" onClick={handleSubmit} disabled={submitting} className="gap-1.5">
               <Check className="w-3.5 h-3.5" /> Confirm &amp; Create
             </Button>
           )}

@@ -83,6 +83,8 @@ describe("TransactionDetailModal - Mobile View Ticket Concept", () => {
     expect(screen.getByText("+63 917 220 9021")).toBeInTheDocument();
     expect(screen.getByText("Regular Wash")).toBeInTheDocument();
     expect(screen.getByText("Fabcon")).toBeInTheDocument();
+    expect(screen.getByText("+₱10")).toBeInTheDocument();
+    expect(screen.getByText("Total add-ons: ₱10")).toBeInTheDocument();
     expect(screen.getByText("₱40")).toBeInTheDocument();
     expect(screen.getByText("Collect at Pickup")).toBeInTheDocument();
   });
