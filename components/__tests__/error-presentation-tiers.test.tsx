@@ -76,6 +76,43 @@ describe("Tier 1: Global Notice Banner (OfflineAccessNotice)", () => {
     fireEvent.click(retryBtn);
     expect(onRetrySync).toHaveBeenCalledTimes(1);
   });
+
+  it("renders role-tailored counter features and hides admin-only restrictions for staff", () => {
+    const onRetrySync = vi.fn();
+    const onDismiss = vi.fn();
+
+    render(
+      <OfflineAccessNotice
+        syncStatus="offline"
+        pendingChangesCount={0}
+        lastSyncError={null}
+        onRetrySync={onRetrySync}
+        onDismiss={onDismiss}
+        role="staff"
+      />
+    );
+
+    // Staff available counter features
+    expect(screen.getByText("New Order")).toBeInTheDocument();
+    expect(screen.getByText("Processing")).toBeInTheDocument();
+    expect(screen.getByText("Transactions")).toBeInTheDocument();
+    expect(screen.getByText("Claim")).toBeInTheDocument();
+    expect(screen.getByText("Dashboard")).toBeInTheDocument();
+    expect(screen.getByText("Profile")).toBeInTheDocument();
+
+    // Staff needs internet: Live Multi-Device Sync
+    expect(screen.getByText("Live Multi-Device Sync")).toBeInTheDocument();
+
+    // Admin-only restrictions are hidden from staff
+    expect(screen.queryByText("Reports")).not.toBeInTheDocument();
+    expect(screen.queryByText("Staff Management")).not.toBeInTheDocument();
+    expect(screen.queryByText("Audit Logs")).not.toBeInTheDocument();
+    expect(screen.queryByText("Data Import")).not.toBeInTheDocument();
+    expect(screen.queryByText("Settings")).not.toBeInTheDocument();
+
+    // Staff reassurance text
+    expect(screen.getByText(/All counter operations are safely cached locally/i)).toBeInTheDocument();
+  });
 });
 
 describe("Tier 2: Enhanced Action Toasts (showAppErrorToast)", () => {

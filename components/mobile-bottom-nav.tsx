@@ -1,16 +1,18 @@
 "use client";
 
-import { LayoutDashboard, ListTodo, Receipt, User, Plus } from "lucide-react";
+import { LayoutDashboard, ListTodo, Receipt, User, Plus, BarChart3, Users } from "lucide-react";
 import { type Page } from "@/components/sidebar";
+import { type UserRole } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 interface MobileBottomNavProps {
   activePage: Page;
   onNavigate: (page: Page) => void;
   onPreload?: (page: Page) => void;
+  role?: UserRole;
 }
 
-const ITEMS: Array<{ page: Page; label: string; icon: typeof LayoutDashboard }> = [
+const STAFF_ITEMS: Array<{ page: Page; label: string; icon: typeof LayoutDashboard }> = [
   { page: "dashboard", label: "Home", icon: LayoutDashboard },
   { page: "processing", label: "Process", icon: ListTodo },
   { page: "new-transaction", label: "New Order", icon: Plus },
@@ -18,11 +20,21 @@ const ITEMS: Array<{ page: Page; label: string; icon: typeof LayoutDashboard }> 
   { page: "profile", label: "Profile", icon: User },
 ];
 
-export default function MobileBottomNav({ activePage, onNavigate, onPreload }: MobileBottomNavProps) {
+const ADMIN_ITEMS: Array<{ page: Page; label: string; icon: typeof LayoutDashboard }> = [
+  { page: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { page: "processing", label: "Process", icon: ListTodo },
+  { page: "transactions", label: "Records", icon: Receipt },
+  { page: "reports", label: "Reports", icon: BarChart3 },
+  { page: "audit-logs", label: "Audit Logs", icon: Users },
+];
+
+export default function MobileBottomNav({ activePage, onNavigate, onPreload, role }: MobileBottomNavProps) {
+  const items = role === "admin" ? ADMIN_ITEMS : STAFF_ITEMS;
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card pb-[env(safe-area-inset-bottom)] lg:hidden">
       <div className="grid grid-cols-5">
-        {ITEMS.map(({ page, label, icon: Icon }) => {
+        {items.map(({ page, label, icon: Icon }) => {
           const active = activePage === page;
           return (
             <button

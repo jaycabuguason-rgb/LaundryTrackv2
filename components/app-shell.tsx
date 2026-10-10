@@ -468,13 +468,14 @@ export default function AppShell({ onSignOut, adminProfile, onProfileUpdate }: A
               lastSyncError={lastSyncError}
               onRetrySync={() => void retrySync()}
               onDismiss={() => setNoticeDismissed(true)}
+              role={adminProfile.role}
             />
           )}
           {renderPage()}
         </main>
       </div>
     </div>
-    <MobileBottomNav activePage={activePage} onNavigate={handleNavigate} onPreload={preloadPage} />
+    <MobileBottomNav activePage={activePage} onNavigate={handleNavigate} onPreload={preloadPage} role={adminProfile.role} />
 
     <TransactionDetailModal
       open={detailOpen}

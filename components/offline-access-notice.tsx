@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { AlertCircle, Database, RefreshCw, WifiOff, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { type UserRole } from "@/lib/auth";
 import { parseAppError } from "@/lib/error-catalog";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +13,7 @@ interface OfflineAccessNoticeProps {
   lastSyncError: string | null;
   onRetrySync: () => void;
   onDismiss: () => void;
+  role?: UserRole;
 }
 
 export default function OfflineAccessNotice({
@@ -20,6 +22,7 @@ export default function OfflineAccessNotice({
   lastSyncError,
   onRetrySync,
   onDismiss,
+  role = "admin",
 }: OfflineAccessNoticeProps) {
   const [retrying, setRetrying] = useState(false);
 
@@ -43,20 +46,35 @@ export default function OfflineAccessNotice({
     setTimeout(() => setRetrying(false), 2000);
   };
 
-  const availableFeatures = [
-    "Dashboard",
-    "Processing",
-    "Transactions",
-    "Claim",
-    "Profile",
-    "Settings",
-  ];
-  const unavailableFeatures = [
-    "Reports",
-    "Staff Management",
-    "Audit Logs",
-    "Data Import",
-  ];
+  const isStaff = role === "staff";
+
+  const availableFeatures = isStaff
+    ? [
+        "New Order",
+        "Processing",
+        "Transactions",
+        "Claim",
+        "Dashboard",
+        "Profile",
+      ]
+    : [
+        "Dashboard",
+        "New Order",
+        "Processing",
+        "Transactions",
+        "Claim",
+        "Settings",
+        "Profile",
+      ];
+
+  const unavailableFeatures = isStaff
+    ? ["Live Multi-Device Sync"]
+    : [
+        "Reports",
+        "Staff Management",
+        "Audit Logs",
+        "Data Import",
+      ];
 
   return (
     <div
@@ -117,7 +135,9 @@ export default function OfflineAccessNotice({
                     "The cloud server is taking longer than expected to respond. All local operations remain available, and sync will resume automatically."
                   : isSyncing
                     ? "Queued changes are syncing with the server in the background."
-                    : "No internet connection detected. Your changes are safely stored on this device and will automatically sync once your connection returns."}
+                    : isStaff
+                      ? "No internet connection detected. Counter orders and updates are saved safely on this device and will automatically sync once your connection returns."
+                      : "No internet connection detected. Your changes are safely stored on this device and will automatically sync once your connection returns."}
               </p>
             </div>
 
@@ -199,7 +219,9 @@ export default function OfflineAccessNotice({
                 </p>
               ) : (
                 <p className="text-xs opacity-80">
-                  Data is safely cached locally and ready to sync.
+                  {isStaff
+                    ? "All counter operations are safely cached locally and ready to sync."
+                    : "Data is safely cached locally and ready to sync."}
                 </p>
               )}
             </div>

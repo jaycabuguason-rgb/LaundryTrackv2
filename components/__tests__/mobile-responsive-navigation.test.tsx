@@ -43,4 +43,31 @@ describe("Mobile Responsive Navigation & Modern Sidebar Dock", () => {
     // After collapsing, the button shows expand title and PanelLeftOpen icon
     expect(screen.queryByText("Collapse sidebar")).not.toBeInTheDocument();
   });
+
+  it("renders admin mobile bottom navigation items with direct access to reports and audit logs", () => {
+    const handleNavigate = vi.fn();
+    render(
+      <MobileBottomNav
+        activePage="dashboard"
+        onNavigate={handleNavigate}
+        role="admin"
+      />
+    );
+
+    expect(screen.getByText("Dashboard")).toBeInTheDocument();
+    expect(screen.getByText("Process")).toBeInTheDocument();
+    expect(screen.getByText("Records")).toBeInTheDocument();
+    expect(screen.getByText("Reports")).toBeInTheDocument();
+    expect(screen.getByText("Audit Logs")).toBeInTheDocument();
+
+    const reportsBtn = screen.getByText("Reports").closest("button");
+    expect(reportsBtn).toBeInTheDocument();
+    fireEvent.click(reportsBtn!);
+    expect(handleNavigate).toHaveBeenCalledWith("reports");
+
+    const auditBtn = screen.getByText("Audit Logs").closest("button");
+    expect(auditBtn).toBeInTheDocument();
+    fireEvent.click(auditBtn!);
+    expect(handleNavigate).toHaveBeenCalledWith("audit-logs");
+  });
 });

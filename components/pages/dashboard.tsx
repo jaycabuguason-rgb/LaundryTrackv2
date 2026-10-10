@@ -18,6 +18,7 @@ import {
   RotateCw,
   QrCode,
   Layers,
+  BarChart3,
 } from "lucide-react";
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -115,13 +116,25 @@ export default function DashboardPage({
             </p>
           </div>
           {onNavigate && (
-            <Button
-              onClick={() => onNavigate("new-transaction")}
-              className="gap-2 shrink-0 shadow-xs cursor-pointer"
-            >
-              <Plus className="h-4 w-4" aria-hidden="true" />
-              New order
-            </Button>
+            <div className="flex items-center gap-2">
+              {role === "admin" && (
+                <Button
+                  variant="outline"
+                  onClick={() => onNavigate("reports")}
+                  className="gap-2 shrink-0 shadow-xs cursor-pointer"
+                >
+                  <BarChart3 className="h-4 w-4" aria-hidden="true" />
+                  Reports
+                </Button>
+              )}
+              <Button
+                onClick={() => onNavigate("new-transaction")}
+                className="gap-2 shrink-0 shadow-xs cursor-pointer"
+              >
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                New order
+              </Button>
+            </div>
           )}
         </div>
 
@@ -141,35 +154,55 @@ export default function DashboardPage({
           </div>
         </div>
 
-        {/* Mobile Quick Action Buttons: Scan QR + Intake Order */}
+        {/* Mobile Quick Action Buttons: Scan QR + Intake Order + Admin Reports Redirect */}
         {onNavigate && (
-          <div className="grid grid-cols-2 gap-2.5 sm:hidden mt-0.5">
-            <button
-              type="button"
-              onClick={() => onNavigate("claim-verification")}
-              className="flex items-center gap-2.5 p-3 rounded-2xl bg-card border border-border/70 shadow-xs active:scale-[0.98] transition-transform text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            >
-              <div className="w-9 h-9 rounded-xl bg-secondary text-secondary-foreground flex items-center justify-center shrink-0">
-                <QrCode className="w-5 h-5" aria-hidden="true" />
-              </div>
-              <div className="min-w-0">
-                <span className="block text-xs font-bold text-foreground truncate">Scan QR</span>
-                <span className="block text-[10px] text-muted-foreground truncate">Instant pickup</span>
-              </div>
-            </button>
-            <button
-              type="button"
-              onClick={() => onNavigate("new-transaction")}
-              className="flex items-center gap-2.5 p-3 rounded-2xl bg-primary text-primary-foreground shadow-xs active:scale-[0.98] transition-transform text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            >
-              <div className="w-9 h-9 rounded-xl bg-white/20 text-white flex items-center justify-center shrink-0">
-                <Plus className="w-5 h-5" aria-hidden="true" />
-              </div>
-              <div className="min-w-0">
-                <span className="block text-xs font-bold text-primary-foreground truncate">Intake Order</span>
-                <span className="block text-[10px] text-primary-foreground/80 truncate">Fast counter</span>
-              </div>
-            </button>
+          <div className="flex flex-col gap-2 sm:hidden mt-0.5">
+            <div className="grid grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                onClick={() => onNavigate("claim-verification")}
+                className="flex items-center gap-2.5 p-3 rounded-2xl bg-card border border-border/70 shadow-xs active:scale-[0.98] transition-transform text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <div className="w-9 h-9 rounded-xl bg-secondary text-secondary-foreground flex items-center justify-center shrink-0">
+                  <QrCode className="w-5 h-5" aria-hidden="true" />
+                </div>
+                <div className="min-w-0">
+                  <span className="block text-xs font-bold text-foreground truncate">Scan QR</span>
+                  <span className="block text-[10px] text-muted-foreground truncate">Instant pickup</span>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => onNavigate("new-transaction")}
+                className="flex items-center gap-2.5 p-3 rounded-2xl bg-primary text-primary-foreground shadow-xs active:scale-[0.98] transition-transform text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <div className="w-9 h-9 rounded-xl bg-white/20 text-white flex items-center justify-center shrink-0">
+                  <Plus className="w-5 h-5" aria-hidden="true" />
+                </div>
+                <div className="min-w-0">
+                  <span className="block text-xs font-bold text-primary-foreground truncate">Intake Order</span>
+                  <span className="block text-[10px] text-primary-foreground/80 truncate">Fast counter</span>
+                </div>
+              </button>
+            </div>
+            {role === "admin" && (
+              <button
+                type="button"
+                onClick={() => onNavigate("reports")}
+                className="flex items-center justify-between p-2.5 px-3 rounded-2xl bg-card border border-border/70 shadow-xs active:scale-[0.98] transition-transform text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                    <BarChart3 className="w-4 h-4" aria-hidden="true" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="block text-xs font-bold text-foreground truncate">View Reports &amp; Analytics</span>
+                    <span className="block text-[10px] text-muted-foreground truncate">Track revenue, KPIs &amp; charts</span>
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -252,7 +285,17 @@ export default function DashboardPage({
           </Card>
 
           {/* 4. Revenue */}
-          <Card className="snap-start shrink-0 w-[164px] sm:w-auto border border-border/70 rounded-2xl shadow-xs bg-card">
+          <Card
+            className={cn(
+              "snap-start shrink-0 w-[164px] sm:w-auto border border-border/70 rounded-2xl shadow-xs bg-card",
+              onNavigate && role === "admin" && "cursor-pointer hover:border-primary/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            )}
+            role={onNavigate && role === "admin" ? "button" : undefined}
+            tabIndex={onNavigate && role === "admin" ? 0 : undefined}
+            onClick={onNavigate && role === "admin" ? () => onNavigate("reports") : undefined}
+            onKeyDown={onNavigate && role === "admin" ? (e) => handleCardKeyDown(e, "reports") : undefined}
+            aria-label={onNavigate && role === "admin" ? "View revenue and financial reports" : undefined}
+          >
             <CardContent className="p-3.5 sm:p-5">
               <div className="flex items-start justify-between gap-1.5 sm:gap-2">
                 <div className="space-y-0.5 min-w-0">
@@ -262,7 +305,14 @@ export default function DashboardPage({
                   <p className="text-xl sm:text-2xl font-bold tracking-tight text-foreground font-mono tabular-nums whitespace-nowrap">
                     ₱{paidRevenue.toLocaleString()}
                   </p>
-                  <p className="text-[11px] sm:text-xs text-muted-foreground truncate">paid transactions</p>
+                  <p className="text-[11px] sm:text-xs text-muted-foreground truncate flex items-center gap-1">
+                    <span>paid transactions</span>
+                    {onNavigate && role === "admin" && (
+                      <span className="text-primary font-medium inline-flex items-center">
+                        • Reports <ArrowRight className="w-2.5 h-2.5 ml-0.5" />
+                      </span>
+                    )}
+                  </p>
                 </div>
                 <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0">
                   <Banknote className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />

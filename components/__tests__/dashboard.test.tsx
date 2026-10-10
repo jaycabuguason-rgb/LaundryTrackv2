@@ -147,5 +147,22 @@ describe("Dashboard Accessibility & Responsiveness", () => {
       expect(onNavigate).toHaveBeenCalledWith("processing");
     }
   });
+
+  it("allows admin to redirect to reports via Revenue metric card and mobile View Reports button", () => {
+    const onNavigate = vi.fn();
+    render(<DashboardPage transactions={mockTransactions} onNavigate={onNavigate} role="admin" />);
+
+    // 1. Clickable Revenue card
+    const revenueCard = screen.getByLabelText(/view revenue and financial reports/i);
+    expect(revenueCard).toBeInTheDocument();
+    fireEvent.click(revenueCard);
+    expect(onNavigate).toHaveBeenCalledWith("reports");
+
+    // 2. Mobile View Reports button
+    const viewReportsBtn = screen.getByRole("button", { name: /view reports & analytics/i });
+    expect(viewReportsBtn).toBeInTheDocument();
+    fireEvent.click(viewReportsBtn);
+    expect(onNavigate).toHaveBeenCalledWith("reports");
+  });
 });
 
