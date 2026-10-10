@@ -1916,7 +1916,15 @@ export default function TransactionsPage({
 
   // ── Derived ──────────────────────────────────────────────────────────────
   const filtered = (() => {
-    const base = txns.filter((t) => {
+    const seenTickets = new Set<string>();
+    const uniqueTxns = txns.filter((t) => {
+      const key = (t.ticketId || t.id || "").trim();
+      if (!key || seenTickets.has(key)) return false;
+      seenTickets.add(key);
+      return true;
+    });
+
+    const base = uniqueTxns.filter((t) => {
       const matchTab =
         activeTab === "all"
           ? true

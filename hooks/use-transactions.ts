@@ -44,6 +44,24 @@ function normalizePaymentStatus(value: unknown): Transaction["paymentStatus"] {
   return value === "paid" ? "paid" : "unpaid";
 }
 
+export function deduplicateTransactions(list: Transaction[]): Transaction[] {
+  const seenTicketIds = new Set<string>();
+  const seenIds = new Set<string>();
+  return list.filter((t) => {
+    const ticketKey = (t.ticketId || "").trim();
+    const idKey = (t.id || "").trim();
+    if (ticketKey && seenTicketIds.has(ticketKey)) {
+      return false;
+    }
+    if (idKey && seenIds.has(idKey)) {
+      return false;
+    }
+    if (ticketKey) seenTicketIds.add(ticketKey);
+    if (idKey) seenIds.add(idKey);
+    return true;
+  });
+}
+
 export function mapRealtimeRow(row: unknown): Transaction | null {
   if (!row || typeof row !== "object") {
     return null;
@@ -163,17 +181,19 @@ export function useTransactions() {
   const inFlightCreationsRef = useRef<Map<string, Promise<Transaction>>>(new Map());
 
   const persistTransactions = useCallback(async (next: Transaction[]) => {
-    transactionsRef.current = next;
-    setTransactions(next);
-    await writeCachedTransactions(next);
+    const deduplicated = deduplicateTransactions(next);
+    transactionsRef.current = deduplicated;
+    setTransactions(deduplicated);
+    await writeCachedTransactions(deduplicated);
   }, []);
 
   const updateTransactions = useCallback((updater: (current: Transaction[]) => Transaction[]) => {
     setTransactions((current) => {
       const next = updater(current);
-      transactionsRef.current = next;
-      void writeCachedTransactions(next);
-      return next;
+      const deduplicated = deduplicateTransactions(next);
+      transactionsRef.current = deduplicated;
+      void writeCachedTransactions(deduplicated);
+      return deduplicated;
     });
   }, []);
 
@@ -525,7 +545,10 @@ export function useTransactions() {
         });
         setPendingChangesCount((await readOfflineQueue()).length);
         setSyncStatus("offline");
-        updateTransactions((current) => [optimistic, ...current]);
+        updateTransactions((current) => {
+          const withoutNew = current.filter((t) => t.id !== optimistic.id && t.ticketId !== optimistic.ticketId);
+          return [optimistic, ...withoutNew];
+        });
         return optimistic;
       }
 
@@ -546,7 +569,10 @@ export function useTransactions() {
           ? { paidAt: data.transaction.arrivalDateTime || formatCompactDateTime(new Date().toISOString()) }
           : {}),
       };
-      updateTransactions((current) => [tx, ...current]);
+      updateTransactions((current) => {
+        const withoutNew = current.filter((t) => t.id !== tx.id && t.ticketId !== tx.ticketId);
+        return [tx, ...withoutNew];
+      });
       return tx;
     })();
 

@@ -414,5 +414,97 @@ describe("useTransactions Realtime Reconciliation", () => {
 
     expect(result.current.transactions[0].status).toBe("Claimed");
   });
+
+  it("does not duplicate transaction when Realtime INSERT arrives before HTTP POST response", async () => {
+    let resolvePost!: (res: any) => void;
+    const postPromise = new Promise((resolve) => {
+      resolvePost = resolve;
+    });
+
+    global.fetch = vi.fn().mockImplementation((url: string, opts?: any) => {
+      if (url.includes("/api/transactions") && opts?.method === "POST") {
+        return postPromise;
+      }
+      return Promise.resolve({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify({ transactions: [] })),
+      });
+    });
+
+    const { result } = renderHook(() => useTransactions());
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    // 1. User creates transaction
+    let createPromise!: Promise<any>;
+    act(() => {
+      createPromise = result.current.createTransaction({
+        customerName: "test",
+        phone: "",
+        arrivalDateTime: "2026-10-10 10:00",
+        washType: "Wash only",
+        weight: 1,
+        fee: 85,
+        status: "Received",
+        paymentStatus: "paid",
+        addOns: ["Liquid Detergent"],
+      });
+    });
+
+    // 2. Realtime WebSocket INSERT event arrives first (~50ms)
+    await act(async () => {
+      channelCallbacks["INSERT"]?.({
+        new: {
+          id: "uuid-order-81",
+          ticket_id: "TKT-0081",
+          customer_name: "test",
+          phone_number: "",
+          arrival_time: "2026-10-10 10:00",
+          wash_type: "Wash only",
+          weight_kg: 1,
+          fee: 85,
+          status: "Received",
+          payment_status: "paid",
+          addons: ["Liquid Detergent"],
+        },
+      });
+    });
+
+    expect(result.current.transactions.length).toBe(1);
+    expect(result.current.transactions[0].ticketId).toBe("TKT-0081");
+
+    // 3. HTTP POST response arrives later (~150ms)
+    await act(async () => {
+      resolvePost({
+        ok: true,
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({
+              transaction: {
+                id: "uuid-order-81",
+                ticketId: "TKT-0081",
+                customerName: "test",
+                phone: "",
+                arrivalDateTime: "2026-10-10 10:00",
+                dropOffDate: "2026-10-10",
+                washType: "Wash only",
+                weight: 1,
+                fee: 85,
+                status: "Received",
+                paymentStatus: "paid",
+                addOns: ["Liquid Detergent"],
+              },
+            }),
+          ),
+      });
+      await createPromise;
+    });
+
+    // Must still be exactly 1 item in state, NOT duplicated!
+    expect(result.current.transactions.length).toBe(1);
+    expect(result.current.transactions[0].ticketId).toBe("TKT-0081");
+  });
 });
 
