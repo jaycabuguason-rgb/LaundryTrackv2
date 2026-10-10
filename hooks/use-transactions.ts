@@ -160,6 +160,41 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
   };
 }
 
+const SESSION_RECENT_CREATIONS_KEY = "laundrytrack_recent_creations_v1";
+
+function loadRecentCreationsFromSession(): Map<string, { tx: Transaction; timestamp: number }> {
+  const map = new Map<string, { tx: Transaction; timestamp: number }>();
+  if (typeof window === "undefined") return map;
+  try {
+    const raw = window.sessionStorage.getItem(SESSION_RECENT_CREATIONS_KEY);
+    if (!raw) return map;
+    const parsed = JSON.parse(raw) as Array<[string, { tx: Transaction; timestamp: number }]>;
+    const now = Date.now();
+    for (const [ticketId, item] of parsed) {
+      if (now - item.timestamp < 60_000) {
+        map.set(ticketId, item);
+      }
+    }
+  } catch {
+    // Ignore storage parse errors
+  }
+  return map;
+}
+
+function saveRecentCreationsToSession(map: Map<string, { tx: Transaction; timestamp: number }>) {
+  if (typeof window === "undefined") return;
+  try {
+    const entries = Array.from(map.entries());
+    if (entries.length === 0) {
+      window.sessionStorage.removeItem(SESSION_RECENT_CREATIONS_KEY);
+    } else {
+      window.sessionStorage.setItem(SESSION_RECENT_CREATIONS_KEY, JSON.stringify(entries));
+    }
+  } catch {
+    // Ignore storage write errors
+  }
+}
+
 export function useTransactions() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const transactionsRef = useRef<Transaction[]>([]);
@@ -179,6 +214,8 @@ export function useTransactions() {
   const refreshRef = useRef<(() => Promise<void>) | null>(null);
   const processQueueRef = useRef<(() => Promise<void>) | null>(null);
   const inFlightCreationsRef = useRef<Map<string, Promise<Transaction>>>(new Map());
+  // Buffer of recently created transactions to protect them from momentary stale server GET responses on refresh
+  const recentCreationsRef = useRef<Map<string, { tx: Transaction; timestamp: number }>>(new Map());
 
   const persistTransactions = useCallback(async (next: Transaction[]) => {
     const deduplicated = deduplicateTransactions(next);
@@ -203,6 +240,12 @@ export function useTransactions() {
       transactionsRef.current = cached;
       setTransactions(cached);
       setError(null);
+    }
+    const sessionRecent = loadRecentCreationsFromSession();
+    for (const [ticketId, item] of sessionRecent.entries()) {
+      if (!recentCreationsRef.current.has(ticketId)) {
+        recentCreationsRef.current.set(ticketId, item);
+      }
     }
     setPendingChangesCount(queue.length);
     hydratedRef.current = true;
@@ -241,7 +284,11 @@ export function useTransactions() {
       }
       const response = await fetch("/api/transactions", {
         cache: "no-store",
-        headers,
+        headers: {
+          ...headers,
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
+        },
       });
       const data = await readJson<TransactionsResponse>(response);
       if (queue.length === 0) {
@@ -254,6 +301,33 @@ export function useTransactions() {
             return pendingEntry ? pendingEntry.optimisticTx : serverTx;
           });
         }
+
+        // Clean up recent creations that are already reflected on the server, or older than 60s
+        const now = Date.now();
+        for (const [ticketId, item] of recentCreationsRef.current.entries()) {
+          const presentInServer = mergedTransactions.some(
+            (t) => t.ticketId === ticketId || (item.tx.id && t.id === item.tx.id),
+          );
+          if (presentInServer || now - item.timestamp > 60_000) {
+            recentCreationsRef.current.delete(ticketId);
+          }
+        }
+        saveRecentCreationsToSession(recentCreationsRef.current);
+
+        // Retain any recent creation that the server response has not yet reflected
+        const missingRecent = Array.from(recentCreationsRef.current.values())
+          .filter(
+            (item) =>
+              !mergedTransactions.some(
+                (t) => t.ticketId === item.tx.ticketId || (item.tx.id && t.id === item.tx.id),
+              ),
+          )
+          .map((item) => item.tx);
+
+        if (missingRecent.length > 0) {
+          mergedTransactions = [...missingRecent, ...mergedTransactions];
+        }
+
         mergedTransactions = mergedTransactions.filter((tx) => !tx.ticketId.startsWith("OFF-"));
         await persistTransactions(mergedTransactions);
       } else {
@@ -545,6 +619,8 @@ export function useTransactions() {
         });
         setPendingChangesCount((await readOfflineQueue()).length);
         setSyncStatus("offline");
+        recentCreationsRef.current.set(optimistic.ticketId, { tx: optimistic, timestamp: Date.now() });
+        saveRecentCreationsToSession(recentCreationsRef.current);
         updateTransactions((current) => {
           const withoutNew = current.filter((t) => t.id !== optimistic.id && t.ticketId !== optimistic.ticketId);
           return [optimistic, ...withoutNew];
@@ -569,6 +645,8 @@ export function useTransactions() {
           ? { paidAt: data.transaction.arrivalDateTime || formatCompactDateTime(new Date().toISOString()) }
           : {}),
       };
+      recentCreationsRef.current.set(tx.ticketId, { tx, timestamp: Date.now() });
+      saveRecentCreationsToSession(recentCreationsRef.current);
       updateTransactions((current) => {
         const withoutNew = current.filter((t) => t.id !== tx.id && t.ticketId !== tx.ticketId);
         return [tx, ...withoutNew];
@@ -683,6 +761,8 @@ export function useTransactions() {
   }, [updateTransactions]);
 
   const deleteTransaction = useCallback(async (ticketId: string) => {
+    recentCreationsRef.current.delete(ticketId);
+    saveRecentCreationsToSession(recentCreationsRef.current);
     const originalTransactions = transactionsRef.current;
     updateTransactions((current) =>
       current.filter((t) => t.ticketId !== ticketId && t.id !== ticketId),

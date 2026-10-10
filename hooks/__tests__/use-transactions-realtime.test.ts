@@ -81,6 +81,9 @@ describe("useTransactions Realtime Reconciliation", () => {
 
   beforeEach(() => {
     vi.restoreAllMocks();
+    if (typeof window !== "undefined" && window.sessionStorage) {
+      window.sessionStorage.clear();
+    }
     channelCallbacks = {};
 
     mockChannel = {
@@ -505,6 +508,128 @@ describe("useTransactions Realtime Reconciliation", () => {
     // Must still be exactly 1 item in state, NOT duplicated!
     expect(result.current.transactions.length).toBe(1);
     expect(result.current.transactions[0].ticketId).toBe("TKT-0081");
+  });
+
+  it("preserves newly created transaction across refresh even if server GET response is temporarily stale", async () => {
+    // 1. Initial server list has no transactions
+    globalThis.fetch = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+      if (url.includes("/api/transactions") && init?.method === "POST") {
+        return Promise.resolve({
+          ok: true,
+          text: () =>
+            Promise.resolve(
+              JSON.stringify({
+                transaction: {
+                  id: "uuid-order-99",
+                  ticketId: "TKT-0099",
+                  customerName: "Fresh Customer",
+                  phone: "",
+                  arrivalDateTime: "2026-10-10 11:00",
+                  dropOffDate: "2026-10-10",
+                  washType: "Regular",
+                  weight: 5,
+                  fee: 150,
+                  status: "Received",
+                  paymentStatus: "paid",
+                  addOns: [],
+                },
+              }),
+            ),
+        } as Response);
+      }
+
+      // Initial GET returns empty list
+      return Promise.resolve({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify({ transactions: [] })),
+      } as Response);
+    });
+
+    const { result } = renderHook(() => useTransactions());
+
+    await act(async () => {
+      // Hydrate & refresh initial empty list
+    });
+
+    expect(result.current.transactions).toHaveLength(0);
+
+    // 2. Create the order
+    await act(async () => {
+      await result.current.createTransaction({
+        customerName: "Fresh Customer",
+        phone: "",
+        arrivalDateTime: "2026-10-10 11:00",
+        dropOffDate: "2026-10-10",
+        washType: "Regular",
+        weight: 5,
+        fee: 150,
+        status: "Received",
+        paymentStatus: "paid",
+        addOns: [],
+      });
+    });
+
+    expect(result.current.transactions).toHaveLength(1);
+    expect(result.current.transactions[0].ticketId).toBe("TKT-0099");
+
+    // 3. User refreshes immediately (First Refresh)
+    // Server GET response is still stale (returns empty transactions: [])
+    globalThis.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url.includes("/api/transactions")) {
+        return Promise.resolve({
+          ok: true,
+          text: () => Promise.resolve(JSON.stringify({ transactions: [] })),
+        } as Response);
+      }
+      return Promise.resolve({ ok: true, text: () => Promise.resolve("{}") } as Response);
+    });
+
+    await act(async () => {
+      await result.current.refresh();
+    });
+
+    // CRITICAL: The newly created transaction must NOT disappear!
+    expect(result.current.transactions).toHaveLength(1);
+    expect(result.current.transactions[0].ticketId).toBe("TKT-0099");
+
+    // 4. Second Refresh: Server cache has expired, now returns TKT-0099
+    globalThis.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url.includes("/api/transactions")) {
+        return Promise.resolve({
+          ok: true,
+          text: () =>
+            Promise.resolve(
+              JSON.stringify({
+                transactions: [
+                  {
+                    id: "uuid-order-99",
+                    ticketId: "TKT-0099",
+                    customerName: "Fresh Customer",
+                    phone: "",
+                    arrivalDateTime: "2026-10-10 11:00",
+                    dropOffDate: "2026-10-10",
+                    washType: "Regular",
+                    weight: 5,
+                    fee: 150,
+                    status: "Received",
+                    paymentStatus: "paid",
+                    addOns: [],
+                  },
+                ],
+              }),
+            ),
+        } as Response);
+      }
+      return Promise.resolve({ ok: true, text: () => Promise.resolve("{}") } as Response);
+    });
+
+    await act(async () => {
+      await result.current.refresh();
+    });
+
+    // Still exactly 1 item, clean reconciliation without duplicate
+    expect(result.current.transactions).toHaveLength(1);
+    expect(result.current.transactions[0].ticketId).toBe("TKT-0099");
   });
 });
 

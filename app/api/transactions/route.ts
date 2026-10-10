@@ -17,8 +17,22 @@ function formatCurrency(value: number) {
 export async function GET(request: Request) {
   try {
     await requireAuthRequest(request);
-    const transactions = await listTransactions();
-    return NextResponse.json({ transactions });
+    const cacheControlHeader = request.headers.get("cache-control") || "";
+    const url = new URL(request.url);
+    const bypassCache =
+      cacheControlHeader.includes("no-cache") ||
+      cacheControlHeader.includes("no-store") ||
+      url.searchParams.get("fresh") === "true";
+    const transactions = await listTransactions({ bypassCache });
+    return NextResponse.json(
+      { transactions },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+          Pragma: "no-cache",
+        },
+      },
+    );
   } catch (error) {
     const authStatus = getAuthErrorStatus(error);
     if (authStatus) {

@@ -766,10 +766,12 @@ export function isSupabaseConfigured(): boolean {
   return hasSupabaseConfig();
 }
 
-export async function listTransactions(): Promise<Transaction[]> {
-  const cachedRows = transactionListCache.get("transactions");
-  if (cachedRows) {
-    return cachedRows;
+export async function listTransactions(options?: { bypassCache?: boolean }): Promise<Transaction[]> {
+  if (!options?.bypassCache) {
+    const cachedRows = transactionListCache.get("transactions");
+    if (cachedRows) {
+      return cachedRows;
+    }
   }
 
   const rows = hasSupabaseConfig() ? await listSupabaseRows() : listMockRows();
@@ -788,7 +790,7 @@ export async function getTransactionByTicketId(ticketId: string): Promise<Transa
 
 export async function createTransaction(input: CreateTransactionInput): Promise<Transaction> {
   const row = hasSupabaseConfig() ? await createSupabaseTransaction(input) : createMockTransaction(input);
-  transactionListCache.delete("transactions");
+  transactionListCache.clear();
   return mapRowToTransaction(row);
 }
 
@@ -797,7 +799,7 @@ export async function updateTransaction(ticketId: string, updates: UpdateTransac
     ? await updateSupabaseTransaction(ticketId, updates)
     : updateMockTransaction(ticketId, updates);
 
-  transactionListCache.delete("transactions");
+  transactionListCache.clear();
   return mapRowToTransaction(row);
 }
 
@@ -806,7 +808,7 @@ export async function deleteTransaction(ticketId: string): Promise<boolean> {
     ? await deleteSupabaseTransaction(ticketId)
     : deleteMockTransaction(ticketId);
 
-  transactionListCache.delete("transactions");
+  transactionListCache.clear();
   return deleted;
 }
 
