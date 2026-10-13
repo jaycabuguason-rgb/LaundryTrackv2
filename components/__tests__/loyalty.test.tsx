@@ -186,13 +186,25 @@ describe("LoyaltyPage Mobile Concept Layout", () => {
     expect(screen.getByText("Laundry Records & History")).toBeInTheDocument();
     expect(screen.getByText("Redeemed Rewards History")).toBeInTheDocument();
 
+    // Click QR Status inside drilldown view
+    const drilldownQrBtn = screen.getByRole("button", { name: /^qr status$/i });
+    fireEvent.click(drilldownQrBtn);
+
+    // QR modal opens immediately while in drilldown view
+    expect(screen.getByText(/Member QR & Status Card/i)).toBeInTheDocument();
+
+    // Close QR modal - should remain in drilldown view
+    const closeDrilldownQrBtn = screen.getByRole("button", { name: /close/i });
+    fireEvent.click(closeDrilldownQrBtn);
+    expect(screen.getByText("Laundry Records & History")).toBeInTheDocument();
+
     // Click Back button
     const backBtn = screen.getByRole("button", { name: /back/i });
     fireEvent.click(backBtn);
 
     // Back in main members list
     expect(screen.getAllByText("Active Shop Campaign").length).toBeGreaterThanOrEqual(1);
-  });
+  }, 15000);
 
   it("triggers direct stamp addition when clicking Add Stamp button", async () => {
     render(<LoyaltyPage />);

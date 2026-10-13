@@ -895,33 +895,38 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // MEMBER DRILLDOWN VIEW (Step 2)
+  // MEMBER DRILLDOWN CALCULATIONS (Step 2)
   // ─────────────────────────────────────────────────────────────────────────────
-  if (selected) {
-    const status = calculateLoyaltyRewardStatus(selected.stampCount, washesPerReward, selected.rewardsRedeemed);
-    const currentCycleStamps = status.currentCycleStamps;
-    const stampsUntilReward = status.stampsUntilNextReward;
-    const progressPct = status.progressPct;
-    const pendingRewards = status.pendingRewards;
-    const canUndo = undoStack.some((a) => a.memberId === selected.id);
-    const canRedo = redoStack.some((a) => a.memberId === selected.id);
+  const drilldownStatus = selected
+    ? calculateLoyaltyRewardStatus(selected.stampCount, washesPerReward, selected.rewardsRedeemed)
+    : null;
+  const currentCycleStamps = drilldownStatus?.currentCycleStamps ?? 0;
+  const stampsUntilReward = drilldownStatus?.stampsUntilNextReward ?? 0;
+  const progressPct = drilldownStatus?.progressPct ?? 0;
+  const pendingRewards = drilldownStatus?.pendingRewards ?? 0;
+  const canUndo = selected ? undoStack.some((a) => a.memberId === selected.id) : false;
+  const canRedo = selected ? redoStack.some((a) => a.memberId === selected.id) : false;
 
-    // Matching laundry transactions for this member
-    const memberPhoneClean = (selected.phone || "").replace(/\D/g, "");
-    const memberNameLower = selected.name.trim().toLowerCase();
-    const effectiveTxns = transactions && transactions.length > 0 ? transactions : seedTransactions;
-    const matchingTxns = effectiveTxns.filter((t) => {
-      const tPhoneClean = (t.phone || "").replace(/\D/g, "");
-      if (memberPhoneClean && tPhoneClean && memberPhoneClean === tPhoneClean) return true;
-      if (t.customerName && t.customerName.trim().toLowerCase() === memberNameLower) return true;
-      return false;
-    });
+  // Matching laundry transactions for this member
+  const memberPhoneClean = (selected?.phone || "").replace(/\D/g, "");
+  const memberNameLower = selected?.name.trim().toLowerCase() || "";
+  const effectiveTxns = transactions && transactions.length > 0 ? transactions : seedTransactions;
+  const matchingTxns = selected
+    ? effectiveTxns.filter((t) => {
+        const tPhoneClean = (t.phone || "").replace(/\D/g, "");
+        if (memberPhoneClean && tPhoneClean && memberPhoneClean === tPhoneClean) return true;
+        if (t.customerName && t.customerName.trim().toLowerCase() === memberNameLower) return true;
+        return false;
+      })
+    : [];
 
-    const totalKg = matchingTxns.reduce((acc, t) => acc + (t.weight || 0), 0).toFixed(1);
-    const totalVisits = Math.max(matchingTxns.length, selected.stampCount);
+  const totalKg = matchingTxns.reduce((acc, t) => acc + (t.weight || 0), 0).toFixed(1);
+  const totalVisits = selected ? Math.max(matchingTxns.length, selected.stampCount) : 0;
 
-    return (
-      <div className="space-y-5">
+  return (
+    <Skeleton name="loyalty-members" loading={loading}>
+      {selected ? (
+        <div className="space-y-5">
         {/* Header navigation */}
         <div className="flex items-center justify-between">
           <div>
@@ -1252,14 +1257,10 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
           </CardContent>
         </Card>
       </div>
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // MAIN MEMBERS & REWARDS VIEW (Step 1)
-  // ─────────────────────────────────────────────────────────────────────────────
-  return (
-    <Skeleton name="loyalty-members" loading={loading}>
+    ) : (
+      /* ───────────────────────────────────────────────────────────────────── */
+      /* MAIN MEMBERS & REWARDS VIEW (Step 1)                                  */
+      /* ───────────────────────────────────────────────────────────────────── */
       <div className="space-y-5">
       {/* ─────────────────────────────────────────────────────────────────── */}
       {/* MOBILE CONCEPT VIEW (< md)                                          */}
@@ -1974,6 +1975,8 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
           </div>
         )}
       </div>
+    </div>
+  )}
 
       {/* Add Member Modal */}
       <Dialog open={addModal} onOpenChange={setAddModal}>
@@ -2157,7 +2160,6 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
           })()}
         </DialogContent>
       </Dialog>
-    </div>
     </Skeleton>
   );
 }
