@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getPublicTrackingRecord } from "@/lib/server/laundry-repository";
+import { getPublicLoyaltyMemberRecord, getLoyaltySettings } from "@/lib/server/loyalty-repository";
 
 export async function GET(
   _request: Request,
@@ -14,10 +15,19 @@ export async function GET(
       return NextResponse.json({ error: "Token is required." }, { status: 400 });
     }
 
-    const record = await getPublicTrackingRecord(cleanToken);
+    const [record, loyaltySettings] = await Promise.all([
+      getPublicTrackingRecord(cleanToken),
+      getLoyaltySettings().catch(() => null),
+    ]);
+
     if (!record) {
       return NextResponse.json({ error: "Tracking record not found." }, { status: 404 });
     }
+
+    const isLoyaltyEnabled = Boolean(loyaltySettings?.loyalty_enabled);
+    const loyaltyRecord = (isLoyaltyEnabled && (record.customerPhone || record.customerName))
+      ? await getPublicLoyaltyMemberRecord(record.customerPhone || record.customerName).catch(() => null)
+      : null;
 
     return NextResponse.json(
       {
@@ -31,6 +41,7 @@ export async function GET(
         paidAmount: record.paidAmount,
         loads: record.loads,
         enablePaymentOption: record.enablePaymentOption,
+        loyaltyRecord,
       },
       {
         headers: {

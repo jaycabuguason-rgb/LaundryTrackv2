@@ -214,4 +214,103 @@ describe("CustomerTrackingView", () => {
     expect(screen.getByText("2 loads")).toBeInTheDocument();
     expect(screen.queryByText("0 kg")).not.toBeInTheDocument();
   });
+
+  it("renders live loyalty section and pending reward banner when member has pending rewards", () => {
+    const mockLoyaltyRecord = {
+      id: "mem-1",
+      name: "Maria Clara",
+      phone: "09171234567",
+      dateJoined: "2026-01-01",
+      stampCount: 7,
+      currentCycleStamps: 7,
+      washesPerReward: 7,
+      stampsUntilReward: 0,
+      progressPct: 100,
+      rewardsAvailable: 1,
+      pendingRewards: 1,
+      rewardsRedeemed: 0,
+      rewardDescription: "Free Wash",
+      totalVisits: 5,
+      totalKgWashed: 25,
+      laundryRecords: [],
+      rewardHistory: [],
+      shopProfile: mockInitialRecord.shopProfile,
+    };
+
+    render(
+      <CustomerTrackingView
+        initialRecord={mockInitialRecord}
+        token="test-token-123"
+        pickupQrUrl="https://example.com/qr.png"
+        initialLoyaltyRecord={mockLoyaltyRecord}
+        isLoyaltyEnabled={true}
+      />
+    );
+
+    expect(screen.getByText(/Free Reward Ready to Claim!/i)).toBeInTheDocument();
+    expect(screen.getByText("1 READY")).toBeInTheDocument();
+    expect(screen.getByText("Reward Progress")).toBeInTheDocument();
+    expect(screen.getByText("7 / 7 Stamps")).toBeInTheDocument();
+  });
+
+  it("auto-updates loyalty record when polling returns updated loyalty data", async () => {
+    const mockLoyaltyRecord = {
+      id: "mem-1",
+      name: "Maria Clara",
+      phone: "09171234567",
+      dateJoined: "2026-01-01",
+      stampCount: 5,
+      currentCycleStamps: 5,
+      washesPerReward: 7,
+      stampsUntilReward: 2,
+      progressPct: 71,
+      rewardsAvailable: 0,
+      pendingRewards: 0,
+      rewardsRedeemed: 0,
+      rewardDescription: "Free Wash",
+      totalVisits: 4,
+      totalKgWashed: 20,
+      laundryRecords: [],
+      rewardHistory: [],
+      shopProfile: mockInitialRecord.shopProfile,
+    };
+
+    const updatedLoyaltyRecord = {
+      ...mockLoyaltyRecord,
+      stampCount: 7,
+      currentCycleStamps: 7,
+      stampsUntilReward: 0,
+      pendingRewards: 1,
+    };
+
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        ...mockInitialRecord,
+        loyaltyRecord: updatedLoyaltyRecord,
+      }),
+    });
+
+    render(
+      <CustomerTrackingView
+        initialRecord={mockInitialRecord}
+        token="test-token-123"
+        pickupQrUrl="https://example.com/qr.png"
+        initialLoyaltyRecord={mockLoyaltyRecord}
+        isLoyaltyEnabled={true}
+      />
+    );
+
+    expect(screen.getByText("5 / 7 Stamps")).toBeInTheDocument();
+
+    // Trigger polling by dispatching visibilitychange
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("7 / 7 Stamps")).toBeInTheDocument();
+      expect(screen.getByText(/Free Reward Ready to Claim!/i)).toBeInTheDocument();
+    });
+  });
 });

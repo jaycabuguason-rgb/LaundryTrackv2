@@ -388,7 +388,7 @@ interface LoyaltyPageProps {
 }
 
 export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, transactions }: LoyaltyPageProps) {
-  const { members, loading, refetch } = useLoyaltyMembers();
+  const { members, setMembers, loading, refetch } = useLoyaltyMembers();
   const [activeTab, setActiveTab] = useState<"members" | "rewards">("members");
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
   const [search, setSearch] = useState("");
@@ -560,21 +560,35 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
 
   async function handleDeleteMember() {
     if (!deleteModal) return;
+    const targetMember = deleteModal;
+    const prevMembers = [...members];
+    const prevSelected = selected;
+
+    // Optimistic UI update (0ms)
+    if (typeof setMembers === "function") {
+      setMembers((prev) => prev.filter((m) => m.id !== targetMember.id));
+    }
+    if (selected && selected.id === targetMember.id) {
+      setSelected(null);
+    }
+    setDeleteModal(null);
+    toast({ title: "Member deleted successfully" });
+
     setSaving(true);
     try {
-      const res = await fetch(`/api/loyalty/${deleteModal.id}`, {
+      const res = await fetch(`/api/loyalty/${targetMember.id}`, {
         method: "DELETE",
         headers: await getAuthHeaders(),
       });
       if (!res.ok) throw new Error("Failed to delete member");
-      toast({ title: "Member deleted successfully" });
-      setDeleteModal(null);
-      if (selected && selected.id === deleteModal.id) {
-        setSelected(null);
-      }
       refetch();
     } catch {
-      toast({ title: "Failed to delete member", variant: "destructive" });
+      // Rollback on failure
+      if (typeof setMembers === "function") {
+        setMembers(prevMembers);
+      }
+      setSelected(prevSelected);
+      toast({ title: "Failed to delete member. Changes rolled back.", variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -584,8 +598,45 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
     if (saving) return;
     setSaving(true);
     const targetMemberId = member.id;
+    const prevMembers = [...members];
+    const prevSelected = selected;
+
+    const prevStatus = calculateLoyaltyRewardStatus(member.stampCount, washesPerReward, member.rewardsRedeemed);
+    const optimisticNewStamps = (member.stampCount || 0) + stamps;
+    const newStatus = calculateLoyaltyRewardStatus(
+      optimisticNewStamps,
+      washesPerReward,
+      member.rewardsRedeemed
+    );
+
+    // Optimistic UI update (0ms instant visual response)
+    if (typeof setMembers === "function") {
+      setMembers((prev) =>
+        prev.map((m) => (m.id === targetMemberId ? { ...m, stampCount: optimisticNewStamps } : m))
+      );
+    }
+    if (selected && selected.id === targetMemberId) {
+      setSelected({ ...selected, stampCount: optimisticNewStamps });
+    }
+
+    if (newStatus.pendingRewards > prevStatus.pendingRewards) {
+      toast({
+        title: `🎉 Reward Unlocked for ${member.name}!`,
+        description: `+${stamps} stamp added! ${newStatus.pendingRewards} reward${newStatus.pendingRewards > 1 ? "s" : ""} ready to claim in Rewards page.`,
+      });
+    } else if (newStatus.pendingRewards > 0) {
+      toast({
+        title: `+${stamps} stamp added to ${member.name}!`,
+        description: `Reminder: Customer still has ${newStatus.pendingRewards} pending reward ready to claim.`,
+      });
+    } else {
+      toast({ title: `+${stamps} stamp added to ${member.name}!` });
+    }
+
+    setUndoStack((prev) => [...prev, { memberId: targetMemberId, stamps }]);
+    setRedoStack([]);
+
     try {
-      const prevStatus = calculateLoyaltyRewardStatus(member.stampCount, washesPerReward, member.rewardsRedeemed);
       const headers = await getAuthHeaders({ "Content-Type": "application/json" });
       const res = await fetch(`/api/loyalty/${targetMemberId}/stamps`, {
         method: "POST",
@@ -597,52 +648,27 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
         throw new Error(errJson.error || `Server returned error (${res.status})`);
       }
       const json = await res.json();
-      const updatedMember = (json.member as LoyaltyMember | undefined) || {
-        ...member,
-        stampCount: (member.stampCount || 0) + stamps,
-      };
-      const newStatus = calculateLoyaltyRewardStatus(
-        updatedMember.stampCount,
-        washesPerReward,
-        updatedMember.rewardsRedeemed ?? member.rewardsRedeemed
-      );
-
-      if (newStatus.pendingRewards > prevStatus.pendingRewards) {
-        toast({
-          title: `🎉 Reward Unlocked for ${member.name}!`,
-          description: `+${stamps} stamp added! ${newStatus.pendingRewards} reward${newStatus.pendingRewards > 1 ? "s" : ""} ready to claim in Rewards page.`,
-        });
-      } else if (newStatus.pendingRewards > 0) {
-        toast({
-          title: `+${stamps} stamp added to ${member.name}!`,
-          description: `Reminder: Customer still has ${newStatus.pendingRewards} pending reward ready to claim.`,
-        });
-      } else {
-        toast({ title: `+${stamps} stamp added to ${member.name}!` });
-      }
-
-      setUndoStack((prev) => [...prev, { memberId: targetMemberId, stamps }]);
-      setRedoStack([]);
       refetch();
 
       if (json.member) {
-        setSelected(json.member);
-      } else {
-        const memberRes = await fetch(`/api/loyalty/${targetMemberId}`, {
-          headers,
-        });
-        if (memberRes.ok) {
-          const memberData = await memberRes.json();
-          if (memberData.member) {
-            setSelected(memberData.member);
-          }
+        if (typeof setMembers === "function") {
+          setMembers((prev) => prev.map((m) => (m.id === targetMemberId ? json.member : m)));
+        }
+        if (selected && selected.id === targetMemberId) {
+          setSelected(json.member);
         }
       }
     } catch (err: unknown) {
       console.error("Direct add stamp error:", err);
+      // Rollback on failure
+      if (typeof setMembers === "function") {
+        setMembers(prevMembers);
+      }
+      setSelected(prevSelected);
+      setUndoStack((prev) => prev.filter((a) => a.memberId !== targetMemberId || a.stamps !== stamps));
       toast({
         title: "Failed to add stamp",
-        description: err instanceof Error ? err.message : "An unexpected error occurred.",
+        description: err instanceof Error ? err.message : "Changes rolled back.",
         variant: "destructive",
       });
     } finally {
@@ -784,6 +810,36 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
 
   async function handleClaimReward(member: LoyaltyMember) {
     if (saving) return;
+
+    // Snapshot for optimistic rollback
+    const prevMembers = [...members];
+    const prevSelected = selected ? { ...selected } : null;
+
+    // Optimistically calculate new state
+    const updatedRewardsRedeemed = (member.rewardsRedeemed || 0) + 1;
+    const newRewardEntry = {
+      date: new Date().toISOString().split("T")[0],
+      reward: rewardName,
+    };
+    const optimisticMember: LoyaltyMember = {
+      ...member,
+      rewardsRedeemed: updatedRewardsRedeemed,
+      rewardHistory: [newRewardEntry, ...(member.rewardHistory || [])],
+    };
+
+    // Apply immediate 0ms UI update
+    if (typeof setMembers === "function") {
+      setMembers((prev) => prev.map((m) => (m.id === member.id ? optimisticMember : m)));
+    }
+    if (selected && selected.id === member.id) {
+      setSelected(optimisticMember);
+    }
+
+    toast({
+      title: "🎉 Reward Claimed Successfully!",
+      description: `${member.name} has claimed their ${rewardName}.`,
+    });
+
     setSaving(true);
     try {
       const headers = await getAuthHeaders({ "Content-Type": "application/json" });
@@ -797,13 +853,12 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
         throw new Error(errJson.error || "Failed to redeem reward");
       }
       const json = await res.json();
-      toast({
-        title: "🎉 Reward Claimed Successfully!",
-        description: `${member.name} has claimed their ${rewardName}.`,
-      });
       refetch();
 
       if (json.member) {
+        if (typeof setMembers === "function") {
+          setMembers((prev) => prev.map((m) => (m.id === member.id ? json.member : m)));
+        }
         if (selected && selected.id === member.id) {
           setSelected(json.member);
         }
@@ -811,12 +866,24 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
         const memberRes = await fetch(`/api/loyalty/${member.id}`, { headers });
         if (memberRes.ok) {
           const memberData = await memberRes.json();
-          if (memberData.member && selected && selected.id === member.id) {
-            setSelected(memberData.member);
+          if (memberData.member) {
+            if (typeof setMembers === "function") {
+              setMembers((prev) => prev.map((m) => (m.id === member.id ? memberData.member : m)));
+            }
+            if (selected && selected.id === member.id) {
+              setSelected(memberData.member);
+            }
           }
         }
       }
     } catch (err: unknown) {
+      // Rollback on error
+      if (typeof setMembers === "function") {
+        setMembers(prevMembers);
+      }
+      if (prevSelected) {
+        setSelected(prevSelected);
+      }
       toast({
         title: "Failed to claim reward",
         description: err instanceof Error ? err.message : "An unexpected error occurred.",

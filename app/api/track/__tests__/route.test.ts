@@ -4,6 +4,12 @@ const mockGetPublicTrackingRecord = vi.fn();
 
 vi.mock("@/lib/server/laundry-repository", () => ({
   getPublicTrackingRecord: (...args: unknown[]) => mockGetPublicTrackingRecord(...args),
+  getSettings: vi.fn().mockResolvedValue({}),
+}));
+
+vi.mock("@/lib/server/loyalty-repository", () => ({
+  getLoyaltySettings: vi.fn().mockResolvedValue({ loyalty_enabled: false }),
+  getPublicLoyaltyMemberRecord: vi.fn().mockResolvedValue(null),
 }));
 
 import { GET } from "@/app/api/track/[token]/route";
@@ -61,7 +67,7 @@ describe("GET /api/track/[token]", () => {
 
     expect(response.status).toBe(200);
     const body = await response.json();
-    expect(body).toEqual({
+    expect(body).toMatchObject({
       status: "Washing",
       eta: "2026-09-18 15:00",
       updatedAt: "2026-09-17 12:00",

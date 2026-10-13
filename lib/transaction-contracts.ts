@@ -79,6 +79,7 @@ export interface PublicTrackingRecord {
   claimedAt?: string | null;
   shopProfile: PublicShopProfile;
   enablePaymentOption?: boolean;
+  loyaltyRecord?: PublicLoyaltyMemberRecord | null;
 }
 
 export interface PublicLoyaltyMemberRecord {
@@ -92,6 +93,7 @@ export interface PublicLoyaltyMemberRecord {
   stampsUntilReward: number;
   progressPct: number;
   rewardsAvailable: number;
+  pendingRewards?: number;
   rewardsRedeemed: number;
   rewardDescription: string;
   totalVisits: number;

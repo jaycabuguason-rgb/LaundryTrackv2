@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import {
   Check,
   Copy,
@@ -17,11 +18,21 @@ import {
   Phone,
   Mail,
   AlertTriangle,
+  Star,
+  Gift,
+  Flame,
+  QrCode,
+  ExternalLink,
+  History,
+  Bell,
+  BellRing,
+  Sparkles,
 } from "lucide-react";
 
 import { formatReadableDateTime } from "@/lib/date-format";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import type { PublicTrackingRecord } from "@/lib/transaction-contracts";
+import { StatusBadge } from "@/components/status-badge";
+import type { PublicTrackingRecord, PublicLoyaltyMemberRecord } from "@/lib/transaction-contracts";
 import type { TransactionStatus } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
@@ -34,16 +45,98 @@ function getTrackingProgressIndex(status: string): number {
 
 const ACTIVE_TRACKING_STATUSES = ["Received", "Washing", "Drying", "Ready"];
 
+function StampDots({ count, max = 7 }: { count: number; max?: number }) {
+  const effectiveCount = Math.min(count, max);
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-2">
+      {Array.from({ length: max }).map((_, i) => {
+        const filled = i < effectiveCount;
+        return (
+          <div
+            key={i}
+            className={cn(
+              "flex h-9 w-9 items-center justify-center rounded-xl border-2 text-xs font-bold transition-all shadow-xs",
+              filled
+                ? "border-primary bg-primary text-primary-foreground scale-105 shadow-md shadow-primary/20"
+                : "border-dashed border-border bg-muted/30 text-muted-foreground"
+            )}
+          >
+            {filled ? <Star className="h-4 w-4 fill-current" /> : i + 1}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function playNotificationChime() {
+  if (typeof window === "undefined") return;
+  try {
+    const AudioCtx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.frequency.setValueAtTime(587.33, now); // D5
+    gain1.gain.setValueAtTime(0.12, now);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.28);
+
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.frequency.setValueAtTime(880, now + 0.14); // A5
+    gain2.gain.setValueAtTime(0.15, now + 0.14);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(now + 0.14);
+    osc2.stop(now + 0.55);
+  } catch {
+    // Ignore audio errors
+  }
+}
+
+function triggerBrowserNotification(title: string, options?: NotificationOptions) {
+  if (typeof window === "undefined" || !("Notification" in window)) return;
+  if (Notification.permission !== "granted") return;
+
+  try {
+    new Notification(title, options);
+  } catch {
+    if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.ready
+        .then((reg) => {
+          reg.showNotification(title, options);
+        })
+        .catch(() => {});
+    }
+  }
+  playNotificationChime();
+}
+
 export interface CustomerTrackingViewProps {
   initialRecord: PublicTrackingRecord;
   token: string;
   pickupQrUrl: string;
+  initialLoyaltyRecord?: PublicLoyaltyMemberRecord | null;
+  isLoyaltyEnabled?: boolean;
+  memberBaseUrl?: string;
 }
 
 export function CustomerTrackingView({
   initialRecord,
   token,
   pickupQrUrl,
+  initialLoyaltyRecord,
+  isLoyaltyEnabled = true,
+  memberBaseUrl,
 }: CustomerTrackingViewProps) {
   const [status, setStatus] = useState<TransactionStatus>(initialRecord.status);
   const [eta, setEta] = useState<string | null>(initialRecord.eta);
@@ -57,6 +150,88 @@ export function CustomerTrackingView({
   const [lastSynced, setLastSynced] = useState<Date>(() => new Date());
   const [isPulsing, setIsPulsing] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // Live Loyalty Record State (Updates in real-time on poll or push)
+  const [loyaltyRecord, setLoyaltyRecord] = useState<PublicLoyaltyMemberRecord | null>(
+    initialLoyaltyRecord ?? initialRecord.loyaltyRecord ?? null
+  );
+
+  // Browser Notification States & Permissions (Mobile & Desktop)
+  const [notificationPermission, setNotificationPermission] = useState<string>("default");
+  const hasNotifiedReadyRef = useRef<boolean>(initialRecord.status === "Ready");
+  const hasNotifiedRewardRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      setNotificationPermission(Notification.permission);
+    } else {
+      setNotificationPermission("unsupported");
+    }
+  }, []);
+
+  const pendingCount =
+    loyaltyRecord?.pendingRewards ??
+    (loyaltyRecord && loyaltyRecord.stampsUntilReward === 0 ? 1 : 0);
+
+  const checkAndTriggerNotifications = (
+    currentStatus: TransactionStatus,
+    currentLoyalty: PublicLoyaltyMemberRecord | null
+  ) => {
+    // 1. Ready Notification (For both Loyalty members and non-loyalty customers)
+    if (currentStatus === "Ready") {
+      if (!hasNotifiedReadyRef.current) {
+        hasNotifiedReadyRef.current = true;
+        triggerBrowserNotification("🧺 Laundry Ready for Pickup!", {
+          body: `Order #${initialRecord.ticketId} is ready for pickup at ${initialRecord.shopProfile.shopName}!`,
+          icon: initialRecord.shopProfile.logoDataUrl || undefined,
+        });
+      }
+    } else {
+      hasNotifiedReadyRef.current = false;
+    }
+
+    // 2. Pending Reward Notification (For loyalty members)
+    const currentPending =
+      currentLoyalty?.pendingRewards ??
+      (currentLoyalty && currentLoyalty.stampsUntilReward === 0 ? 1 : 0);
+    if (currentPending > 0) {
+      if (!hasNotifiedRewardRef.current) {
+        hasNotifiedRewardRef.current = true;
+        triggerBrowserNotification("🎁 Free Reward Ready to Claim!", {
+          body: `Congratulations ${currentLoyalty?.name || ""}! You have earned a free ${currentLoyalty?.rewardDescription || "reward"}!`,
+          icon: initialRecord.shopProfile.logoDataUrl || undefined,
+        });
+      }
+    } else {
+      hasNotifiedRewardRef.current = false;
+    }
+  };
+
+  const requestNotificationPermission = async () => {
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    try {
+      const perm = await Notification.requestPermission();
+      setNotificationPermission(perm);
+      if (perm === "granted") {
+        playNotificationChime();
+        if (status === "Ready") {
+          hasNotifiedReadyRef.current = true;
+          triggerBrowserNotification("🧺 Laundry Ready for Pickup!", {
+            body: `Order #${initialRecord.ticketId} is ready for pickup at ${initialRecord.shopProfile.shopName}!`,
+            icon: initialRecord.shopProfile.logoDataUrl || undefined,
+          });
+        } else if (pendingCount > 0) {
+          hasNotifiedRewardRef.current = true;
+          triggerBrowserNotification("🎁 Free Reward Ready to Claim!", {
+            body: `Congratulations ${loyaltyRecord?.name || ""}! You have earned a free ${loyaltyRecord?.rewardDescription || "reward"}!`,
+            icon: initialRecord.shopProfile.logoDataUrl || undefined,
+          });
+        }
+      }
+    } catch {
+      // User closed permission dialog
+    }
+  };
 
   const statusRef = useRef(status);
   useEffect(() => {
@@ -109,6 +284,7 @@ export function CustomerTrackingView({
           if (newStatus && typeof newStatus === "string" && newStatus !== statusRef.current) {
             setStatus(newStatus as TransactionStatus);
             notifyUpdated();
+            checkAndTriggerNotifications(newStatus as TransactionStatus, loyaltyRecord);
           }
           if (payload.new?.eta !== undefined) {
             setEta(payload.new.eta);
@@ -129,12 +305,10 @@ export function CustomerTrackingView({
     return () => {
       supabase.removeChannel(channel).catch(() => {});
     };
-  }, [isActive, initialRecord.ticketId]);
+  }, [isActive, initialRecord.ticketId, loyaltyRecord]);
 
   // 2. Resilient Lightweight JSON Poll (6s fallback, visibility-aware, zero reload)
   useEffect(() => {
-    if (!isActive) return;
-
     const checkStatus = async () => {
       if (typeof document !== "undefined" && document.visibilityState === "hidden") {
         return;
@@ -174,6 +348,13 @@ export function CustomerTrackingView({
         if (data?.enablePaymentOption !== undefined) {
           setEnablePaymentOption(data.enablePaymentOption);
         }
+        if (data?.loyaltyRecord !== undefined) {
+          setLoyaltyRecord(data.loyaltyRecord);
+        }
+        checkAndTriggerNotifications(
+          (data?.status as TransactionStatus) || statusRef.current,
+          data?.loyaltyRecord !== undefined ? data.loyaltyRecord : loyaltyRecord
+        );
         setLastSynced(new Date());
       } catch {
         // Silently tolerate connection hiccups
@@ -194,13 +375,50 @@ export function CustomerTrackingView({
       clearInterval(intervalId);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [isActive, token]);
+  }, [token, loyaltyRecord]);
 
   const dropOffFormatted =
     formatReadableDateTime(initialRecord.dropOffTime) || initialRecord.dropOffTime;
 
   return (
     <div className="space-y-4">
+      {/* Browser Notification Opt-In Banner */}
+      {notificationPermission === "default" && (
+        <div
+          className="bg-purple-50/90 border border-purple-200/90 rounded-2xl p-3 sm:p-3.5 flex items-center justify-between gap-3 shadow-2xs"
+          data-purpose="notification-permission-prompt"
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
+              <Bell className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-slate-800 leading-tight">
+                Enable Status & Reward Alerts
+              </p>
+              <p className="text-[11px] text-slate-500 leading-tight mt-0.5 truncate">
+                Get notified on phone or PC when laundry is ready or rewards unlock
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={requestNotificationPermission}
+            className="px-3 py-1.5 text-xs font-bold bg-purple-700 hover:bg-purple-800 text-white rounded-xl shadow-xs transition-colors shrink-0 cursor-pointer"
+          >
+            Notify Me
+          </button>
+        </div>
+      )}
+
+      {notificationPermission === "granted" && (
+        <div className="flex items-center justify-between px-1 text-[11px] text-slate-400 font-medium">
+          <span className="flex items-center gap-1.5 text-emerald-600">
+            <BellRing className="w-3.5 h-3.5" /> Alerts enabled on this device
+          </span>
+        </div>
+      )}
+
       {/* ── CARD 1: TICKET OVERVIEW CARD ──────────────────────────────────── */}
       <section
         className={cn(
@@ -871,6 +1089,232 @@ export function CustomerTrackingView({
           </p>
         </div>
       </section>
+
+      {/* ── CARD 6: LIVE LOYALTY & REWARDS (Auto-updates with 0 reload) ── */}
+      {isLoyaltyEnabled && loyaltyRecord && (
+        <section
+          className="bg-white rounded-3xl border border-purple-200/90 p-4 sm:p-5 shadow-sm space-y-4"
+          data-purpose="loyalty-member-section"
+        >
+          <div className="flex items-center justify-between gap-3 border-b border-border/50 pb-3.5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-700 text-white font-bold shadow-xs">
+                {loyaltyRecord.name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")
+                  .slice(0, 2)
+                  .toUpperCase()}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-bold text-slate-900">{loyaltyRecord.name}</h2>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 text-purple-700 px-2 py-0.5 text-[10px] font-bold border border-purple-200">
+                    <Star className="w-3 h-3 fill-purple-700 text-purple-700" /> Member
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 font-mono mt-0.5">
+                  {loyaltyRecord.id.startsWith("MEM-")
+                    ? loyaltyRecord.id
+                    : `MEM-${loyaltyRecord.id.slice(-6).toUpperCase()}`}
+                </p>
+              </div>
+            </div>
+
+            {memberBaseUrl && (
+              <Link
+                href={`${memberBaseUrl}/${loyaltyRecord.id}`}
+                target="_blank"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-purple-700 hover:underline"
+              >
+                Card <ExternalLink className="w-3 h-3" />
+              </Link>
+            )}
+          </div>
+
+          {/* Pending Reward Alert (Prominent if > 0) */}
+          {pendingCount > 0 ? (
+            <div
+              className="rounded-2xl border-2 border-emerald-500/50 bg-gradient-to-r from-emerald-50 via-teal-50/60 to-emerald-50 p-4 shadow-xs space-y-2.5 animate-pulse"
+              data-purpose="pending-reward-alert"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
+                  <Gift className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-extrabold text-sm text-emerald-950">
+                      🎉 Free Reward Ready to Claim!
+                    </h3>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-600 text-white">
+                      {pendingCount} READY
+                    </span>
+                  </div>
+                  <p className="text-xs text-emerald-800 mt-0.5">
+                    You have unlocked a{" "}
+                    <strong className="font-bold underline">
+                      {loyaltyRecord.rewardDescription || "Free Wash"}
+                    </strong>
+                    !
+                  </p>
+                </div>
+              </div>
+              <p className="text-[11px] text-emerald-700 bg-emerald-100/60 rounded-xl px-3 py-1.5 leading-relaxed font-medium">
+                Show your Member QR pass below to the counter staff to redeem! Your wash progress continues uninterrupted.
+              </p>
+            </div>
+          ) : (
+            /* Remaining Laundries Banner */
+            <div className="rounded-2xl border border-purple-200/80 bg-purple-50/50 p-3.5 text-center">
+              {loyaltyRecord.stampsUntilReward > 0 ? (
+                <div className="space-y-1">
+                  <p className="text-xs font-bold text-slate-800">
+                    Only{" "}
+                    <span className="text-purple-700 font-extrabold text-sm">
+                      {loyaltyRecord.stampsUntilReward}
+                    </span>{" "}
+                    more {loyaltyRecord.stampsUntilReward === 1 ? "laundry" : "laundries"} remaining!
+                  </p>
+                  <p className="text-[11px] text-slate-500">
+                    Complete {loyaltyRecord.stampsUntilReward} more wash to earn your next{" "}
+                    <span className="font-semibold text-purple-700">
+                      {loyaltyRecord.rewardDescription}
+                    </span>
+                    .
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <p className="text-xs font-bold text-emerald-700">
+                    🎉 Congratulations! Free Reward Ready!
+                  </p>
+                  <p className="text-[11px] text-slate-500">
+                    You have earned a{" "}
+                    <span className="font-semibold text-slate-800">
+                      {loyaltyRecord.rewardDescription}
+                    </span>
+                    . Claim it at the counter!
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Stamp Progress Dots */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-slate-800 flex items-center gap-1.5">
+                <Flame className="w-3.5 h-3.5 text-amber-500" /> Reward Progress
+              </span>
+              <span className="font-bold text-purple-700 text-[11px]">
+                {loyaltyRecord.currentCycleStamps} / {loyaltyRecord.washesPerReward} Stamps
+              </span>
+            </div>
+            <StampDots count={loyaltyRecord.currentCycleStamps} max={loyaltyRecord.washesPerReward} />
+          </div>
+
+          {/* Lifetime Stats */}
+          <div className="grid grid-cols-3 gap-2 pt-1">
+            <div className="rounded-xl border border-stone-200/80 bg-stone-50/80 p-2.5 text-center">
+              <p className="text-sm font-bold text-slate-900">{loyaltyRecord.totalVisits}</p>
+              <p className="text-[10px] text-slate-500 mt-0.5">Visits</p>
+            </div>
+            <div className="rounded-xl border border-stone-200/80 bg-stone-50/80 p-2.5 text-center">
+              <p className="text-sm font-bold text-slate-900">{loyaltyRecord.totalKgWashed} kg</p>
+              <p className="text-[10px] text-slate-500 mt-0.5">Washed</p>
+            </div>
+            <div className="rounded-xl border border-stone-200/80 bg-stone-50/80 p-2.5 text-center">
+              <p className="text-sm font-bold text-slate-900">{loyaltyRecord.rewardsRedeemed}</p>
+              <p className="text-[10px] text-slate-500 mt-0.5">Claimed</p>
+            </div>
+          </div>
+
+          {/* Member QR Pass */}
+          <div className="flex items-center gap-3.5 rounded-2xl border border-stone-200/80 bg-stone-50/80 p-3">
+            <div className="bg-white p-1.5 rounded-xl shadow-xs border border-stone-200/80 shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(
+                  memberBaseUrl ? `${memberBaseUrl}/${loyaltyRecord.id}` : `/member/${loyaltyRecord.id}`
+                )}`}
+                alt={`Loyalty QR code for ${loyaltyRecord.name}`}
+                className="w-16 h-16 object-contain rounded"
+              />
+            </div>
+            <div className="space-y-0.5">
+              <p className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <QrCode className="w-3.5 h-3.5 text-purple-700" /> Member Pass
+              </p>
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                Show this QR code at checkout to quickly collect stamps and claim rewards!
+              </p>
+            </div>
+          </div>
+
+          {/* Laundry Records / History */}
+          {loyaltyRecord.laundryRecords.length > 0 && (
+            <div className="space-y-2 pt-2 border-t border-border/50">
+              <div className="flex items-center justify-between">
+                <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <History className="w-3.5 h-3.5 text-purple-700" /> Laundry Records
+                </h3>
+                <span className="text-[10px] text-slate-400">
+                  {loyaltyRecord.laundryRecords.length} records
+                </span>
+              </div>
+              <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
+                {loyaltyRecord.laundryRecords.slice(0, 8).map((item, idx) => (
+                  <div
+                    key={`${item.ticketId}-${idx}`}
+                    className="flex items-center justify-between gap-2 rounded-xl border border-stone-200/80 bg-stone-50/60 p-2.5 text-xs"
+                  >
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono font-bold text-slate-800 text-[11px]">
+                          {item.ticketId}
+                        </span>
+                        <StatusBadge status={item.status} className="px-1.5 py-0 text-[10px]" />
+                        {item.rewardUsed && (
+                          <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-100 text-emerald-800 px-1 py-0 text-[9px] font-bold">
+                            <Gift className="w-2.5 h-2.5" /> Reward
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-slate-500">
+                        {item.washType} {item.weight > 0 ? `• ${item.weight} kg` : ""}{" "}
+                        {item.fee > 0 ? `• ₱${item.fee}` : ""}
+                      </p>
+                    </div>
+
+                    <div className="text-right text-[10px]">
+                      <span className="text-slate-400">{item.date}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Non-member promotional banner */}
+      {isLoyaltyEnabled && !loyaltyRecord && (
+        <section
+          className="bg-white rounded-3xl border border-purple-200/90 p-5 shadow-sm text-center space-y-2"
+          data-purpose="non-member-loyalty-promo"
+        >
+          <div className="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-purple-50 text-purple-700">
+            <Gift className="w-5 h-5" />
+          </div>
+          <h3 className="text-sm font-bold text-slate-900">
+            Earn Free Laundries With Every Wash!
+          </h3>
+          <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
+            Ask our staff to enroll your number into our Loyalty Program on your next visit to collect stamps and earn free washes.
+          </p>
+        </section>
+      )}
     </div>
   );
 }

@@ -54,6 +54,7 @@ const mockRefetch = vi.fn();
 vi.mock("@/hooks/use-loyalty-members", () => ({
   useLoyaltyMembers: () => ({
     members: mockMembers,
+    setMembers: vi.fn(),
     loading: false,
     refetch: mockRefetch,
   }),

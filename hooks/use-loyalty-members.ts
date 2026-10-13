@@ -6,6 +6,7 @@ import { getBrowserAccessToken, refreshBrowserSession } from "@/lib/supabase/bro
 
 interface UseLoyaltyMembersResult {
   members: LoyaltyMember[];
+  setMembers: React.Dispatch<React.SetStateAction<LoyaltyMember[]>>;
   loading: boolean;
   error: string | null;
   refetch: () => void;
@@ -55,5 +56,5 @@ export function useLoyaltyMembers(): UseLoyaltyMembersResult {
     return () => { cancelled = true; };
   }, [tick]);
 
-  return { members, loading, error, refetch: () => setTick((t) => t + 1) };
+  return { members, setMembers, loading, error, refetch: () => setTick((t) => t + 1) };
 }

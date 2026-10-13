@@ -240,8 +240,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\app\\track\\[token]\\page.tsx": {
-    "mtime": 1790533242.8029723,
-    "ast_hash": "8be61b7aca9f8ad2b3576d772e909972",
+    "mtime": 1791906907.665121,
+    "ast_hash": "1d38e91e36aa41931843495e40aede4f",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\app-shell.tsx": {
@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pages\\loyalty.tsx": {
-    "mtime": 1791903571.3325875,
-    "ast_hash": "c802b847f85eaef023caa9eaffceb27c",
+    "mtime": 1791906671.461316,
+    "ast_hash": "27c7889d9bad2dfed6c98378ac6bf88f",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\pages\\processing.tsx": {
@@ -680,8 +680,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\hooks\\use-loyalty-members.ts": {
-    "mtime": 1779652981.0,
-    "ast_hash": "3c1b276a8e58338803c768ffb58549a5",
+    "mtime": 1791906284.3944974,
+    "ast_hash": "50792c26d86881b8fa0a6c9f4a8f8d36",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\hooks\\use-mobile.ts": {
@@ -780,8 +780,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\transaction-contracts.ts": {
-    "mtime": 1791200583.3595536,
-    "ast_hash": "06dcabf8c0b3fd66e434b4f2ba61eebc",
+    "mtime": 1791906230.9631493,
+    "ast_hash": "986101ce31832852f489f4eb10e2c7e3",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\utils.ts": {
@@ -800,8 +800,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\server\\loyalty-repository.ts": {
-    "mtime": 1791903750.8955572,
-    "ast_hash": "6cfc567c21835d0903068b0e38f5f3e5",
+    "mtime": 1791906242.6975648,
+    "ast_hash": "d5cedf6680927d747357df46cf8ad4b3",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\lib\\server\\request-auth.ts": {
@@ -1485,8 +1485,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\app\\member\\[id]\\page.tsx": {
-    "mtime": 1790667728.7290702,
-    "ast_hash": "d6be01d45a1a898a6ea4d9aa57fc8ebf",
+    "mtime": 1791906955.5725634,
+    "ast_hash": "cc63c463196510a44f3ad7349b1689ec",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\vitest.config.ts": {
@@ -1660,8 +1660,8 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\__tests__\\loyalty.test.tsx": {
-    "mtime": 1791903521.5536115,
-    "ast_hash": "78830d300e95b79095601fb37f4d8de1",
+    "mtime": 1791906678.4735699,
+    "ast_hash": "8041408060c935d2c6caca9a8553a764",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\__tests__\\settings.test.tsx": {
@@ -1670,23 +1670,23 @@
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\app\\api\\track\\[token]\\route.ts": {
-    "mtime": 1791200573.4646275,
-    "ast_hash": "992643ca01406ff30980dd72c5003723",
+    "mtime": 1791906256.829751,
+    "ast_hash": "eeefd88a4a1e3b3690a4a50c5831b0d6",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\app\\api\\track\\__tests__\\route.test.ts": {
-    "mtime": 1789754028.472578,
-    "ast_hash": "006e749e403834f854814aacb2b7bf09",
+    "mtime": 1791907259.0227768,
+    "ast_hash": "2682d08e4b480325bdc5772162b1834b",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\customer-tracking-view.tsx": {
-    "mtime": 1791200575.443601,
-    "ast_hash": "e2e4e483607bd54e1b8f24f68eb2c559",
+    "mtime": 1791906861.0022485,
+    "ast_hash": "cc84ffaca5cb4bbafb6b4bc0247190f7",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\components\\__tests__\\customer-tracking-view.test.tsx": {
-    "mtime": 1791200573.714778,
-    "ast_hash": "e2e7b52432c54250929bbee3939ecde2",
+    "mtime": 1791907036.8422315,
+    "ast_hash": "48a96cbc936cd2b46b0a72d16efce244",
     "semantic_hash": ""
   },
   "E:\\sample project\\LaundryTrackv2-pr-11\\hooks\\__tests__\\use-transactions-realtime.test.ts": {
@@ -1957,6 +1957,16 @@
   "E:\\sample project\\LaundryTrackv2-pr-11\\app\\api\\loyalty\\[id]\\redeem\\route.ts": {
     "mtime": 1791903343.6281283,
     "ast_hash": "5f2ed9eb2a383406da28aee0ae8ada40",
+    "semantic_hash": ""
+  },
+  "E:\\sample project\\LaundryTrackv2-pr-11\\app\\api\\member\\[id]\\route.ts": {
+    "mtime": 1791906263.0994196,
+    "ast_hash": "bc0960fed44e4f4563bcabb35d39f13f",
+    "semantic_hash": ""
+  },
+  "E:\\sample project\\LaundryTrackv2-pr-11\\components\\member-pass-view.tsx": {
+    "mtime": 1791906946.2643628,
+    "ast_hash": "1c849da0dd5506efa18d346ae7a76f01",
     "semantic_hash": ""
   }
 }

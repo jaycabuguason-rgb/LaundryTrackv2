@@ -596,6 +596,10 @@ export async function getPublicLoyaltyMemberRecord(
       0,
       Math.floor(member.stampCount / washesPerReward) - (member.rewardsRedeemed || 0)
     ),
+    pendingRewards: Math.max(
+      0,
+      Math.floor(member.stampCount / washesPerReward) - (member.rewardsRedeemed || 0)
+    ),
     rewardsRedeemed: member.rewardsRedeemed || 0,
     rewardDescription: settings.reward_description || "Free wash",
     totalVisits,
