@@ -32,6 +32,7 @@ const KNOWN_ACTIONS = new Set<AuditActionType>([
   "transaction_created",
   "transaction_updated",
   "transaction_voided",
+  "transaction_deleted",
   "status_changed",
   "claim_scanned",
   "claim_verified",
@@ -91,6 +92,18 @@ const MOCK_AUDIT_LOGS: AuditLogEntry[] = [
     action: "staff_created",
     summary: "Created staff account: maria_santos",
     details: "Full Name: Maria Santos | Username: maria_santos | Role: Staff | Status: Active",
+    ipAddress: "192.168.1.1",
+  },
+  {
+    id: "AL-005",
+    timestamp: "2026-04-15T09:15:00",
+    staffName: "Admin",
+    staffRole: "Admin",
+    action: "transaction_deleted",
+    summary: "Permanently deleted transaction TKT-0005",
+    details: "Customer: Rosa Dela Cruz | Status: Ready | Total: ₱180.00 | Deleted by Admin",
+    ticketId: "TKT-0005",
+    customerName: "Rosa Dela Cruz",
     ipAddress: "192.168.1.1",
   },
 ];
@@ -159,7 +172,26 @@ export async function listAuditLogs(limit = 200): Promise<AuditLogEntry[]> {
 
 export async function createAuditLog(input: CreateAuditLogInput): Promise<AuditLogEntry> {
   const supabase = getSupabaseAdminClient();
-  const { data, error } = await supabase
+  if (!supabase) {
+    const mockEntry: AuditLogEntry = {
+      id: `AL-MOCK-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      staffName: input.staffName || "Admin",
+      staffRole: input.staffRole === "staff" ? "Staff" : "Admin",
+      action: mapAction(input.action),
+      summary: input.summary,
+      details: input.details || "",
+      ticketId: input.ticketId ?? undefined,
+      customerName: input.customerName ?? undefined,
+      paymentStatus: input.paymentStatus ?? undefined,
+      ipAddress: input.ipAddress ?? undefined,
+    };
+    MOCK_AUDIT_LOGS.unshift(mockEntry);
+    auditLogCache.clear();
+    return mockEntry;
+  }
+
+  let insertResult = await supabase
     .from("audit_logs")
     .insert({
       transaction_id: input.transactionId ?? null,
@@ -178,12 +210,37 @@ export async function createAuditLog(input: CreateAuditLogInput): Promise<AuditL
     .select("id,created_at,action,summary,notes,ticket_id,customer_name,payment_status,staff_name,staff_role,ip_address,metadata")
     .single();
 
-  if (error) {
-    throw new Error(error.message);
+  if (insertResult.error && input.transactionId) {
+    // Retry with transaction_id: null in case the referenced transaction row was already deleted
+    insertResult = await supabase
+      .from("audit_logs")
+      .insert({
+        transaction_id: null,
+        ticket_id: input.ticketId ?? null,
+        action: input.action,
+        staff_name: input.staffName ?? null,
+        staff_role: input.staffRole ?? null,
+        staff_profile_id: input.staffProfileId ?? null,
+        summary: input.summary,
+        customer_name: input.customerName ?? null,
+        payment_status: input.paymentStatus ?? null,
+        ip_address: input.ipAddress ?? null,
+        notes: input.details ?? "",
+        metadata: {
+          ...(input.metadata ?? {}),
+          unlinkedTransactionId: input.transactionId,
+        },
+      })
+      .select("id,created_at,action,summary,notes,ticket_id,customer_name,payment_status,staff_name,staff_role,ip_address,metadata")
+      .single();
+  }
+
+  if (insertResult.error) {
+    throw new Error(insertResult.error.message);
   }
 
   auditLogCache.clear();
-  return mapAuditRow(data as AuditLogRow);
+  return mapAuditRow(insertResult.data as AuditLogRow);
 }
 
 export function listMockAuditLogs(): AuditLogEntry[] {

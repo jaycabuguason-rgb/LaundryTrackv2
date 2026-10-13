@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutDashboard, ListTodo, Receipt, User, Plus, BarChart3, Users } from "lucide-react";
+import { LayoutDashboard, ListTodo, Receipt, Plus, BarChart3, Users, QrCode } from "lucide-react";
 import { type Page } from "@/components/sidebar";
 import { type UserRole } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -17,7 +17,7 @@ const STAFF_ITEMS: Array<{ page: Page; label: string; icon: typeof LayoutDashboa
   { page: "processing", label: "Process", icon: ListTodo },
   { page: "new-transaction", label: "New Order", icon: Plus },
   { page: "transactions", label: "Records", icon: Receipt },
-  { page: "profile", label: "Profile", icon: User },
+  { page: "claim-verification", label: "Claim", icon: QrCode },
 ];
 
 const ADMIN_ITEMS: Array<{ page: Page; label: string; icon: typeof LayoutDashboard }> = [

@@ -164,5 +164,71 @@ describe("Dashboard Accessibility & Responsiveness", () => {
     fireEvent.click(viewReportsBtn);
     expect(onNavigate).toHaveBeenCalledWith("reports");
   });
+
+  it("calculates Today's Orders and Revenue strictly from today's transactions", () => {
+    const todayStr = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Manila",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date());
+
+    const mixedTransactions: Transaction[] = [
+      {
+        id: "tx-today-1",
+        ticketId: "2001",
+        customerName: "Today Customer 1",
+        phone: "09170000001",
+        washType: "Regular",
+        weight: 5,
+        fee: 300,
+        status: "Received",
+        paymentStatus: "paid",
+        arrivalDateTime: `${todayStr} 09:00`,
+        dropOffDate: todayStr,
+        paidAt: `${todayStr} 09:00`,
+        addOns: [],
+      },
+      {
+        id: "tx-today-2",
+        ticketId: "2002",
+        customerName: "Today Customer 2",
+        phone: "09170000002",
+        washType: "Express",
+        weight: 4,
+        fee: 200,
+        status: "Washing",
+        paymentStatus: "unpaid",
+        arrivalDateTime: `${todayStr} 10:30`,
+        dropOffDate: todayStr,
+        addOns: [],
+      },
+      {
+        id: "tx-yesterday",
+        ticketId: "2003",
+        customerName: "Old Customer",
+        phone: "09170000003",
+        washType: "Regular",
+        weight: 6,
+        fee: 500,
+        status: "Ready",
+        paymentStatus: "paid",
+        arrivalDateTime: "2025-01-01 10:00",
+        dropOffDate: "2025-01-01",
+        paidAt: "2025-01-01 10:00",
+        addOns: [],
+      },
+    ];
+
+    render(<DashboardPage transactions={mixedTransactions} />);
+
+    // Today's Orders should be 2 (tx-today-1 and tx-today-2), excluding tx-yesterday
+    expect(screen.getByText("2")).toBeInTheDocument();
+    expect(screen.getByText("orders today")).toBeInTheDocument();
+
+    // Today's Revenue should be ₱300 (only tx-today-1 paid today), excluding ₱500 from yesterday and unpaid
+    expect(screen.getAllByText("₱300").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("paid today")).toBeInTheDocument();
+  });
 });
 

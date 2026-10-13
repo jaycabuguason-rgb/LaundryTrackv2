@@ -70,16 +70,53 @@ export default function DashboardPage({
     }
   };
 
+  const todayKey = useMemo(() => {
+    try {
+      return new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Manila",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(new Date());
+    } catch {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    }
+  }, []);
+
   // Counts & Metrics (3 Operational Stages: Received -> Washing -> Ready)
-  const totalOrders = transactions.length;
+  // Today's orders only (non-voided orders arriving/dropped off today in local time)
+  const todayOrders = useMemo(() => {
+    return transactions.filter((t) => {
+      if (t.status === "Voided") return false;
+      const dateKey = t.dropOffDate || (t.arrivalDateTime ? t.arrivalDateTime.split(/[ T]/)[0] : "");
+      return dateKey === todayKey;
+    });
+  }, [transactions, todayKey]);
+
+  const totalOrders = todayOrders.length;
   const receivedCount = transactions.filter((t) => t.status === "Received").length;
   const washingCount = transactions.filter((t) => t.status === "Washing" || t.status === "Drying").length;
   const readyCount = transactions.filter((t) => t.status === "Ready").length;
   const activeOrdersCount = receivedCount + washingCount + readyCount;
 
-  const paidRevenue = transactions
-    .filter((t) => t.paymentStatus === "paid" && t.status !== "Voided")
-    .reduce((sum, t) => sum + t.fee, 0);
+  // Daily revenue: only transactions recognized/paid today
+  const paidRevenue = useMemo(() => {
+    return transactions
+      .filter((t) => {
+        if (t.paymentStatus !== "paid" || t.status === "Voided") return false;
+        let payDate = "";
+        if (t.paidAt) {
+          const match = t.paidAt.match(/^(\d{4}-\d{2}-\d{2})/);
+          if (match) payDate = match[1];
+        }
+        if (!payDate) {
+          payDate = t.dropOffDate || (t.arrivalDateTime ? t.arrivalDateTime.split(/[ T]/)[0] : "");
+        }
+        return payDate === todayKey;
+      })
+      .reduce((sum, t) => sum + t.fee, 0);
+  }, [transactions, todayKey]);
 
   const totalMembers = liveMembers.length > 0 ? liveMembers.length : initialLoyaltyMembers.length;
 
@@ -235,7 +272,7 @@ export default function DashboardPage({
                   <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
                     {totalOrders}
                   </p>
-                  <p className="text-[11px] sm:text-xs text-muted-foreground truncate">orders this cycle</p>
+                  <p className="text-[11px] sm:text-xs text-muted-foreground truncate">orders today</p>
                 </div>
                 <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-[#F6F1F9] dark:bg-purple-950/40 border border-purple-100/80 dark:border-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shrink-0">
                   <Receipt className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
@@ -306,7 +343,7 @@ export default function DashboardPage({
                     ₱{paidRevenue.toLocaleString()}
                   </p>
                   <p className="text-[11px] sm:text-xs text-muted-foreground truncate flex items-center gap-1">
-                    <span>paid transactions</span>
+                    <span>paid today</span>
                     {onNavigate && role === "admin" && (
                       <span className="text-primary font-medium inline-flex items-center">
                         • Reports <ArrowRight className="w-2.5 h-2.5 ml-0.5" />

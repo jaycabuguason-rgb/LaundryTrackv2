@@ -37,6 +37,17 @@ const mockAuditLogs: AuditLogEntry[] = [
     details: "Changed full wash rate from PHP 220 to PHP 250",
     ipAddress: "192.168.1.1",
   },
+  {
+    id: "AL-104",
+    timestamp: "2026-04-15T11:00:00",
+    staffName: "Jay Admin",
+    staffRole: "Admin",
+    action: "transaction_deleted",
+    summary: "Permanently deleted transaction TKT-0005",
+    details: "Customer: Rosa Dela Cruz | Status: Ready | Total: ₱180.00 | Deleted by Admin",
+    ticketId: "TKT-0005",
+    ipAddress: "192.168.1.1",
+  },
 ];
 
 const mockRefresh = vi.fn();
@@ -100,7 +111,7 @@ describe("AuditLogsPage Mobile View", () => {
     ).toBeGreaterThanOrEqual(1);
 
     // Live admin badge
-    expect(screen.getByText("Jay Admin")).toBeInTheDocument();
+    expect(screen.getAllByText("Jay Admin").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText(/admin/i).length).toBeGreaterThanOrEqual(1);
 
     // Metrics Carousel values
@@ -108,9 +119,10 @@ describe("AuditLogsPage Mobile View", () => {
     expect(screen.getAllByText("Warning Events").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("System Actions").length).toBeGreaterThanOrEqual(1);
 
-    // Check count values (3 total entries, 1 warning event: transaction_voided, 1 system action: settings_changed)
-    expect(screen.getAllByText("3").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("1").length).toBeGreaterThanOrEqual(2);
+    // Check count values (4 total entries, 2 warning events: transaction_voided & transaction_deleted, 1 system action: settings_changed)
+    expect(screen.getAllByText("4").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("2").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("1").length).toBeGreaterThanOrEqual(1);
   });
 
   it("renders mobile segmented tabs and allows navigating to staff management", () => {
@@ -133,10 +145,15 @@ describe("AuditLogsPage Mobile View", () => {
     expect(screen.getAllByText("Created transaction TKT-0012").length).toBe(2);
     expect(screen.getAllByText("Voided ticket TKT-0008").length).toBe(2);
     expect(screen.getAllByText("Updated pricing settings").length).toBe(2);
+    expect(screen.getAllByText("Permanently deleted transaction TKT-0005").length).toBe(2);
+
+    // DELETED badge rendered on both desktop and mobile
+    expect(screen.getAllByText("DELETED").length).toBeGreaterThanOrEqual(2);
 
     // Ticket badges on mobile cards
     expect(screen.getByText("#TKT-0012")).toBeInTheDocument();
     expect(screen.getByText("#TKT-0008")).toBeInTheDocument();
+    expect(screen.getByText("#TKT-0005")).toBeInTheDocument();
 
     // Expanded details initially hidden
     expect(screen.queryByText(/Full Details:/i)).not.toBeInTheDocument();
@@ -177,6 +194,6 @@ describe("AuditLogsPage Mobile View", () => {
   it("renders end of feed synchronization notice when items are present", () => {
     render(<AuditLogsPage initialTab="audit" currentProfile={mockProfile} />);
 
-    expect(screen.getByText(/Feed synchronized • 3 events loaded/i)).toBeInTheDocument();
+    expect(screen.getByText(/Feed synchronized • 4 events loaded/i)).toBeInTheDocument();
   });
 });

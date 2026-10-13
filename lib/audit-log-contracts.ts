@@ -5,6 +5,7 @@ export type AuditActionType =
   | "transaction_created"
   | "transaction_updated"
   | "transaction_voided"
+  | "transaction_deleted"
   | "status_changed"
   | "claim_scanned"
   | "claim_verified"

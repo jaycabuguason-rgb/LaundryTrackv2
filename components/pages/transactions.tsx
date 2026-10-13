@@ -67,7 +67,7 @@ import {
 } from "@/components/ui/select";
 import { loyaltyMembers as _seedMembers, statusOrder, type Transaction, type PaymentStatus, type LoyaltyMember } from "@/lib/data";
 import { useLoyaltyMembers } from "@/hooks/use-loyalty-members";
-import { formatReadableDateTime, formatLifecycleDateTime } from "@/lib/date-format";
+import { formatReadableDateTime, formatReadableTime, formatLifecycleDateTime } from "@/lib/date-format";
 import {
   type ServiceType,
   type AddOn,
@@ -1295,6 +1295,8 @@ export default function TransactionsPage({
     | "newest-voided"
     | "oldest-voided";
   const [sortBy, setSortBy] = useState<SortOption>("newest");
+  type GroupByOption = "date" | "none";
+  const [groupBy, setGroupBy] = useState<GroupByOption>("date");
   const [activeTab, setActiveTab] = useState<"transactions" | "all" | "claimed" | "voided">("transactions");
 
   const [enablePaymentOption, setEnablePaymentOption] = useState<boolean>(
@@ -1361,6 +1363,12 @@ export default function TransactionsPage({
     } catch {
       return dateStr;
     }
+  }
+
+  function formatTimeDisplay(dateStr?: string): string | null {
+    if (!dateStr) return null;
+    const time = formatReadableTime(dateStr);
+    return time || null;
   }
 
   function getTerminalLifecycleInfo(txn: Transaction): { label: string; dateText: string } | null {
@@ -2007,6 +2015,66 @@ export default function TransactionsPage({
   const totalFilteredRevenue = filtered.reduce((acc, t) => acc + (t.status === "Voided" ? 0 : t.fee), 0);
   const totalFilteredWeight = filtered.reduce((acc, t) => acc + (t.status === "Voided" ? 0 : (t.weight || 0)), 0);
 
+  interface TransactionDateGroup {
+    dateKey: string;
+    displayDate: string;
+    isToday: boolean;
+    isYesterday: boolean;
+    totalFee: number;
+    totalOrders: number;
+    transactions: Transaction[];
+  }
+
+  const groupedTransactions = useMemo<TransactionDateGroup[]>(() => {
+    if (groupBy === "none") {
+      return [{
+        dateKey: "all",
+        displayDate: "",
+        isToday: false,
+        isYesterday: false,
+        totalFee: totalFilteredRevenue,
+        totalOrders: totalFilteredOrders,
+        transactions: filtered,
+      }];
+    }
+
+    const todayKey = format(new Date(), "yyyy-MM-dd");
+    const yesterdayDate = new Date();
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+    const yesterdayKey = format(yesterdayDate, "yyyy-MM-dd");
+
+    const groupMap = new Map<string, Transaction[]>();
+    for (const txn of filtered) {
+      const key = txn.dropOffDate || (txn.arrivalDateTime ? txn.arrivalDateTime.split(/[ T]/)[0] : "unknown");
+      if (!groupMap.has(key)) {
+        groupMap.set(key, []);
+      }
+      groupMap.get(key)!.push(txn);
+    }
+
+    return Array.from(groupMap.entries()).map(([dateKey, txns]) => {
+      let displayDate = dateKey;
+      try {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
+          const d = new Date(`${dateKey}T00:00:00`);
+          displayDate = format(d, "MMMM d, yyyy");
+        }
+      } catch {
+        displayDate = dateKey;
+      }
+
+      return {
+        dateKey,
+        displayDate,
+        isToday: dateKey === todayKey,
+        isYesterday: dateKey === yesterdayKey,
+        totalFee: txns.reduce((acc, t) => acc + (t.status === "Voided" ? 0 : t.fee), 0),
+        totalOrders: txns.length,
+        transactions: txns,
+      };
+    });
+  }, [filtered, groupBy, totalFilteredOrders, totalFilteredRevenue]);
+
   const isAllFilteredSelected = filtered.length > 0 && filtered.every((t) => selectedTicketIds.has(t.ticketId));
 
   const toggleSelectAllFiltered = () => {
@@ -2541,6 +2609,22 @@ export default function TransactionsPage({
               </SelectContent>
             </Select>
 
+            {/* Group Chip */}
+            <Select value={groupBy} onValueChange={(v) => setGroupBy(v as GroupByOption)}>
+              <SelectTrigger className={cn(
+                "h-8 px-2.5 rounded-full text-xs font-semibold shrink-0 gap-1 shadow-xs border",
+                groupBy === "date"
+                  ? "bg-secondary/15 border-secondary/30 text-foreground"
+                  : "bg-card border-border/80 text-foreground"
+              )}>
+                <SelectValue placeholder="Group" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="date">Group by Date</SelectItem>
+                <SelectItem value="none">No Grouping</SelectItem>
+              </SelectContent>
+            </Select>
+
             {/* Date Chip */}
             <Popover>
               <PopoverTrigger asChild>
@@ -2627,7 +2711,21 @@ export default function TransactionsPage({
 
         {/* Mobile Interactive Orders Stream */}
         <div className="space-y-3 pt-1">
-          {filtered.map((txn) => {
+          {groupedTransactions.map((group) => (
+            <div key={`group-mobile-${group.dateKey}`} className="space-y-2.5">
+              {groupBy === "date" && group.displayDate && (
+                <div className="flex items-center gap-2 pt-2.5 pb-1 px-1">
+                  <CalendarIcon className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span className="text-xs font-bold text-foreground">
+                    {group.isToday ? `Today • ${group.displayDate}` : group.isYesterday ? `Yesterday • ${group.displayDate}` : group.displayDate}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground font-medium">
+                    ({group.totalOrders} {group.totalOrders === 1 ? "order" : "orders"} • ₱{group.totalFee.toLocaleString()})
+                  </span>
+                  <div className="flex-1 h-px bg-border/60 ml-1" />
+                </div>
+              )}
+              {group.transactions.map((txn) => {
             const isVoided = txn.status === "Voided";
             const isClaimed = txn.status === "Claimed";
             const terminalInfo = getTerminalLifecycleInfo(txn);
@@ -2727,8 +2825,8 @@ export default function TransactionsPage({
 
                             <div className="flex items-center gap-2 text-xs text-muted-foreground pt-0.5 flex-wrap">
                               <StatusBadge status={txn.status} className="scale-90 origin-left" />
-                              <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                                <Clock className="w-3 h-3 text-muted-foreground/60" />
+                              <span className="flex items-center gap-1 leading-tight font-medium text-[11px] text-muted-foreground">
+                                <Clock className="w-3 h-3 text-muted-foreground/60 shrink-0" />
                                 {formatDateDisplay(txn.arrivalDateTime || txn.dropOffDate)}
                               </span>
                             </div>
@@ -2817,6 +2915,17 @@ export default function TransactionsPage({
                             </div>
                           </div>
 
+                          {/* Key-Value Row 3: Intake / Drop-Off Time Below Service */}
+                          <div className="flex items-center justify-between gap-2 text-xs">
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                              <span className="text-muted-foreground w-12 shrink-0 font-medium">Time</span>
+                              <div className="flex items-center gap-1.5 text-foreground font-medium text-xs">
+                                <Clock className="w-3.5 h-3.5 text-muted-foreground/70 shrink-0" />
+                                <span>{formatTimeDisplay(txn.arrivalDateTime) || "—"}</span>
+                              </div>
+                            </div>
+                          </div>
+
                           {/* Lifecycle info (Claimed timestamp or Void reason) */}
                           {(terminalInfo || (isVoided && txn.voidReason)) && (
                             <div className="flex items-center justify-between gap-2 text-xs pt-0.5">
@@ -2885,7 +2994,9 @@ export default function TransactionsPage({
             {renderTransactionContextMenu(txn)}
           </ContextMenu>
         );
-          })}
+      })}
+    </div>
+  ))}
 
           {filtered.length === 0 && (
             <div className="bg-card border border-border rounded-2xl p-8 text-center">
@@ -3261,6 +3372,16 @@ export default function TransactionsPage({
                 </SelectContent>
               </Select>
 
+              <Select value={groupBy} onValueChange={(v) => setGroupBy(v as GroupByOption)}>
+                <SelectTrigger className="w-full sm:w-[155px] h-10 md:h-9 text-sm">
+                  <SelectValue placeholder="Group by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="date">Group by Date</SelectItem>
+                  <SelectItem value="none">No Grouping</SelectItem>
+                </SelectContent>
+              </Select>
+
               {hasActiveFilters && (
                 <Button
                   variant="ghost"
@@ -3320,7 +3441,23 @@ export default function TransactionsPage({
 
         {/* Clean Transaction Card Rows matching Concept */}
         <div className="space-y-2.5">
-          {filtered.map((txn) => {
+          {groupedTransactions.map((group) => (
+            <div key={`group-desktop-${group.dateKey}`} className="space-y-2.5">
+              {groupBy === "date" && group.displayDate && (
+                <div className="flex items-center gap-3 pt-3 pb-1 first:pt-0">
+                  <div className="flex items-center gap-2 shrink-0">
+                    <CalendarIcon className="w-3.5 h-3.5 text-primary" />
+                    <span className="text-xs font-bold text-foreground">
+                      {group.isToday ? `Today • ${group.displayDate}` : group.isYesterday ? `Yesterday • ${group.displayDate}` : group.displayDate}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground font-medium">
+                      ({group.totalOrders} {group.totalOrders === 1 ? "order" : "orders"} • ₱{group.totalFee.toLocaleString()})
+                    </span>
+                  </div>
+                  <div className="flex-1 h-px bg-border/60" />
+                </div>
+              )}
+              {group.transactions.map((txn) => {
             const isVoided = txn.status === "Voided";
             const isClaimed = txn.status === "Claimed";
             const terminalInfo = getTerminalLifecycleInfo(txn);
@@ -3540,9 +3677,14 @@ export default function TransactionsPage({
                     <p className={cn("text-sm font-bold text-foreground", isVoided && "line-through text-muted-foreground")}>
                       ₱{txn.fee.toLocaleString()}
                     </p>
-                    <p className="text-[11px] text-muted-foreground whitespace-nowrap mt-0.5">
+                    <p className="text-[11px] text-muted-foreground whitespace-nowrap mt-0.5 font-medium">
                       {formatDateDisplay(txn.arrivalDateTime || txn.dropOffDate)}
                     </p>
+                    {formatTimeDisplay(txn.arrivalDateTime) && (
+                      <p className="text-[10px] text-muted-foreground/75 whitespace-nowrap leading-tight mt-0.5">
+                        {formatTimeDisplay(txn.arrivalDateTime)}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -3550,7 +3692,9 @@ export default function TransactionsPage({
             {renderTransactionContextMenu(txn)}
           </ContextMenu>
         );
-          })}
+      })}
+    </div>
+  ))}
 
           {filtered.length === 0 && (
             <div className="bg-card border border-border rounded-xl p-10">
@@ -3627,9 +3771,14 @@ export default function TransactionsPage({
                   <span className="text-lg font-black text-foreground tabular-nums">
                     ₱{mobileActionTxn.fee.toLocaleString()}
                   </span>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                  <p className="text-[11px] text-muted-foreground mt-0.5 font-medium">
                     {formatDateDisplay(mobileActionTxn.arrivalDateTime || mobileActionTxn.dropOffDate)}
                   </p>
+                  {formatTimeDisplay(mobileActionTxn.arrivalDateTime) && (
+                    <p className="text-[10px] text-muted-foreground/75 mt-0.5">
+                      {formatTimeDisplay(mobileActionTxn.arrivalDateTime)}
+                    </p>
+                  )}
                 </div>
               </div>
 

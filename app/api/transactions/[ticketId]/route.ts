@@ -162,7 +162,7 @@ export async function DELETE(
       summary: `Permanently deleted transaction ${existing.ticketId}`,
       details: `Customer: ${existing.customerName} | Status: ${existing.status} | Total: ₱${(existing.fee ?? 0).toFixed(2)} | Deleted by Admin`,
       ticketId: existing.ticketId,
-      transactionId: existing.id,
+      transactionId: null,
       customerName: existing.customerName,
       paymentStatus: existing.paymentStatus,
       staffProfileId: actor?.id ?? null,
@@ -171,8 +171,11 @@ export async function DELETE(
       ipAddress: getRequestIp(request),
       metadata: {
         source: "api/transactions#delete",
+        deletedTransactionId: existing.id,
       },
-    }).catch(() => undefined);
+    }).catch((err) => {
+      console.error("Failed to create audit log for transaction deletion:", err);
+    });
 
     return NextResponse.json({ success: true, ticketId: existing.ticketId });
   } catch (error) {

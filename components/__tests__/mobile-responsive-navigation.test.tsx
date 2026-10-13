@@ -17,7 +17,12 @@ describe("Mobile Responsive Navigation & Modern Sidebar Dock", () => {
     expect(screen.getByText("Process")).toBeInTheDocument();
     expect(screen.getByText("New Order")).toBeInTheDocument();
     expect(screen.getByText("Records")).toBeInTheDocument();
-    expect(screen.getByText("Profile")).toBeInTheDocument();
+    expect(screen.getByText("Claim")).toBeInTheDocument();
+
+    const claimBtn = screen.getByText("Claim").closest("button");
+    expect(claimBtn).toBeInTheDocument();
+    fireEvent.click(claimBtn!);
+    expect(handleNavigate).toHaveBeenCalledWith("claim-verification");
 
     const newOrderBtn = screen.getByText("New Order").closest("button");
     expect(newOrderBtn).toBeInTheDocument();

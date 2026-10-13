@@ -47,6 +47,18 @@ const FALLBACK_AUDIT_LOGS: AuditLogEntry[] = [
     details: "Changed full wash rate from PHP 220 to PHP 250 | Add-on: Fabric conditioner set to PHP 30",
     ipAddress: "192.168.1.1",
   },
+  {
+    id: "AL-004",
+    timestamp: "2026-04-15T09:15:00",
+    staffName: "Admin",
+    staffRole: "Admin",
+    action: "transaction_deleted",
+    summary: "Permanently deleted transaction TKT-0005",
+    details: "Customer: Rosa Dela Cruz | Status: Ready | Total: ₱180.00 | Deleted by Admin",
+    ticketId: "TKT-0005",
+    customerName: "Rosa Dela Cruz",
+    ipAddress: "192.168.1.1",
+  },
 ];
 
 async function readJson<T>(response: Response): Promise<T> {

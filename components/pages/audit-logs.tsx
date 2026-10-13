@@ -57,6 +57,7 @@ function getLogCategory(action: AuditActionType): "transaction" | "auth" | "sett
 
 function getLogSeverity(entry: AuditLogEntry): "info" | "warning" | "error" {
   if (entry.action === "staff_deactivated") return "warning";
+  if (entry.action === "transaction_voided" || entry.action === "transaction_deleted") return "warning";
   if (entry.action === "transaction_updated" && entry.details?.toLowerCase().includes("void")) return "warning";
   if (entry.details?.toLowerCase().includes("failed") || entry.details?.toLowerCase().includes("error")) return "error";
   return "info";
@@ -188,7 +189,14 @@ function AuditTableRow({ entry }: { entry: AuditLogEntry }) {
 
         {/* Action */}
         <td className="px-4 py-3.5 font-medium text-xs text-foreground whitespace-nowrap">
-          {entry.summary || entry.action}
+          <div className="flex items-center gap-1.5">
+            {entry.action === "transaction_deleted" && (
+              <span className="inline-flex items-center rounded-md bg-destructive/10 px-1.5 py-0.5 text-[10px] font-bold text-destructive border border-destructive/20 shrink-0">
+                DELETED
+              </span>
+            )}
+            <span>{entry.summary || entry.action}</span>
+          </div>
         </td>
 
         {/* Details */}
@@ -264,9 +272,16 @@ function AuditMobileCard({ entry }: { entry: AuditLogEntry }) {
       {/* Main Row: Action Summary & Staff Actor */}
       <div className="flex items-start justify-between gap-2 pt-0.5">
         <div className="flex flex-col min-w-0 flex-1">
-          <h3 className="font-semibold text-sm text-foreground leading-tight break-words">
-            {entry.summary || entry.action}
-          </h3>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {entry.action === "transaction_deleted" && (
+              <span className="inline-flex items-center rounded-md bg-destructive/10 px-1.5 py-0.5 text-[10px] font-bold text-destructive border border-destructive/20 shrink-0">
+                DELETED
+              </span>
+            )}
+            <h3 className="font-semibold text-sm text-foreground leading-tight break-words">
+              {entry.summary || entry.action}
+            </h3>
+          </div>
           <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
             <User className="w-3.5 h-3.5 text-primary shrink-0" />
             <span className="font-medium text-foreground truncate">

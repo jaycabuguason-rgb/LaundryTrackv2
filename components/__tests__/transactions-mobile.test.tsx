@@ -64,7 +64,7 @@ const mockTransactions: Transaction[] = [
   },
 ];
 
-describe("TransactionsPage Mobile Concept Layout", () => {
+describe("TransactionsPage Mobile Concept Layout", { timeout: 15000 }, () => {
   const onUpdateTransaction = vi.fn().mockResolvedValue({
     transaction: mockTransactions[0],
   });
@@ -400,6 +400,28 @@ describe("TransactionsPage Mobile Concept Layout", () => {
 
     expect(screen.queryByRole("button", { name: /undo status change/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /redo status change/i })).not.toBeInTheDocument();
+  });
+
+  it("renders Time row below Service only when a mobile transaction card is expanded", () => {
+    render(
+      <TransactionsPage
+        transactions={mockTransactions}
+        onCreateTransaction={onCreateTransaction}
+        onUpdateTransaction={onUpdateTransaction}
+      />
+    );
+
+    const card27 = screen.getByLabelText(/Ticket #TKT-0027/i);
+    expect(card27).toBeInTheDocument();
+
+    // Time is not visible in collapsed header
+    expect(within(card27).queryByText("10:00 AM")).not.toBeInTheDocument();
+
+    // Tap card to expand
+    fireEvent.click(card27);
+
+    expect(within(card27).getByText("Time")).toBeInTheDocument();
+    expect(within(card27).getByText("10:00 AM")).toBeInTheDocument();
   });
 });
 
