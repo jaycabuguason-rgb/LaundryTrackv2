@@ -2,7 +2,8 @@ import "server-only";
 
 import { loyaltyMembers as seedMembers, type LoyaltyMember } from "@/lib/data";
 import { getPublicSupabaseConfig } from "@/lib/supabase/config";
-import { listTransactions, getBusinessProfile, getSettings, saveSettings } from "@/lib/server/laundry-repository";
+import { listTransactions, getBusinessProfile, getSettings } from "@/lib/server/laundry-repository";
+import { createAuditLog } from "@/lib/server/audit-log-repository";
 import type { PublicLoyaltyMemberRecord, PublicShopProfile } from "@/lib/transaction-contracts";
 import type { LoyaltySettings } from "@/lib/settings-store";
 
@@ -603,4 +604,95 @@ export async function getPublicLoyaltyMemberRecord(
     rewardHistory: member.rewardHistory || [],
     shopProfile,
   };
+}
+
+export async function redeemMemberReward(
+  memberId: string,
+  rewardDescription?: string,
+  staffInfo?: { name?: string; role?: "admin" | "staff" | null; id?: string | null }
+): Promise<LoyaltyMember> {
+  const settings = await getLoyaltySettings();
+  const rewardName = rewardDescription || settings.reward_description || "Free wash";
+  const nowIso = new Date().toISOString();
+  const todayDate = nowIso.split("T")[0];
+
+  if (!hasSupabaseConfig()) {
+    let target = mockMembers.find((m) => m.id === memberId);
+    if (!target) throw new Error("Member not found");
+
+    const newRedeemed = (target.rewardsRedeemed || 0) + 1;
+    const newRewardHistory = [
+      { date: todayDate, reward: rewardName },
+      ...(target.rewardHistory || []),
+    ];
+    const updated: LoyaltyMember = {
+      ...target,
+      rewardsRedeemed: newRedeemed,
+      rewardHistory: newRewardHistory,
+    };
+    mockMembers = mockMembers.map((m) => (m.id === memberId ? updated : m));
+
+    await createAuditLog({
+      action: "reward_redeemed",
+      summary: `Redeemed ${rewardName} for ${target.name}`,
+      details: `Member: ${target.name} | Phone: ${target.phone} | Total Stamps: ${target.stampCount}`,
+      customerName: target.name,
+      staffName: staffInfo?.name || "Staff",
+      staffRole: staffInfo?.role || "staff",
+      staffProfileId: staffInfo?.id ?? null,
+      metadata: {
+        source: "api/loyalty#redeem",
+        memberId,
+        reward: rewardName,
+      },
+    }).catch(() => undefined);
+
+    return updated;
+  }
+
+  // 1. Fetch current member from Supabase
+  const rows = await restRequest<LoyaltyMemberRow[]>(
+    `loyalty_members?id=eq.${encodeURIComponent(memberId)}&select=id,full_name,phone_number,stamp_count,rewards_redeemed,preferences,date_joined,created_at`
+  );
+  if (!rows || rows.length === 0) throw new Error("Member not found");
+  const row = rows[0];
+  const newRedeemed = (row.rewards_redeemed || 0) + 1;
+
+  // 2. Update member rewards_redeemed
+  await restRequest(`loyalty_members?id=eq.${encodeURIComponent(memberId)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ rewards_redeemed: newRedeemed }),
+  });
+
+  // 3. Insert into reward_history
+  try {
+    await restRequest(`reward_history`, {
+      method: "POST",
+      body: JSON.stringify({
+        member_id: memberId,
+        reward_type: rewardName,
+        redeemed_at: nowIso,
+      }),
+    });
+  } catch {
+    // Non-fatal if table schema differs
+  }
+
+  // 4. Audit Log
+  await createAuditLog({
+    action: "reward_redeemed",
+    summary: `Redeemed ${rewardName} for ${row.full_name || "Member"}`,
+    details: `Member: ${row.full_name} | Phone: ${row.phone_number} | Total Stamps: ${row.stamp_count}`,
+    customerName: row.full_name,
+    staffName: staffInfo?.name || "Staff",
+    staffRole: staffInfo?.role || "staff",
+    staffProfileId: staffInfo?.id ?? null,
+    metadata: {
+      source: "api/loyalty#redeem",
+      memberId,
+      reward: rewardName,
+    },
+  }).catch(() => undefined);
+
+  return await getLoyaltyMemberWithHistory(memberId);
 }

@@ -12,6 +12,8 @@ import {
   Gift,
   Award,
   Check,
+  RefreshCw,
+  RotateCcw,
   Sparkles,
   CheckCircle2,
   LayoutGrid,
@@ -56,6 +58,15 @@ import {
   type LoyaltySettings,
 } from "@/lib/settings-store";
 
+function formatLastUpdated(date: Date): string {
+  const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (diffSec < 5) return "just now";
+  if (diffSec < 60) return `${diffSec}s ago`;
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
 function getInitials(name: string) {
   return name
     .split(" ")
@@ -63,6 +74,27 @@ function getInitials(name: string) {
     .join("")
     .slice(0, 2)
     .toUpperCase();
+}
+
+function calculateLoyaltyRewardStatus(stampCount: number = 0, washesPerReward: number = 7, rewardsRedeemed: number = 0) {
+  const safeWashes = Math.max(1, washesPerReward);
+  const totalStamps = stampCount || 0;
+  const currentCycleStamps = totalStamps % safeWashes;
+  const totalEarnedRewards = Math.floor(totalStamps / safeWashes);
+  const safeRedeemed = rewardsRedeemed || 0;
+  const pendingRewards = Math.max(0, totalEarnedRewards - safeRedeemed);
+  const stampsUntilNextReward = safeWashes - currentCycleStamps;
+  const progressPct = Math.min(100, (currentCycleStamps / safeWashes) * 100);
+
+  return {
+    totalStamps,
+    currentCycleStamps,
+    totalEarnedRewards,
+    rewardsRedeemed: safeRedeemed,
+    pendingRewards,
+    stampsUntilNextReward,
+    progressPct,
+  };
 }
 
 function StampDots({ count, max = 7 }: { count: number; max?: number }) {
@@ -97,164 +129,253 @@ function StampDots({ count, max = 7 }: { count: number; max?: number }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Mobile Tactile Member Card
+// Member Loyalty Card (Redesigned with Stamp Cycles, Metrics & Pending Alerts)
 // ─────────────────────────────────────────────────────────────────────────────
 function MobileLoyaltyMemberCard({
   member,
   washesPerReward,
-  rewardName,
+  rewardName = "Free wash",
   saving,
+  transactions,
   onSelect,
   onEdit,
   onDelete,
+  onClaimReward,
   onQr,
   onAddStamp,
 }: {
   member: LoyaltyMember;
   washesPerReward: number;
-  rewardName: string;
+  rewardName?: string;
   saving: boolean;
+  transactions?: Transaction[];
   onSelect: (m: LoyaltyMember) => void;
   onEdit: (m: LoyaltyMember) => void;
   onDelete: (m: LoyaltyMember) => void;
-  onQr: (m: LoyaltyMember) => void;
+  onClaimReward?: (m: LoyaltyMember) => void;
+  onQr?: (m: LoyaltyMember) => void;
   onAddStamp: (m: LoyaltyMember, count: number) => void;
 }) {
-  const currentStamps = member.stampCount % washesPerReward;
-  const stampsUntilReward = washesPerReward - currentStamps;
-  const pct = Math.min(100, (currentStamps / washesPerReward) * 100);
-  const isFrequent = member.stampCount >= Math.ceil(washesPerReward / 2);
+  const totalStamps = member.stampCount || 0;
+  const currentCycleStamps = totalStamps % washesPerReward;
+  const totalEarned = Math.floor(totalStamps / washesPerReward);
+  const redeemed = member.rewardsRedeemed || 0;
+  const pendingRewards = Math.max(0, totalEarned - redeemed);
+  const pct = Math.min(100, Math.round((currentCycleStamps / washesPerReward) * 100));
+
+  const effectiveTxns = transactions && transactions.length > 0 ? transactions : seedTransactions;
+  const memberPhoneClean = (member.phone || "").replace(/\D/g, "");
+  const memberNameLower = member.name.trim().toLowerCase();
+  const memberTxns = effectiveTxns.filter((t) => {
+    const tPhoneClean = (t.phone || "").replace(/\D/g, "");
+    if (memberPhoneClean && tPhoneClean && memberPhoneClean === tPhoneClean) return true;
+    if (t.customerName && t.customerName.trim().toLowerCase() === memberNameLower) return true;
+    return false;
+  });
+  const totalKg = memberTxns.reduce((acc, t) => acc + (t.weight || 0), 0);
+  const totalVisits = Math.max(memberTxns.length, totalStamps);
 
   return (
     <div
-      className="bg-card rounded-2xl p-4 border border-border/70 shadow-xs flex flex-col gap-3 transition-all"
+      className="bg-card rounded-2xl p-4 border border-border/80 shadow-xs flex flex-col gap-3 transition-all hover:border-primary/50 group"
       data-name={member.name}
       data-phone={member.phone || ""}
     >
-      {/* Top row: Avatar, Name + Frequent tag, Phone, Edit & Delete */}
+      {/* Top row: Avatar, Name & Phone, Amber Badge */}
       <div className="flex items-start justify-between gap-3">
         <div
           className="flex items-center gap-3 min-w-0 cursor-pointer flex-1"
           onClick={() => onSelect(member)}
         >
-          <div className="w-11 h-11 rounded-full bg-primary/10 text-primary border border-primary/20 font-bold flex items-center justify-center text-sm shrink-0 shadow-xs">
+          <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground font-bold flex items-center justify-center text-sm shrink-0 shadow-xs">
             {getInitials(member.name)}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="font-bold text-sm text-foreground truncate">
-                {member.name}
-              </span>
-              {isFrequent && (
-                <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold text-[10px] tracking-wide uppercase">
-                  Frequent
-                </span>
-              )}
-            </div>
+            <h3 className="font-bold text-sm text-foreground truncate group-hover:text-primary transition-colors">
+              {member.name}
+            </h3>
             <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-              <Phone className="w-3.5 h-3.5 shrink-0" />
+              <Phone className="w-3 h-3 shrink-0" />
               <span className="truncate">{member.phone || "No phone"}</span>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-1 shrink-0">
-          <button
-            type="button"
-            aria-label={`Edit ${member.name}`}
-            onClick={() => onEdit(member)}
-            className="w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors flex items-center justify-center cursor-pointer"
-          >
-            <Edit className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            aria-label={`Delete ${member.name}`}
-            onClick={() => onDelete(member)}
-            className="w-8 h-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors flex items-center justify-center cursor-pointer"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
+        {/* Amber cycle count badge */}
+        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 px-2 py-0.5 text-xs font-semibold shrink-0">
+          <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+          {currentCycleStamps}/{washesPerReward}
+        </span>
       </div>
 
-      {/* Stamp Progress Section */}
-      <div
-        className="bg-muted/40 rounded-xl p-3 space-y-2 cursor-pointer hover:bg-muted/60 transition-colors"
-        onClick={() => onSelect(member)}
-      >
+      {/* Loyalty Progress Bar & Indicator */}
+      <div className="space-y-1.5 cursor-pointer" onClick={() => onSelect(member)}>
         <div className="flex items-center justify-between text-xs">
-          <div className="flex items-center gap-1 text-primary font-bold">
-            <Star className="w-3.5 h-3.5 fill-current text-primary" />
-            <span>
-              {currentStamps} / {washesPerReward} Stamps
+          <span className="text-muted-foreground font-medium">Loyalty Progress</span>
+          <div className="flex items-center gap-1.5 font-semibold">
+            {pendingRewards > 0 && (
+              <span className="inline-block w-2 h-2 rounded-full bg-red-500 animate-pulse" title="Pending reward waiting to claim!" />
+            )}
+            <span className={pendingRewards > 0 ? "text-primary font-bold" : "text-muted-foreground"}>
+              {currentCycleStamps} / {washesPerReward}
             </span>
           </div>
-          <span className="text-muted-foreground font-medium text-[11px]">
-            {member.rewardsRedeemed} Rewards Claimed
-          </span>
         </div>
-
-        {/* Progress track */}
-        <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+        <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
           <div
-            className="h-full bg-primary rounded-full transition-all duration-300"
+            className="bg-primary h-full transition-all duration-300 rounded-full"
             style={{ width: `${pct}%` }}
           />
         </div>
+      </div>
 
-        <div className="flex justify-between items-center text-[11px] text-muted-foreground">
-          <span>
-            {stampsUntilReward <= 0
-              ? "Reward Unlocked! 🎉"
-              : currentStamps >= Math.ceil(washesPerReward / 2)
-              ? "Halfway to next perk!"
-              : currentStamps > 0
-              ? "Started journey"
-              : "Fresh enrollment"}
-          </span>
-          <span>
-            {stampsUntilReward <= 0
-              ? "Ready to claim"
-              : `${stampsUntilReward} more to ${rewardName.toLowerCase()}`}
-          </span>
+      {/* Stamp Circles Row (Wash cycle stages) */}
+      <div className="flex items-center justify-between gap-1.5 py-1">
+        {Array.from({ length: washesPerReward }).map((_, i) => {
+          const isEarned = i < currentCycleStamps;
+          return (
+            <div
+              key={i}
+              className={cn(
+                "w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all",
+                isEarned
+                  ? "bg-primary text-primary-foreground shadow-xs"
+                  : "bg-muted/40 border border-border text-muted-foreground/40"
+              )}
+              title={isEarned ? `Wash #${i + 1} completed` : `Wash #${i + 1} pending`}
+            >
+              {isEarned ? (
+                <Star className="w-3.5 h-3.5 fill-current" />
+              ) : (
+                <Star className="w-3.5 h-3.5" />
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 3 Metrics Strip: Visits, kg Washed, Rewards */}
+      <div className="grid grid-cols-3 gap-2 py-2 border-t border-b border-border/50 text-center">
+        <div className="flex flex-col items-center">
+          <div className="flex items-center gap-1 text-[11px] text-muted-foreground font-medium">
+            <RotateCcw className="w-3 h-3 text-muted-foreground/70" />
+            <span>Visits</span>
+          </div>
+          <span className="text-sm font-bold text-foreground mt-0.5">{totalVisits}</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <div className="flex items-center gap-1 text-[11px] text-muted-foreground font-medium">
+            <Package className="w-3 h-3 text-muted-foreground/70" />
+            <span>kg Washed</span>
+          </div>
+          <span className="text-sm font-bold text-foreground mt-0.5">{totalKg}</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <div className="flex items-center gap-1 text-[11px] text-muted-foreground font-medium">
+            <Gift className="w-3 h-3 text-muted-foreground/70" />
+            <span>Rewards</span>
+          </div>
+          <span className="text-sm font-bold text-foreground mt-0.5">{redeemed}</span>
         </div>
       </div>
 
-      {/* Quick Action Buttons (3-button strip) */}
-      <div className="flex items-center gap-1.5 pt-0.5">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          aria-label={`View QR status for ${member.name}`}
-          onClick={() => onQr(member)}
-          className="h-9 px-3 text-xs rounded-xl gap-1 shrink-0"
-        >
-          <QrCode className="w-3.5 h-3.5 text-primary" />
-          <span>QR</span>
-        </Button>
+      {/* Pending Reward Alert Banner (if pendingRewards > 0) */}
+      {pendingRewards > 0 && (
+        <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-2.5 flex items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <Gift className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <span className="font-semibold text-emerald-800 dark:text-emerald-300 truncate">
+              {pendingRewards} Reward{pendingRewards > 1 ? "s" : ""} Ready!
+            </span>
+          </div>
+          {onClaimReward && (
+            <Button
+              size="sm"
+              className="h-7 px-2.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-xs cursor-pointer shrink-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClaimReward(member);
+              }}
+              disabled={saving}
+            >
+              <Sparkles className="w-3 h-3 mr-1" /> Claim
+            </Button>
+          )}
+        </div>
+      )}
 
+      {/* Quick Utility Actions (QR, View Details, Add Stamp) */}
+      <div className="flex items-center gap-1.5 pt-0.5">
+        {onQr && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            aria-label={`View QR status for ${member.name}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onQr(member);
+            }}
+            className="h-8 px-2.5 text-xs rounded-lg gap-1 shrink-0"
+          >
+            <QrCode className="w-3.5 h-3.5 text-primary" />
+            <span>QR</span>
+          </Button>
+        )}
         <Button
           type="button"
           variant="outline"
           size="sm"
           onClick={() => onSelect(member)}
-          className="h-9 flex-1 text-xs rounded-xl gap-1"
+          className="h-8 flex-1 text-xs rounded-lg gap-1"
         >
           <History className="w-3.5 h-3.5 text-muted-foreground" />
           <span>View Details</span>
         </Button>
-
         <Button
           type="button"
           size="sm"
-          onClick={() => onAddStamp(member, 1)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onAddStamp(member, 1);
+          }}
           disabled={saving}
-          className="h-9 px-3 text-xs bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-xl gap-1 shrink-0 cursor-pointer"
+          className="h-8 px-3 text-xs bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-lg gap-1 shrink-0 cursor-pointer"
         >
           <Plus className="w-3.5 h-3.5" />
           <span>Add Stamp</span>
+        </Button>
+      </div>
+
+      {/* Primary Action Buttons: Edit & Delete (Side-by-side) */}
+      <div className="grid grid-cols-2 gap-2 pt-0.5">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          aria-label={`Edit ${member.name}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(member);
+          }}
+          className="h-8 text-xs font-semibold text-foreground border-border hover:bg-muted/50 gap-1.5 cursor-pointer"
+        >
+          <Edit className="w-3.5 h-3.5" />
+          <span>Edit</span>
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          aria-label={`Delete ${member.name}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(member);
+          }}
+          className="h-8 text-xs font-semibold text-destructive border-border hover:bg-destructive/10 hover:border-destructive/30 gap-1.5 cursor-pointer"
+        >
+          <Trash2 className="w-3.5 h-3.5 text-destructive" />
+          <span>Delete</span>
         </Button>
       </div>
     </div>
@@ -286,6 +407,32 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
   const [copiedLink, setCopiedLink] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Refresh button state (identical to transactions page)
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [justRefreshed, setJustRefreshed] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date>(() => new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setLastUpdated((prev) => new Date(prev));
+    }, 15000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const handleManualRefresh = async () => {
+    if (loading || isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await refetch();
+      setLastUpdated(new Date());
+      setJustRefreshed(true);
+      setTimeout(() => setJustRefreshed(false), 900);
+    } catch {
+      // silently handle
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Undo / Redo Stamp stack
   const [undoStack, setUndoStack] = useState<Array<{ memberId: string; stamps: number }>>([]);
@@ -298,6 +445,20 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
 
   const washesPerReward = parseInt(loyaltyConfig.washesPerReward) || 7;
   const rewardName = loyaltyConfig.rewardDescription || "Free wash";
+
+  // Pending rewards calculation across all members
+  const membersWithPendingRewards = useMemo(() => {
+    return members
+      .map((m) => {
+        const status = calculateLoyaltyRewardStatus(m.stampCount, washesPerReward, m.rewardsRedeemed);
+        return { member: m, ...status };
+      })
+      .filter((item) => item.pendingRewards > 0);
+  }, [members, washesPerReward]);
+
+  const totalPendingRewardsCount = useMemo(() => {
+    return membersWithPendingRewards.reduce((sum, item) => sum + item.pendingRewards, 0);
+  }, [membersWithPendingRewards]);
 
   async function getAuthHeaders(extra: Record<string, string> = {}) {
     let accessToken = await getBrowserAccessToken();
@@ -424,6 +585,7 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
     setSaving(true);
     const targetMemberId = member.id;
     try {
+      const prevStatus = calculateLoyaltyRewardStatus(member.stampCount, washesPerReward, member.rewardsRedeemed);
       const headers = await getAuthHeaders({ "Content-Type": "application/json" });
       const res = await fetch(`/api/loyalty/${targetMemberId}/stamps`, {
         method: "POST",
@@ -435,7 +597,30 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
         throw new Error(errJson.error || `Server returned error (${res.status})`);
       }
       const json = await res.json();
-      toast({ title: `+${stamps} stamp added to ${member.name}!` });
+      const updatedMember = (json.member as LoyaltyMember | undefined) || {
+        ...member,
+        stampCount: (member.stampCount || 0) + stamps,
+      };
+      const newStatus = calculateLoyaltyRewardStatus(
+        updatedMember.stampCount,
+        washesPerReward,
+        updatedMember.rewardsRedeemed ?? member.rewardsRedeemed
+      );
+
+      if (newStatus.pendingRewards > prevStatus.pendingRewards) {
+        toast({
+          title: `🎉 Reward Unlocked for ${member.name}!`,
+          description: `+${stamps} stamp added! ${newStatus.pendingRewards} reward${newStatus.pendingRewards > 1 ? "s" : ""} ready to claim in Rewards page.`,
+        });
+      } else if (newStatus.pendingRewards > 0) {
+        toast({
+          title: `+${stamps} stamp added to ${member.name}!`,
+          description: `Reminder: Customer still has ${newStatus.pendingRewards} pending reward ready to claim.`,
+        });
+      } else {
+        toast({ title: `+${stamps} stamp added to ${member.name}!` });
+      }
+
       setUndoStack((prev) => [...prev, { memberId: targetMemberId, stamps }]);
       setRedoStack([]);
       refetch();
@@ -597,13 +782,60 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
     }
   }
 
+  async function handleClaimReward(member: LoyaltyMember) {
+    if (saving) return;
+    setSaving(true);
+    try {
+      const headers = await getAuthHeaders({ "Content-Type": "application/json" });
+      const res = await fetch(`/api/loyalty/${member.id}/redeem`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ rewardDescription: rewardName }),
+      });
+      if (!res.ok) {
+        const errJson = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(errJson.error || "Failed to redeem reward");
+      }
+      const json = await res.json();
+      toast({
+        title: "🎉 Reward Claimed Successfully!",
+        description: `${member.name} has claimed their ${rewardName}.`,
+      });
+      refetch();
+
+      if (json.member) {
+        if (selected && selected.id === member.id) {
+          setSelected(json.member);
+        }
+      } else {
+        const memberRes = await fetch(`/api/loyalty/${member.id}`, { headers });
+        if (memberRes.ok) {
+          const memberData = await memberRes.json();
+          if (memberData.member && selected && selected.id === member.id) {
+            setSelected(memberData.member);
+          }
+        }
+      }
+    } catch (err: unknown) {
+      toast({
+        title: "Failed to claim reward",
+        description: err instanceof Error ? err.message : "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  }
+
   // ─────────────────────────────────────────────────────────────────────────────
   // MEMBER DRILLDOWN VIEW (Step 2)
   // ─────────────────────────────────────────────────────────────────────────────
   if (selected) {
-    const currentCycleStamps = selected.stampCount % washesPerReward;
-    const stampsUntilReward = washesPerReward - currentCycleStamps;
-    const progressPct = Math.min(100, (currentCycleStamps / washesPerReward) * 100);
+    const status = calculateLoyaltyRewardStatus(selected.stampCount, washesPerReward, selected.rewardsRedeemed);
+    const currentCycleStamps = status.currentCycleStamps;
+    const stampsUntilReward = status.stampsUntilNextReward;
+    const progressPct = status.progressPct;
+    const pendingRewards = status.pendingRewards;
     const canUndo = undoStack.some((a) => a.memberId === selected.id);
     const canRedo = redoStack.some((a) => a.memberId === selected.id);
 
@@ -679,6 +911,11 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
                   <span className="inline-flex items-center rounded-full bg-primary/10 text-primary border border-primary/20 px-2.5 py-0.5 text-xs font-semibold">
                     {currentCycleStamps}/{washesPerReward} stamps
                   </span>
+                  {pendingRewards > 0 && (
+                    <span className="inline-flex items-center rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 text-xs font-bold animate-pulse">
+                      🎁 {pendingRewards} Pending Reward{pendingRewards > 1 ? "s" : ""}
+                    </span>
+                  )}
                   <span className="inline-flex items-center rounded-full bg-muted text-muted-foreground px-2.5 py-0.5 text-xs font-semibold">
                     {selected.rewardsRedeemed} rewards
                   </span>
@@ -730,6 +967,33 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
             </div>
           </CardContent>
         </Card>
+
+        {/* Pending Reward Alert Banner for Selected Member */}
+        {pendingRewards > 0 && (
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0">
+                <Gift className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-foreground">
+                  🎉 {pendingRewards} Reward{pendingRewards > 1 ? "s" : ""} Ready to Claim!
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Customer is eligible for <span className="font-semibold text-foreground">{rewardName}</span>. Wash progress continues uninterrupted ({currentCycleStamps}/{washesPerReward} in current cycle).
+                </p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              onClick={() => handleClaimReward(selected)}
+              disabled={saving}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 px-4 rounded-lg shadow-xs cursor-pointer gap-1.5 self-start sm:self-auto shrink-0"
+            >
+              <Sparkles className="w-3.5 h-3.5" /> Claim Reward
+            </Button>
+          </div>
+        )}
 
         {/* Current Cycle Progress Card */}
         <Card className="border border-border shadow-xs bg-card">
@@ -940,16 +1204,37 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
             <h1 className="text-xl font-bold tracking-tight text-foreground">Members & Rewards</h1>
             <p className="text-xs text-muted-foreground mt-0.5">Manage customer loyalty points, rewards, and program rules</p>
           </div>
-          {activeTab === "members" && (
+          <div className="flex items-center gap-1.5 shrink-0">
             <Button
-              size="sm"
-              onClick={() => setAddModal(true)}
-              className="h-9 px-3.5 rounded-full bg-primary text-primary-foreground font-semibold text-xs shadow-xs gap-1.5 shrink-0 hover:bg-primary/90 cursor-pointer"
+              type="button"
+              variant="outline"
+              size="icon"
+              className={cn(
+                "w-9 h-9 rounded-full bg-secondary/10 border-border text-foreground hover:bg-secondary/20 shadow-xs cursor-pointer transition-all duration-300",
+                justRefreshed && "border-primary/60 ring-2 ring-primary/25 bg-primary/10 text-primary"
+              )}
+              onClick={() => void handleManualRefresh()}
+              disabled={loading || isRefreshing}
+              aria-label="Refresh loyalty"
+              title={isRefreshing ? "Refreshing…" : justRefreshed ? "Updated!" : `Last updated: ${formatLastUpdated(lastUpdated)}`}
             >
-              <UserPlus className="w-4 h-4" />
-              <span>Add Member</span>
+              {justRefreshed ? (
+                <Check className="h-4 w-4 text-primary animate-in fade-in zoom-in-75 duration-200" />
+              ) : (
+                <RefreshCw className={cn("h-4 w-4", (loading || isRefreshing) && "animate-spin text-primary")} />
+              )}
             </Button>
-          )}
+            {activeTab === "members" && (
+              <Button
+                size="sm"
+                onClick={() => setAddModal(true)}
+                className="h-9 px-3.5 rounded-full bg-primary text-primary-foreground font-semibold text-xs shadow-xs gap-1.5 shrink-0 hover:bg-primary/90 cursor-pointer"
+              >
+                <UserPlus className="w-4 h-4" />
+                <span>Add Member</span>
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Segmented Navigation Tabs */}
@@ -982,6 +1267,11 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
           >
             <Award className="w-3.5 h-3.5 text-primary" />
             <span>Rewards & Rules</span>
+            {totalPendingRewardsCount > 0 && (
+              <span className="ml-1 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/40 px-1.5 py-0.2 text-[10px] font-bold animate-pulse">
+                {totalPendingRewardsCount} Ready
+              </span>
+            )}
           </button>
         </div>
 
@@ -1109,12 +1399,14 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
                     member={member}
                     washesPerReward={washesPerReward}
                     rewardName={rewardName}
+                    transactions={transactions}
                     saving={saving}
                     onSelect={setSelected}
                     onEdit={setEditModal}
                     onDelete={setDeleteModal}
                     onQr={setQrModal}
                     onAddStamp={handleDirectAddStamp}
+                    onClaimReward={handleClaimReward}
                   />
                 ))}
               </div>
@@ -1174,6 +1466,65 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
         ) : (
           /* Mobile Rewards & Rules Tab */
           <div className="space-y-4">
+            {/* Rewards Ready for Claiming Section */}
+            <Card className="border border-border shadow-xs bg-card">
+              <CardHeader className="pb-3 border-b border-border/60">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-emerald-500" /> Rewards Ready for Claiming
+                    </CardTitle>
+                    <CardDescription className="text-xs mt-0.5">
+                      Members who reached their wash milestones
+                    </CardDescription>
+                  </div>
+                  {totalPendingRewardsCount > 0 && (
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                      {totalPendingRewardsCount} Ready
+                    </span>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="p-3 sm:p-4 space-y-2.5">
+                {membersWithPendingRewards.length === 0 ? (
+                  <div className="text-center py-6 px-4">
+                    <Gift className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+                    <p className="text-xs font-semibold text-foreground">No rewards waiting to be claimed</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      When members complete {washesPerReward} washes, their rewards will automatically appear here!
+                    </p>
+                  </div>
+                ) : (
+                  membersWithPendingRewards.map(({ member, pendingRewards, currentCycleStamps }) => (
+                    <div
+                      key={member.id}
+                      className="border border-emerald-500/30 rounded-xl p-3 bg-emerald-500/5 flex items-center justify-between gap-3"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-9 h-9 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold flex items-center justify-center text-xs shrink-0">
+                          {getInitials(member.name)}
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="font-bold text-xs text-foreground truncate">{member.name}</h4>
+                          <p className="text-[11px] text-emerald-700 dark:text-emerald-300 font-medium">
+                            🎁 {pendingRewards} {rewardName}{pendingRewards > 1 ? "s" : ""} ready ({currentCycleStamps}/{washesPerReward} in cycle)
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => handleClaimReward(member)}
+                        disabled={saving}
+                        className="h-8 px-3 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-xs cursor-pointer gap-1 shrink-0"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" /> Claim
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+
             {/* Active Reward Perks */}
             <Card className="border border-border shadow-xs bg-card">
               <CardHeader className="pb-3 border-b border-border/60">
@@ -1215,15 +1566,39 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
             <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">Members & Rewards</h1>
             <p className="text-xs text-muted-foreground sm:text-sm mt-0.5">Manage customer loyalty points, rewards, and program rules</p>
           </div>
-          {activeTab === "members" && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              Last updated: {formatLastUpdated(lastUpdated)}
+            </span>
             <Button
+              type="button"
+              variant="outline"
               size="sm"
-              onClick={() => setAddModal(true)}
-              className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs cursor-pointer"
+              onClick={() => void handleManualRefresh()}
+              disabled={loading || isRefreshing}
+              className={cn(
+                "h-9 gap-1.5 text-xs cursor-pointer transition-all duration-300",
+                justRefreshed && "border-primary/60 ring-2 ring-primary/25 bg-primary/10 text-primary font-semibold shadow-xs"
+              )}
+              aria-label="Refresh"
             >
-              <Plus className="w-4 h-4" /> Add Member
+              {justRefreshed ? (
+                <Check className="h-3.5 w-3.5 text-primary animate-in fade-in zoom-in-75 duration-200" />
+              ) : (
+                <RefreshCw className={cn("h-3.5 w-3.5", (loading || isRefreshing) && "animate-spin text-primary")} />
+              )}
+              <span>{isRefreshing ? "Refreshing…" : justRefreshed ? "Updated!" : "Refresh"}</span>
             </Button>
-          )}
+            {activeTab === "members" && (
+              <Button
+                size="sm"
+                onClick={() => setAddModal(true)}
+                className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs cursor-pointer"
+              >
+                <Plus className="w-4 h-4" /> Add Member
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Tabs */}
@@ -1240,13 +1615,18 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
           </button>
           <button
             onClick={() => setActiveTab("rewards")}
-            className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors cursor-pointer ${
+            className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 ${
               activeTab === "rewards"
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            Rewards & Rules
+            <span>Rewards & Rules</span>
+            {totalPendingRewardsCount > 0 && (
+              <span className="ml-1 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/40 px-2 py-0.5 text-xs font-bold animate-pulse">
+                {totalPendingRewardsCount} Ready
+              </span>
+            )}
           </button>
         </div>
 
@@ -1334,100 +1714,22 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
               </Card>
             ) : viewMode === "cards" ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                {filteredMembers.map((member) => {
-                  const currentStamps = member.stampCount % washesPerReward;
-                  const pct = Math.min(100, (currentStamps / washesPerReward) * 100);
-
-                  return (
-                    <Card
-                      key={member.id}
-                      className="border border-border/80 hover:border-primary/50 transition-all bg-card shadow-xs group"
-                    >
-                      <CardContent className="p-4 space-y-3.5">
-                        <div className="flex items-start justify-between gap-3">
-                          <div
-                            className="flex items-center gap-3 min-w-0 cursor-pointer"
-                            onClick={() => setSelected(member)}
-                          >
-                            <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground font-bold flex items-center justify-center text-sm shrink-0 shadow-xs">
-                              {getInitials(member.name)}
-                            </div>
-                            <div className="min-w-0">
-                              <h3 className="font-bold text-sm text-foreground truncate group-hover:text-primary transition-colors">
-                                {member.name}
-                              </h3>
-                              <p className="text-xs text-muted-foreground truncate">{member.phone || "No phone"}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              aria-label={`Edit ${member.name}`}
-                              className="h-8 w-8 min-h-[32px] min-w-[32px] text-muted-foreground hover:text-foreground cursor-pointer"
-                              onClick={() => setEditModal(member)}
-                            >
-                              <Edit className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              aria-label={`Delete ${member.name}`}
-                              className="h-8 w-8 min-h-[32px] min-w-[32px] text-muted-foreground hover:text-destructive cursor-pointer"
-                              onClick={() => setDeleteModal(member)}
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
-                          </div>
-                        </div>
-
-                        {/* Progress Bar & Details */}
-                        <div className="space-y-1.5 cursor-pointer" onClick={() => setSelected(member)}>
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="font-semibold text-primary">{currentStamps}/{washesPerReward} Stamps</span>
-                            <span className="text-muted-foreground text-[11px]">{member.rewardsRedeemed} Rewards</span>
-                          </div>
-                          <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
-                            <div
-                              className="bg-primary h-full transition-all duration-300 rounded-full"
-                              style={{ width: `${pct}%` }}
-                            />
-                          </div>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex items-center gap-1.5 pt-1">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            aria-label={`View QR status for ${member.name}`}
-                            onClick={() => setQrModal(member)}
-                            className="h-8 text-xs px-2.5 cursor-pointer gap-1"
-                            title="View Member QR Status & Public Link"
-                          >
-                            <QrCode className="w-3.5 h-3.5 text-primary" /> QR
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setSelected(member)}
-                            className="flex-1 text-xs h-8 cursor-pointer"
-                          >
-                            View Details
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => handleDirectAddStamp(member, 1)}
-                            disabled={saving}
-                            className="h-8 text-xs bg-primary text-primary-foreground hover:bg-primary/90 px-3 cursor-pointer"
-                          >
-                            + Add Stamp
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+                {filteredMembers.map((member) => (
+                  <MobileLoyaltyMemberCard
+                    key={member.id}
+                    member={member}
+                    washesPerReward={washesPerReward}
+                    rewardName={rewardName}
+                    transactions={transactions}
+                    saving={saving}
+                    onSelect={setSelected}
+                    onEdit={setEditModal}
+                    onDelete={setDeleteModal}
+                    onQr={setQrModal}
+                    onAddStamp={handleDirectAddStamp}
+                    onClaimReward={handleClaimReward}
+                  />
+                ))}
               </div>
             ) : (
               <Card className="overflow-hidden border border-border shadow-xs bg-card">
@@ -1444,49 +1746,69 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/60">
-                      {filteredMembers.map((member) => (
-                        <tr key={member.id} className="hover:bg-muted/30 transition-colors">
-                          <td className="px-4 py-3 font-semibold text-foreground cursor-pointer" onClick={() => setSelected(member)}>
-                            {member.name}
-                          </td>
-                          <td className="px-4 py-3 text-muted-foreground">{member.phone || "—"}</td>
-                          <td className="px-4 py-3 font-medium text-primary">
-                            {member.stampCount % washesPerReward}/{washesPerReward}
-                          </td>
-                          <td className="px-4 py-3 text-foreground">{member.stampCount}</td>
-                          <td className="px-4 py-3 text-foreground">{member.rewardsRedeemed}</td>
-                          <td className="px-4 py-3 text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                aria-label={`View QR status for ${member.name}`}
-                                className="h-7 text-xs px-2"
-                                onClick={() => setQrModal(member)}
-                                title="View Member QR Status"
-                              >
-                                <QrCode className="w-3 h-3 text-primary" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-7 text-xs px-2.5"
-                                onClick={() => setSelected(member)}
-                              >
-                                View
-                              </Button>
-                              <Button
-                                size="sm"
-                                className="h-7 text-xs bg-primary text-primary-foreground px-2.5"
-                                onClick={() => handleDirectAddStamp(member, 1)}
-                                disabled={saving}
-                              >
-                                + Stamp
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                      {filteredMembers.map((member) => {
+                        const status = calculateLoyaltyRewardStatus(member.stampCount, washesPerReward, member.rewardsRedeemed);
+                        return (
+                          <tr key={member.id} className="hover:bg-muted/30 transition-colors">
+                            <td className="px-4 py-3 font-semibold text-foreground cursor-pointer" onClick={() => setSelected(member)}>
+                              {member.name}
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground">{member.phone || "—"}</td>
+                            <td className="px-4 py-3 font-medium text-primary">
+                              {status.currentCycleStamps}/{washesPerReward}
+                            </td>
+                            <td className="px-4 py-3 text-foreground">{member.stampCount}</td>
+                            <td className="px-4 py-3 text-foreground">
+                              <span>{member.rewardsRedeemed}</span>
+                              {status.pendingRewards > 0 && (
+                                <span className="ml-1.5 inline-block text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full border border-emerald-500/20">
+                                  +{status.pendingRewards} ready
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                {status.pendingRewards > 0 && (
+                                  <Button
+                                    size="sm"
+                                    className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2.5 cursor-pointer"
+                                    onClick={() => handleClaimReward(member)}
+                                    disabled={saving}
+                                  >
+                                    Claim
+                                  </Button>
+                                )}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  aria-label={`View QR status for ${member.name}`}
+                                  className="h-7 text-xs px-2"
+                                  onClick={() => setQrModal(member)}
+                                  title="View Member QR Status"
+                                >
+                                  <QrCode className="w-3 h-3 text-primary" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 text-xs px-2.5"
+                                  onClick={() => setSelected(member)}
+                                >
+                                  View
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  className="h-7 text-xs bg-primary text-primary-foreground px-2.5"
+                                  onClick={() => handleDirectAddStamp(member, 1)}
+                                  disabled={saving}
+                                >
+                                  + Stamp
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -1495,7 +1817,66 @@ export default function LoyaltyPage({ loyaltyEnabled: _loyaltyEnabled = true, tr
           </div>
         ) : (
           /* Rewards & Rules Tab */
-          <div className="max-w-2xl">
+          <div className="max-w-2xl space-y-4">
+            {/* Rewards Ready for Claiming Section */}
+            <Card className="border border-border shadow-xs bg-card">
+              <CardHeader className="pb-3 border-b border-border/60">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-emerald-500" /> Rewards Ready for Claiming
+                    </CardTitle>
+                    <CardDescription className="text-xs mt-0.5">
+                      Members who reached their wash milestones
+                    </CardDescription>
+                  </div>
+                  {totalPendingRewardsCount > 0 && (
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                      {totalPendingRewardsCount} Ready
+                    </span>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 space-y-2.5">
+                {membersWithPendingRewards.length === 0 ? (
+                  <div className="text-center py-6 px-4">
+                    <Gift className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+                    <p className="text-xs font-semibold text-foreground">No rewards waiting to be claimed</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      When members complete {washesPerReward} washes, their rewards will automatically appear here!
+                    </p>
+                  </div>
+                ) : (
+                  membersWithPendingRewards.map(({ member, pendingRewards, currentCycleStamps }) => (
+                    <div
+                      key={member.id}
+                      className="border border-emerald-500/30 rounded-xl p-3.5 bg-emerald-500/5 flex items-center justify-between gap-3"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-9 h-9 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold flex items-center justify-center text-xs shrink-0">
+                          {getInitials(member.name)}
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="font-bold text-xs text-foreground truncate">{member.name}</h4>
+                          <p className="text-[11px] text-emerald-700 dark:text-emerald-300 font-medium">
+                            🎁 {pendingRewards} {rewardName}{pendingRewards > 1 ? "s" : ""} ready to claim ({currentCycleStamps}/{washesPerReward} in current cycle)
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => handleClaimReward(member)}
+                        disabled={saving}
+                        className="h-8 px-3.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-xs cursor-pointer gap-1.5 shrink-0"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" /> Claim Reward
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+
             {/* Active Reward Perks */}
             <Card className="border border-border shadow-xs bg-card">
               <CardHeader className="pb-3 border-b border-border/60">

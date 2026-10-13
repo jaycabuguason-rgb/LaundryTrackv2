@@ -210,4 +210,45 @@ describe("LoyaltyPage Mobile Concept Layout", () => {
       );
     });
   });
+
+  it("triggers manual refresh when clicking Refresh button", async () => {
+    render(<LoyaltyPage />);
+
+    const refreshButtons = screen.getAllByRole("button", { name: /refresh/i });
+    expect(refreshButtons.length).toBeGreaterThanOrEqual(1);
+
+    fireEvent.click(refreshButtons[0]);
+
+    await waitFor(() => {
+      expect(mockRefetch).toHaveBeenCalled();
+    });
+  });
+
+  it("displays pending rewards ready banner and triggers redeem API when claiming reward", async () => {
+    // Alice Santos with 20 stamps and 1 redeemed = 1 pending reward ready
+    const originalStampCount = mockMembers[0].stampCount;
+    mockMembers[0].stampCount = 20;
+
+    try {
+      render(<LoyaltyPage />);
+
+      // Pending rewards notification should be present on member card
+      expect(screen.getAllByText(/1 Reward Ready!/i).length).toBeGreaterThanOrEqual(1);
+
+      // Claim button on card
+      const claimButtons = screen.getAllByRole("button", { name: /claim/i });
+      expect(claimButtons.length).toBeGreaterThanOrEqual(1);
+
+      fireEvent.click(claimButtons[0]);
+
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalledWith(
+          expect.stringContaining("/api/loyalty/mem-1/redeem"),
+          expect.objectContaining({ method: "POST" })
+        );
+      });
+    } finally {
+      mockMembers[0].stampCount = originalStampCount;
+    }
+  });
 });
