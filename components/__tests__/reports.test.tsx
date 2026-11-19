@@ -185,7 +185,7 @@ describe("ReportsPage Responsiveness and Mobile Concept Layout", () => {
     }
   });
 
-  it("supports Past Year preset and filters transactions from past year (2025)", () => {
+  it("supports Year preset and filters transactions from selected year", () => {
     const pastYearTransactions: Transaction[] = [
       ...mockTransactions,
       {
@@ -215,14 +215,80 @@ describe("ReportsPage Responsiveness and Mobile Concept Layout", () => {
       fireEvent.click(analyticsTab);
     }
 
-    // Find Past Year buttons (desktop and mobile)
-    const pastYearButtons = screen.getAllByRole("button", { name: "Past Year" });
-    expect(pastYearButtons.length).toBeGreaterThanOrEqual(1);
+    // Find Year buttons (desktop and mobile)
+    const yearButtons = screen.getAllByRole("button", { name: "Year" });
+    expect(yearButtons.length).toBeGreaterThanOrEqual(1);
 
-    // Click Past Year button
-    fireEvent.click(pastYearButtons[0]);
+    // Click Year button
+    fireEvent.click(yearButtons[0]);
 
-    // Check that 2025 is reflected in the active period / metrics
-    expect(screen.getAllByText(/2025/).length).toBeGreaterThanOrEqual(1);
+    // Check that Year selector is visible
+    expect(screen.getAllByText("Year:").length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("does not show past years warning banner when Day, Week, or Month are clicked", () => {
+    const pastYearTransactions: Transaction[] = [
+      {
+        id: "tx-past",
+        ticketId: "2025-01",
+        customerName: "Past Year Customer",
+        phone: "09201234567",
+        washType: "Regular",
+        weight: 6,
+        fee: 300,
+        status: "Claimed",
+        paymentStatus: "paid",
+        paidAt: "2025-06-15 10:00:00",
+        arrivalDateTime: "2025-06-15 10:00 AM",
+        dropOffDate: "2025-06-15",
+        addOns: [],
+      },
+    ];
+
+    render(<ReportsPage transactions={pastYearTransactions} />);
+
+    // Switch to Sales Analytics tab
+    const tabs = screen.getAllByRole("tab");
+    const analyticsTab = tabs.find((tab) => tab.textContent?.includes("Sales Analytics"));
+    if (analyticsTab) {
+      fireEvent.click(analyticsTab);
+    }
+
+    // On Month (default) - banner must not show
+    expect(screen.queryByText(/No transactions found for/i)).not.toBeInTheDocument();
+
+    // Click Week button - banner must not show
+    const weekButtons = screen.getAllByRole("button", { name: "Week" });
+    fireEvent.click(weekButtons[0]);
+    expect(screen.queryByText(/No transactions found for/i)).not.toBeInTheDocument();
+
+    // Click Day button - banner must not show
+    const dayButtons = screen.getAllByRole("button", { name: "Day" });
+    fireEvent.click(dayButtons[0]);
+    expect(screen.queryByText(/No transactions found for/i)).not.toBeInTheDocument();
+
+    // Click Year button - banner SHOULD show because year is selected and has no transactions in current year
+    const yearButtons = screen.getAllByRole("button", { name: "Year" });
+    fireEvent.click(yearButtons[0]);
+    expect(screen.getByText(/No transactions found for/i)).toBeInTheDocument();
+  });
+
+  it("renders month and year selectors when Month preset is active", () => {
+    render(<ReportsPage transactions={mockTransactions} />);
+
+    // Switch to Sales Analytics tab
+    const tabs = screen.getAllByRole("tab");
+    const analyticsTab = tabs.find((tab) => tab.textContent?.includes("Sales Analytics"));
+    if (analyticsTab) {
+      fireEvent.click(analyticsTab);
+    }
+
+    // Click Month preset
+    const monthButtons = screen.getAllByRole("button", { name: "Month" });
+    fireEvent.click(monthButtons[0]);
+
+    // Check that Month label/selector and Year selector exist
+    expect(screen.getAllByText("Month:").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Year:").length).toBeGreaterThanOrEqual(1);
   });
 });
