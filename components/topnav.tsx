@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bell, ChevronDown, ChevronRight, User, Eye, X, KeyRound, LogOut, AlertTriangle, Menu, Moon, Sun } from "lucide-react";
+import { format } from "date-fns";
+import { Bell, ChevronDown, ChevronRight, User, Eye, X, KeyRound, LogOut, AlertTriangle, Menu, Moon, Sun, Circle, CircleDot, Check } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,7 @@ import {
 import { type Page } from "@/components/sidebar";
 import type { UserProfile } from "@/lib/auth";
 import type { Transaction } from "@/lib/data";
-import { getUserInitials } from "@/lib/utils";
+import { getUserInitials, cn } from "@/lib/utils";
 import { ConnectionDiagnosticsDialog } from "@/components/connection-diagnostics-dialog";
 
 const pageTitles: Record<Page, string> = {
@@ -46,33 +47,42 @@ const pageTitles: Record<Page, string> = {
   "settings-data-import": "Settings — Data Import",
 };
 
-const notifGroups: Array<{ key: Notification["type"]; label: string }> = [
-  { key: "unclaimed", label: "Unclaimed" },
-  { key: "ready", label: "Ready" },
-];
+/** Groups notifications chronologically by date matching the reference notification design. */
+function groupNotificationsByDate(items: Notification[]) {
+  const map = new Map<string, Notification[]>();
 
-/** Groups notifications by type and computes each group's total fee from live transactions. */
-function buildNotificationGroups(
-  items: Notification[],
-  txnsByTicket: Map<string, Transaction>,
-) {
-  const knownKeys = new Set<string>(notifGroups.map((g) => g.key));
-  const sumFees = (list: Notification[]) =>
-    list.reduce((sum, n) => sum + (txnsByTicket.get(n.ticketId)?.fee ?? 0), 0);
-
-  const groups = notifGroups
-    .map((group) => {
-      const grouped = items.filter((n) => n.type === group.key);
-      return { key: group.key as string, label: group.label, items: grouped, total: sumFees(grouped) };
-    })
-    .filter((group) => group.items.length > 0);
-
-  const other = items.filter((n) => !knownKeys.has(n.type));
-  if (other.length > 0) {
-    groups.push({ key: "other", label: "Other", items: other, total: sumFees(other) });
+  for (const item of items) {
+    let d = new Date(item.createdAt);
+    if (isNaN(d.getTime())) {
+      d = new Date();
+    }
+    const dateKey = format(d, "yyyy-MM-dd");
+    if (!map.has(dateKey)) {
+      map.set(dateKey, []);
+    }
+    map.get(dateKey)!.push(item);
   }
 
-  return groups;
+  const sortedKeys = Array.from(map.keys()).sort((a, b) => b.localeCompare(a));
+  return sortedKeys.map((dateKey) => {
+    const dateObj = new Date(`${dateKey}T00:00:00`);
+    const dateLabel = format(dateObj, "EEE, d MMM yyyy").toUpperCase();
+    return {
+      dateKey,
+      dateLabel,
+      items: map.get(dateKey)!,
+    };
+  });
+}
+
+function formatFooterTimestamp(createdAt?: string, fallbackTime?: string) {
+  if (createdAt) {
+    const d = new Date(createdAt);
+    if (!isNaN(d.getTime())) {
+      return format(d, "d MMM yyyy HH:mm");
+    }
+  }
+  return fallbackTime || "";
 }
 
 interface TopNavProps {
@@ -107,10 +117,51 @@ export default function TopNav({ activePage, onNavigate, onSignOut, adminProfile
     }
   }, [externalNotifications]);
 
-  // Badge only counts READY + UNCLAIMED
-  const badgeCount = notifications.filter((n) => n.type === "ready" || n.type === "unclaimed").length;
+  // Read notification IDs persisted in localStorage
+  const [readIds, setReadIds] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const raw = window.localStorage.getItem("laundrytrack-read-notifications");
+      return raw ? new Set(JSON.parse(raw)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
+  const persistReadIds = (next: Set<string>) => {
+    setReadIds(next);
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem("laundrytrack-read-notifications", JSON.stringify(Array.from(next)));
+      } catch {
+        // ignore
+      }
+    }
+  };
+
+  const isRead = (id: string) => readIds.has(id);
+
+  const toggleRead = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const next = new Set(readIds);
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
+    persistReadIds(next);
+  };
+
+  const markAllAsRead = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const next = new Set([...readIds, ...notifications.map((n) => n.id)]);
+    persistReadIds(next);
+  };
+
+  // Badge only counts unread notifications
+  const badgeCount = notifications.filter((n) => !readIds.has(n.id)).length;
   const txnsByTicket = new Map(liveTransactions.map((t) => [t.ticketId, t]));
-  const groupedNotifications = buildNotificationGroups(notifications, txnsByTicket);
+  const groupedNotifications = groupNotificationsByDate(notifications);
 
   const dismiss = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -119,6 +170,11 @@ export default function TopNav({ activePage, onNavigate, onSignOut, adminProfile
 
   const viewNotif = (notif: Notification, e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!readIds.has(notif.id)) {
+      const next = new Set(readIds);
+      next.add(notif.id);
+      persistReadIds(next);
+    }
     setNotifOpen(false);
     // Open the detail modal first — "Edit Status" button inside goes directly to Edit Ticket modal
     setTimeout(() => {
@@ -213,92 +269,152 @@ export default function TopNav({ activePage, onNavigate, onSignOut, adminProfile
         {/* Notifications */}
         <DropdownMenu open={notifOpen} onOpenChange={setNotifOpen}>
           <DropdownMenuTrigger asChild>
-            <button aria-label="Notifications" className="relative p-2 rounded-md cursor-pointer hover:bg-accent transition-colors active:scale-95 min-h-[44px] min-w-[44px] flex items-center justify-center">
+            <button
+              type="button"
+              aria-label="Notifications"
+              onClick={() => setNotifOpen((prev) => !prev)}
+              className="relative p-2 rounded-md cursor-pointer hover:bg-accent transition-colors active:scale-95 min-h-[44px] min-w-[44px] flex items-center justify-center"
+            >
               <Bell className="w-4 h-4 text-muted-foreground" />
               {badgeCount > 0 && (
-                <Badge className="absolute -top-0.5 -right-0.5 h-4 w-4 p-0 flex items-center justify-center text-xs bg-primary text-primary-foreground border-0">
+                <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-md flex items-center justify-center text-[10px] font-bold bg-rose-500 text-white shadow-xs">
                   {badgeCount}
-                </Badge>
+                </span>
               )}
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
-            className="w-72 sm:w-80 p-0"
+            className="w-80 sm:w-96 md:w-[420px] p-0 rounded-2xl border border-border shadow-2xl bg-card overflow-hidden"
             onCloseAutoFocus={(e) => e.preventDefault()}
           >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-              <p className="text-xs font-semibold text-foreground">Notifications</p>
-              <span className="text-xs text-muted-foreground">{badgeCount} unread</span>
+            {/* Header: Notifications [count] ... Mark All As Read */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-bold text-foreground">Notifications</p>
+                <span className="px-1.5 py-0.5 text-[11px] font-bold rounded-md bg-rose-500 text-white min-w-[20px] text-center leading-none">
+                  {badgeCount}
+                </span>
+              </div>
+              {notifications.length > 0 && (
+                <button
+                  type="button"
+                  onClick={markAllAsRead}
+                  className="text-xs font-semibold text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 transition-colors cursor-pointer"
+                >
+                  Mark All As Read
+                </button>
+              )}
             </div>
 
             {notifications.length === 0 ? (
-              <div className="py-8 text-center text-xs text-muted-foreground">
-                No notifications
+              <div className="py-12 px-4 text-center text-xs text-muted-foreground flex flex-col items-center justify-center gap-2">
+                <Bell className="w-8 h-8 text-muted-foreground/30" />
+                <p className="font-semibold text-foreground">No notifications</p>
+                <p>You&apos;re all caught up!</p>
               </div>
             ) : (
-              <div className="max-h-80 overflow-y-auto">
+              <div className="max-h-[440px] overflow-y-auto">
                 {groupedNotifications.map((group) => (
-                  <div key={group.key} className="border-t border-border first:border-t-0">
-                    <div className="px-4 py-1.5 bg-muted/30 border-b border-border text-xs font-medium text-muted-foreground">
-                      <span>
-                        {group.label} &middot; {group.items.length}
-                      </span>
+                  <div key={group.dateKey} className="border-t border-border/60 first:border-t-0">
+                    {/* Date Section Header */}
+                    <div className="px-4 py-1.5 bg-muted/40 dark:bg-muted/20 border-b border-border/50 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                      {group.dateLabel}
                     </div>
+
                     <div>
                       {group.items.map((notif) => {
                         const txn = txnsByTicket.get(notif.ticketId);
                         const isPaid = txn?.paymentStatus === "paid";
+                        const read = isRead(notif.id);
+                        const isUnclaimed = notif.type === "unclaimed";
+
                         return (
                           <div
                             key={notif.id}
-                            className="flex items-center border-b border-border last:border-0 hover:bg-muted/40 transition-colors"
-                          >
-                            <button
-                              type="button"
-                              onClick={(e) => viewNotif(notif, e)}
-                              className="flex-1 min-w-0 flex items-center justify-between gap-3 px-4 py-2.5 text-left cursor-pointer focus-visible:outline-none focus-visible:bg-muted/40"
-                            >
-                              <div className="min-w-0 flex-1">
-                                <p className="text-xs font-semibold text-foreground truncate">
-                                  {notif.customerName}
-                                </p>
-                                <p className="text-xs text-muted-foreground truncate mt-0.5">
-                                  <span className="font-mono">{notif.ticketId}</span> &middot; {notif.time}
-                                </p>
-                              </div>
-                              <div className="flex items-center gap-2.5 shrink-0">
-                                {txn && (
-                                  <div className="text-right">
-                                    <p className="text-xs font-semibold tabular-nums text-foreground">
-                                      ₱{txn.fee.toLocaleString()}
-                                    </p>
-                                    <p
-                                      className={`text-xs font-medium text-right ${
-                                        isPaid
-                                          ? "text-emerald-600 dark:text-emerald-400"
-                                          : "text-amber-600 dark:text-amber-400"
-                                      }`}
-                                    >
-                                      {isPaid ? "Paid" : "Unpaid"}
-                                    </p>
-                                  </div>
-                                )}
-                                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/70 shrink-0" aria-hidden="true" />
-                              </div>
-                            </button>
-                            {/* Hide Dismiss button for UNCLAIMED notifications */}
-                            {notif.type !== "unclaimed" && (
-                              <button
-                                type="button"
-                                onClick={(e) => dismiss(notif.id, e)}
-                                title="Dismiss"
-                                aria-label="Dismiss notification"
-                                className="mr-2.5 p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-muted transition-colors cursor-pointer shrink-0"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
+                            className={cn(
+                              "relative flex items-start gap-3 px-3.5 py-3 border-b border-border/50 last:border-0 transition-colors group cursor-pointer",
+                              read
+                                ? "border-l-4 border-l-transparent bg-card hover:bg-muted/25"
+                                : "border-l-4 border-l-rose-500 bg-rose-50/50 dark:bg-rose-950/20 hover:bg-rose-50/80 dark:hover:bg-rose-950/30"
                             )}
+                            onClick={(e) => viewNotif(notif, e)}
+                          >
+                            {/* Left Avatar / Icon with Status Badge */}
+                            <div className="relative shrink-0 mt-0.5">
+                              <div className="w-9 h-9 rounded-full bg-muted/80 border border-border/60 flex items-center justify-center text-xs font-bold text-muted-foreground">
+                                {getUserInitials(notif.customerName) || "LT"}
+                              </div>
+                              {isUnclaimed ? (
+                                <div
+                                  className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-amber-400 text-amber-950 flex items-center justify-center ring-2 ring-card shadow-xs"
+                                  title="Unclaimed alert"
+                                >
+                                  <AlertTriangle className="w-2.5 h-2.5 fill-current" />
+                                </div>
+                              ) : (
+                                <div
+                                  className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center ring-2 ring-card shadow-xs"
+                                  title="Ready for pickup"
+                                >
+                                  <Check className="w-2.5 h-2.5 stroke-[3]" />
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Middle Main Content */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-xs font-bold text-foreground truncate">
+                                  {isUnclaimed ? "Unclaimed order alert" : "Order ready for pickup"}
+                                </p>
+
+                                {/* Right toggle read/unread circle */}
+                                <button
+                                  type="button"
+                                  onClick={(e) => toggleRead(notif.id, e)}
+                                  title={read ? "Mark as unread" : "Mark as read"}
+                                  aria-label={read ? "Mark as unread" : "Mark as read"}
+                                  className="p-0.5 -mr-0.5 text-muted-foreground/60 hover:text-rose-500 transition-colors shrink-0"
+                                >
+                                  {read ? (
+                                    <Circle className="w-4 h-4 text-muted-foreground/40 hover:text-rose-500" />
+                                  ) : (
+                                    <CircleDot className="w-4 h-4 text-muted-foreground/70 hover:text-rose-500" />
+                                  )}
+                                </button>
+                              </div>
+
+                              <p className="text-xs text-muted-foreground leading-relaxed mt-1">
+                                {isUnclaimed ? (
+                                  <>
+                                    Order <span className="font-mono font-medium text-foreground">#{notif.ticketId}</span> for {notif.customerName} has remained unclaimed for over 2 days. Contact customer to schedule collection.
+                                  </>
+                                ) : (
+                                  <>
+                                    {notif.customerName}&apos;s laundry order <span className="font-mono font-medium text-foreground">#{notif.ticketId}</span> is ready for customer pickup.
+                                    {txn && (
+                                      <span className="text-foreground/85 font-medium"> Total: ₱{txn.fee.toLocaleString()} ({isPaid ? "Paid" : "Unpaid"}).</span>
+                                    )}
+                                  </>
+                                )}
+                              </p>
+
+                              {/* Action Link & Footer Metadata */}
+                              <div className="flex items-center justify-between gap-2 mt-2">
+                                <button
+                                  type="button"
+                                  onClick={(e) => viewNotif(notif, e)}
+                                  className="text-xs font-bold text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 uppercase tracking-wider inline-flex items-center gap-1 cursor-pointer"
+                                >
+                                  VIEW
+                                </button>
+
+                                <span className="text-[11px] text-muted-foreground/75 truncate text-right">
+                                  Ticket: <span className="font-mono">{notif.ticketId}</span> &middot; {formatFooterTimestamp(notif.createdAt, notif.time)}
+                                </span>
+                              </div>
+                            </div>
                           </div>
                         );
                       })}
