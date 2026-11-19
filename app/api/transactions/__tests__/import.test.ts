@@ -7,16 +7,21 @@ const mockInsert = vi.fn();
 const mockSelect = vi.fn();
 const mockOrder = vi.fn();
 const mockLimit = vi.fn();
+const mockDelete = vi.fn();
+const mockIn = vi.fn();
 
 const mockFrom = vi.fn(() => ({
   select: mockSelect,
   insert: mockInsert,
+  delete: mockDelete,
 }));
 
 mockSelect.mockReturnValue({ order: mockOrder });
 mockOrder.mockReturnValue({ limit: mockLimit });
 mockLimit.mockResolvedValue({ data: [{ ticket_id: "TKT-0010" }] });
 mockInsert.mockResolvedValue({ error: null });
+mockDelete.mockReturnValue({ in: mockIn });
+mockIn.mockResolvedValue({ error: null, count: 2 });
 
 vi.mock("@/lib/server/request-auth", () => ({
   requireAdminRequest: (...args: unknown[]) => mockRequireAdminRequest(...args),
@@ -43,16 +48,17 @@ vi.mock("@/lib/server/request-meta", () => ({
   getRequestIp: (...args: unknown[]) => mockGetRequestIp(...args),
 }));
 
-import { POST } from "@/app/api/transactions/import/route";
+import { POST, DELETE } from "@/app/api/transactions/import/route";
 
-describe("POST /api/transactions/import", () => {
+describe("POST & DELETE /api/transactions/import", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockInsert.mockResolvedValue({ error: null });
     mockLimit.mockResolvedValue({ data: [{ ticket_id: "TKT-0010" }] });
+    mockIn.mockResolvedValue({ error: null, count: 2 });
   });
 
-  it("returns 200 and imports valid rows", async () => {
+  it("returns 200, imports valid rows, and returns ticketIds", async () => {
     mockRequireAdminRequest.mockResolvedValue({ id: "admin-1", name: "Admin", role: "admin" });
     mockCreateAuditLog.mockResolvedValue({});
 
@@ -72,6 +78,28 @@ describe("POST /api/transactions/import", () => {
     expect(data.success).toBe(true);
     expect(data.importedCount).toBe(2);
     expect(data.skippedCount).toBe(0);
+    expect(data.ticketIds).toEqual(["TKT-0011", "TKT-0012"]);
+  });
+
+  it("DELETE removes transactions by ticketIds and writes audit log", async () => {
+    mockRequireAdminRequest.mockResolvedValue({ id: "admin-1", name: "Admin", role: "admin" });
+    mockCreateAuditLog.mockResolvedValue({});
+
+    const request = new Request("http://localhost:3000/api/transactions/import", {
+      method: "DELETE",
+      body: JSON.stringify({
+        ticketIds: ["TKT-0011", "TKT-0012"],
+      }),
+    });
+
+    const response = await DELETE(request);
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data.success).toBe(true);
+    expect(data.deletedCount).toBe(2);
+    expect(mockFrom).toHaveBeenCalledWith("transactions");
+    expect(mockIn).toHaveBeenCalledWith("ticket_id", ["TKT-0011", "TKT-0012"]);
+    expect(mockCreateAuditLog).toHaveBeenCalled();
   });
 
   it("skips rows with missing customerName", async () => {

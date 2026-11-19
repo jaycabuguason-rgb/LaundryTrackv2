@@ -1,0 +1,16 @@
+Arrival Date,Wash Type,Fee,Add-ons,Customer Name,Weight (kg),Status,Phone Number,Notes
+2025-01-15 08:30,Wash & Dry,150,Fabric Softener,Juan Dela Cruz,5.2,Claimed,09171234567,Handle with care
+2025-01-15 09:15,Wash Only,95,,Maria Santos,3.8,Claimed,09281234567,
+2025-01-15 10:00,Wash & Dry,180,Bleach,Pedro Reyes,6.0,Claimed,09191234567,Separate whites
+2025-01-16 08:45,Dry Only,80,,Ana Gonzales,4.0,Claimed,09179876543,
+2025-01-16 10:30,Wash & Dry,220,Fabric Softener,Carlos Mendoza,7.5,Claimed,09228765432,Heavy blankets
+2025-01-16 11:20,Wash Only,110,Fabcon,Elena Ramos,4.5,Claimed,09187654321,
+2025-01-17 09:00,Wash & Dry,160,,Roberto Garcia,5.5,Claimed,09296543210,
+2025-01-17 10:15,Delicate,130,Fabric Softener,Liza Aquino,3.2,Claimed,09175432109,Silk and wool
+2025-01-17 14:00,Wash & Dry,195,Bleach; Fabcon,Mark Bautista,6.8,Claimed,09204321098,
+2025-01-18 08:30,Wash Only,95,,Teresa Dizon,3.5,Claimed,09183210987,Fold neatly
+2025-01-18 10:45,Wash & Dry,250,Fabric Softener,Joseph Tan,8.2,Claimed,09212109876,Bulky curtains
+2025-01-18 13:15,Dry Only,90,,Grace Lim,4.2,Claimed,09191098765,
+2025-01-19 09:30,Wash & Dry,175,Fabric Softener,Antonio Cruz,5.8,Claimed,09280987654,
+2025-01-19 11:00,Wash Only,105,Bleach,Carmela Flores,4.1,Claimed,09170876543,Color safe bleach
+

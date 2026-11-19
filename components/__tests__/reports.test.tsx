@@ -184,4 +184,45 @@ describe("ReportsPage Responsiveness and Mobile Concept Layout", () => {
       expect(screen.queryByText("Payment Split")).not.toBeInTheDocument();
     }
   });
+
+  it("supports Past Year preset and filters transactions from past year (2025)", () => {
+    const pastYearTransactions: Transaction[] = [
+      ...mockTransactions,
+      {
+        id: "tx-past",
+        ticketId: "2025-01",
+        customerName: "Past Year Customer",
+        phone: "09201234567",
+        washType: "Regular",
+        weight: 6,
+        fee: 300,
+        status: "Claimed",
+        paymentStatus: "paid",
+        paidAt: "2025-06-15 10:00:00",
+        arrivalDateTime: "2025-06-15 10:00 AM",
+        dropOffDate: "2025-06-15",
+        addOns: [],
+      },
+    ];
+
+    render(<ReportsPage transactions={pastYearTransactions} />);
+
+    // Switch to Sales Analytics tab
+    const tabs = screen.getAllByRole("tab");
+    const analyticsTab = tabs.find((tab) => tab.textContent?.includes("Sales Analytics"));
+    expect(analyticsTab).toBeDefined();
+    if (analyticsTab) {
+      fireEvent.click(analyticsTab);
+    }
+
+    // Find Past Year buttons (desktop and mobile)
+    const pastYearButtons = screen.getAllByRole("button", { name: "Past Year" });
+    expect(pastYearButtons.length).toBeGreaterThanOrEqual(1);
+
+    // Click Past Year button
+    fireEvent.click(pastYearButtons[0]);
+
+    // Check that 2025 is reflected in the active period / metrics
+    expect(screen.getAllByText(/2025/).length).toBeGreaterThanOrEqual(1);
+  });
 });

@@ -2678,7 +2678,7 @@ export default function SettingsPage({
         />
       );
       case "settings-backup": return <BackupSettings />;
-      case "settings-data-import": return <DataImportPage onViewTransactions={() => onNavigate?.("transactions")} />;
+      case "settings-data-import": return <DataImportPage onViewTransactions={() => onNavigate?.("transactions")} onViewReports={() => onNavigate?.("reports")} />;
       default: return <PricingSettings />;
     }
   };

@@ -402,7 +402,7 @@ describe("TransactionsPage Mobile Concept Layout", { timeout: 15000 }, () => {
     expect(screen.queryByRole("button", { name: /redo status change/i })).not.toBeInTheDocument();
   });
 
-  it("renders Time row below Service only when a mobile transaction card is expanded", () => {
+  it("renders Arrival Time row below Service only when a mobile transaction card is expanded", () => {
     render(
       <TransactionsPage
         transactions={mockTransactions}
@@ -420,7 +420,7 @@ describe("TransactionsPage Mobile Concept Layout", { timeout: 15000 }, () => {
     // Tap card to expand
     fireEvent.click(card27);
 
-    expect(within(card27).getByText("Time")).toBeInTheDocument();
+    expect(within(card27).getByText("Arrival Time")).toBeInTheDocument();
     expect(within(card27).getByText("10:00 AM")).toBeInTheDocument();
   });
 });

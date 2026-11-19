@@ -1,0 +1,5 @@
+Arrival Date,Weight (kg),Wash Type,Fee,Status,Phone Number,Add-ons
+2025-01-15,5.2,Wash & Dry,150,Claimed,09171234567,Fabric Softener
+2025-01-15 09:00,3.8,Wash Only,95,Claimed,09281234567,
+2025-01-16,6.5,Wash & Dry,195,Claimed,09181234567,Bleach
+2025-01-16 11:00,4.0,Dry Only,80,Ready,,

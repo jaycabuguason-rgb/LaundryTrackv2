@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Upload,
   FileSpreadsheet,
@@ -18,12 +18,19 @@ import {
   Clock,
   Loader2,
   ArrowRight,
+  Database,
+  Trash2,
+  ClipboardList,
+  CircleDollarSign,
+  Layers,
+  Lightbulb,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -31,10 +38,34 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { getBrowserAccessToken } from "@/lib/supabase/browser-session";
+import { useToast } from "@/hooks/use-toast";
+import { getBrowserAccessToken, refreshBrowserSession } from "@/lib/supabase/browser-session";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+
+async function getAuthHeaders(extra: Record<string, string> = {}): Promise<Record<string, string>> {
+  let token = await getBrowserAccessToken();
+  if (!token) {
+    const refreshed = await refreshBrowserSession();
+    token = refreshed?.access_token ?? null;
+  }
+  const headers: Record<string, string> = { ...extra };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  return headers;
+}
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -59,44 +90,46 @@ interface ImportHistoryEntry {
   dataType: DataType;
   recordsImported: number;
   status: "Success" | "Partial" | "Failed";
+  ticketIds?: string[];
+  isMock?: boolean;
 }
 
 // ── Required / optional field definitions ────────────────────────────────────
 
 const REQUIRED_FIELDS = [
-  { key: "customerName",  label: "Customer Name",       required: true  },
-  { key: "arrivalDate",   label: "Arrival Date & Time", required: true  },
-  { key: "weight",        label: "Weight (kg)",         required: true  },
+  { key: "arrivalDate",   label: "Arrival Date",        required: true  },
   { key: "washType",      label: "Wash Type",           required: true  },
   { key: "fee",           label: "Fee",                 required: true  },
-  { key: "status",        label: "Status",              required: true  },
-  { key: "phone",         label: "Phone Number",        required: false },
   { key: "addons",        label: "Add-ons",             required: false },
+  { key: "customerName",  label: "Customer Name",       required: false },
+  { key: "weight",        label: "Weight (kg)",         required: false },
+  { key: "status",        label: "Status",              required: false },
+  { key: "phone",         label: "Phone Number",        required: false },
   { key: "notes",         label: "Notes",               required: false },
 ];
 
 const AUTO_MATCH_HINTS: Record<string, string[]> = {
-  customerName:  ["customer", "name", "client", "customer name", "full name"],
   arrivalDate:   ["date", "arrival", "drop", "dropoff", "drop-off", "drop off", "datetime", "time"],
-  weight:        ["weight", "kg", "kilos", "mass"],
   washType:      ["wash", "type", "service", "wash type", "service type"],
-  fee:           ["fee", "amount", "price", "cost", "charge", "total"],
+  fee:           ["fee", "amount", "price", "cost", "charge", "total", "total fee"],
+  addons:        ["addon", "add-on", "extras", "additional"],
+  customerName:  ["customer", "name", "client", "customer name", "full name"],
+  weight:        ["weight", "kg", "kilos", "mass"],
   status:        ["status", "state", "stage"],
   phone:         ["phone", "mobile", "contact", "number", "cell"],
-  addons:        ["addon", "add-on", "extras", "additional"],
   notes:         ["note", "notes", "remarks", "comment"],
 };
 
 // ── CSV Template content ──────────────────────────────────────────────────────
 
 const CSV_TEMPLATE = [
-  "Customer Name,Arrival Date & Time,Weight (kg),Wash Type,Fee,Status,Phone Number,Add-ons,Notes",
-  "Juan Dela Cruz,2025-01-15 08:30,5.2,Wash & Dry,150,Claimed,09171234567,Fabric Softener,Handle with care",
-  "Maria Santos,2025-01-15 09:00,3.8,Wash Only,95,Claimed,09281234567,,",
+  "Arrival Date,Wash Type,Fee,Add-ons,Customer Name,Weight (kg),Status,Phone Number,Notes",
+  "2025-01-15,Wash & Dry,150,Fabric Softener,Juan Dela Cruz,5.2,Claimed,09171234567,Handle with care",
+  "2025-01-15 09:00,Wash Only,95,,Maria Santos,3.8,Claimed,09281234567,",
 ].join("\n");
 
-const EXCEL_TEMPLATE_HEADERS = "Customer Name\tArrival Date & Time\tWeight (kg)\tWash Type\tFee\tStatus\tPhone Number\tAdd-ons\tNotes";
-const EXCEL_TEMPLATE_EXAMPLE = "Juan Dela Cruz\t2025-01-15 08:30\t5.2\tWash & Dry\t150\tClaimed\t09171234567\tFabric Softener\tHandle with care";
+const EXCEL_TEMPLATE_HEADERS = "Arrival Date\tWash Type\tFee\tAdd-ons\tCustomer Name\tWeight (kg)\tStatus\tPhone Number\tNotes";
+const EXCEL_TEMPLATE_EXAMPLE = "2025-01-15\tWash & Dry\t150\tFabric Softener\tJuan Dela Cruz\t5.2\tClaimed\t09171234567\tHandle with care";
 
 // ── Step indicator ────────────────────────────────────────────────────────────
 
@@ -151,12 +184,99 @@ function StepIndicator({ current }: { current: StepId }) {
 
 interface DataImportProps {
   onViewTransactions: () => void;
+  onViewReports?: () => void;
 }
 
-export default function DataImportPage({ onViewTransactions }: DataImportProps) {
+export default function DataImportPage({ onViewTransactions, onViewReports }: DataImportProps) {
+  const { toast } = useToast();
   // Wizard state
   const [step, setStep]           = useState<StepId>(1);
   const [dataType, setDataType]   = useState<DataType | null>(null);
+  const [undoingId, setUndoingId] = useState<string | null>(null);
+  const [undoConfirmEntry, setUndoConfirmEntry] = useState<ImportHistoryEntry | null>(null);
+
+  // Clear any previous mock database storage on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("laundrytrack_mock_transactions");
+      window.dispatchEvent(new Event("laundrytrack:mock-import"));
+    }
+  }, []);
+
+  // History state persisted in localStorage
+  const [history, setHistory] = useState<ImportHistoryEntry[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const raw = localStorage.getItem("laundrytrack_import_history");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((item) => ({
+            ...item,
+            timestamp: new Date(item.timestamp),
+          }));
+        }
+      }
+    } catch {}
+    return [];
+  });
+
+  const saveHistory = useCallback((newHistory: ImportHistoryEntry[]) => {
+    setHistory(newHistory);
+    try {
+      localStorage.setItem("laundrytrack_import_history", JSON.stringify(newHistory));
+    } catch {}
+  }, []);
+
+  const executeUndo = async (entry: ImportHistoryEntry) => {
+    if (entry.ticketIds && entry.ticketIds.length > 0) {
+      setUndoingId(entry.id);
+      try {
+        const headers = await getAuthHeaders({ "Content-Type": "application/json" });
+
+        const res = await fetch("/api/transactions/import", {
+          method: "DELETE",
+          headers,
+          body: JSON.stringify({ ticketIds: entry.ticketIds }),
+        });
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({ error: "Undo failed" }));
+          throw new Error(data.error || "Failed to remove imported transactions");
+        }
+
+        toast({
+          title: "Import Undone",
+          description: `Successfully removed ${entry.recordsImported} transaction(s) from the database.`,
+        });
+
+        // Trigger immediate transaction refresh across components
+        window.dispatchEvent(new Event("laundrytrack:refresh-transactions"));
+        window.dispatchEvent(new Event("focus"));
+      } catch (err) {
+        toast({
+          title: "Undo Failed",
+          description: err instanceof Error ? err.message : "Could not undo import.",
+          variant: "destructive",
+        });
+        setUndoingId(null);
+        setUndoConfirmEntry(null);
+        return;
+      } finally {
+        setUndoingId(null);
+        setUndoConfirmEntry(null);
+      }
+    }
+
+    setHistory((prev) => {
+      const remaining = prev.filter((e) => e.id !== entry.id);
+      try {
+        localStorage.setItem("laundrytrack_import_history", JSON.stringify(remaining));
+      } catch {}
+      return remaining;
+    });
+    setUndoConfirmEntry(null);
+  };
 
   // File state
   const [file, setFile]           = useState<File | null>(null);
@@ -181,10 +301,8 @@ export default function DataImportPage({ onViewTransactions }: DataImportProps) 
   const [importing, setImporting]      = useState(false);
   const [importProgress, setImportProgress] = useState(0);
   const [importDone, setImportDone]    = useState(false);
+  const [importError, setImportError]  = useState<string | null>(null);
   const [importResult, setImportResult] = useState({ total: 0, skipped: 0, dupsSkipped: 0, seconds: 0 });
-
-  // History
-  const [history, setHistory]          = useState<ImportHistoryEntry[]>([]);
 
   // ── File parsing ────────────────────────────────────────────────────────────
 
@@ -234,16 +352,24 @@ export default function DataImportPage({ onViewTransactions }: DataImportProps) 
         setHeaders(hdrs);
         setRows(parsed);
         setFile(f);
-        setMapping({});
+        const initialMap: Record<string, string> = {};
+        REQUIRED_FIELDS.forEach(({ key }) => {
+          const hints = AUTO_MATCH_HINTS[key] ?? [];
+          const matched = hdrs.find((h) =>
+            hints.some((hint) => h.toLowerCase().trim() === hint.toLowerCase().trim())
+          );
+          if (matched) initialMap[key] = matched;
+        });
+        setMapping(initialMap);
       };
       reader.readAsText(f);
     } else {
       // For Excel files: accept them visually but simulate with placeholder data
-      setHeaders(["Customer Name", "Arrival Date", "Weight", "Wash Type", "Fee", "Status", "Phone"]);
+      setHeaders(["Arrival Date", "Wash Type", "Fee", "Add-ons", "Customer Name", "Weight (kg)", "Status", "Phone Number"]);
       setRows([
-        { "Customer Name": "Juan Dela Cruz", "Arrival Date": "2025-03-01", Weight: "5.2", "Wash Type": "Wash & Dry", Fee: "150", Status: "Claimed", Phone: "09171234567" },
-        { "Customer Name": "Maria Santos",   "Arrival Date": "2025-03-02", Weight: "3.8", "Wash Type": "Wash Only",  Fee: "95",  Status: "Claimed", Phone: "09281234567" },
-        { "Customer Name": "Pedro Reyes",    "Arrival Date": "2025-03-03", Weight: "7.0", "Wash Type": "Dry Only",   Fee: "120", Status: "Ready",   Phone: "" },
+        { "Arrival Date": "2025-03-01", "Wash Type": "Wash & Dry", Fee: "150", "Add-ons": "Fabric Softener", "Customer Name": "Juan Dela Cruz", "Weight (kg)": "5.2", Status: "Claimed", "Phone Number": "09171234567" },
+        { "Arrival Date": "2025-03-02", "Wash Type": "Wash Only",  Fee: "95",  "Add-ons": "",                "Customer Name": "Maria Santos",   "Weight (kg)": "3.8", Status: "Claimed", "Phone Number": "09281234567" },
+        { "Arrival Date": "2025-03-03 10:15", "Wash Type": "Dry Only",   Fee: "120", "Add-ons": "Bleach",          "Customer Name": "Pedro Reyes",    "Weight (kg)": "7.0", Status: "Ready",   "Phone Number": "" },
       ]);
       setFile(f);
       setMapping({});
@@ -280,22 +406,40 @@ export default function DataImportPage({ onViewTransactions }: DataImportProps) 
     rows.forEach((row, idx) => {
       const rowNum = idx + 2; // 1-based, +1 for header
 
-      const dateVal = row[mapping["arrivalDate"] ?? ""];
-      if (dateVal && isNaN(Date.parse(dateVal))) {
-        found.push({ row: rowNum, column: "Arrival Date & Time", severity: "error",   message: "Date format not recognized" });
+      const dateVal = mapping["arrivalDate"] ? row[mapping["arrivalDate"]] : "";
+      if (mapping["arrivalDate"]) {
+        if (!dateVal || !dateVal.trim()) {
+          found.push({ row: rowNum, column: "Arrival Date", severity: "error", message: "Arrival date is missing" });
+        } else {
+          const trimmed = dateVal.trim();
+          const isValidDate = !isNaN(Date.parse(trimmed)) ||
+            /^\d{4}[-/]\d{1,2}[-/]\d{1,2}/.test(trimmed) ||
+            /^\d{1,2}[-/]\d{1,2}[-/]\d{4}/.test(trimmed);
+          if (!isValidDate) {
+            found.push({ row: rowNum, column: "Arrival Date", severity: "error", message: "Date format not recognized" });
+          }
+        }
       }
 
-      const wt = parseFloat(row[mapping["weight"] ?? ""] ?? "");
-      if (mapping["weight"] && (isNaN(wt) || wt <= 0)) {
-        found.push({ row: rowNum, column: "Weight (kg)", severity: mapping["weight"] ? "error" : "warning", message: "Weight value is missing or invalid" });
+      const washTypeVal = mapping["washType"] ? row[mapping["washType"]] : "";
+      if (mapping["washType"] && (!washTypeVal || !washTypeVal.trim())) {
+        found.push({ row: rowNum, column: "Wash Type", severity: "error", message: "Wash type is missing" });
       }
 
-      const fee = parseFloat(row[mapping["fee"] ?? ""] ?? "");
-      if (mapping["fee"] && isNaN(fee)) {
-        found.push({ row: rowNum, column: "Fee", severity: "error", message: "Fee is not a valid number" });
+      const feeRaw = mapping["fee"] ? row[mapping["fee"]] : "";
+      if (mapping["fee"]) {
+        const fee = parseFloat(feeRaw ?? "");
+        if (!feeRaw || !feeRaw.trim() || isNaN(fee)) {
+          found.push({ row: rowNum, column: "Fee", severity: "error", message: "Fee is missing or not a valid number" });
+        }
       }
 
-      const name = row[mapping["customerName"] ?? ""];
+      const wt = parseFloat(mapping["weight"] ? row[mapping["weight"]] ?? "" : "");
+      if (mapping["weight"] && row[mapping["weight"]] && (isNaN(wt) || wt <= 0)) {
+        found.push({ row: rowNum, column: "Weight (kg)", severity: "warning", message: "Weight value is invalid" });
+      }
+
+      const name = mapping["customerName"] ? row[mapping["customerName"]] : "";
       if (mapping["customerName"] && !name?.trim()) {
         found.push({ row: rowNum, column: "Customer Name", severity: "warning", message: "Customer name is empty" });
       }
@@ -344,8 +488,9 @@ export default function DataImportPage({ onViewTransactions }: DataImportProps) 
         .map((row, idx) => {
           const rowNum = idx + 2; // 1-based + header
           if (errRowSet.has(rowNum)) return null;
+          const rawCustomerName = mapping["customerName"] ? row[mapping["customerName"]]?.trim() : "";
           return {
-            customerName: row[mapping["customerName"] ?? ""] ?? "",
+            customerName: rawCustomerName || "Walk-in Customer",
             arrivalDate:  row[mapping["arrivalDate"] ?? ""] ?? "",
             weight:       row[mapping["weight"] ?? ""] ?? "",
             washType:     row[mapping["washType"] ?? ""] ?? "",
@@ -360,12 +505,7 @@ export default function DataImportPage({ onViewTransactions }: DataImportProps) 
 
       setImportProgress(20);
 
-      // Build auth headers
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (getSupabaseBrowserClient()) {
-        const accessToken = await getBrowserAccessToken();
-        if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
-      }
+      const headers = await getAuthHeaders({ "Content-Type": "application/json" });
 
       setImportProgress(30);
 
@@ -386,6 +526,11 @@ export default function DataImportPage({ onViewTransactions }: DataImportProps) 
       const elapsed = Math.round((Date.now() - start) / 1000);
 
       setImportProgress(100);
+      setImportError(null);
+
+      // Refresh application-wide transactions
+      window.dispatchEvent(new Event("laundrytrack:refresh-transactions"));
+      window.dispatchEvent(new Event("focus"));
       setImportResult({
         total: result.importedCount ?? 0,
         skipped: (result.skippedCount ?? 0) + (skipErrors ? uniqueErr : 0),
@@ -397,19 +542,20 @@ export default function DataImportPage({ onViewTransactions }: DataImportProps) 
       setStep(5);
 
       // Add to history
-      setHistory((prev) => [
-        {
-          id: `h${Date.now()}`,
-          timestamp: new Date(),
-          fileName: file?.name ?? "unknown",
-          dataType: dataType ?? "transactions",
-          recordsImported: result.importedCount ?? 0,
-          status: (result.skippedCount ?? 0) > 0 || uniqueErr > 0 ? "Partial" : "Success",
-        },
-        ...prev,
-      ]);
+      const newEntry: ImportHistoryEntry = {
+        id: `h${Date.now()}`,
+        timestamp: new Date(),
+        fileName: file?.name ?? "unknown",
+        dataType: dataType ?? "transactions",
+        recordsImported: result.importedCount ?? 0,
+        status: (result.skippedCount ?? 0) > 0 || uniqueErr > 0 ? "Partial" : "Success",
+        ticketIds: result.ticketIds ?? [],
+      };
+
+      saveHistory([newEntry, ...history]);
     } catch (err) {
       const elapsed = Math.round((Date.now() - start) / 1000);
+      setImportError(err instanceof Error ? err.message : "Import failed");
       setImportResult({ total: 0, skipped: rows.length, dupsSkipped: 0, seconds: elapsed });
       setImporting(false);
       setImportDone(true);
@@ -450,6 +596,7 @@ export default function DataImportPage({ onViewTransactions }: DataImportProps) 
     setImporting(false);
     setImportProgress(0);
     setImportDone(false);
+    setImportError(null);
     setParseError(null);
   };
 
@@ -460,11 +607,14 @@ export default function DataImportPage({ onViewTransactions }: DataImportProps) 
   const warningRows    = new Set(issues.filter((i) => i.severity === "warning").map((i) => i.row));
   const validCount     = rows.length - (skipErrors ? errorRows.size : 0) - (duplicateAction === "skip" ? duplicateCount : 0);
 
-  const dataTypeOptions: { value: DataType; label: string; icon: string }[] = [
-    { value: "transactions", label: "Transactions / Service Records", icon: "📋" },
-    { value: "customers",    label: "Customer List",                  icon: "👤" },
-    { value: "revenue",      label: "Revenue Records",               icon: "💰" },
-    { value: "all",          label: "All of the above (separate files)", icon: "📦" },
+  const dataTypeOptions: {
+    value: DataType;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }[] = [
+    { value: "transactions", label: "Transactions / Service Records", icon: ClipboardList },
+    { value: "revenue",      label: "Revenue Records",               icon: CircleDollarSign },
+    { value: "all",          label: "All of the above (separate files)", icon: Layers },
   ];
 
   const fileIcon = file?.name.endsWith(".csv")
@@ -517,7 +667,14 @@ export default function DataImportPage({ onViewTransactions }: DataImportProps) 
                       <Check className="w-3 h-3 text-primary" aria-hidden="true" />
                     )}
                   </div>
-                  <span className="text-lg">{opt.icon}</span>
+                  <div className={cn(
+                    "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors",
+                    dataType === opt.value
+                      ? "bg-primary/10 text-primary"
+                      : "bg-muted text-muted-foreground"
+                  )}>
+                    <opt.icon className="w-4 h-4" />
+                  </div>
                   <span className="text-sm font-medium text-foreground">{opt.label}</span>
                 </button>
               ))}
@@ -939,15 +1096,31 @@ export default function DataImportPage({ onViewTransactions }: DataImportProps) 
         {/* ── Step 5: Complete ───────────────────────────────────────────── */}
         {step === 5 && importDone && (
           <div className="space-y-6 text-center">
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
-                <CheckCircle2 className="w-9 h-9 text-green-600" />
+            {importError ? (
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
+                  <XCircle className="w-9 h-9 text-red-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-foreground">Import Failed</h2>
+                  <p className="text-sm text-red-600 dark:text-red-400 mt-1 max-w-md mx-auto">
+                    {importError}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-lg font-bold text-foreground">Import Complete!</h2>
-                <p className="text-sm text-muted-foreground mt-1">Your historical data has been successfully imported.</p>
+            ) : (
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+                  <CheckCircle2 className="w-9 h-9 text-green-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-foreground">Import Complete!</h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Your historical data has been successfully imported into the cloud database.
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Summary card */}
             <div className="rounded-xl border border-border overflow-hidden text-left">
@@ -956,6 +1129,7 @@ export default function DataImportPage({ onViewTransactions }: DataImportProps) 
               </div>
               <div className="divide-y divide-border">
                 {[
+                  { label: "Target Database",          value: "Live Cloud Database", color: "text-foreground font-semibold" },
                   { label: "Total records imported", value: importResult.total,       color: "text-green-700 font-bold" },
                   { label: "Records skipped (errors)", value: importResult.skipped,   color: "text-muted-foreground" },
                   { label: "Duplicates skipped",       value: importResult.dupsSkipped, color: "text-muted-foreground" },
@@ -969,9 +1143,24 @@ export default function DataImportPage({ onViewTransactions }: DataImportProps) 
               </div>
             </div>
 
+            <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl p-3 text-left flex items-start gap-2.5">
+              <div className="w-6 h-6 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 mt-0.5">
+                <Lightbulb className="w-3.5 h-3.5" />
+              </div>
+              <p className="text-xs text-blue-900 dark:text-blue-200 leading-relaxed">
+                <strong>Viewing imported records:</strong> Past year records (such as 2025) appear in{" "}
+                <strong>Reports &rarr; Sales Analytics</strong> by selecting the <strong>&ldquo;Past Year&rdquo;</strong> period filter, as well as in the <strong>Transactions</strong> table.
+              </p>
+            </div>
+
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button onClick={onViewTransactions} className="gap-2">
-                View Imported Data <ArrowRight className="w-4 h-4" />
+              {onViewReports && (
+                <Button onClick={onViewReports} className="gap-2 bg-purple-600 hover:bg-purple-700 text-white">
+                  View in Reports <ArrowRight className="w-4 h-4" />
+                </Button>
+              )}
+              <Button onClick={onViewTransactions} variant="outline" className="gap-2">
+                View Transactions <ArrowRight className="w-4 h-4" />
               </Button>
               <Button variant="outline" onClick={resetWizard} className="gap-2">
                 <RotateCcw className="w-4 h-4" /> Import Another File
@@ -982,114 +1171,196 @@ export default function DataImportPage({ onViewTransactions }: DataImportProps) 
       </div>
 
       {/* ── Import History ─────────────────────────────────────────────────── */}
-      {history.length > 0 && (
-        <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-border flex items-center gap-2">
+      <div id="import-history-section" className="bg-card border border-border rounded-xl shadow-sm overflow-hidden scroll-mt-6">
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+          <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-muted-foreground" />
             <h2 className="text-sm font-semibold text-foreground">Import History</h2>
           </div>
-          <div className="divide-y divide-border md:hidden">
-            {history.map((entry) => {
-              const withinUndo = Date.now() - entry.timestamp.getTime() < 24 * 60 * 60 * 1000;
-              return (
-                <div key={entry.id} className="space-y-3 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-foreground">{entry.fileName}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">{format(entry.timestamp, "MMM d, yyyy h:mm a")}</p>
-                    </div>
-                    <Badge
-                      className={cn(
-                        "shrink-0 border-0 text-xs font-semibold",
-                        entry.status === "Success" && "bg-green-100 text-green-700",
-                        entry.status === "Partial" && "bg-yellow-100 text-yellow-700",
-                        entry.status === "Failed" && "bg-red-100 text-red-700",
-                      )}
-                    >
-                      {entry.status}
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 rounded-md bg-muted/30 p-2.5">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Data Type</p>
-                      <p className="mt-0.5 text-xs font-medium capitalize text-foreground">{entry.dataType}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Records</p>
-                      <p className="mt-0.5 text-xs font-semibold text-foreground">{entry.recordsImported.toLocaleString()}</p>
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={!withinUndo}
-                    className="min-h-[40px] w-full gap-1.5 text-xs"
-                    onClick={() => setHistory((prev) => prev.filter((e) => e.id !== entry.id))}
-                  >
-                    <RotateCcw className="w-3 h-3" />
-                    {withinUndo ? "Undo Import" : "Undo Expired"}
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
-          <div className="hidden overflow-x-auto md:block">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-muted/40 border-b border-border">
-                  {["Date & Time", "File Name", "Data Type", "Records", "Status", "Action"].map((h) => (
-                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground whitespace-nowrap">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {history.map((entry, idx) => {
-                  const withinUndo = Date.now() - entry.timestamp.getTime() < 24 * 60 * 60 * 1000;
-                  return (
-                    <tr key={entry.id} className={cn("border-b border-border last:border-0", idx % 2 === 0 ? "bg-background" : "bg-muted/10")}>
-                      <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
-                        {format(entry.timestamp, "MMM d, yyyy h:mm a")}
-                      </td>
-                      <td className="px-4 py-3 font-medium text-foreground max-w-[160px] truncate" title={entry.fileName}>
-                        {entry.fileName}
-                      </td>
-                      <td className="px-4 py-3 text-xs capitalize text-muted-foreground">{entry.dataType}</td>
-                      <td className="px-4 py-3 font-semibold text-foreground">{entry.recordsImported.toLocaleString()}</td>
-                      <td className="px-4 py-3">
-                        <Badge
-                          className={cn(
-                            "text-xs font-semibold border-0",
-                            entry.status === "Success" && "bg-green-100 text-green-700",
-                            entry.status === "Partial" && "bg-yellow-100 text-yellow-700",
-                            entry.status === "Failed"  && "bg-red-100 text-red-700",
-                          )}
-                        >
-                          {entry.status}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled={!withinUndo}
-                          className="text-xs h-7 gap-1.5"
-                          onClick={() => setHistory((prev) => prev.filter((e) => e.id !== entry.id))}
-                        >
-                          <RotateCcw className="w-3 h-3" />
-                          Undo Import
-                        </Button>
-                        {!withinUndo && (
-                          <span className="ml-2 text-xs text-muted-foreground">Expired</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          {history.length > 0 && (
+            <span className="text-xs text-muted-foreground">{history.length} file{history.length > 1 ? "s" : ""} logged</span>
+          )}
         </div>
-      )}
+
+        {history.length === 0 ? (
+          <div className="p-8 text-center text-xs text-muted-foreground">
+            <Clock className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+            <p className="font-semibold text-foreground">No imports logged yet</p>
+            <p className="mt-1">When you import CSV files, they will be listed here with details and an Undo button.</p>
+          </div>
+        ) : (
+          <>
+            <div className="divide-y divide-border md:hidden">
+              {history.map((entry) => {
+                const withinUndo = Date.now() - entry.timestamp.getTime() < 24 * 60 * 60 * 1000;
+                return (
+                  <div key={entry.id} className="space-y-3 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-foreground">{entry.fileName}</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">{format(entry.timestamp, "MMM d, yyyy h:mm a")}</p>
+                      </div>
+                      <Badge
+                        className={cn(
+                          "shrink-0 border-0 text-xs font-semibold",
+                          entry.status === "Success" && "bg-green-100 text-green-700",
+                          entry.status === "Partial" && "bg-yellow-100 text-yellow-700",
+                          entry.status === "Failed" && "bg-red-100 text-red-700",
+                        )}
+                      >
+                        {entry.status}
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 rounded-md bg-muted/30 p-2.5">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Data Type</p>
+                        <p className="mt-0.5 text-xs font-medium capitalize text-foreground">{entry.dataType}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Records</p>
+                        <p className="mt-0.5 text-xs font-semibold text-foreground">{entry.recordsImported.toLocaleString()}</p>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={!withinUndo || undoingId === entry.id}
+                      className="min-h-[40px] w-full gap-1.5 text-xs"
+                      onClick={() => setUndoConfirmEntry(entry)}
+                    >
+                      {undoingId === entry.id ? (
+                        <>
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          Undoing...
+                        </>
+                      ) : (
+                        <>
+                          <RotateCcw className="w-3 h-3" />
+                          {withinUndo ? "Undo Import" : "Undo Expired"}
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="hidden overflow-x-auto md:block">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-muted/40 border-b border-border">
+                    {["Date & Time", "File Name", "Data Type", "Records", "Status", "Action"].map((h) => (
+                      <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground whitespace-nowrap">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {history.map((entry, idx) => {
+                    const withinUndo = Date.now() - entry.timestamp.getTime() < 24 * 60 * 60 * 1000;
+                    return (
+                      <tr key={entry.id} className={cn("border-b border-border last:border-0", idx % 2 === 0 ? "bg-background" : "bg-muted/10")}>
+                        <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                          {format(entry.timestamp, "MMM d, yyyy h:mm a")}
+                        </td>
+                        <td className="px-4 py-3 font-medium text-foreground max-w-[160px] truncate" title={entry.fileName}>
+                          {entry.fileName}
+                        </td>
+                        <td className="px-4 py-3 text-xs capitalize text-muted-foreground">{entry.dataType}</td>
+                        <td className="px-4 py-3 font-semibold text-foreground">{entry.recordsImported.toLocaleString()}</td>
+                        <td className="px-4 py-3">
+                          <Badge
+                            className={cn(
+                              "text-xs font-semibold border-0",
+                              entry.status === "Success" && "bg-green-100 text-green-700",
+                              entry.status === "Partial" && "bg-yellow-100 text-yellow-700",
+                              entry.status === "Failed"  && "bg-red-100 text-red-700",
+                            )}
+                          >
+                            {entry.status}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={!withinUndo || undoingId === entry.id}
+                            className="text-xs h-7 gap-1.5"
+                            onClick={() => setUndoConfirmEntry(entry)}
+                          >
+                            {undoingId === entry.id ? (
+                              <>
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                                Undoing...
+                              </>
+                            ) : (
+                              <>
+                                <RotateCcw className="w-3 h-3" />
+                                Undo Import
+                              </>
+                            )}
+                          </Button>
+                          {!withinUndo && (
+                            <span className="ml-2 text-xs text-muted-foreground">Expired</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* ── Undo Confirmation Dialog ────────────────────────────────────────── */}
+      <AlertDialog
+        open={Boolean(undoConfirmEntry)}
+        onOpenChange={(open) => {
+          if (!open && !undoingId) setUndoConfirmEntry(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5 text-destructive" />
+              </div>
+              <AlertDialogTitle>Delete Imported Records</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription>
+              Are you sure you want to permanently delete the <strong className="text-foreground">{undoConfirmEntry?.recordsImported} imported transaction(s)</strong> from <strong className="text-foreground">{undoConfirmEntry?.fileName}</strong>? This action cannot be undone and will be permanently recorded in audit logs.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={Boolean(undoingId)}
+              onClick={() => setUndoConfirmEntry(null)}
+              className="cursor-pointer"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={Boolean(undoingId)}
+              onClick={(e) => {
+                e.preventDefault();
+                if (undoConfirmEntry) {
+                  void executeUndo(undoConfirmEntry);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 cursor-pointer"
+            >
+              {undoingId ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
+                  Deleting...
+                </>
+              ) : (
+                "Permanently Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
