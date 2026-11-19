@@ -2861,7 +2861,7 @@ export default function TransactionsPage({
                           {/* Key-Value Row 1: Ticket ID + Full Record Link */}
                           <div className="flex items-center justify-between gap-2 text-xs">
                             <div className="flex items-center gap-2 min-w-0">
-                              <span className="text-muted-foreground w-12 shrink-0 font-medium">Ticket</span>
+                              <span className="text-muted-foreground w-20 shrink-0 font-medium">Ticket</span>
                               <span
                                 className={cn(
                                   "font-mono font-bold text-xs text-foreground px-1.5 py-0.5 rounded bg-muted/60 border border-border/40",
@@ -2887,7 +2887,7 @@ export default function TransactionsPage({
                           {/* Key-Value Row 2: Service + Payment Status */}
                           <div className="flex items-center justify-between gap-2 text-xs">
                             <div className="flex items-center gap-2 min-w-0 flex-1 flex-wrap">
-                              <span className="text-muted-foreground w-12 shrink-0 font-medium">Service</span>
+                              <span className="text-muted-foreground w-20 shrink-0 font-medium">Service</span>
                               <div className="flex items-center gap-1.5 flex-wrap text-foreground font-medium">
                                 <span>{txn.washType}</span>
                                 {txn.weight ? (
@@ -2918,7 +2918,7 @@ export default function TransactionsPage({
                           {/* Key-Value Row 3: Intake / Drop-Off Time Below Service */}
                           <div className="flex items-center justify-between gap-2 text-xs">
                             <div className="flex items-center gap-2 min-w-0 flex-1">
-                              <span className="text-muted-foreground w-12 shrink-0 font-medium">Time</span>
+                              <span className="text-muted-foreground w-20 shrink-0 font-medium">Arrival Time</span>
                               <div className="flex items-center gap-1.5 text-foreground font-medium text-xs">
                                 <Clock className="w-3.5 h-3.5 text-muted-foreground/70 shrink-0" />
                                 <span>{formatTimeDisplay(txn.arrivalDateTime) || "—"}</span>
@@ -2930,7 +2930,7 @@ export default function TransactionsPage({
                           {(terminalInfo || (isVoided && txn.voidReason)) && (
                             <div className="flex items-center justify-between gap-2 text-xs pt-0.5">
                               <div className="flex items-center gap-2 min-w-0">
-                                <span className="text-muted-foreground w-12 shrink-0 font-medium">
+                                <span className="text-muted-foreground w-20 shrink-0 font-medium">
                                   {terminalInfo ? terminalInfo.label : "Void"}
                                 </span>
                                 <span className="text-muted-foreground font-medium truncate">

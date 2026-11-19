@@ -56,7 +56,7 @@ import { loadPricingConfig } from "@/lib/settings-store";
 
 type ExportSection = "transactions" | "analytics" | "customers";
 type ForecastRange = "7d" | "30d" | "3m" | "6m" | "custom";
-type RangePreset = "day" | "week" | "month" | "year" | "custom";
+type RangePreset = "day" | "week" | "month" | "year" | "past_year" | "custom";
 type ReportsPageProps = {
   transactions: Transaction[];
   shopName?: string;
@@ -75,6 +75,15 @@ const exportOptions: Array<{ id: ExportSection; label: string }> = [
   { id: "transactions", label: "Transactions" },
   { id: "analytics", label: "Sales and Analytics" },
   { id: "customers", label: "Loyalty Customer Records" },
+];
+
+const PRESET_OPTIONS: Array<{ id: RangePreset; label: string }> = [
+  { id: "day", label: "Day" },
+  { id: "week", label: "Week" },
+  { id: "month", label: "Month" },
+  { id: "year", label: "Year" },
+  { id: "past_year", label: "Past Year" },
+  { id: "custom", label: "Custom" },
 ];
 
 const PIE_COLORS = ["hsl(257 58% 49%)", "hsl(142 71% 45%)", "hsl(214 62% 59%)", "hsl(39 79% 54%)", "hsl(266 17% 53%)", "hsl(44 83% 61%)"];
@@ -102,8 +111,16 @@ function getStatusIconComponent(status: string) {
   return <Icon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />;
 }
 
-function getDateKey(transaction: Transaction) {
-  return transaction.dropOffDate;
+function getDateKey(transaction: Transaction): string {
+  if (transaction.dropOffDate) {
+    const match = transaction.dropOffDate.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (match) return match[1];
+  }
+  if (transaction.arrivalDateTime) {
+    const match = transaction.arrivalDateTime.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (match) return match[1];
+  }
+  return transaction.dropOffDate || "";
 }
 
 function getPaymentDateKey(transaction: Transaction): string | null {
@@ -113,7 +130,14 @@ function getPaymentDateKey(transaction: Transaction): string | null {
   }
   if (transaction.paymentStatus === "paid") {
     // Graceful fallback for transactions without explicit paidAt timestamp
-    return transaction.dropOffDate || (transaction.arrivalDateTime ? transaction.arrivalDateTime.split(" ")[0] : null);
+    if (transaction.dropOffDate) {
+      const match = transaction.dropOffDate.match(/^(\d{4}-\d{2}-\d{2})/);
+      if (match) return match[1];
+    }
+    if (transaction.arrivalDateTime) {
+      const match = transaction.arrivalDateTime.match(/^(\d{4}-\d{2}-\d{2})/);
+      if (match) return match[1];
+    }
   }
   return null;
 }
@@ -243,7 +267,7 @@ function buildForecastMetrics(transactions: Transaction[], from: Date, to: Date)
   const weekCounts = new Map<number, number>([1, 2, 3, 4].map((week) => [week, 0]));
 
   for (const transaction of rangeTransactions) {
-    const transactionDate = parseDateKey(transaction.dropOffDate);
+    const transactionDate = parseDateKey(getDateKey(transaction));
     const dayLabel = DAY_LABELS[transactionDate.getDay()];
     dayCounts.set(dayLabel, (dayCounts.get(dayLabel) ?? 0) + 1);
     weekCounts.set(getWeekOfMonth(transactionDate), (weekCounts.get(getWeekOfMonth(transactionDate)) ?? 0) + 1);
@@ -282,7 +306,7 @@ function buildForecastMetrics(transactions: Transaction[], from: Date, to: Date)
   });
   const monthMap = new Map(monthlyTrend.map((item) => [item.month, item]));
   for (const transaction of rangeTransactions) {
-    const month = transaction.dropOffDate.slice(0, 7);
+    const month = getDateKey(transaction).slice(0, 7);
     const current = monthMap.get(month);
     if (current) current.transactions += 1;
   }
@@ -400,12 +424,38 @@ export default function ReportsPage({
     return () => clearInterval(interval);
   }, [onRefresh]);
 
-  const periodRanges = {
+  const currentYear = new Date().getFullYear();
+  const defaultPastYear = currentYear - 1;
+  const [selectedPastYear, setSelectedPastYear] = useState<number>(defaultPastYear);
+
+  const availablePastYears = useMemo(() => {
+    const years = new Set<number>();
+    years.add(defaultPastYear);
+    for (const tx of transactions) {
+      const raw = tx.dropOffDate || tx.arrivalDateTime || tx.paidAt;
+      if (raw) {
+        const match = raw.match(/^(\d{4})/);
+        if (match) {
+          const y = parseInt(match[1], 10);
+          if (y < currentYear && y >= 2000) {
+            years.add(y);
+          }
+        }
+      }
+    }
+    return Array.from(years).sort((a, b) => b - a);
+  }, [transactions, currentYear, defaultPastYear]);
+
+  const periodRanges = useMemo(() => ({
     day: { from: new Date(), to: new Date() },
     week: { from: subDays(new Date(), 6), to: new Date() },
     month: { from: subDays(new Date(), 29), to: new Date() },
     year: { from: subDays(new Date(), 364), to: new Date() },
-  };
+    past_year: {
+      from: new Date(selectedPastYear, 0, 1),
+      to: new Date(selectedPastYear, 11, 31, 23, 59, 59),
+    },
+  }), [selectedPastYear]);
 
   const applyPreset = (preset: RangePreset) => {
     setRangePreset(preset);
@@ -413,6 +463,12 @@ export default function ReportsPage({
       setExportFromDate(periodRanges[preset].from);
       setExportToDate(periodRanges[preset].to);
     }
+  };
+
+  const handlePastYearChange = (year: number) => {
+    setSelectedPastYear(year);
+    setExportFromDate(new Date(year, 0, 1));
+    setExportToDate(new Date(year, 11, 31, 23, 59, 59));
   };
 
   const summaryDateKey = format(summaryDate, "yyyy-MM-dd");
@@ -462,7 +518,7 @@ export default function ReportsPage({
   const receivedPct = activeOrdersCount > 0 ? Math.max(0, 100 - readyPct - washingPct) : 0;
 
   const dailyTransactions = useMemo(
-    () => transactions.filter((transaction) => transaction.dropOffDate === summaryDateKey),
+    () => transactions.filter((transaction) => getDateKey(transaction) === summaryDateKey),
     [summaryDateKey, transactions],
   );
 
@@ -604,7 +660,7 @@ export default function ReportsPage({
         existing.revenue += transaction.fee;
         existing.count += 1;
       }
-    } else if (rangePreset === "year") {
+    } else if (rangePreset === "year" || rangePreset === "past_year") {
       for (let month = exportFromDate; month <= exportToDate; month = addMonths(month, 1)) {
         const key = format(month, "MMM yyyy");
         seed(key, key);
@@ -1207,6 +1263,28 @@ export default function ReportsPage({
         </TabsContent>
 
       <TabsContent value="analytics" className="space-y-4">
+        {/* Past Years Helper Banner */}
+        {recognizedRevenueTransactions.length === 0 && availablePastYears.length > 0 && rangePreset !== "past_year" && (
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-xs">
+            <div className="flex items-center gap-2.5">
+              <div className="w-6 h-6 rounded-md bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                <Lightbulb className="w-3.5 h-3.5" />
+              </div>
+              <span className="text-amber-900 dark:text-amber-200">
+                No transactions found for the current period (<strong>{rangePreset}</strong>). You have transactions recorded in past years (e.g. {availablePastYears[0]}).
+              </span>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs bg-background border-amber-500/50 hover:bg-amber-500/20 text-amber-800 dark:text-amber-200 font-semibold shrink-0"
+              onClick={() => applyPreset("past_year")}
+            >
+              Switch to Past Year ({selectedPastYear})
+            </Button>
+          </div>
+        )}
+
         {/* Mobile Concept View */}
         <div className="space-y-4 md:hidden">
           {/* Mobile Period Selector & Custom Date Pickers */}
@@ -1214,23 +1292,44 @@ export default function ReportsPage({
             <div className="flex items-center justify-between bg-card rounded-2xl p-1.5 border border-border/80 shadow-sm">
               <span className="text-xs font-bold text-muted-foreground pl-2">Period</span>
               <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
-                {(["day", "week", "month", "year", "custom"] as const).map((preset) => (
+                {PRESET_OPTIONS.map(({ id, label }) => (
                   <button
-                    key={preset}
+                    key={id}
                     type="button"
-                    onClick={() => applyPreset(preset)}
+                    onClick={() => applyPreset(id)}
                     className={cn(
-                      "px-2.5 py-1 text-xs font-semibold rounded-xl capitalize transition-all whitespace-nowrap",
-                      rangePreset === preset
+                      "px-2.5 py-1 text-xs font-semibold rounded-xl transition-all whitespace-nowrap",
+                      rangePreset === id
                         ? "bg-primary text-primary-foreground shadow-sm"
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    {preset}
+                    {label}
                   </button>
                 ))}
               </div>
             </div>
+
+            {rangePreset === "past_year" && (
+              <div className="flex items-center justify-between gap-2 pt-1 px-1">
+                <span className="text-xs text-muted-foreground">Select Year:</span>
+                <Select
+                  value={String(selectedPastYear)}
+                  onValueChange={(val) => handlePastYearChange(parseInt(val, 10))}
+                >
+                  <SelectTrigger className="h-8 w-[110px] text-xs rounded-xl">
+                    <SelectValue placeholder="Year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availablePastYears.map((year) => (
+                      <SelectItem key={year} value={String(year)} className="text-xs">
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {rangePreset === "custom" && (
               <div className="grid grid-cols-2 gap-2 pt-1">
@@ -1350,10 +1449,20 @@ export default function ReportsPage({
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-bold text-foreground">Sales Trend</h3>
-                <p className="text-[11px] text-muted-foreground">Daily revenue performance</p>
+                <p className="text-[11px] text-muted-foreground">
+                  {rangePreset === "year" || rangePreset === "past_year"
+                    ? "Monthly revenue performance"
+                    : rangePreset === "day"
+                    ? "Hourly revenue performance"
+                    : "Daily revenue performance"}
+                </p>
               </div>
               <span className="text-[11px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-lg border border-primary/20 capitalize">
-                {rangePreset === "custom" ? "Custom" : `Last ${rangePreset}`}
+                {rangePreset === "custom"
+                  ? "Custom"
+                  : rangePreset === "past_year"
+                  ? `Past Year (${selectedPastYear})`
+                  : `Last ${rangePreset}`}
               </span>
             </div>
             <div className="h-[240px]">
@@ -1520,17 +1629,38 @@ export default function ReportsPage({
         <div className="hidden md:block space-y-4">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-medium text-muted-foreground">Period:</span>
-            {(["day", "week", "month", "year", "custom"] as const).map((preset) => (
+            {PRESET_OPTIONS.map(({ id, label }) => (
               <Button
-                key={preset}
+                key={id}
                 size="sm"
-                variant={rangePreset === preset ? "default" : "outline"}
-                className="h-8 text-xs capitalize"
-                onClick={() => applyPreset(preset)}
+                variant={rangePreset === id ? "default" : "outline"}
+                className="h-8 text-xs"
+                onClick={() => applyPreset(id)}
               >
-                {preset}
+                {label}
               </Button>
             ))}
+
+            {rangePreset === "past_year" && (
+              <div className="flex items-center gap-2 ml-1 sm:ml-2 pl-2 border-l border-border">
+                <span className="text-xs text-muted-foreground">Year:</span>
+                <Select
+                  value={String(selectedPastYear)}
+                  onValueChange={(val) => handlePastYearChange(parseInt(val, 10))}
+                >
+                  <SelectTrigger className="h-8 w-[100px] text-xs">
+                    <SelectValue placeholder="Year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availablePastYears.map((year) => (
+                      <SelectItem key={year} value={String(year)} className="text-xs">
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {rangePreset === "custom" && (
               <div className="flex flex-wrap items-center gap-2 ml-1 sm:ml-2 pl-2 border-l border-border">
