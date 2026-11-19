@@ -82,7 +82,6 @@ const PRESET_OPTIONS: Array<{ id: RangePreset; label: string }> = [
   { id: "week", label: "Week" },
   { id: "month", label: "Month" },
   { id: "year", label: "Year" },
-  { id: "past_year", label: "Past Year" },
   { id: "custom", label: "Custom" },
 ];
 
@@ -446,6 +445,7 @@ export default function ReportsPage({
   }, [onRefresh]);
 
   const defaultPastYear = currentYear - 1;
+  const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   const [selectedPastYear, setSelectedPastYear] = useState<number>(defaultPastYear);
   const [selectedMonth, setSelectedMonth] = useState<number>(currentMonth);
   const [selectedMonthYear, setSelectedMonthYear] = useState<number>(currentYear);
@@ -484,12 +484,15 @@ export default function ReportsPage({
       from: new Date(selectedMonthYear, selectedMonth, 1, 0, 0, 0, 0),
       to: new Date(selectedMonthYear, selectedMonth + 1, 0, 23, 59, 59, 999),
     },
-    year: { from: subDays(new Date(), 364), to: new Date() },
-    past_year: {
-      from: new Date(selectedPastYear, 0, 1),
-      to: new Date(selectedPastYear, 11, 31, 23, 59, 59),
+    year: {
+      from: new Date(selectedYear, 0, 1),
+      to: new Date(selectedYear, 11, 31, 23, 59, 59),
     },
-  }), [selectedMonth, selectedMonthYear, selectedPastYear]);
+    past_year: {
+      from: new Date(selectedYear, 0, 1),
+      to: new Date(selectedYear, 11, 31, 23, 59, 59),
+    },
+  }), [selectedMonth, selectedMonthYear, selectedYear]);
 
   const applyPreset = (preset: RangePreset) => {
     setRangePreset(preset);
@@ -499,10 +502,15 @@ export default function ReportsPage({
     }
   };
 
-  const handlePastYearChange = (year: number) => {
+  const handleYearChange = (year: number) => {
+    setSelectedYear(year);
     setSelectedPastYear(year);
     setExportFromDate(new Date(year, 0, 1));
     setExportToDate(new Date(year, 11, 31, 23, 59, 59));
+  };
+
+  const handlePastYearChange = (year: number) => {
+    handleYearChange(year);
   };
 
   const handleMonthChange = (month: number, year: number) => {
@@ -1305,23 +1313,23 @@ export default function ReportsPage({
 
       <TabsContent value="analytics" className="space-y-4">
         {/* Past Years Helper Banner */}
-        {recognizedRevenueTransactions.length === 0 && availablePastYears.length > 0 && rangePreset === "year" && (
+        {recognizedRevenueTransactions.length === 0 && availablePastYears.length > 0 && (rangePreset === "year" || rangePreset === "past_year") && selectedYear === currentYear && (
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-xs">
             <div className="flex items-center gap-2.5">
               <div className="w-6 h-6 rounded-md bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
                 <Lightbulb className="w-3.5 h-3.5" />
               </div>
               <span className="text-amber-900 dark:text-amber-200">
-                No transactions found for the current period (<strong>{rangePreset}</strong>). You have transactions recorded in past years (e.g. {availablePastYears[0]}).
+                No transactions found for {currentYear}. You have transactions recorded in {availablePastYears[0]}.
               </span>
             </div>
             <Button
               size="sm"
               variant="outline"
               className="h-7 text-xs bg-background border-amber-500/50 hover:bg-amber-500/20 text-amber-800 dark:text-amber-200 font-semibold shrink-0"
-              onClick={() => applyPreset("past_year")}
+              onClick={() => handleYearChange(availablePastYears[0])}
             >
-              Switch to Past Year ({selectedPastYear})
+              Switch to {availablePastYears[0]}
             </Button>
           </div>
         )}
@@ -1392,18 +1400,18 @@ export default function ReportsPage({
               </div>
             )}
 
-            {rangePreset === "past_year" && (
+            {(rangePreset === "year" || rangePreset === "past_year") && (
               <div className="flex items-center justify-between gap-2 pt-1 px-1">
                 <span className="text-xs text-muted-foreground">Select Year:</span>
                 <Select
-                  value={String(selectedPastYear)}
-                  onValueChange={(val) => handlePastYearChange(parseInt(val, 10))}
+                  value={String(selectedYear)}
+                  onValueChange={(val) => handleYearChange(parseInt(val, 10))}
                 >
                   <SelectTrigger className="h-8 w-[110px] text-xs rounded-xl">
                     <SelectValue placeholder="Year" />
                   </SelectTrigger>
                   <SelectContent>
-                    {availablePastYears.map((year) => (
+                    {availableYears.map((year) => (
                       <SelectItem key={year} value={String(year)} className="text-xs">
                         {year}
                       </SelectItem>
@@ -1542,8 +1550,8 @@ export default function ReportsPage({
               <span className="text-[11px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-lg border border-primary/20 capitalize">
                 {rangePreset === "custom"
                   ? "Custom"
-                  : rangePreset === "past_year"
-                  ? `Past Year (${selectedPastYear})`
+                  : rangePreset === "year" || rangePreset === "past_year"
+                  ? `Year (${selectedYear})`
                   : rangePreset === "month"
                   ? `${MONTH_OPTIONS[selectedMonth]?.label || "Month"} ${selectedMonthYear}`
                   : `Last ${rangePreset}`}
@@ -1762,18 +1770,18 @@ export default function ReportsPage({
               </div>
             )}
 
-            {rangePreset === "past_year" && (
+            {(rangePreset === "year" || rangePreset === "past_year") && (
               <div className="flex items-center gap-2 ml-1 sm:ml-2 pl-2 border-l border-border">
                 <span className="text-xs text-muted-foreground">Year:</span>
                 <Select
-                  value={String(selectedPastYear)}
-                  onValueChange={(val) => handlePastYearChange(parseInt(val, 10))}
+                  value={String(selectedYear)}
+                  onValueChange={(val) => handleYearChange(parseInt(val, 10))}
                 >
                   <SelectTrigger className="h-8 w-[100px] text-xs">
                     <SelectValue placeholder="Year" />
                   </SelectTrigger>
                   <SelectContent>
-                    {availablePastYears.map((year) => (
+                    {availableYears.map((year) => (
                       <SelectItem key={year} value={String(year)} className="text-xs">
                         {year}
                       </SelectItem>
