@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import Sidebar, { type Page } from "@/components/sidebar";
 import TopNav from "@/components/topnav";

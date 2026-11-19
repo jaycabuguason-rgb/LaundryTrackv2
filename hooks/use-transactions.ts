@@ -572,11 +572,13 @@ export function useTransactions() {
 
     window.addEventListener("focus", handleRecheck);
     document.addEventListener("visibilitychange", handleRecheck);
+    window.addEventListener("laundrytrack:refresh-transactions", handleRecheck);
 
     return () => {
       if (focusTimeout) clearTimeout(focusTimeout);
       window.removeEventListener("focus", handleRecheck);
       document.removeEventListener("visibilitychange", handleRecheck);
+      window.removeEventListener("laundrytrack:refresh-transactions", handleRecheck);
     };
   }, []);
 

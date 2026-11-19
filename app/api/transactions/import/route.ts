@@ -43,16 +43,36 @@ function normalizeStatus(value: string | undefined): string {
 const PH_OFFSET = "+08:00";
 
 function normalizeDateTime(value: string | undefined | null): string {
-  if (!value) return new Date().toISOString();
-  if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(:\d{2})?$/.test(value)) {
-    const [datePart, timePart] = value.split(/[ T]/);
-    const timeWithSec = timePart.length === 5 ? `${timePart}:00` : timePart;
-    return `${datePart}T${timeWithSec}${PH_OFFSET}`;
+  if (!value || !value.trim()) return new Date().toISOString();
+  const trimmed = value.trim();
+
+  // YYYY-MM-DD or YYYY/MM/DD with optional time
+  const ymdMatch = trimmed.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+  if (ymdMatch) {
+    const [, y, m, d, hh, mm, ss] = ymdMatch;
+    const year = y;
+    const month = m.padStart(2, "0");
+    const day = d.padStart(2, "0");
+    const hour = (hh ?? "00").padStart(2, "0");
+    const min = (mm ?? "00").padStart(2, "0");
+    const sec = (ss ?? "00").padStart(2, "0");
+    return `${year}-${month}-${day}T${hour}:${min}:${sec}${PH_OFFSET}`;
   }
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return `${value}T00:00:00${PH_OFFSET}`;
+
+  // MM/DD/YYYY or DD/MM/YYYY with optional time
+  const dmyMatch = trimmed.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+  if (dmyMatch) {
+    const [, p1, p2, y, hh, mm, ss] = dmyMatch;
+    const year = y;
+    const month = (parseInt(p1, 10) > 12 ? p2 : p1).padStart(2, "0");
+    const day = (parseInt(p1, 10) > 12 ? p1 : p2).padStart(2, "0");
+    const hour = (hh ?? "00").padStart(2, "0");
+    const min = (mm ?? "00").padStart(2, "0");
+    const sec = (ss ?? "00").padStart(2, "0");
+    return `${year}-${month}-${day}T${hour}:${min}:${sec}${PH_OFFSET}`;
   }
-  const date = new Date(value);
+
+  const date = new Date(trimmed);
   return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
 }
 
@@ -98,8 +118,9 @@ export async function POST(request: Request) {
         continue;
       }
 
-      const status = normalizeStatus(row.status);
-      const isPaid = status === "Claimed";
+      const rawStatus = row.status ? String(row.status).trim() : "";
+      const status = rawStatus ? normalizeStatus(rawStatus) : "Claimed";
+      const isPaid = status === "Claimed" || rawStatus.toLowerCase() === "paid";
       const arrivalTime = normalizeDateTime(row.arrivalDate);
 
       insertRecords.push({
@@ -114,9 +135,7 @@ export async function POST(request: Request) {
         addons: row.addons ? String(row.addons).split(/[,;]/).map((a) => a.trim()).filter(Boolean) : [],
         special_instructions: row.notes ? String(row.notes).trim().slice(0, 500) : null,
         arrival_time: arrivalTime,
-        paid_at: isPaid ? arrivalTime : null,
         claimed_at: status === "Claimed" ? arrivalTime : null,
-        voided_at: status === "Voided" ? arrivalTime : null,
       });
     }
 
@@ -162,6 +181,7 @@ export async function POST(request: Request) {
       importedCount: totalInserted,
       skippedCount: skipped.length,
       skippedRows: skipped,
+      ticketIds: insertRecords.map((r) => String(r.ticket_id)),
     });
   } catch (error) {
     const authStatus = getAuthErrorStatus(error);
@@ -170,6 +190,59 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: message }, { status: authStatus });
     }
     const message = error instanceof Error ? error.message : "Unable to import transactions.";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const actor = await requireAdminRequest(request);
+    const body = await request.json();
+
+    if (!body || !Array.isArray(body.ticketIds) || body.ticketIds.length === 0) {
+      return NextResponse.json({ error: "Invalid request body. Expected { ticketIds: string[] }." }, { status: 400 });
+    }
+
+    const ticketIds: string[] = body.ticketIds.map((t: unknown) => String(t).trim()).filter(Boolean);
+    if (ticketIds.length === 0) {
+      return NextResponse.json({ error: "No valid ticket IDs provided." }, { status: 400 });
+    }
+
+    const supabase = getSupabaseAdminClient();
+    const { error } = await supabase
+      .from("transactions")
+      .delete()
+      .in("ticket_id", ticketIds);
+
+    if (error) {
+      throw new Error(`Failed to delete imported transactions: ${error.message}`);
+    }
+
+    await createAuditLog({
+      action: "other",
+      summary: `Undid import: removed ${ticketIds.length} transactions`,
+      details: `Undo import executed by ${actor.name}. Total tickets removed: ${ticketIds.length}`,
+      staffProfileId: actor.id,
+      staffName: actor.name,
+      staffRole: actor.role,
+      ipAddress: getRequestIp(request),
+      metadata: {
+        source: "api/transactions/import/undo",
+        ticketIdsCount: ticketIds.length,
+      },
+    }).catch(() => undefined);
+
+    return NextResponse.json({
+      success: true,
+      deletedCount: ticketIds.length,
+    });
+  } catch (error) {
+    const authStatus = getAuthErrorStatus(error);
+    if (authStatus) {
+      const message = error instanceof Error ? error.message : "Unauthorized.";
+      return NextResponse.json({ error: message }, { status: authStatus });
+    }
+    const message = error instanceof Error ? error.message : "Unable to undo import.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
