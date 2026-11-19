@@ -86,6 +86,21 @@ const PRESET_OPTIONS: Array<{ id: RangePreset; label: string }> = [
   { id: "custom", label: "Custom" },
 ];
 
+const MONTH_OPTIONS = [
+  { value: 0, label: "January" },
+  { value: 1, label: "February" },
+  { value: 2, label: "March" },
+  { value: 3, label: "April" },
+  { value: 4, label: "May" },
+  { value: 5, label: "June" },
+  { value: 6, label: "July" },
+  { value: 7, label: "August" },
+  { value: 8, label: "September" },
+  { value: 9, label: "October" },
+  { value: 10, label: "November" },
+  { value: 11, label: "December" },
+];
+
 const PIE_COLORS = ["hsl(257 58% 49%)", "hsl(142 71% 45%)", "hsl(214 62% 59%)", "hsl(39 79% 54%)", "hsl(266 17% 53%)", "hsl(44 83% 61%)"];
 const BUSY_BAR = "hsl(257 58% 49%)";
 const EMERALD_BAR = "hsl(142 71% 45%)";
@@ -389,8 +404,14 @@ export default function ReportsPage({
   const [activeTab, setActiveTab] = useState<string>("overview");
   const [mobileStatusFilter, setMobileStatusFilter] = useState<string>("all");
   const [summaryDate, setSummaryDate] = useState<Date>(new Date());
-  const [exportFromDate, setExportFromDate] = useState<Date>(subDays(new Date(), 30));
-  const [exportToDate, setExportToDate] = useState<Date>(new Date());
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth();
+  const [exportFromDate, setExportFromDate] = useState<Date>(
+    () => new Date(new Date().getFullYear(), new Date().getMonth(), 1, 0, 0, 0, 0)
+  );
+  const [exportToDate, setExportToDate] = useState<Date>(
+    () => new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0, 23, 59, 59, 999)
+  );
   const [forecastRange, setForecastRange] = useState<ForecastRange>("30d");
   const [forecastFromDate, setForecastFromDate] = useState<Date>(subDays(new Date(), 29));
   const [forecastToDate, setForecastToDate] = useState<Date>(new Date());
@@ -424,9 +445,10 @@ export default function ReportsPage({
     return () => clearInterval(interval);
   }, [onRefresh]);
 
-  const currentYear = new Date().getFullYear();
   const defaultPastYear = currentYear - 1;
   const [selectedPastYear, setSelectedPastYear] = useState<number>(defaultPastYear);
+  const [selectedMonth, setSelectedMonth] = useState<number>(currentMonth);
+  const [selectedMonthYear, setSelectedMonthYear] = useState<number>(currentYear);
 
   const availablePastYears = useMemo(() => {
     const years = new Set<number>();
@@ -446,16 +468,28 @@ export default function ReportsPage({
     return Array.from(years).sort((a, b) => b - a);
   }, [transactions, currentYear, defaultPastYear]);
 
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    years.add(currentYear);
+    for (const y of availablePastYears) {
+      years.add(y);
+    }
+    return Array.from(years).sort((a, b) => b - a);
+  }, [currentYear, availablePastYears]);
+
   const periodRanges = useMemo(() => ({
     day: { from: new Date(), to: new Date() },
     week: { from: subDays(new Date(), 6), to: new Date() },
-    month: { from: subDays(new Date(), 29), to: new Date() },
+    month: {
+      from: new Date(selectedMonthYear, selectedMonth, 1, 0, 0, 0, 0),
+      to: new Date(selectedMonthYear, selectedMonth + 1, 0, 23, 59, 59, 999),
+    },
     year: { from: subDays(new Date(), 364), to: new Date() },
     past_year: {
       from: new Date(selectedPastYear, 0, 1),
       to: new Date(selectedPastYear, 11, 31, 23, 59, 59),
     },
-  }), [selectedPastYear]);
+  }), [selectedMonth, selectedMonthYear, selectedPastYear]);
 
   const applyPreset = (preset: RangePreset) => {
     setRangePreset(preset);
@@ -469,6 +503,13 @@ export default function ReportsPage({
     setSelectedPastYear(year);
     setExportFromDate(new Date(year, 0, 1));
     setExportToDate(new Date(year, 11, 31, 23, 59, 59));
+  };
+
+  const handleMonthChange = (month: number, year: number) => {
+    setSelectedMonth(month);
+    setSelectedMonthYear(year);
+    setExportFromDate(new Date(year, month, 1, 0, 0, 0, 0));
+    setExportToDate(new Date(year, month + 1, 0, 23, 59, 59, 999));
   };
 
   const summaryDateKey = format(summaryDate, "yyyy-MM-dd");
@@ -1264,7 +1305,7 @@ export default function ReportsPage({
 
       <TabsContent value="analytics" className="space-y-4">
         {/* Past Years Helper Banner */}
-        {recognizedRevenueTransactions.length === 0 && availablePastYears.length > 0 && rangePreset !== "past_year" && (
+        {recognizedRevenueTransactions.length === 0 && availablePastYears.length > 0 && rangePreset === "year" && (
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-xs">
             <div className="flex items-center gap-2.5">
               <div className="w-6 h-6 rounded-md bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
@@ -1309,6 +1350,47 @@ export default function ReportsPage({
                 ))}
               </div>
             </div>
+
+            {rangePreset === "month" && (
+              <div className="flex items-center justify-between gap-2 pt-1 px-1">
+                <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                  <span className="text-xs text-muted-foreground shrink-0">Month:</span>
+                  <Select
+                    value={String(selectedMonth)}
+                    onValueChange={(val) => handleMonthChange(parseInt(val, 10), selectedMonthYear)}
+                  >
+                    <SelectTrigger className="h-8 w-full text-xs rounded-xl">
+                      <SelectValue placeholder="Month" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MONTH_OPTIONS.map((m) => (
+                        <SelectItem key={m.value} value={String(m.value)} className="text-xs">
+                          {m.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="text-xs text-muted-foreground">Year:</span>
+                  <Select
+                    value={String(selectedMonthYear)}
+                    onValueChange={(val) => handleMonthChange(selectedMonth, parseInt(val, 10))}
+                  >
+                    <SelectTrigger className="h-8 w-[85px] text-xs rounded-xl">
+                      <SelectValue placeholder="Year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableYears.map((year) => (
+                        <SelectItem key={year} value={String(year)} className="text-xs">
+                          {year}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
 
             {rangePreset === "past_year" && (
               <div className="flex items-center justify-between gap-2 pt-1 px-1">
@@ -1462,6 +1544,8 @@ export default function ReportsPage({
                   ? "Custom"
                   : rangePreset === "past_year"
                   ? `Past Year (${selectedPastYear})`
+                  : rangePreset === "month"
+                  ? `${MONTH_OPTIONS[selectedMonth]?.label || "Month"} ${selectedMonthYear}`
                   : `Last ${rangePreset}`}
               </span>
             </div>
@@ -1640,6 +1724,43 @@ export default function ReportsPage({
                 {label}
               </Button>
             ))}
+
+            {rangePreset === "month" && (
+              <div className="flex items-center gap-2 ml-1 sm:ml-2 pl-2 border-l border-border">
+                <span className="text-xs text-muted-foreground">Month:</span>
+                <Select
+                  value={String(selectedMonth)}
+                  onValueChange={(val) => handleMonthChange(parseInt(val, 10), selectedMonthYear)}
+                >
+                  <SelectTrigger className="h-8 w-[120px] text-xs">
+                    <SelectValue placeholder="Month" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MONTH_OPTIONS.map((m) => (
+                      <SelectItem key={m.value} value={String(m.value)} className="text-xs">
+                        {m.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span className="text-xs text-muted-foreground">Year:</span>
+                <Select
+                  value={String(selectedMonthYear)}
+                  onValueChange={(val) => handleMonthChange(selectedMonth, parseInt(val, 10))}
+                >
+                  <SelectTrigger className="h-8 w-[95px] text-xs">
+                    <SelectValue placeholder="Year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableYears.map((year) => (
+                      <SelectItem key={year} value={String(year)} className="text-xs">
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {rangePreset === "past_year" && (
               <div className="flex items-center gap-2 ml-1 sm:ml-2 pl-2 border-l border-border">
